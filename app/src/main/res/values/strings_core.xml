@@ -24,6 +24,10 @@
     <!-- About screen. -->
     <string name="core_about_subtitle">App information and community.</string>
     <string name="core_about_description">CatSmoker is an open-source performance utility for Android. Our mission is to provide gamers with the best possible experience by optimizing system resources and unlocking hidden potential.</string>
+    <string name="core_about_dev_title">Still in development</string>
+    <string name="core_about_dev_body">Some features are still in development and may not work. If something fails, please save the logs and report it on GitHub.</string>
+    <string name="core_about_dev_logs">View logs</string>
+    <string name="core_about_dev_report">Report on GitHub</string>
 
     <!-- Logs screen ViewModel messages (%1$s = detail). -->
     <string name="core_logs_fetch_error">Error fetching logs: %1$s</string>

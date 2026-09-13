@@ -24,16 +24,18 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.catsmoker.app.BuildConfig
 import com.catsmoker.app.R
 import com.catsmoker.app.shared.ui.components.ScreenScaffold
+import com.catsmoker.app.shared.ui.components.SectionCard
 import com.catsmoker.app.shared.ui.theme.CatsmokerTheme
 
 @Composable
-fun AboutRoute(onBack: () -> Unit) {
-    AboutScreen(onBack = onBack)
+fun AboutRoute(onBack: () -> Unit, onOpenLogs: () -> Unit) {
+    AboutScreen(onBack = onBack, onOpenLogs = onOpenLogs)
 }
 
 @Composable
-fun AboutScreen(onBack: () -> Unit) {
+fun AboutScreen(onBack: () -> Unit, onOpenLogs: () -> Unit) {
     val uriHandler = LocalUriHandler.current
+    val githubUrl = stringResource(R.string.url_github)
 
     ScreenScaffold(title = stringResource(R.string.about_header_title), subtitle = stringResource(R.string.core_about_subtitle), onBack = onBack) {
         Column(modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(bottom = 32.dp)) {
@@ -54,7 +56,6 @@ fun AboutScreen(onBack: () -> Unit) {
                     horizontalArrangement = Arrangement.Center,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    val githubUrl = stringResource(R.string.url_github)
                     val webUrl = stringResource(R.string.url_webpage)
                     val discordUrl = stringResource(R.string.url_discord)
                     val telegramUrl = stringResource(R.string.url_telegram)
@@ -91,6 +92,46 @@ fun AboutScreen(onBack: () -> Unit) {
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
+
+            Spacer(modifier = Modifier.height(16.dp))
+            SectionCard {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(
+                        Icons.Default.Construction,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.size(20.dp)
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        text = stringResource(R.string.core_about_dev_title),
+                        style = MaterialTheme.typography.titleSmall,
+                        fontWeight = FontWeight.SemiBold,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                }
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(
+                    text = stringResource(R.string.core_about_dev_body),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Spacer(modifier = Modifier.height(12.dp))
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    OutlinedButton(onClick = onOpenLogs, modifier = Modifier.weight(1f)) {
+                        Text(stringResource(R.string.core_about_dev_logs))
+                    }
+                    Button(
+                        onClick = { uriHandler.openUri("$githubUrl/issues") },
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        Text(stringResource(R.string.core_about_dev_report))
+                    }
+                }
+            }
         }
     }
 }
@@ -131,6 +172,6 @@ fun SocialIcon(
 @Composable
 fun AboutPreview() {
     CatsmokerTheme {
-        AboutScreen(onBack = {})
+        AboutScreen(onBack = {}, onOpenLogs = {})
     }
 }

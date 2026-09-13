@@ -24,6 +24,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -49,6 +50,7 @@ import com.catsmoker.app.features.gamingtools.tools.firewall.BackgroundDataRestr
 import com.catsmoker.app.features.gamingtools.tools.firewall.VpnFirewall
 import com.catsmoker.app.features.gamingtools.tools.graphics.GameDeveloperOptions
 import com.catsmoker.app.features.gamingtools.ui.*
+import com.catsmoker.app.shared.ui.theme.LogTerminalBackground
 import com.catsmoker.app.shared.ui.theme.logLineColor
 import com.catsmoker.app.shared.data.model.GameInfo
 import com.catsmoker.app.shared.ui.components.*
@@ -572,7 +574,9 @@ fun GameLibraryCard(game: GameInfo, onLaunch: (String) -> Unit, onRemove: (Strin
     ) {
         Box {
             Column(modifier = Modifier.padding(12.dp)) {
-                Image(bitmap = game.icon.toBitmap().asImageBitmap(), contentDescription = null, modifier = Modifier.size(40.dp).clip(RoundedCornerShape(8.dp)))
+                // Cached per game: toBitmap() allocates on every recomposition otherwise.
+                val icon = remember(game.packageName, game.icon) { game.icon.toBitmap().asImageBitmap() }
+                Image(bitmap = icon, contentDescription = null, modifier = Modifier.size(40.dp).clip(RoundedCornerShape(8.dp)))
                 Spacer(modifier = Modifier.height(12.dp))
                 Text(text = game.appName, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface, maxLines = 1, overflow = TextOverflow.Ellipsis)
                 Spacer(modifier = Modifier.height(12.dp))
@@ -816,7 +820,7 @@ fun ResolutionChangerContent(
         }
         if (log.isNotEmpty()) {
             Spacer(modifier = Modifier.height(16.dp))
-            Box(modifier = Modifier.fillMaxWidth().height(100.dp).clip(RoundedCornerShape(8.dp)).background(Color.Black.copy(alpha = 0.4f)).padding(8.dp)) {
+            Box(modifier = Modifier.fillMaxWidth().height(100.dp).clip(RoundedCornerShape(8.dp)).background(LogTerminalBackground).padding(8.dp)) {
                 val scroll = rememberScrollState()
                 LaunchedEffect(log.size) { scroll.scrollTo(scroll.maxValue) }
                 Column(modifier = Modifier.verticalScroll(scroll)) {
@@ -1026,7 +1030,9 @@ fun AutoForceStopContent(
             items(apps) { app ->
                 Row(modifier = Modifier.fillMaxWidth().clickable { onToggle(app.packageName) }.padding(vertical = 4.dp), verticalAlignment = Alignment.CenterVertically) {
                     Checkbox(checked = kept.contains(app.packageName), onCheckedChange = { onToggle(app.packageName) })
-                    Image(bitmap = app.icon.toBitmap().asImageBitmap(), contentDescription = null, modifier = Modifier.size(24.dp).clip(RoundedCornerShape(4.dp)))
+                    // Cached per row: decoding inside LazyColumn items re-runs on every scroll recomposition.
+                    val appIcon = remember(app.packageName, app.icon) { app.icon.toBitmap().asImageBitmap() }
+                    Image(bitmap = appIcon, contentDescription = null, modifier = Modifier.size(24.dp).clip(RoundedCornerShape(4.dp)))
                     Spacer(modifier = Modifier.width(12.dp))
                     Text(app.appName, color = MaterialTheme.colorScheme.onSurface, modifier = Modifier.weight(1f))
                 }
@@ -2262,7 +2268,7 @@ fun AppBoosterContent(
 
         if (log.isNotEmpty()) {
             Spacer(modifier = Modifier.height(12.dp))
-            Box(modifier = Modifier.fillMaxWidth().height(100.dp).clip(RoundedCornerShape(8.dp)).background(Color.Black.copy(alpha = 0.4f)).padding(8.dp)) {
+            Box(modifier = Modifier.fillMaxWidth().height(100.dp).clip(RoundedCornerShape(8.dp)).background(LogTerminalBackground).padding(8.dp)) {
                 val scroll = rememberScrollState()
                 LaunchedEffect(log.size) { scroll.scrollTo(scroll.maxValue) }
                 Column(modifier = Modifier.verticalScroll(scroll)) {
@@ -2377,13 +2383,15 @@ private fun intervalLabel(hours: Int): String = when (hours) {
     else -> stringResource(R.string.gt_booster_every_h, hours)
 }
 
+@Composable
 private fun formatScheduleTime(at: Long): String =
-    java.text.SimpleDateFormat("d MMM, HH:mm", java.util.Locale.getDefault()).format(java.util.Date(at))
+    java.text.SimpleDateFormat("d MMM, HH:mm", LocalConfiguration.current.locales[0]).format(java.util.Date(at))
 
 /** One history row: when, what it achieved, how long it took, and how it ended. */
 @Composable
 private fun boosterHistoryLine(run: BoosterRun): String {
-    val when_ = java.text.SimpleDateFormat("d MMM, HH:mm", java.util.Locale.getDefault())
+    val locale = LocalConfiguration.current.locales[0]
+    val when_ = java.text.SimpleDateFormat("d MMM, HH:mm", locale)
         .format(java.util.Date(run.startedAt))
     val minutes = run.durationMs / 60000
     val seconds = (run.durationMs % 60000) / 1000
@@ -2458,6 +2466,8 @@ fun AppPickerDialog(apps: List<GameInfo>, onDismiss: () -> Unit, onAppSelected: 
                     verticalArrangement = Arrangement.spacedBy(4.dp)
                 ) {
                     items(filtered, key = { it.packageName }) { app ->
+                        // Cached per row (key already exists above): same scroll-churn reason as the other lists.
+                        val pickerIcon = remember(app.packageName, app.icon) { app.icon.toBitmap().asImageBitmap() }
                         Row(
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.spacedBy(12.dp),
@@ -2468,7 +2478,7 @@ fun AppPickerDialog(apps: List<GameInfo>, onDismiss: () -> Unit, onAppSelected: 
                                 .padding(8.dp)
                         ) {
                             Image(
-                                bitmap = app.icon.toBitmap().asImageBitmap(),
+                                bitmap = pickerIcon,
                                 contentDescription = null,
                                 modifier = Modifier.size(36.dp).clip(RoundedCornerShape(8.dp))
                             )

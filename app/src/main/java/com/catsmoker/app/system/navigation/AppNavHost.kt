@@ -47,7 +47,8 @@ fun AppNavHost(navController: NavHostController, startDestination: String) {
         }
         composable(Routes.ABOUT) {
             AboutRoute(
-                onBack = { navController.popBackStack() }
+                onBack = { navController.popBackStack() },
+                onOpenLogs = { navController.navigate(Routes.LOGS) }
             )
         }
         composable(Routes.SETTINGS) {

@@ -24,6 +24,10 @@
     <!-- About screen. -->
     <string name="core_about_subtitle">معلومات التطبيق والمجتمع.</string>
     <string name="core_about_description">CatSmoker أداة أداء مفتوحة المصدر لنظام Android. مهمتنا هي منح اللاعبين أفضل تجربة ممكنة من خلال تحسين موارد النظام وإطلاق الإمكانات الخفية.</string>
+    <string name="core_about_dev_title">لا يزال قيد التطوير</string>
+    <string name="core_about_dev_body">بعض الميزات لا تزال قيد التطوير وقد لا تعمل. إذا حدث خطأ، يرجى حفظ السجلات والإبلاغ عنه على GitHub.</string>
+    <string name="core_about_dev_logs">عرض السجلات</string>
+    <string name="core_about_dev_report">الإبلاغ على GitHub</string>
 
     <!-- Logs screen ViewModel messages (%1$s = detail). -->
     <string name="core_logs_fetch_error">تعذر جلب السجلات: %1$s</string>

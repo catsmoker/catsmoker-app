@@ -15,6 +15,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
@@ -46,7 +47,14 @@ fun QuickActionButton(
      */
     isLoading: Boolean = false,
     enabled: Boolean = true,
-    icon: @Composable () -> Unit
+    icon: @Composable () -> Unit,
+    /**
+     * Density overrides so dense hosts (e.g. the no-scroll dashboard) can shrink the tile
+     * without changing every other screen. Defaults preserve the original 18dp / 46dp look.
+     */
+    contentPadding: Dp = 18.dp,
+    iconSize: Dp = 46.dp,
+    gridTitleGap: Dp = 22.dp
 ) {
     val clickable = enabled && !isLoading
     Card(
@@ -66,13 +74,13 @@ fun QuickActionButton(
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(18.dp),
+                        .padding(contentPadding),
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
                     Box(
                         modifier = Modifier
-                            .size(46.dp)
+                            .size(iconSize)
                             .clip(RoundedCornerShape(14.dp))
                             .background(iconContainerColor)
                             .border(1.dp, iconContentColor.copy(alpha = 0.28f), RoundedCornerShape(14.dp)),
@@ -115,7 +123,7 @@ fun QuickActionButton(
                 }
             } else {
                 Column(
-                    modifier = Modifier.padding(18.dp),
+                    modifier = Modifier.padding(contentPadding),
                     horizontalAlignment = Alignment.Start
                 ) {
                     Row(
@@ -125,7 +133,7 @@ fun QuickActionButton(
                     ) {
                         Box(
                             modifier = Modifier
-                                .size(46.dp)
+                                .size(iconSize)
                                 .clip(RoundedCornerShape(14.dp))
                                 .background(iconContainerColor)
                                 .border(1.dp, iconContentColor.copy(alpha = 0.28f), RoundedCornerShape(14.dp)),
@@ -142,7 +150,7 @@ fun QuickActionButton(
                             )
                         }
                     }
-                    Spacer(modifier = Modifier.height(22.dp))
+                    Spacer(modifier = Modifier.height(gridTitleGap))
                     Text(
                         text = title,
                         style = MaterialTheme.typography.titleMedium,

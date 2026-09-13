@@ -12,7 +12,6 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
@@ -20,6 +19,7 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.catsmoker.app.R
 import com.catsmoker.app.shared.ui.components.ScreenScaffold
+import com.catsmoker.app.shared.ui.theme.LogTerminalBackground
 import com.catsmoker.app.shared.ui.theme.logLineColor
 
 @Composable
@@ -111,7 +111,7 @@ fun LogsScreen(
                         state = scrollState,
                         modifier = Modifier
                             .fillMaxSize()
-                            .background(Color.Black.copy(alpha = 0.3f), RoundedCornerShape(12.dp))
+                            .background(LogTerminalBackground, RoundedCornerShape(12.dp))
                             .padding(8.dp)
                     ) {
                         items(filteredLogs) { line ->
