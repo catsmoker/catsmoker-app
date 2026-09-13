@@ -89,17 +89,24 @@ on one invariant enforced in `resolvePackageName`:
 This is a deliberate design trade-off: exported-but-scope-guarded content
 must stay correct, and a regression here would leak spoof assignments.
 
-## Ads: Start.io
+## Ads: AdMob (playstore branch)
 
-The app integrates the Start.io SDK for ads (`system/ads/AdManager.kt`,
-`com.startapp:inapp-sdk`). This is the primary place network traffic to a
-third party originates and is a real supply-chain + data-flow consideration:
+The playstore branch integrates the Google Mobile Ads SDK for AdMob
+(`system/ads/AdManager.kt`, `shared/ui/components/AdMobBanner.kt`,
+`com.google.android.gms:play-services-ads`). This is the primary place
+network traffic to a third party originates and is a real supply-chain +
+data-flow consideration:
 
-- SDK auto-initialization is **explicitly disabled** in the manifest
-  (`tools:node="remove"` on `StartAppInitProvider`); integration is manual.
-- The SDK id can be overridden via `STARTIO_APP_ID` in `local.properties`.
+- The AdMob App ID reaches the manifest via the `ADMOB_APP_ID` manifest
+  placeholder (overridable in `local.properties`); banner/interstitial unit
+  IDs arrive via `BuildConfig` fields from the same file. Unset keys fall
+  back to Google's documented sample (test) IDs.
+- The user's `ads_enabled` toggle gates every surface: SDK init is skipped
+  when off, and no ad is loaded or shown. Init itself fetches nothing until
+  a banner/interstitial explicitly loads.
 - Any `build.gradle.kts` change here should be reviewed like any other
   third-party dependency: pinned via the version catalog, not floating.
+- `main` serves Start.io instead — see `PLAYSTORE.md` for the branch split.
 
 ## Permissions requested (AndroidManifest)
 

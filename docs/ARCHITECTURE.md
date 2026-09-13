@@ -31,7 +31,7 @@ app/src/main/java/com/catsmoker/app/
 │   ├── di/                 # Hilt modules (ServiceModule, EngineModule)
 │   ├── navigation/         # Routes + AppNavHost
 │   ├── shell/ShellRunner.kt  # root + Shizuku command execution
-│   └── ads/AdManager.kt      # Start.io ads
+│   └── ads/AdManager.kt      # AdMob ads on the playstore branch (Start.io on main)
 ├── shared/
 │   ├── data/               # models, repositories, presets
 │   └── ui/                 # theme, reusable components

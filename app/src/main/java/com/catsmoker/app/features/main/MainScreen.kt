@@ -36,7 +36,7 @@ import com.catsmoker.app.shared.data.model.MetricReadStatus
 import com.catsmoker.app.shared.data.model.MetricsState
 import com.catsmoker.app.shared.ui.components.QuickActionButton
 import com.catsmoker.app.shared.ui.components.SectionCard
-import com.catsmoker.app.shared.ui.components.StartAppBanner
+import com.catsmoker.app.shared.ui.components.AdMobBanner
 import com.catsmoker.app.system.navigation.Routes
 import com.catsmoker.app.shared.ui.theme.CatsmokerTheme
 import com.catsmoker.app.shared.ui.theme.NothingRed
@@ -91,7 +91,6 @@ fun MainRoute(onNavigate: (String) -> Unit) {
         tempHistory = tempHistory,
         pingHistory = pingHistory,
         adsEnabled = adsEnabled,
-        onOpenSpoofDevice = { onNavigate(Routes.SPOOF_DEVICE) },
         onOpenEditGameFiles = { onNavigate(Routes.EDIT_GAME_FILES) },
         onOpenGamingTools = { onNavigate(Routes.GAMING_TOOLS) },
         onOpenAbout = { onNavigate(Routes.ABOUT) },
@@ -108,7 +107,6 @@ fun MainScreen(
     tempHistory: List<Float>,
     pingHistory: List<Int>,
     adsEnabled: Boolean,
-    onOpenSpoofDevice: () -> Unit,
     onOpenEditGameFiles: () -> Unit,
     onOpenGamingTools: () -> Unit,
     onOpenAbout: () -> Unit,
@@ -296,15 +294,6 @@ fun MainScreen(
                         horizontalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
                         QuickActionButton(
-                            title = stringResource(R.string.dash_spoof_title),
-                            subtitle = stringResource(R.string.dash_spoof_subtitle),
-                            iconContainerColor = MaterialTheme.colorScheme.surfaceVariant,
-                            iconContentColor = MaterialTheme.colorScheme.onSurface,
-                            onClick = onOpenSpoofDevice,
-                            modifier = Modifier.weight(1f).fillMaxHeight(),
-                            icon = { Icon(Icons.Default.SettingsInputComponent, null) }
-                        )
-                        QuickActionButton(
                             title = stringResource(R.string.dash_edit_files_title),
                             subtitle = stringResource(R.string.dash_edit_files_subtitle),
                             iconContainerColor = MaterialTheme.colorScheme.surfaceVariant,
@@ -367,7 +356,7 @@ fun MainScreen(
             item {
                 if (adsEnabled && showAdsDeferred) {
                     Spacer(modifier = Modifier.height(24.dp))
-                    StartAppBanner(modifier = Modifier.padding(bottom = 8.dp))
+                    AdMobBanner(modifier = Modifier.padding(bottom = 8.dp))
                 }
                 Spacer(modifier = Modifier.height(40.dp))
             }
@@ -523,7 +512,6 @@ fun MainPreview() {
             tempHistory = listOf(37f, 38f, 38f),
             pingHistory = listOf(20, 24, 22),
             adsEnabled = true,
-            onOpenSpoofDevice = {},
             onOpenEditGameFiles = {},
             onOpenGamingTools = {},
             onOpenAbout = {},

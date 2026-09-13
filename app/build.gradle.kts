@@ -30,8 +30,15 @@ android {
         if (localPropertiesFile.exists()) {
             localProperties.load(localPropertiesFile.inputStream())
         }
-        val startIoId = localProperties.getProperty("STARTIO_APP_ID") ?: "205489527"
-        buildConfigField("String", "STARTIO_APP_ID", "\"$startIoId\"")
+        // Play-store branch serves AdMob. IDs come from local.properties so the real
+        // production IDs never enter git; unset keys fall back to Google's documented
+        // sample (test) IDs, which serve test ads and are safe to build with.
+        val admobAppId = localProperties.getProperty("ADMOB_APP_ID") ?: "ca-app-pub-3940256099942544~3347511713"
+        val admobBannerId = localProperties.getProperty("ADMOB_BANNER_ID") ?: "ca-app-pub-3940256099942544/6300978111"
+        val admobInterstitialId = localProperties.getProperty("ADMOB_INTERSTITIAL_ID") ?: "ca-app-pub-3940256099942544/1033173712"
+        manifestPlaceholders["ADMOB_APP_ID"] = admobAppId
+        buildConfigField("String", "ADMOB_BANNER_ID", "\"$admobBannerId\"")
+        buildConfigField("String", "ADMOB_INTERSTITIAL_ID", "\"$admobInterstitialId\"")
     }
 
     buildTypes {
@@ -126,12 +133,11 @@ dependencies {
     // --- JSON ---
     implementation(libs.gson)
 
-    // --- Ads ---
-    implementation(libs.startio.sdk)
+    // --- Ads (AdMob; playstore branch — see PLAYSTORE.md) ---
+    implementation(libs.play.services.ads)
 
     // --- Root & System ---
     implementation(libs.libsu.core)
-    compileOnly(libs.api) // Xposed API
 
     // --- Shizuku ---
     implementation(libs.shizuku.api)

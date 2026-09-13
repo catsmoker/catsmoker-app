@@ -1,6 +1,5 @@
 [versions]
 agp = "9.4.0"
-api = "82"
 core = "1.19.0"
 coreSplashscreen = "1.2.0"
 coreVersion = "6.0.0"
@@ -8,7 +7,9 @@ documentfile = "1.1.0"
 junit = "4.13.2"
 material = "1.14.0"
 activity = "1.13.0"
-startioSdk = "5.3.2"
+# Play-store branch uses AdMob (Google Mobile Ads, legacy SDK 25.4.0).
+# Main keeps Start.io — do not re-add it here without updating PLAYSTORE.md.
+playServicesAds = "25.4.0"
 provider = "13.1.5"
 coreKtx = "1.19.0"
 kotlin = "2.4.10"
@@ -24,7 +25,6 @@ work = "2.11.2"
 
 [libraries]
 gson = { group = "com.google.code.gson", name = "gson", version.ref = "gson" }
-api = { module = "de.robv.android.xposed:api", version.ref = "api" }
 core = { module = "androidx.core:core", version.ref = "core" }
 core-splashscreen = { module = "androidx.core:core-splashscreen", version.ref = "coreSplashscreen" }
 documentfile = { module = "androidx.documentfile:documentfile", version.ref = "documentfile" }
@@ -34,7 +34,8 @@ json-test = { group = "org.json", name = "json", version = "20260814" }
 libsu-core = { module = "com.github.topjohnwu.libsu:core", version.ref = "coreVersion" }
 material = { group = "com.google.android.material", name = "material", version.ref = "material" }
 activity = { group = "androidx.activity", name = "activity", version.ref = "activity" }
-startio-sdk = { module = "com.startapp:inapp-sdk", version.ref = "startioSdk" }
+    # Ads (AdMob on the playstore branch; see PLAYSTORE.md).
+    play-services-ads = { module = "com.google.android.gms:play-services-ads", version.ref = "playServicesAds" }
 provider = { module = "dev.rikka.shizuku:provider", version.ref = "provider" }
 shizuku-api = { module = "dev.rikka.shizuku:api", version.ref = "provider" }
 core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }

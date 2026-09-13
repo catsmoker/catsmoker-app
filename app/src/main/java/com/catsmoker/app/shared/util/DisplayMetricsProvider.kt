@@ -13,10 +13,10 @@ import kotlin.math.roundToInt
 /**
  * The one place the app reads this device's real screen resolution and density.
  *
- * Spoof profiles and the Resolution Changer used to read the display through different APIs —
- * `Resources.displayMetrics` on one side, `WindowManager.maximumWindowMetrics` on the other — so the
- * two screens could quote different numbers for the same panel. Both now go through here, which
- * keeps them consistent and puts the version gates and fallbacks in a single place.
+ * The Resolution Changer reads the display through here rather than calling the platform
+ * APIs directly, which keeps the version gates and fallbacks in a single place.
+ * (On the main line a spoof-profile reader shared this contract so the two screens could
+ * never quote different numbers for the same panel; the Play build ships no spoofing.)
  *
  * The derived values ([Snapshot.smallestWidthDp], [Snapshot.isTablet], [densityForSmallestWidthDp])
  * are the reference project's own formulas, taken from `DevicePresetCatalog.isTablet` and

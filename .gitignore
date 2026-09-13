@@ -16,9 +16,10 @@ build/
 .kotlin/
 
 # ── Local / machine-specific configuration ──────────────────────────────────
-# Carries sdk.dir (an absolute path on one machine) and STARTIO_APP_ID.
+# Carries sdk.dir (an absolute path on one machine) and the AdMob IDs
+# (ADMOB_APP_ID / ADMOB_BANNER_ID / ADMOB_INTERSTITIAL_ID) on the playstore branch.
 # app/build.gradle.kts already guards with `if (localPropertiesFile.exists())`
-# and falls back to the Start.io demo id, so a clone without this file builds.
+# and falls back to Google's sample (test) IDs, so a clone without this file builds.
 local.properties
 
 # ── Android build artifacts ─────────────────────────────────────────────────

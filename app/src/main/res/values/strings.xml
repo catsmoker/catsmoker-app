@@ -122,8 +122,6 @@
     <!-- Frame-rate label for the vsync fallback: this app's own frames, not the game's -->
     <string name="dash_fps_label_ui"> UI FPS</string>
     <string name="dash_quick_actions">ENGINEERING CONSOLE</string>
-    <string name="dash_spoof_title">Device Spoofing</string>
-    <string name="dash_spoof_subtitle">Identity &amp; Prop Overrides</string>
     <string name="dash_edit_files_title">File Engineering</string>
     <string name="dash_edit_files_subtitle">Data Optimization Tools</string>
     <string name="dash_gaming_tools_subtitle">Overlays, Network &amp; Logic</string>
@@ -135,83 +133,5 @@
     <string name="url_paypal">https://www.paypal.me/catsmoker</string>
     <string name="url_discord">https://discord.gg/catsmoker</string>
     <string name="url_telegram">https://t.me/catsmoker</string>
-
-    <!-- ========================================== -->
-    <!--            LSPOSED MODULE SCOPE            -->
-    <!-- ========================================== -->
-    <!--
-        LSPosed module load scope (xposedscope): any package a user can enable in
-        the app must appear here, or LSPosed never loads the module into that
-        process. com.catsmoker.app is intentionally listed so the module runs in
-        the app process and can detect itself (isModuleActive).
-
-        This is the only array in the file. Per-game metadata lives in Kotlin —
-        EditGameFilesViewModel.initializeGameConfigs and GameType — so there is
-        nothing here to keep index-synchronised with anything else.
-    -->
-    <array name="scope">
-        <item>com.cpuid.cpu_z</item>
-        <item>com.activision.callofduty.shooter</item>
-        <item>com.activision.callofduty.warzone</item>
-        <item>com.garena.game.codm</item>
-        <item>com.tencent.tmgp.kr.codm</item>
-        <item>com.vng.codmvn</item>
-        <item>com.tencent.tmgp.cod</item>
-        <item>com.tencent.ig</item>
-        <item>com.pubg.imobile</item>
-        <item>com.pubg.krmobile</item>
-        <item>com.rekoo.pubgm</item>
-        <item>com.vng.pubgmobile</item>
-        <item>com.tencent.tmgp.pubgmhd</item>
-        <item>com.dts.freefiremax</item>
-        <item>com.dts.freefireth</item>
-        <item>com.epicgames.fortnite</item>
-        <item>com.ea.gp.fifamobile</item>
-        <item>com.gameloft.android.ANMP.GloftA9HM</item>
-        <item>com.madfingergames.legends</item>
-        <item>com.pearlabyss.blackdesertm</item>
-        <item>com.pearlabyss.blackdesertm.gl</item>
-        <item>com.netease.lztgglobal</item>
-        <item>com.riotgames.league.wildrift</item>
-        <item>com.riotgames.league.wildrifttw</item>
-        <item>com.riotgames.league.wildriftvn</item>
-        <item>com.riotgames.league.teamfighttactics</item>
-        <item>com.riotgames.league.teamfighttacticstw</item>
-        <item>com.riotgames.league.teamfighttacticsvn</item>
-        <item>com.ngame.allstar.eu</item>
-        <item>com.mojang.minecraftpe</item>
-        <item>com.YoStar.AetherGazer</item>
-        <item>com.miHoYo.GenshinImpact</item>
-        <item>com.garena.game.lmjx</item>
-        <item>com.tencent.lolm</item>
-        <item>jp.konami.pesam</item>
-        <item>com.ea.gp.apexlegendsmobilefps</item>
-        <item>com.mobilelegends.mi</item>
-        <item>com.levelinfinite.hotta.gp</item>
-        <item>com.supercell.clashofclans</item>
-        <item>com.vng.mlbbvn</item>
-        <item>com.levelinfinite.sgameGlobal</item>
-        <item>com.tencent.tmgp.sgame</item>
-        <item>com.mobile.legends</item>
-        <item>com.mobile.legends.usa</item>
-        <item>com.proximabeta.mf.uamo</item>
-        <item>com.tencent.KiHan</item>
-        <item>com.tencent.tmgp.cf</item>
-        <item>com.tencent.tmgp.gnyx</item>
-        <item>com.netease.newspike</item>
-        <item>com.proxima.dfm</item>
-        <item>com.netease.qrsj</item>
-        <item>com.h73.jhqyna</item>
-        <item>com.carxtech.sr</item>
-        <item>com.miraclegames.farlight84</item>
-        <item>com.farlightgames.farlight84</item>
-        <item>com.farlightgames.farlight84.gray</item>
-        <item>com.garena.game.df</item>
-        <item>com.FosFenes.Sonolus</item>
-        <item>com.netease.yysls</item>
-        <item>com.innersloth.spacemafia</item>
-        <item>com.epicgames.portal</item>
-        <item>com.kiloo.subwaysurf</item>
-    </array>
 
 </resources>

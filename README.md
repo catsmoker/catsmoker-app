@@ -20,14 +20,13 @@
 [![Jetpack Compose](https://img.shields.io/badge/UI-Jetpack%20Compose-4285F4?style=flat-square&logo=jetpackcompose&logoColor=white)](https://developer.android.com/compose)
 [![Gradle](https://img.shields.io/badge/build-Gradle-02303A?style=flat-square&logo=gradle&logoColor=white)](https://gradle.org/)
 [![Shizuku](https://img.shields.io/badge/access-Shizuku-2E7D32?style=flat-square)](https://shizuku.rikka.app/)
-[![LSPosed](https://img.shields.io/badge/module-LSPosed-8E44AD?style=flat-square)](https://github.com/LSPosed/LSPosed)
 [![Discord](https://img.shields.io/badge/community-Discord-5865F2?style=flat-square&logo=discord&logoColor=white)](https://discord.com/invite/HQC5BwcXtS)
 [![Telegram](https://img.shields.io/badge/chat-Telegram-26A5E4?style=flat-square&logo=telegram&logoColor=white)](https://t.me/CATSM0KER)
 [![PayPal](https://img.shields.io/badge/support-PayPal-00457C?style=flat-square&logo=paypal&logoColor=white)](https://www.paypal.me/catsmoker)
 
 [![Typing effect](https://readme-typing-svg.demolab.com?font=Fira+Code&size=20&duration=2800&pause=900&color=0EA5E9&center=true&vCenter=true&width=620&lines=Tune+your+game.+Measure+your+device.;Android+gaming+tools+for+serious+sessions.)](https://github.com/catsmoker/com.catsmoker.app)
 
-[Download](https://github.com/catsmoker/com.catsmoker.app/releases) · [Report an issue](https://github.com/catsmoker/com.catsmoker.app/issues) · [简体中文](README.zh-CN.md)
+[Google Play (listing pending)](PLAYSTORE.md) · [Report an issue](https://github.com/catsmoker/com.catsmoker.app/issues) · [简体中文](README.zh-CN.md)
 </div>
 
 **CatSmoker** is an Android optimization utility for supported games. It combines system-level integrations, game configuration tools, performance overlays, and gaming-focused controls in one app.
@@ -37,7 +36,7 @@
 ## 🚀 Key Features
 
 ### 🛠️ Core Optimization
-- **Device Spoofing**: Unlock higher graphics settings and FPS by mimicking premium device models (Supports LSPosed & Shizuku).
+- **GFX/FPS Configuration**: Unlock higher graphics settings and frame rates through game config editing and Game Interventions.
 - **Resolution Changer**: Customize your display resolution and density (DPI) to balance performance and visual clarity.
 - **File Engineering**: Directly modify game configuration files to tweak hidden settings (SAF, Shizuku, or manual export).
 - and more...
@@ -51,7 +50,7 @@
 
 ### ⚙️ System & Advanced
 - **Engineering Console**: Detailed system logs and diagnostics for troubleshooting.
-- **Root & Non-Root Support**: Optimized workflows for both rooted (LSPosed) and non-rooted (Shizuku) devices.
+- **Non-Root First**: Elevated workflows via Shizuku, with SAF and manual export where no privilege is available.
 - **Privacy First**: No unnecessary data collection; all modifications are performed locally.
 - and more...
 
@@ -74,10 +73,7 @@
 
 CatSmoker operates by bridging the gap between hardware limitations and software potential.
 
-### Root Method (LSPosed/Xposed)
-Utilizes the LSPosed framework to hook into game processes at runtime. This allows for seamless device property spoofing without modifying game files.
-
-### Non-Root Method (Shizuku / SAF)
+### How It Optimizes (Shizuku / SAF)
 - **Shizuku**: Uses the Shizuku API to gain elevated permissions on Android 11+, allowing direct modification of game data folders without root.
 - **SAF (Storage Access Framework)**: Provides a way for users to manually grant access to game directories for file-based optimizations.
 - **Export Mode**: Prepares optimized files that users can manually move using tools like ZArchiver.
@@ -88,20 +84,9 @@ Utilizes the LSPosed framework to hook into game processes at runtime. This allo
 
 - **Watch Tutorial** (old but some apply): [YouTube Guide](https://youtu.be/Ie0vEiQaQek)
 
-### Download CatSmoker: [Releases](https://github.com/catsmoker/com.catsmoker.app/releases)
+### Get CatSmoker: Google Play listing (pending — see [PLAYSTORE.md](PLAYSTORE.md))
 
-### For Rooted Devices (Recommended)
-1. **Prerequisites**: [Magisk](https://github.com/topjohnwu/Magisk/releases) (v24+) installed.
-2. **Setup Zygisk**: Enable [ZygiskNext](https://github.com/Dr-TSNG/ZygiskNext/releases) in your root manager settings.
-3. **Install LSPosed**: Flash the latest [LSPosed](https://github.com/LSPosed/LSPosed/releases) module and reboot.
-4. **Enable CatSmoker**:
-  - Grant it root access in your root manager.
-   - Open the **LSPosed Manager**.
-   - Navigate to **Modules** and enable **CatSmoker**.
-   - Select the games you want to optimize in the module's scope.
-5. **Apply**: Force stop the selected games to let the hooks take effect, or reboot.
-
-### For Non-Rooted Devices (Shizuku)
+### Setup (Shizuku)
 1. **Install Shizuku**: Download from the [Play Store](https://play.google.com/store/apps/details?id=moe.shizuku.privileged.api).
 2. **Activate Shizuku**: Follow the in-app instructions (Wireless Debugging or ADB via PC).
 3. **Authorize**: Open CatSmoker and grant Shizuku permission when prompted.
@@ -148,11 +133,38 @@ bash ./gradlew assembleDebug
 
 The debug APK is generated at `app/build/outputs/apk/debug/app-debug.apk`.
 
+---
+
+## 🏪 Play Store variant (`playstore` branch)
+
+The `playstore` branch is the dedicated line for Google Play publication.
+See [PLAYSTORE.md](PLAYSTORE.md) for the full record (purpose, release
+config, signing status, required changes, and changelog).
+
+Play-build rules (author decisions, details in `PLAYSTORE.md`):
+
+- Keeps: GFX/FPS config editing, game-file editing, SAF, Shizuku,
+  user-requested force-stop, app freeze/suspend, game backups, gaming
+  overlay, audio enhancement, DND, and the VPN firewall (with declaration).
+- Reviews before shipping: `MANAGE_EXTERNAL_STORAGE`,
+  `PACKAGE_USAGE_STATS`, dexopt, `device_config`, `setprop` (exact
+  commands), `wm size/density`, and the notification listener purpose.
+- Removes on `playstore`: LSPosed hooks, ID spoofing, fake `getprop`,
+  the Magisk spoof module, and the external (GitHub-release) APK updater —
+  Play updates come from Play.
+- Ads on `playstore` are served via AdMob (Google sample/test IDs by
+  default; production IDs via `local.properties`, never committed) —
+  `main` serves Start.io instead.
+
+> The `main` branch still documents the full GitHub distribution (GitHub
+> Releases APKs plus root-hook flows) that is out of scope for the Play
+> listing. This branch's guide above covers the Play build only.
+
 
 ---
 
 ## 🛡️ Disclaimer
-**Warning**: Modifying game files or spoofing device identity may violate some games' Terms of Service. Use CatSmoker responsibly. The developers are not responsible for account bans, hardware issues, or boot-loops.
+**Warning**: Modifying game files may violate some games' Terms of Service. Use CatSmoker responsibly. The developers are not responsible for account bans, hardware issues, or boot-loops.
 
 ---
 

@@ -23,7 +23,6 @@ import com.catsmoker.app.shared.ui.components.QuickActionButton
 import com.catsmoker.app.shared.ui.components.ScreenScaffold
 import com.catsmoker.app.shared.ui.components.SectionCard
 import com.catsmoker.app.shared.ui.theme.CatsmokerTheme
-import com.catsmoker.app.shared.ui.components.CatsmokerButton
 import com.catsmoker.app.shared.ui.components.LanguageOptions
 import com.catsmoker.app.shared.ui.components.ThemeModeOptions
 import com.catsmoker.app.shared.ui.components.languageDisplayName
@@ -53,48 +52,28 @@ fun SettingsRoute(onBack: () -> Unit, onOpenPermissions: () -> Unit, onOpenLogs:
 
     SettingsScreen(
         adsEnabled = uiState.adsEnabled,
-        autoCheck = uiState.autoCheck,
-        isUpdating = uiState.isUpdating,
-        updateProgress = uiState.updateProgress,
         themeMode = uiState.themeMode,
         languageTag = uiState.languageTag,
         onAdsToggled = viewModel::onAdsToggled,
-        onAutoCheckToggled = viewModel::onAutoCheckToggled,
         onThemeModeChanged = viewModel::onThemeModeChanged,
         onLanguageChanged = viewModel::onLanguageChanged,
         onOpenPermissions = onOpenPermissions,
         onOpenLogs = onOpenLogs,
-        onBack = onBack,
-        onCheckUpdates = viewModel::onCheckUpdates
+        onBack = onBack
     )
-
-    uiState.updateDialog?.let { dialog ->
-        AlertDialog(
-            onDismissRequest = viewModel::dismissUpdateDialog,
-            title = { Text(stringResource(R.string.sys_update_available, dialog.tagName)) },
-            text = { Text(stringResource(R.string.sys_update_prompt)) },
-            confirmButton = { TextButton(onClick = viewModel::startUpdateDownload) { Text(stringResource(R.string.sys_download)) } },
-            dismissButton = { TextButton(onClick = viewModel::dismissUpdateDialog) { Text(stringResource(R.string.sys_later)) } }
-        )
-    }
 }
 
 @Composable
 fun SettingsScreen(
     adsEnabled: Boolean,
-    autoCheck: Boolean,
-    isUpdating: Boolean,
-    updateProgress: Float,
     themeMode: AppearanceStore.ThemeMode,
     languageTag: String,
     onAdsToggled: (Boolean) -> Unit,
-    onAutoCheckToggled: (Boolean) -> Unit,
     onThemeModeChanged: (AppearanceStore.ThemeMode) -> Unit,
     onLanguageChanged: (String) -> Unit,
     onOpenPermissions: () -> Unit,
     onOpenLogs: () -> Unit,
-    onBack: () -> Unit,
-    onCheckUpdates: () -> Unit
+    onBack: () -> Unit
 ) {
     var themeDialog by remember { mutableStateOf(false) }
     var languageDialog by remember { mutableStateOf(false) }
@@ -137,22 +116,6 @@ fun SettingsScreen(
             Text(stringResource(R.string.sys_section_general), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(start = 4.dp, bottom = 8.dp))
             SectionCard {
                 SettingsToggle(stringResource(R.string.sys_ads_title), adsEnabled, onAdsToggled)
-            }
-
-            Spacer(modifier = Modifier.height(24.dp))
-            Text(stringResource(R.string.sys_section_updates), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(start = 4.dp, bottom = 8.dp))
-            SectionCard {
-                if (isUpdating) {
-                    Column {
-                        Text(stringResource(R.string.sys_updating), fontSize = 14.sp, color = MaterialTheme.colorScheme.onSurface)
-                        Spacer(modifier = Modifier.height(8.dp))
-                        LinearProgressIndicator(progress = { updateProgress }, modifier = Modifier.fillMaxWidth())
-                    }
-                } else {
-                    CatsmokerButton(onClick = onCheckUpdates, modifier = Modifier.fillMaxWidth()) { Text(stringResource(R.string.sys_check_updates)) }
-                }
-                HorizontalDivider(modifier = Modifier.padding(vertical = 12.dp), thickness = 0.5.dp, color = MaterialTheme.colorScheme.outlineVariant)
-                SettingsToggle(stringResource(R.string.sys_auto_check), autoCheck, onAutoCheckToggled)
             }
 
             Spacer(modifier = Modifier.height(24.dp))
@@ -264,19 +227,14 @@ fun SettingsPreview() {
     CatsmokerTheme {
         SettingsScreen(
             adsEnabled = true,
-            autoCheck = false,
-            isUpdating = false,
-            updateProgress = 0f,
             themeMode = AppearanceStore.ThemeMode.SYSTEM,
             languageTag = AppearanceStore.LANGUAGE_SYSTEM,
             onAdsToggled = {},
-            onAutoCheckToggled = {},
             onThemeModeChanged = {},
             onLanguageChanged = {},
             onOpenPermissions = {},
             onOpenLogs = {},
-            onBack = {},
-            onCheckUpdates = {}
+            onBack = {}
         )
     }
 }

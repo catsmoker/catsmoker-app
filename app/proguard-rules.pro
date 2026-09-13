@@ -20,27 +20,11 @@
 # hide the original source file name.
 #-renamesourcefileattribute SourceFile
 
-# Start.io (formerly StartApp) SDK rules.
-# The broad keep rule is often required by the SDK to function correctly due to reflection.
--keep class com.startapp.** {
-    *;
-}
-
--keep class com.truenet.** {
-    *;
-}
-
+# Ads on the playstore branch are AdMob (Google Play services), whose consumer ProGuard
+# rules ship inside its own AAR — no app-level keep rules needed.
 -keepattributes Exceptions, InnerClasses, Signature, Deprecated, SourceFile, LineNumberTable, *Annotation*, EnclosingMethod
--dontwarn android.webkit.JavascriptInterface
--dontwarn com.startapp.**
 
 -dontwarn org.jetbrains.annotations.**
-
-# Keep LSPosed entrypoints and config names stable in release builds.
--keep class com.catsmoker.app.features.spoofdevice.root.LSPosedModule { *; }
--keep class com.catsmoker.app.shared.data.model.LSPosedConfig { *; }
-
--dontwarn de.robv.android.xposed.**
 
 # ShellRunner reflects Shizuku's private newProcess(String[], String[], String) — the one-shot
 # remote-shell channel (BattleGrounds_GFX's mechanism) that works when the user-service helper

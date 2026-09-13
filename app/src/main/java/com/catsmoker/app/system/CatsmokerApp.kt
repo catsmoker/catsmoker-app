@@ -4,12 +4,11 @@ import android.app.Application
 import android.content.Context
 import androidx.hilt.work.HiltWorkerFactory
 import androidx.work.Configuration
-import com.catsmoker.app.BuildConfig
 import com.catsmoker.app.features.main.engine.MetricsEngine
 import com.catsmoker.app.system.config.AppearanceStore
 import com.catsmoker.app.system.config.LocaleHelper
 import com.catsmoker.app.system.shell.ShellRunner
-import com.startapp.sdk.adsbase.StartAppSDK
+import com.google.android.gms.ads.MobileAds
 import com.topjohnwu.superuser.Shell
 import dagger.hilt.android.HiltAndroidApp
 import kotlinx.coroutines.CoroutineScope
@@ -83,22 +82,12 @@ class CatsmokerApp : Application(), Configuration.Provider {
             metricsEngine.get()
             shellRunner.get()
 
-            // Initialize Start.io SDK
+            // Initialize the AdMob SDK on a background thread (per Google's quick-start).
+            // The user's ads_enabled toggle is honoured at each ad surface instead: SDK init
+            // itself fetches no ad until a banner/interstitial is explicitly loaded.
             val prefs = getSharedPreferences("app_prefs", MODE_PRIVATE)
-            val adsEnabledSetting = prefs.getBoolean("ads_enabled", true)
-            val appId = BuildConfig.STARTIO_APP_ID
-            if (appId.isNotEmpty()) {
-                StartAppSDK.init(this@CatsmokerApp, appId, true)
-                StartAppSDK.enableReturnAds(false) // Disable to prevent early WebView creation
-                
-                // If ads are disabled in settings, make sure SDK knows (though init still happens)
-                if (!adsEnabledSetting) {
-                    StartAppSDK.enableReturnAds(false)
-                }
-                // Demo ID: 205489527
-                if (appId == "205489527") {
-                    StartAppSDK.setTestAdsEnabled(true)
-                }
+            if (prefs.getBoolean("ads_enabled", true)) {
+                MobileAds.initialize(this@CatsmokerApp) {}
             }
         }
     }

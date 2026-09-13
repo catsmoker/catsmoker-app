@@ -20,8 +20,7 @@ package com.catsmoker.app.features.editgamefiles.wuwa
  * - **The packs are never bundled.** The source repo's own README is a community disclaimer —
  *   "I do not personaly own or create these configurations… entirely submitted and updated by
  *   the community through Pull Requests". Importing what the user picked keeps the app out of
- *   the business of endorsing one stranger's cvar list, which is the same reason
- *   `SpoofRepository.getPresets()` stays author-curated. The README travels with the pack —
+ *   the business of endorsing one stranger's cvar list. The README travels with the pack —
  *   its device/chipset/FPS claims and its WARNING are the author's words, shown as such.
  * - **The forbidden-cvars list is a gate, not a courtesy flag.** [WuWaForbiddenCvars] exists
  *   because the game's integrity checks watch those keys; the generator strips them when

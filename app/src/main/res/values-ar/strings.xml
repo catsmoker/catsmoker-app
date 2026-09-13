@@ -1,5 +1,5 @@
 <resources>
-    <!-- Base strings.xml translated: app_name, URLs, scope array and ROOT/SHIZUKU badges
+    <!-- Base strings.xml translated: app_name, URLs and ROOT/SHIZUKU badges
          intentionally omitted (brand/technical tokens, identical in every locale). -->
     <string name="crosshair_desc">مؤشر التصويب</string>
     <string name="crosshair_move_hint">اسحب مؤشر التصويب إلى المكان الذي تريده.</string>
@@ -52,8 +52,6 @@
     <string name="dash_fps_label"> FPS</string>
     <string name="dash_fps_label_ui"> UI FPS</string>
     <string name="dash_quick_actions">وحدة التحكم الهندسية</string>
-    <string name="dash_spoof_title">انتحال الجهاز</string>
-    <string name="dash_spoof_subtitle">الهوية وتجاوزات الخصائص</string>
     <string name="dash_edit_files_title">هندسة الملفات</string>
     <string name="dash_edit_files_subtitle">أدوات تحسين البيانات</string>
     <string name="dash_gaming_tools_subtitle">التراكبات والشبكة والمنطق</string>

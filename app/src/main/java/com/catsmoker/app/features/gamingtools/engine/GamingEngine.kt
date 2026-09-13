@@ -84,10 +84,9 @@ data class GamingModeReport(
      *  - **The `persist.` twin is deliberately not set.** `setprop` cannot delete a property, so
      *    a `persist.vendor.qti.game.fps` that did not exist would become a permanent,
      *    reboot-surviving, device-wide change that deactivation could overwrite but never
-     *    remove — exactly the class of change the Magisk channel's narrowing rejected. The
-     *    `debug.` prop is reversible in the only way Android offers: a reboot clears the debug
-     *    property area. Until then, a hint that did not exist before stays hinting the panel's
-     *    own peak — bounded, and stated here rather than hidden.
+     *    remove. The `debug.` prop is reversible in the only way Android offers: a reboot clears
+     *    the debug property area. Until then, a hint that did not exist before stays hinting
+     *    the panel's own peak — bounded, and stated here rather than hidden.
      *
      * null when the device's own property dump carries no `ro.vendor.qti.*` property (every
      * non-Qualcomm SoC) — not applicable, so the report row is omitted. The gate is the dump

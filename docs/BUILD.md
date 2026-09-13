@@ -65,8 +65,10 @@ still run it explicitly:
   build type; the release APK signs with the **debug** signing config, so a
   release-minded build should supply its own signing configuration before it
   is published.
-- The Start.io ad SDK id can be overridden via `STARTIO_APP_ID` in
-  `local.properties`; it defaults to a built-in value.
+- The AdMob IDs can be overridden via `ADMOB_APP_ID` / `ADMOB_BANNER_ID` /
+  `ADMOB_INTERSTITIAL_ID` in `local.properties`; unset keys fall back to
+  Google's documented sample (test) IDs. The playstore branch serves AdMob —
+  see `PLAYSTORE.md`; `main` serves Start.io.
 
 ## Troubleshooting
 

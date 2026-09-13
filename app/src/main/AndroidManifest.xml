@@ -5,9 +5,6 @@
     <queries>
         <package android:name="moe.shizuku.privileged.api" />
         <package android:name="ru.zdevs.zarchiver" />
-        <package android:name="com.topjohnwu.magisk" />
-        <package android:name="me.weishu.kernelsu" />
-        <package android:name="me.bmax.apatch" />
         <!--
             The games whose install state the File Engineering screen probes with
             PackageManager.getPackageInfo. The blanket MAIN/GAME intent below made them
@@ -84,11 +81,6 @@
         android:localeConfig="@xml/locales_config"
         android:theme="@style/Theme.Catsmoker">
 
-        <meta-data android:name="xposedmodule" android:value="true" />
-        <meta-data android:name="xposeddescription" android:value="Unlock max FPS and optimize supported games." />
-        <meta-data android:name="xposedminversion" android:value="93" />
-        <meta-data android:name="xposedsharedprefs" android:value="true" />
-        <meta-data android:name="xposedscope" android:resource="@array/scope" />
         <meta-data android:name="moe.shizuku.client.V3_SUPPORT" android:value="true" />
 
         <activity
@@ -102,16 +94,6 @@
             </intent-filter>
         </activity>
 
-        <!--
-            Exported because the Xposed hooks read it from inside the target app's process, under
-            that app's UID. The provider only ever serves a caller its own profile, so being
-            exported does not let an app enumerate the user's spoof assignments.
-        -->
-        <provider
-            android:name=".system.config.SpoofConfigProvider"
-            android:authorities="com.catsmoker.app.configprovider"
-            android:exported="true" />
-
         <provider
             android:name="rikka.shizuku.ShizukuProvider"
             android:authorities="${applicationId}.shizuku"
@@ -119,14 +101,6 @@
             android:enabled="true"
             android:exported="true"
             android:permission="android.permission.INTERACT_ACROSS_USERS_FULL" />
-
-        <provider
-            android:name="androidx.core.content.FileProvider"
-            android:authorities="${applicationId}.fileprovider"
-            android:exported="false"
-            android:grantUriPermissions="true">
-            <meta-data android:name="android.support.FILE_PROVIDER_PATHS" android:resource="@xml/file_paths" />
-        </provider>
 
         <!--
             WorkManager on demand: the default initializer is removed so the HiltWorkerFactory in
@@ -156,11 +130,13 @@
             <property android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE" android:value="Scheduled dexopt sweep" />
         </service>
 
-        <!-- Disable StartApp SDK Auto-Initialization -->
-        <provider
-            android:name="com.startapp.sdk.adsbase.StartAppInitProvider"
-            android:authorities="${applicationId}.startappinitprovider"
-            tools:node="remove" />
+        <!-- AdMob App ID. The playstore branch serves AdMob (see PLAYSTORE.md); the value
+            comes from the ADMOB_APP_ID manifest placeholder, which defaults to Google's
+            sample (test) App ID and is overridden via ADMOB_APP_ID in local.properties.
+            Missing exactly this tag crashes the app with "Missing application ID". -->
+        <meta-data
+            android:name="com.google.android.gms.ads.APPLICATION_ID"
+            android:value="${ADMOB_APP_ID}" />
 
         <service
             android:name=".features.gamingtools.tools.crosshair.CrosshairOverlayService"

@@ -1,5 +1,5 @@
 <resources>
-    <!-- Base strings.xml translated: app_name, URLs, scope array and ROOT/SHIZUKU badges
+    <!-- Base strings.xml translated: app_name, URLs and ROOT/SHIZUKU badges
          intentionally omitted (brand/technical tokens, identical in every locale). -->
     <string name="crosshair_desc">Superposición de punto de mira</string>
     <string name="crosshair_move_hint">Arrastra el punto de mira donde lo quieras.</string>
@@ -52,8 +52,6 @@
     <string name="dash_fps_label"> FPS</string>
     <string name="dash_fps_label_ui"> UI FPS</string>
     <string name="dash_quick_actions">CONSOLA DE INGENIERÍA</string>
-    <string name="dash_spoof_title">Suplantación de dispositivo</string>
-    <string name="dash_spoof_subtitle">Identidad y propiedades</string>
     <string name="dash_edit_files_title">Ingeniería de archivos</string>
     <string name="dash_edit_files_subtitle">Herramientas de datos</string>
     <string name="dash_gaming_tools_subtitle">Superposiciones, red y lógica</string>

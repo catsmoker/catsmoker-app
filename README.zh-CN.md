@@ -20,14 +20,13 @@
 [![Jetpack Compose](https://img.shields.io/badge/UI-Jetpack%20Compose-4285F4?style=flat-square&logo=jetpackcompose&logoColor=white)](https://developer.android.com/compose)
 [![Gradle](https://img.shields.io/badge/build-Gradle-02303A?style=flat-square&logo=gradle&logoColor=white)](https://gradle.org/)
 [![Shizuku](https://img.shields.io/badge/access-Shizuku-2E7D32?style=flat-square)](https://shizuku.rikka.app/)
-[![LSPosed](https://img.shields.io/badge/module-LSPosed-8E44AD?style=flat-square)](https://github.com/LSPosed/LSPosed)
 [![Discord](https://img.shields.io/badge/community-Discord-5865F2?style=flat-square&logo=discord&logoColor=white)](https://discord.com/invite/HQC5BwcXtS)
 [![Telegram](https://img.shields.io/badge/chat-Telegram-26A5E4?style=flat-square&logo=telegram&logoColor=white)](https://t.me/CATSM0KER)
 [![PayPal](https://img.shields.io/badge/support-PayPal-00457C?style=flat-square&logo=paypal&logoColor=white)](https://www.paypal.me/catsmoker)
 
 [![Typing effect](https://readme-typing-svg.demolab.com?font=Fira+Code&size=20&duration=2800&pause=900&color=0EA5E9&center=true&vCenter=true&width=620&lines=%E8%B0%83%E4%BC%98%E4%BD%A0%E7%9A%84%E6%B8%B8%E6%88%8F%E3%80%82%E6%8E%8C%E6%8F%A1%E4%BD%A0%E7%9A%84%E8%AE%BE%E5%A4%87%E3%80%82;%E4%B8%BA%E8%AE%A4%E7%9C%9F%E6%B8%B8%E6%88%8F%E7%9A%84%E4%BD%A0%E8%80%8C%E7%94%9F%E7%9A%84%20Android%20%E5%B7%A5%E5%85%B7%E3%80%82)](https://github.com/catsmoker/com.catsmoker.app)
 
-[下载](https://github.com/catsmoker/com.catsmoker.app/releases) · [反馈问题](https://github.com/catsmoker/com.catsmoker.app/issues) · [English](README.md)
+[Google Play（待上架）](PLAYSTORE.md) · [反馈问题](https://github.com/catsmoker/com.catsmoker.app/issues) · [English](README.md)
 </div>
 
 **CatSmoker** 是一款面向已支持游戏的 Android 优化工具。它将系统级深度整合、游戏配置文件修改、性能悬浮窗以及游戏专属操控集于一身。
@@ -37,7 +36,7 @@
 ## 🚀 主要特性
 
 ### 🛠️ 核心优化
-- **设备伪装（Device Spoofing）**：模拟高端机型以解锁更高的画质与帧率（支持 LSPosed 与 Shizuku）。
+- **画面/帧率配置**：通过游戏配置文件编辑与 Game Interventions 解锁更高的画质与帧率档位。
 - **分辨率修改器**：自定义屏幕分辨率与像素密度（DPI），在性能与画质之间取得平衡。
 - **配置文件工程**：直接修改游戏配置文件，调整隐藏设置（支持 SAF、Shizuku 或手动导出）。
 - 更多……
@@ -51,7 +50,7 @@
 
 ### ⚙️ 系统与进阶
 - **工程控制台**：详尽的系统日志与诊断信息，助力排障。
-- **Root 与免 Root 双支持**：为已 Root（LSPosed）与未 Root（Shizuku）设备提供各自优化的工作流。
+- **免 Root 优先**：通过 Shizuku 提权，无提权时可用 SAF 与手动导出方案。
 - **隐私优先**：不进行任何多余的数据收集；所有修改均在本机完成。
 - 更多……
 
@@ -75,10 +74,7 @@
 
 CatSmoker 的使命，是打通硬件限制与软件潜力之间的最后一公里。
 
-### Root 方案（LSPosed/Xposed）
-借助 LSPosed 框架在运行时 Hook 游戏进程，无需修改游戏文件即可无缝伪装设备属性。
-
-### 免 Root 方案（Shizuku / SAF）
+### 优化方式（Shizuku / SAF）
 - **Shizuku**：通过 Shizuku API 在 Android 11+ 上获取提权权限，免 Root 即可直接修改游戏数据目录。
 - **SAF（存储访问框架）**：用户可手动授予游戏目录访问权限，实现基于文件的优化。
 - **导出模式**：生成优化好的文件，用户可通过 ZArchiver 等工具手动导入。
@@ -89,20 +85,9 @@ CatSmoker 的使命，是打通硬件限制与软件潜力之间的最后一公�
 
 - **视频教程**（版本较旧，部分内容仍适用）：[YouTube 教程](https://youtu.be/Ie0vEiQaQek)
 
-### 下载 CatSmoker：[Releases 发布页](https://github.com/catsmoker/com.catsmoker.app/releases)
+### 获取 CatSmoker：Google Play 待上架（见 [PLAYSTORE.md](PLAYSTORE.md)）
 
-### 已 Root 设备（推荐）
-1. **前置条件**：已安装 [Magisk](https://github.com/topjohnwu/Magisk/releases)（v24+）。
-2. **配置 Zygisk**：在 Root 管理器中启用 [ZygiskNext](https://github.com/Dr-TSNG/ZygiskNext/releases)。
-3. **安装 LSPosed**：刷入最新版 [LSPosed](https://github.com/LSPosed/LSPosed/releases) 模块并重启。
-4. **启用 CatSmoker**：
-   - 在 Root 管理器中授予 CatSmoker Root 权限。
-   - 打开 **LSPosed 管理器**。
-   - 进入 **模块** 页面，启用 **CatSmoker**。
-   - 在模块作用域中勾选你想优化的游戏。
-5. **生效**：强停所选游戏使 Hook 生效，或直接重启设备。
-
-### 未 Root 设备（Shizuku）
+### 配置步骤（Shizuku）
 1. **安装 Shizuku**：从 [Play 商店](https://play.google.com/store/apps/details?id=moe.shizuku.privileged.api) 下载。
 2. **激活 Shizuku**：按照应用内指引操作（无线调试，或通过 PC 端 ADB）。
 3. **授权**：打开 CatSmoker，在弹窗提示时授予 Shizuku 权限。
@@ -151,8 +136,32 @@ bash ./gradlew assembleDebug
 
 ---
 
+## 🏪 Play 商店变体（`playstore` 分支）
+
+`playstore` 分支是专用于 Google Play 上架的分支。完整记录（目标、发布
+配置、签名状态、所需改动与更新日志）见 [PLAYSTORE.md](PLAYSTORE.md)。
+
+Play 版本规则（作者决定，详见 `PLAYSTORE.md`）：
+
+- 保留：GFX/FPS 配置编辑、游戏文件编辑、SAF、Shizuku、用户主动触发的
+  force-stop、应用冻结/挂起、游戏备份、游戏悬浮窗、音频增强、DND，以及
+  VPN 防火墙（需声明）。
+- 上架前复核：`MANAGE_EXTERNAL_STORAGE`、`PACKAGE_USAGE_STATS`、dexopt、
+  `device_config`、`setprop`（具体命令）、`wm size/density`，以及通知
+  监听器的确切用途。
+- 在 `playstore` 上移除：LSPosed Hook、ID 伪装、虚拟 `getprop`、Magisk
+  伪装模块，以及外部（GitHub-release）APK 更新器——Play 版本仅通过 Play
+  更新。
+- `playstore` 的广告由 AdMob 提供（默认使用 Google 示例/测试 ID；生产 ID
+  通过 `local.properties` 配置，永不提交）——`main` 分支使用 Start.io。
+
+> `main` 分支仍面向完整的 GitHub 分发版（GitHub Releases APK 与 Root Hook
+> 流程），这些不在 Play 上架范围内。上文指南仅覆盖 Play 版本。
+
+---
+
 ## 🛡️ 免责声明
-**警告**：修改游戏文件或伪装设备身份可能违反部分游戏的服务条款。请合理使用 CatSmoker。开发者不对账号封禁、硬件故障或变砖等任何后果承担责任。
+**警告**：修改游戏文件可能违反部分游戏的服务条款。请合理使用 CatSmoker。开发者不对账号封禁、硬件故障或变砖等任何后果承担责任。
 
 ---
 
