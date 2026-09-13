@@ -73,10 +73,10 @@ Sources: `app/build.gradle.kts`, `gradle.properties`, `docs/BUILD.md`,
 | `compileSdk` | 37 |
 | `versionCode` | 7 (comment notes the bump forces Shizuku to restart the AIDL helper; do not bump casually — `app/build.gradle.kts:18-21`, `AGENTS.md`) |
 | `versionName` | `2.0.0` |
-| AGP / Kotlin / KSP / Compose BOM / NDK | 9.4.0 / 2.4.10 / 2.3.10 / 2026.08.00 / 27.0.12077973 (per `docs/BUILD.md`) |
+| AGP / Kotlin / KSP / Compose BOM / NDK | 9.4.0 / 2.4.20 / 2.3.10 / 2026.08.00 / 27.0.12077973 (per `docs/BUILD.md`; Kotlin bumped on this branch in `57bccfd`) |
 | `release` build type | `isMinifyEnabled = true`, `isShrinkResources = true`, `isDebuggable = false`, ProGuard `proguard-android-optimize.txt` + `proguard-rules.pro` — but `signingConfig = signingConfigs.getByName("debug")` (`app/build.gradle.kts:37-43`) |
 | `debug` build type | no minify, debuggable, debug signing |
-| Lint | `abortOnError = false`, `checkReleaseBuilds = false` (`app/build.gradle.kts:65-68`) |
+| Lint | `abortOnError = false`, `checkReleaseBuilds = true` (`app/build.gradle.kts`; non-blocking, surfaces warnings on release builds) |
 | Gradle flags | `android.builtInKotlin=true` — do **not** add the `kotlin.android` plugin; four plugins only (`AGENTS.md`, `gradle/libs.versions.toml`) |
 | Local overrides | `ADMOB_APP_ID` / `ADMOB_BANNER_ID` / `ADMOB_INTERSTITIAL_ID` from `local.properties`, fallback to Google's documented sample (test) IDs (`app/build.gradle.kts`); `sdk.dir` also in `local.properties` |
 | Ads provider | AdMob (`com.google.android.gms:play-services-ads:25.4.0`) — this branch only; `main` serves Start.io |
@@ -364,10 +364,10 @@ HYGIENE (required regardless):
   scrubbed — see §11). REVIEW rows (§8 🟡) and hygiene items are untouched.
 - Pending: §8 REVIEW + HYGIENE rows. Order suggested: REVIEW rows next
   (narrow + document), then hygiene (signing, policy, listing, tests).
-- Verification status (honest): **no build, test, or lint run has passed
-  since the removals** — `compileDebugKotlin` was started but aborted for
-  taking too long. `assembleRelease`, `testDebugUnitTest`, `lintDebug`,
-  and the on-device `verify` pass are all still pending before any upload.
+- Verification status (honest): `compileDebugKotlin` is green on
+  `playstore` after the 2026-09-13 `[PLAY-SAFE]` pick (`ed02f8a`).
+  `assembleRelease`, `testDebugUnitTest`, `lintDebug`, and the on-device
+  `verify` pass are all still pending before any upload.
 - Known issues / risks:
   - Spoof/Magisk/updater code is deeply referenced (strings in 4 locales,
     ProGuard, manifest, tests) — removal must touch all split `strings_*`
@@ -411,6 +411,20 @@ HYGIENE (required regardless):
   + Ads declaration / Data safety entry are pending before upload.
 
 ## 11. Changelog (newest first)
+
+- 2026-09-13: Cherry-picked `[PLAY-SAFE] 643cd0c` from `main`
+  (`ed02f8a`, zero conflicts; `libs.versions.toml` hunk empty —
+  Kotlin 2.4.20 already present via `57bccfd`). Manifest drops unused
+  `BLUETOOTH`, `ACCESS_WIFI_STATE`, `FOREGROUND_SERVICE_DATA_SYNC`;
+  `resConfigs` strips transitive locales; legacy launcher PNGs removed
+  (adaptive-only, minSdk 27); lint `checkReleaseBuilds` on (still
+  non-blocking). About gains a Still-in-development card (Logs +
+  GitHub-issues links, 4 locales) — bug-report link only, no
+  self-update behaviour, so the §8 updater removal stands. Logs dumps
+  the full logcat buffer with fixed terminal contrast; game-icon
+  bitmap caching; Wuwa locale-aware history time. `compileDebugKotlin`
+  green on `playstore` after the pick; `assembleRelease` / unit tests
+  / lint / on-device `verify` still pending.
 
 - 2026-09-13: Adopted one-way sync policy (`docs/BRANCH_WORKFLOW.md`):
   `[PLAY-SAFE]` cherry-picks only, no merges/rebases from `main`, nothing
