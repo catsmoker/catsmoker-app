@@ -1,7 +1,6 @@
 package com.catsmoker.app.features.main
 
 import androidx.activity.compose.BackHandler
-import androidx.compose.animation.*
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
@@ -56,6 +55,8 @@ fun MainRoute(onNavigate: (String) -> Unit) {
     val adsEnabled by viewModel.adsEnabled.collectAsState()
 
     val context = LocalContext.current
+    // Configuration-aware read of the format; the count is substituted at press time.
+    val exitTapFormat = stringResource(R.string.core_exit_tap)
     var backPressedCount by remember { mutableIntStateOf(0) }
     var lastBackPressedTime by remember { mutableLongStateOf(0L) }
 
@@ -73,7 +74,7 @@ fun MainRoute(onNavigate: (String) -> Unit) {
         } else {
             Toast.makeText(
                 context,
-                context.getString(R.string.core_exit_tap, 3 - backPressedCount),
+                String.format(Locale.getDefault(), exitTapFormat, 3 - backPressedCount),
                 Toast.LENGTH_SHORT
             ).show()
         }

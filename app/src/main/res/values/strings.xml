@@ -2,7 +2,7 @@
     <!-- ========================================== -->
     <!--                 GENERAL                    -->
     <!-- ========================================== -->
-    <string name="app_name">CatSmoker</string>
+    <string name="app_name" translatable="false">CatSmoker</string>
     <string name="crosshair_desc">Crosshair Overlay</string>
     <!-- Reposition mode. Shown in the overlay's own banner, so these are read over a game frame. -->
     <string name="crosshair_move_hint">Drag the crosshair where you want it.</string>
@@ -83,8 +83,8 @@
     <!-- ========================================== -->
     <!--          RESOLUTION CHANGER SCREEN         -->
     <!-- ========================================== -->
-    <string name="res_method_root">ROOT</string>
-    <string name="res_method_shizuku">SHIZUKU</string>
+    <string name="res_method_root" translatable="false">ROOT</string>
+    <string name="res_method_shizuku" translatable="false">SHIZUKU</string>
 
     <!-- ========================================== -->
     <!--             SPOOF DEVICE SCREEN            -->
@@ -128,10 +128,10 @@
     <string name="dash_about_subtitle">System info &amp; Community</string>
 
     <!-- Links -->
-    <string name="url_github">https://github.com/catsmoker/com.catsmoker.app</string>
-    <string name="url_webpage">https://catsmoker.vercel.app/</string>
-    <string name="url_paypal">https://www.paypal.me/catsmoker</string>
-    <string name="url_discord">https://discord.gg/catsmoker</string>
-    <string name="url_telegram">https://t.me/catsmoker</string>
+    <string name="url_github" translatable="false">https://github.com/catsmoker/com.catsmoker.app</string>
+    <string name="url_webpage" translatable="false">https://catsmoker.vercel.app/</string>
+    <string name="url_paypal" translatable="false">https://www.paypal.me/catsmoker</string>
+    <string name="url_discord" translatable="false">https://discord.gg/catsmoker</string>
+    <string name="url_telegram" translatable="false">https://t.me/catsmoker</string>
 
 </resources>

@@ -29,6 +29,8 @@
 # ShellRunner reflects Shizuku's private newProcess(String[], String[], String) — the one-shot
 # remote-shell channel (BattleGrounds_GFX's mechanism) that works when the user-service helper
 # will not start. R8 must not rename/remove the method on the library class.
+# Return type is ShizukuRemoteProcess (a java.lang.Process), not Process itself — spelling it
+# as java.lang.Process matches nothing and R8 fails the build ("matches no class members").
 -keepclassmembers class rikka.shizuku.Shizuku {
-    private static java.lang.Process newProcess(java.lang.String[], java.lang.String[], java.lang.String);
+    private static rikka.shizuku.ShizukuRemoteProcess newProcess(java.lang.String[], java.lang.String[], java.lang.String);
 }
