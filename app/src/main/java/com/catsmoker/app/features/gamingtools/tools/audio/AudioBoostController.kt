@@ -14,6 +14,7 @@ import android.os.Handler
 import android.os.Looper
 import android.util.Log
 import android.view.KeyEvent
+import androidx.annotation.RequiresApi
 import androidx.core.content.ContextCompat
 import com.catsmoker.app.R
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -107,6 +108,7 @@ class AudioBoostController(private val context: Context) {
         }
     }
 
+    @RequiresApi(Build.VERSION_CODES.P)
     private fun applyDynamicsProcessing() {
         try {
             val fx = dynamicsProcessing ?: DynamicsProcessing(

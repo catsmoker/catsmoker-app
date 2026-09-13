@@ -13,6 +13,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontFamily
@@ -1159,6 +1160,12 @@ private fun historyStatusLabel(status: WuwaDeployHistoryStore.Status): String = 
 }
 
 @Composable
+private fun formattedHistoryTime(timestamp: Long): String {
+    val locale = LocalConfiguration.current.locales[0]
+    return SimpleDateFormat("d MMM yyyy, HH:mm", locale).format(Date(timestamp))
+}
+
+@Composable
 private fun HistoryRecordRow(
     record: WuwaDeployHistoryStore.Record,
     verifying: Boolean,
@@ -1198,13 +1205,13 @@ private fun HistoryRecordRow(
             Text(
                 if (mismatched > 0) stringResource(
                     R.string.gf_history_checked_diff,
-                    SimpleDateFormat("d MMM yyyy, HH:mm", Locale.getDefault()).format(Date(v.timestamp)),
+                    formattedHistoryTime(v.timestamp),
                     v.channelUsed,
                     v.files.count { it.status == WuwaDeployHistoryStore.Status.MATCH },
                     mismatched
                 ) else stringResource(
                     R.string.gf_history_checked_ok,
-                    SimpleDateFormat("d MMM yyyy, HH:mm", Locale.getDefault()).format(Date(v.timestamp)),
+                    formattedHistoryTime(v.timestamp),
                     v.channelUsed,
                     v.files.count { it.status == WuwaDeployHistoryStore.Status.MATCH }
                 ),

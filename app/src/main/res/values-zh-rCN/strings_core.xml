@@ -24,6 +24,10 @@
     <!-- About screen. -->
     <string name="core_about_subtitle">应用信息与社区。</string>
     <string name="core_about_description">CatSmoker 是一款适用于 Android 的开源性能工具。我们的使命是通过优化系统资源并释放隐藏潜力，为玩家提供最佳体验。</string>
+    <string name="core_about_dev_title">仍在开发中</string>
+    <string name="core_about_dev_body">部分功能仍在开发中，可能无法正常工作。如果遇到问题，请保存日志并在 GitHub 上反馈。</string>
+    <string name="core_about_dev_logs">查看日志</string>
+    <string name="core_about_dev_report">在 GitHub 反馈</string>
 
     <!-- Logs screen ViewModel messages (%1$s = detail). -->
     <string name="core_logs_fetch_error">获取日志失败：%1$s</string>

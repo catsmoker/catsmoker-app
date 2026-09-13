@@ -99,11 +99,13 @@ data class GamingOptimizationSnapshot(
      */
     val debugVendorQtiGameFps: SettingValue? = null
 ) {
-    fun toJson(): String = Gson().toJson(this)
+    fun toJson(): String = gson.toJson(this)
 
     companion object {
+        private val gson = Gson()
+
         fun fromJson(json: String): GamingOptimizationSnapshot? {
-            return try { Gson().fromJson(json, GamingOptimizationSnapshot::class.java) } catch (_: Exception) { null }
+            return try { gson.fromJson(json, GamingOptimizationSnapshot::class.java) } catch (_: Exception) { null }
         }
     }
 }

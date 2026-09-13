@@ -21,6 +21,11 @@ android {
         versionCode = 7
         versionName = "2.0.0"
 
+        // Only locales the app actually ships (see res/xml/locales_config.xml): strips the
+        // dozens of transitive locales dragged in by material/startio/splashscreen/work.
+        // Shrinking alone cannot do this.
+        resConfigs("en", "ar", "es", "zh-rCN")
+
         vectorDrawables {
             useSupportLibrary = true
         }
@@ -64,7 +69,9 @@ android {
     // Prevents build failure if minor warnings occur
     lint {
         abortOnError = false
-        checkReleaseBuilds = false
+        // Surfaces future unused-resource/deprecation warnings on release builds; with
+        // abortOnError=false this can never block a release. Zero runtime/APK change.
+        checkReleaseBuilds = true
     }
 
     ndkVersion = "27.0.12077973"

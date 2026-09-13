@@ -40,8 +40,8 @@ class LogsViewModel @Inject constructor(
         viewModelScope.launch(Dispatchers.IO) {
             _uiState.update { it.copy(isLoading = true) }
             try {
-                // Get last 500 lines of logcat
-                val output = shellRunner.exec("logcat -d -t 500")
+                // Dump the whole logcat buffer — a 500-line tail hides the lines a bug report needs.
+                val output = shellRunner.exec("logcat -d")
                 val lines = output.split("\n").filter { it.isNotBlank() }
                 withContext(Dispatchers.Main) {
                     _uiState.update { it.copy(logs = lines, isLoading = false) }
