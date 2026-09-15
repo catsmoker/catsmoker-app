@@ -25,7 +25,6 @@ import com.catsmoker.app.R
 import com.catsmoker.app.shared.ui.components.QuickActionButton
 import com.catsmoker.app.shared.ui.components.ScreenScaffold
 import com.catsmoker.app.shared.ui.components.SectionCard
-import com.catsmoker.app.shared.ui.theme.CatsmokerTheme
 
 @Composable
 fun SpoofRoute(

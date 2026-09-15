@@ -5,7 +5,6 @@ import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
 import android.content.pm.ApplicationInfo
-import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.os.Build
 import android.os.Environment
@@ -23,7 +22,6 @@ import com.catsmoker.app.shared.data.model.DevicePreset
 import com.catsmoker.app.shared.data.model.DeviceProfile
 import com.catsmoker.app.shared.data.model.LSPosedConfig
 import com.catsmoker.app.shared.data.repository.SpoofRepository
-import com.catsmoker.app.shared.util.RandomGenerator
 import com.catsmoker.app.system.shell.ShellRunner
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -41,7 +39,6 @@ import kotlinx.coroutines.withContext
 import java.io.File
 import java.io.FileOutputStream
 import java.io.IOException
-import java.io.OutputStream
 import java.util.UUID
 import javax.inject.Inject
 
@@ -416,18 +413,6 @@ class SpoofDeviceViewModel @Inject constructor(
 
     // --- Global Config ---
 
-    fun toggleScreenMetrics(enabled: Boolean) {
-        viewModelScope.launch {
-            val saved = mutateStore { current ->
-                current.copy(
-                    globalProperties = current.globalProperties +
-                        (LSPosedConfig.KEY_APPLY_SCREEN_METRICS to enabled.toString())
-                )
-            }
-            if (saved) syncLsposedConfig()
-        }
-    }
-
     fun toggleSafeMode(packageName: String, enabled: Boolean) {
         viewModelScope.launch {
             val saved = mutateStore { current ->
@@ -570,7 +555,7 @@ class SpoofDeviceViewModel @Inject constructor(
         val pkgs = arrayOf("com.topjohnwu.magisk", "me.weishu.kernelsu", "me.bmax.apatch")
         val intent = pkgs.firstNotNullOfOrNull { pm.getLaunchIntentForPackage(it) }
         if (intent != null) {
-            intent.addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK)
+            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
             context.startActivity(intent)
         } else {
             _toasts.tryEmit(context.getString(R.string.spoof_error_no_manager))
@@ -633,9 +618,6 @@ class SpoofDeviceViewModel @Inject constructor(
         val result = shellRunner.execSafeResult("settings", "put", "global", key, encoded)
         if (!result.isSuccess) _toasts.tryEmit(context.getString(R.string.spoof_error_publish, key))
     }
-
-    private fun readStringPref(k: String, d: String): String =
-        devicePrefs.getString(k, userPrefs.getString(k, null)) ?: d
 
     private fun writeStringToBoth(k: String, v: String) {
         userPrefs.edit(commit = true) { putString(k, v) }

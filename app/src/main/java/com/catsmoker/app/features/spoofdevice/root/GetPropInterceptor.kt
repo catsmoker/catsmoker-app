@@ -57,7 +57,7 @@ internal class GetPropInterceptor(
     @Suppress("UNCHECKED_CAST")
     private fun commandOf(param: XC_MethodHook.MethodHookParam): List<String>? {
         (param.args.getOrNull(0) as? Array<*>)?.let { argv ->
-            return argv.mapNotNull { it as? String }
+            return argv.filterIsInstance<String>()
         }
         return runCatching { XposedHelpers.callMethod(param.thisObject, "command") as? List<String> }
             .getOrNull()
