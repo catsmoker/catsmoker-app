@@ -54,9 +54,25 @@
 - **Privacy First**: No unnecessary data collection; all modifications are performed locally.
 - and more...
 
+## 📸 Screenshots
+
+<p align="center">
+  <img src="store/screenshots/phone/home.png" width="23%" alt="Home dashboard" />
+  <img src="store/screenshots/phone/gaming-tools-1.png" width="23%" alt="Gaming tools — game library and gaming mode" />
+  <img src="store/screenshots/phone/gaming-tools-2.png" width="23%" alt="Gaming tools — performance and system tools" />
+  <img src="store/screenshots/phone/gaming-tools-3.png" width="23%" alt="Gaming tools — FPS monitor, crosshair and network tools" />
+</p>
+<p align="center">
+  <img src="store/screenshots/phone/gaming-tools-4.png" width="23%" alt="Gaming tools — background apps and cleaner" />
+  <img src="store/screenshots/phone/file-engineering.png" width="23%" alt="File engineering" />
+  <img src="store/screenshots/phone/settings.png" width="23%" alt="Settings" />
+  <img src="store/screenshots/phone/about.png" width="23%" alt="About" />
+</p>
+
 ## 📋 Table of Contents
 
 - [Features](#-key-features)
+- [Screenshots](#-screenshots)
 - [How It Works](#-how-it-works)
 - [Installation Guide](#-installation-guide)
 - [Usage](#usage)

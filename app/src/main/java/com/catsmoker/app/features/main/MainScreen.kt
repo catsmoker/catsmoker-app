@@ -6,7 +6,6 @@ import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -142,42 +141,39 @@ fun MainScreen(
     val actionsAlpha by animateFloatAsState(if (hydrationPhase >= 2) 1f else 0f, tween(300), label = "actions")
     val chartAlpha by animateFloatAsState(if (hydrationPhase >= 3) 1f else 0f, tween(500), label = "chart")
 
-    LazyColumn(
+    Column(
         modifier = Modifier
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
             .systemBarsPadding()
     ) {
         // 1. Header (Always Instant)
-        item {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 24.dp, vertical = 20.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = stringResource(R.string.app_name),
-                    style = MaterialTheme.typography.titleLarge,
-                    color = MaterialTheme.colorScheme.onSurface
-                )
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 24.dp, vertical = 20.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = stringResource(R.string.app_name),
+                style = MaterialTheme.typography.titleLarge,
+                color = MaterialTheme.colorScheme.onSurface
+            )
 
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    StatusBadge(label = stringResource(R.string.res_method_root), active = state.hasRoot, activeColor = NothingRed)
-                    StatusBadge(label = stringResource(R.string.res_method_shizuku), active = state.hasShizuku, activeColor = NothingRed)
-                }
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                StatusBadge(label = stringResource(R.string.res_method_root), active = state.hasRoot, activeColor = NothingRed)
+                StatusBadge(label = stringResource(R.string.res_method_shizuku), active = state.hasShizuku, activeColor = NothingRed)
             }
         }
 
         // 2. Performance Monitor (Progressive)
         if (hydrationPhase >= 1) {
-            item {
-                Column(
-                    modifier = Modifier
-                        .padding(horizontal = 24.dp)
-                        .graphicsLayer { alpha = metricsAlpha }
-                ) {
+            Column(
+                modifier = Modifier
+                    .padding(horizontal = 24.dp)
+                    .graphicsLayer { alpha = metricsAlpha }
+            ) {
                     SectionCard {
                         Row(
                             modifier = Modifier.fillMaxWidth(),
@@ -270,18 +266,16 @@ fun MainScreen(
                             Spacer(modifier = Modifier.height(120.dp))
                         }
                     }
-                }
             }
         }
 
         // 3. Quick Actions (Progressive)
         if (hydrationPhase >= 2) {
-            item {
-                Column(
-                    modifier = Modifier
-                        .padding(horizontal = 24.dp)
-                        .graphicsLayer { alpha = actionsAlpha }
-                ) {
+            Column(
+                modifier = Modifier
+                    .padding(horizontal = 24.dp)
+                    .graphicsLayer { alpha = actionsAlpha }
+            ) {
                     Spacer(modifier = Modifier.height(28.dp))
                     Text(
                         text = stringResource(R.string.dash_quick_actions),
@@ -348,19 +342,16 @@ fun MainScreen(
                         showChevron = true,
                         icon = { Icon(Icons.Default.Info, null) }
                     )
-                }
             }
         }
 
         // 4. Ads (Ultra Deferred)
         if (hydrationPhase >= 3) {
-            item {
-                if (adsEnabled && showAdsDeferred) {
-                    Spacer(modifier = Modifier.height(24.dp))
-                    AdMobBanner(modifier = Modifier.padding(bottom = 8.dp))
-                }
-                Spacer(modifier = Modifier.height(40.dp))
+            if (adsEnabled && showAdsDeferred) {
+                Spacer(modifier = Modifier.height(24.dp))
+                AdMobBanner(modifier = Modifier.padding(bottom = 8.dp))
             }
+            Spacer(modifier = Modifier.height(40.dp))
         }
     }
 }

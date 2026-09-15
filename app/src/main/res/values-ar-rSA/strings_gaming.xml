@@ -260,9 +260,6 @@
     <string name="gt_dev_close_2">الثمن: التطبيقات التي تعود إليها تبدأ من البداية، وتفقد ما كان على الشاشة. جيد قبل لعبة كبيرة، ويستحق الإيقاف بعدها.</string>
     <string name="gt_dev_on">مشغّل</string>
     <string name="gt_dev_off">متوقف</string>
-    <string name="gt_dev_show_rr">إظهار معدل التحديث</string>
-    <string name="gt_dev_show_rr_1">يضع رقماً صغيراً في زاوية شاشتك يعرض عدد مرات إعادة رسم الشاشة في الثانية. مفيد للتحقق من أن هاتفك يعمل فعلاً بأقصى سرعة.</string>
-    <string name="gt_dev_show_rr_2">يحرس أندرويد هذا بشدة، والإصدارات الأحدث تحرسه أكثر: من أندرويد 14 لا يمر إلا الروت، لأن Shizuku ينفذ الأوامر بصفة \"shell\" ولم يعد مسموحاً له بالاقتراب منه. كلما تعذر على هذا التطبيق فعله، يفتح الزر أدناه شاشة أندرويد نفسها، حيث يعمل دائماً — ابحث عن \"إظهار معدل التحديث\".</string>
     <string name="gt_dev_peak">استخدام أسرع سرعة شاشة دائماً</string>
     <string name="gt_dev_peak_1">تبطئ الهواتف الشاشة لتوفير البطارية عندما لا يتحرك الكثير. هذا يمنع ذلك، فتعمل الشاشة دائماً بأقصى سرعة وتبدو أكثر سلاسة.</string>
     <string name="gt_dev_peak_2">الثمن: يستهلك بطارية أكثر أثناء تشغيله. إيقافه يعيد ما كان عليه هاتفك من قبل.</string>
@@ -276,18 +273,6 @@
     <string name="gt_dev_open_developer">افتح إعدادات المطور في أندرويد</string>
 
     <!-- Developer options engine facts -->
-    <string name="gt_gdo_live_at">الشاشة تعمل الآن بسرعة %1$s</string>
-    <string name="gt_gdo_live_unknown">لم يبلغ هذا الجهاز عن معدل التحديث الحالي</string>
-    <string name="gt_gdo_no_priv">لا يستطيع هذا التطبيق تشغيله بنفسه. انقر الزر لتشغيله في إعدادات أندرويد نفسها.</string>
-    <string name="gt_gdo_confirmed">%1$s · أكّد أندرويد أن هذه هي الحالة الحقيقية</string>
-    <string name="gt_gdo_detail_join">%1$s · %2$s</string>
-    <string name="gt_gdo_refused_detail">%1$s %2$s</string>
-    <string name="gt_gdo_src_refused">رفض هاتفك المحاولة الأخيرة</string>
-    <string name="gt_gdo_src_recorded">معروض كما ضبطته آخر مرة — لا يمكن سؤال أندرويد %1$s عنه</string>
-    <string name="gt_gdo_src_boot">معروض من طريقة بدء تشغيل هاتفك — لا يمكن سؤال أندرويد %1$s عنه</string>
-    <string name="gt_gdo_src_fresh">معروض كمتوقف حتى تستخدم المفتاح — يبدأ دائماً متوقفاً بعد إعادة التشغيل، ولا يمكن سؤال أندرويد %1$s عنه</string>
-    <string name="gt_gdo_advice_root">ما زالت شاشة إعدادات هاتفك نفسها تستطيع فعله.</string>
-    <string name="gt_gdo_advice_shell">ينفذ Shizuku الأوامر بصفة \"shell\"، وهو ما لن تسمح له إصدارات أندرويد الأحدث بالاقتراب من هذا الجزء. الروت أو شاشة إعدادات أندرويد نفسها ما زالا يستطيعان.</string>
     <string name="gt_gdo_single_speed">شاشتك لها سرعة واحدة فقط، فلا يوجد ما هو أسرع للتبديل إليه.</string>
     <string name="gt_gdo_runs_at">شاشتك تعمل بسرعة %1$s</string>
     <string name="gt_gdo_need_sys">يتطلب روت أو Shizuku، أو إذن تغيير إعدادات النظام.</string>

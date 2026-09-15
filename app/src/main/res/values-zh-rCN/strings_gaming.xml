@@ -260,9 +260,6 @@
     <string name="gt_dev_close_2">代价：返回的应用从头开始，屏幕上的内容会丢失。适合大游戏前开启，之后值得关闭。</string>
     <string name="gt_dev_on">已开启</string>
     <string name="gt_dev_off">已关闭</string>
-    <string name="gt_dev_show_rr">显示刷新率</string>
-    <string name="gt_dev_show_rr_1">在屏幕角落显示每秒重绘次数的小数字，便于确认手机是否真以最高速度运行。</string>
-    <string name="gt_dev_show_rr_2">Android 对此看管很严，新版本更严：Android 14 起只有 Root 能通过，因为 Shizuku 以“shell”身份执行命令，已不被允许靠近。只有本应用做不到时，下方按钮会打开 Android 自带界面，那里始终可用——查找“显示刷新率”。</string>
     <string name="gt_dev_peak">始终使用最高屏幕速度</string>
     <string name="gt_dev_peak_1">手机在空闲时会降低屏幕速度以省电。此项可阻止降速，让屏幕始终全速运行，感觉更流畅。</string>
     <string name="gt_dev_peak_2">代价：开启时更耗电。关闭后恢复手机原来的设置。</string>
@@ -276,18 +273,6 @@
     <string name="gt_dev_open_developer">打开 Android 开发者设置</string>
 
     <!-- Developer options engine facts -->
-    <string name="gt_gdo_live_at">显示屏当前运行于 %1$s</string>
-    <string name="gt_gdo_live_unknown">此设备未报告当前刷新率</string>
-    <string name="gt_gdo_no_priv">此应用无法自行开启。请点击按钮，在 Android 自带设置中开启。</string>
-    <string name="gt_gdo_confirmed">%1$s · Android 已确认为真实状态</string>
-    <string name="gt_gdo_detail_join">%1$s · %2$s</string>
-    <string name="gt_gdo_refused_detail">%1$s %2$s</string>
-    <string name="gt_gdo_src_refused">手机拒绝了上次尝试</string>
-    <string name="gt_gdo_src_recorded">按你上次设置显示 — Android %1$s 无法查询</string>
-    <string name="gt_gdo_src_boot">按手机启动方式显示 — Android %1$s 无法查询</string>
-    <string name="gt_gdo_src_fresh">在你使用开关前显示为关闭 — 重启后总是关闭，且 Android %1$s 无法查询</string>
-    <string name="gt_gdo_advice_root">手机自带的设置界面仍可操作。</string>
-    <string name="gt_gdo_advice_shell">Shizuku 以“shell”身份执行命令，新版 Android 不允许其靠近系统此部分。Root 或 Android 自带设置界面仍可操作。</string>
     <string name="gt_gdo_single_speed">屏幕只有一种速度，没有更快的可切换。</string>
     <string name="gt_gdo_runs_at">你的屏幕运行于 %1$s</string>
     <string name="gt_gdo_need_sys">需要 Root 或 Shizuku，或更改系统设置的权限。</string>

@@ -1,0 +1,137 @@
+<resources>
+    <!-- ========================================== -->
+    <!--                 GENERAL                    -->
+    <!-- ========================================== -->
+    <string name="app_name" translatable="false">CatSmoker</string>
+    <string name="crosshair_desc">Crosshair Overlay</string>
+    <!-- Reposition mode. Shown in the overlay's own banner, so these are read over a game frame. -->
+    <string name="crosshair_move_hint">Drag the crosshair where you want it.</string>
+    <string name="crosshair_move_done">Done</string>
+    <string name="crosshair_move_recenter">Centre</string>
+
+    <!-- ========================================== -->
+    <!--               MAIN ACTIVITY                -->
+    <!-- ========================================== -->
+
+    <!-- ========================================== -->
+    <!--               ABOUT ACTIVITY               -->
+    <!-- ========================================== -->
+    <string name="about_header_title">About CatSmoker</string>
+
+    <!-- ========================================== -->
+    <!--           ROOT &amp; LSPOSED ACTIVITY          -->
+    <!-- ========================================== -->
+
+    <!-- ========================================== -->
+    <!--            NON-ROOT ACTIVITY               -->
+    <!-- ========================================== -->
+    <string name="apply_profile_first">Please choose a profile first.</string>
+    <string name="selected_item">Selected: %1$s</string>
+    <string name="selected_item_placeholder">Selected: -</string>
+    <string name="custom_upload_need_folder_access">Folder access required. Please select Android/data/%1$s</string>
+    <string name="custom_upload_success_file">Custom file uploaded successfully.</string>
+    <string name="custom_upload_failed">Upload failed: %1$s</string>
+
+    <!-- Methods -->
+
+
+    <!-- Permission Activity Strings -->
+
+    <!-- Performance overlay: shown until the first real reading arrives, then replaced by it -->
+    <string name="overlay_fps_initial">FPS: reading…</string>
+    <string name="overlay_cpu_initial">CPU: reading…</string>
+    <string name="overlay_power_initial">Power: reading…</string>
+    <string name="overlay_ram_initial">RAM: reading…</string>
+    <string name="overlay_temp_initial">Temp: reading…</string>
+
+    <!-- Game Launcher Strings -->
+
+    <!-- ========================================== -->
+    <!--              GAMING TOOLS SCREEN           -->
+    <!-- ========================================== -->
+    <string name="Gaming_tools_title">Gaming Tools</string>
+    <string name="gt_subtitle">Make your games run better</string>
+    <string name="gt_section_your_library">YOUR GAMES</string>
+    <string name="gt_no_games_detected">No games added yet — tap + to add one</string>
+    <string name="gt_section_performance_boost">SPEED</string>
+    <string name="gt_section_focus_network">INTERNET &amp; QUIET</string>
+    <string name="gt_section_system_advanced">SPACE &amp; BACKGROUND APPS</string>
+
+    <!-- ========================================== -->
+    <!--                HERO GAMING CARD            -->
+    <!-- ========================================== -->
+
+    <!-- ========================================== -->
+    <!--               ABOUT SCREEN                 -->
+    <!-- ========================================== -->
+    <string name="logs_title">System Logs</string>
+    <string name="logs_subtitle">Application and system diagnostics.</string>
+    <string name="logs_refresh">Refresh</string>
+    <string name="logs_clear">Clear</string>
+    <string name="logs_share">Share</string>
+    <string name="logs_filter_placeholder">Filter logs…</string>
+    <string name="logs_empty">No logs captured yet.</string>
+
+    <!-- ========================================== -->
+    <!--           EDIT GAME FILES SCREEN           -->
+    <!-- ========================================== -->
+
+    <!-- ========================================== -->
+    <!--              PERMISSION SCREEN             -->
+    <!-- ========================================== -->
+
+    <!-- ========================================== -->
+    <!--          RESOLUTION CHANGER SCREEN         -->
+    <!-- ========================================== -->
+    <string name="res_method_root" translatable="false">ROOT</string>
+    <string name="res_method_shizuku" translatable="false">SHIZUKU</string>
+
+    <!-- ========================================== -->
+    <!--             SPOOF DEVICE SCREEN            -->
+    <!-- ========================================== -->
+
+    <!-- ========================================== -->
+    <!--                 SERVICES                   -->
+    <!-- ========================================== -->
+    <!-- Stop action on every ongoing service notification. Each service routes it through the same
+         stop path its in-app switch uses, so one label serves all of them. -->
+    <string name="notification_stop">Stop</string>
+    <string name="booster_running_title">Game Booster Running</string>
+    <!-- Booster notification: the body is the real progress, so there is no fixed slogan here -->
+    <string name="booster_notification_preparing">Reading the app list…</string>
+    <string name="booster_notification_progress">%1$d of %2$d apps</string>
+    <string name="booster_notification_compiling">%1$d/%2$d · compiling %3$s</string>
+    <string name="booster_notification_stop">Stop</string>
+    <!-- App Booster card. Plain words: the user never has to know what "compile" or "AOT" mean. -->
+    <string name="booster_start">Start</string>
+    <string name="booster_stop">Stop</string>
+    <string name="booster_force_label">Also redo apps that are already done</string>
+    <string name="booster_status_idle">Not started yet.</string>
+    <string name="booster_status_preparing">Getting your list of apps…</string>
+    <string name="booster_status_compiling">Working on %1$d of %2$d: %3$s</string>
+    <string name="booster_status_done">Done: %1$d improved, %2$d were already fine, %3$d could not be done.</string>
+    <string name="booster_status_cancelled">Stopped after %1$d apps.</string>
+    <string name="booster_status_failed">Could not start: %1$s</string>
+    <!-- Scheduled sweep. It runs while the app is closed, so the notification is the only surface
+         a skipped run has — the reason is the engine's own refusal text, not a slogan. -->
+    <string name="booster_scheduled_title">Scheduled App Boost</string>
+    <string name="booster_scheduled_skipped">Did not run: %1$s</string>
+    <!-- Dashboard -->
+    <string name="dash_live_performance">REAL-TIME TELEMETRY</string>
+    <string name="dash_fps_label"> FPS</string>
+    <!-- Frame-rate label for the vsync fallback: this app's own frames, not the game's -->
+    <string name="dash_fps_label_ui"> UI FPS</string>
+    <string name="dash_quick_actions">ENGINEERING CONSOLE</string>
+    <string name="dash_edit_files_title">File Engineering</string>
+    <string name="dash_edit_files_subtitle">Data Optimization Tools</string>
+    <string name="dash_gaming_tools_subtitle">Overlays, Network &amp; Logic</string>
+    <string name="dash_about_subtitle">System info &amp; Community</string>
+
+    <!-- Links -->
+    <string name="url_github" translatable="false">https://github.com/catsmoker/com.catsmoker.app</string>
+    <string name="url_webpage" translatable="false">https://catsmoker.vercel.app/</string>
+    <string name="url_paypal" translatable="false">https://www.paypal.me/catsmoker</string>
+    <string name="url_discord" translatable="false">https://discord.gg/catsmoker</string>
+    <string name="url_telegram" translatable="false">https://t.me/catsmoker</string>
+
+</resources>

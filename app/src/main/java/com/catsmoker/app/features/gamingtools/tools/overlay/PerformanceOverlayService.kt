@@ -35,7 +35,10 @@ class PerformanceOverlayService : Service() {
     private var windowManager: WindowManager? = null
     private var overlayView: View? = null
     private val serviceScope = CoroutineScope(Dispatchers.Main + Job())
-    private val prefs = getSharedPreferences(PREFS_NAME, MODE_PRIVATE)
+    // Never touch a Context in a field initializer: the base context is null until
+    // onCreate/attachBaseContext, so getSharedPreferences() here NPEs and crash-loops
+    // the process on every service start (see OverlayBootReceiver restart path).
+    private val prefs by lazy { getSharedPreferences(PREFS_NAME, MODE_PRIVATE) }
 
     override fun onCreate() {
         super.onCreate()

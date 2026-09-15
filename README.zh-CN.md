@@ -54,9 +54,25 @@
 - **隐私优先**：不进行任何多余的数据收集；所有修改均在本机完成。
 - 更多……
 
+## 📸 应用截图
+
+<p align="center">
+  <img src="store/screenshots/phone/home.png" width="23%" alt="主页仪表盘" />
+  <img src="store/screenshots/phone/gaming-tools-1.png" width="23%" alt="游戏工具 —— 游戏库与游戏模式" />
+  <img src="store/screenshots/phone/gaming-tools-2.png" width="23%" alt="游戏工具 —— 性能与系统工具" />
+  <img src="store/screenshots/phone/gaming-tools-3.png" width="23%" alt="游戏工具 —— FPS 悬浮窗、准星与网络工具" />
+</p>
+<p align="center">
+  <img src="store/screenshots/phone/gaming-tools-4.png" width="23%" alt="游戏工具 —— 后台应用与清理工具" />
+  <img src="store/screenshots/phone/file-engineering.png" width="23%" alt="配置文件工程" />
+  <img src="store/screenshots/phone/settings.png" width="23%" alt="设置" />
+  <img src="store/screenshots/phone/about.png" width="23%" alt="关于" />
+</p>
+
 ## 📋 目录
 
 - [主要特性](#-主要特性)
+- [应用截图](#-应用截图)
 - [工作原理](#-工作原理)
 - [安装指南](#-安装指南)
 - [使用说明](#使用说明)

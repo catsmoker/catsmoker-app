@@ -1,3 +1,4 @@
+import java.security.KeyStore
 import java.util.Properties
 
 plugins {
@@ -24,7 +25,7 @@ android {
         // Only locales the app actually ships (see res/xml/locales_config.xml): strips the
         // dozens of transitive locales dragged in by material/startio/splashscreen/work.
         // Shrinking alone cannot do this.
-        resConfigs("en", "ar", "es", "zh-rCN")
+        resConfigs("en", "en-rGB", "ar-rSA", "es-rES", "zh-rCN")
 
         vectorDrawables {
             useSupportLibrary = true
@@ -46,13 +47,44 @@ android {
         buildConfigField("String", "ADMOB_INTERSTITIAL_ID", "\"$admobInterstitialId\"")
     }
 
+    // Release-signing credentials (git-ignored signing.properties at the repo root;
+    // four keys required: storeFile, storePassword, keyAlias, keyPassword).
+    val signingProps = Properties()
+    val signingPropsFile = project.rootProject.file("signing.properties")
+    if (signingPropsFile.exists()) {
+        signingProps.load(signingPropsFile.inputStream())
+    }
+    val hasReleaseSigning = signingProps.containsKey("storeFile")
+        && signingProps.containsKey("storePassword")
+        && signingProps.containsKey("keyAlias")
+        && signingProps.containsKey("keyPassword")
+    if (!hasReleaseSigning) {
+        logger.warn("signing.properties missing or incomplete — release will be debug-signed.")
+    }
+
+    signingConfigs {
+        create("release") {
+            if (hasReleaseSigning) {
+                storeFile = file(signingProps.getProperty("storeFile"))
+                storePassword = signingProps.getProperty("storePassword")
+                keyAlias = signingProps.getProperty("keyAlias")
+                keyPassword = signingProps.getProperty("keyPassword")
+                storeType = signingProps.getProperty("storeType", KeyStore.getDefaultType())
+            }
+        }
+    }
+
     buildTypes {
         getByName("release") {
             isMinifyEnabled = true
             isShrinkResources = true
             isDebuggable = false
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
-            signingConfig = signingConfigs.getByName("debug")
+            // Permanent release key (PLAYSTORE.md §4): credentials live in the git-ignored
+            // signing.properties at the repo root. Without that file the release build stays
+            // debug-signed so any clone still builds.
+            signingConfig = if (hasReleaseSigning) signingConfigs.getByName("release")
+            else signingConfigs.getByName("debug")
         }
         getByName("debug") {
             isMinifyEnabled = false

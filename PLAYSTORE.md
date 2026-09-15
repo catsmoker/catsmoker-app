@@ -74,7 +74,7 @@ Sources: `app/build.gradle.kts`, `gradle.properties`, `docs/BUILD.md`,
 | `versionCode` | 7 (comment notes the bump forces Shizuku to restart the AIDL helper; do not bump casually — `app/build.gradle.kts:18-21`, `AGENTS.md`) |
 | `versionName` | `2.0.0` |
 | AGP / Kotlin / KSP / Compose BOM / NDK | 9.4.0 / 2.4.20 / 2.3.10 / 2026.08.00 / 27.0.12077973 (per `docs/BUILD.md`; Kotlin bumped on this branch in `57bccfd`) |
-| `release` build type | `isMinifyEnabled = true`, `isShrinkResources = true`, `isDebuggable = false`, ProGuard `proguard-android-optimize.txt` + `proguard-rules.pro` — but `signingConfig = signingConfigs.getByName("debug")` (`app/build.gradle.kts:37-43`) |
+| `release` build type | `isMinifyEnabled = true`, `isShrinkResources = true`, `isDebuggable = false`, ProGuard `proguard-android-optimize.txt` + `proguard-rules.pro` — signed by `signingConfigs.release` from the git-ignored `signing.properties` (permanent `key0` key, see §4), falling back to debug signing without that file (`app/build.gradle.kts`) |
 | `debug` build type | no minify, debuggable, debug signing |
 | Lint | `abortOnError = false`, `checkReleaseBuilds = true` (`app/build.gradle.kts`; non-blocking, surfaces warnings on release builds) |
 | Gradle flags | `android.builtInKotlin=true` — do **not** add the `kotlin.android` plugin; four plugins only (`AGENTS.md`, `gradle/libs.versions.toml`) |
@@ -91,18 +91,37 @@ Play implication (not yet done):
 
 ## 4. Signing / upload-key information (no secrets stored)
 
-- Current state: **no Play upload key configured in the repo.** Release uses
-  the debug keystore (`app/build.gradle.kts:42`). No keystore file, alias,
-  or password is checked in, and none may be added.
+- Current state (2026-09-13): permanent release/upload key designated and
+  wired. PKCS#12 keystore **outside the repo** (path only in the git-ignored
+  `signing.properties` at the repo root), alias `key0`, created 2026-09-12,
+  owner `C=FR, ST=paris, L=paris, O=catsmoker, OU=dev, CN="el hachim boulhada"`,
+  valid to 2051. No keystore file, alias, or password is checked in, and none
+  may be added.
+  - SHA-256: `C6:D3:98:9E:F7:03:0D:40:7C:58:2A:5A:8A:D2:15:8E:12:7E:3F:66:F4:76:5E:79:4C:2C:DF:15:63:48:39:FA`
+  - SHA-1: `2C:B4:5B:F5:5A:86:BD:D3:E3:78:4E:34:CD:E9:18:8C:1E:2C:7C:75`
+  - Wiring: `app/build.gradle.kts` (`signingConfigs.release` from
+    `signing.properties`, `storeType=pkcs12`); without that file the release
+    build falls back to debug signing so any clone still builds.
+  - Proven 2026-09-13: `:app:assembleRelease` green, `apksigner` confirms the
+    APK signer is this key.
+- History (why this key exists): all past GitHub releases were signed with
+  throwaway auto-generated **debug** keys, a fresh one per build machine —
+  v1.8.1 (`6-1.8.1`, Feb 2026) = `26:C4:AC:E7:…:F6:ED`, v1.7.2 =
+  `B3:ED:B5:DE:…`, this machine's current debug keystore = `DC:E1:36:6E:…`.
+  The private key for the v1.8.1 certificate (`26:C4:…`) is **lost** (found on
+  no machine checked, including the local keystore directory outside the
+  repo, which holds only the new key), so a
+  proof-of-ownership APK for that fingerprint cannot be built.
 - Required before first upload (pending):
-  1. Create the upload key **outside the repo** (Play App Signing recommended).
-  2. Wire it via environment / CI secrets or a local `signing.properties`
-      that stays git-ignored — never commit the `.jks`/`.keystore`.
-  3. Record here only: key owner, creation date, SHA-1/SHA-256 fingerprints
-     of the **public certificate**, and which Play track it was uploaded to.
-     Fingerprints are currently **unknown** (no key created yet).
-- Rotation/recovery plan: unknown — to be documented when Play App Signing is
-  enrolled.
+  1. Register the package: either add the new key's fingerprint above in the
+     Console (multiple signing keys per package are allowed — accepted only
+     if the install-cluster rules permit), or use the appeal-like process for
+     packages whose key is lost (proof of repo/release ownership).
+  2. Enrol in Play App Signing (recommended) and record here which Play track
+     the key was uploaded to.
+- Rotation/recovery plan: back up the PKCS#12 file **and** its passwords
+  off-machine — a lost keystore is how the `26:C4` key was lost. To be
+  documented fully when Play App Signing is enrolled.
 
 ## 5. Feature compliance matrix (author decisions)
 
@@ -343,7 +362,10 @@ REVIEW / GATE (🟡 — justify, narrow, or gate; record outcome per item):
 
 HYGIENE (required regardless):
 
-- [ ] Real signing config for `release` (no debug signing on upload).
+- [x] Real signing config for `release` (no debug signing on upload).
+      — **Done 2026-09-13** (see §4): `signingConfigs.release` from the
+      git-ignored `signing.properties` (permanent `key0` key); debug fallback
+      without the file so clones still build.
 - [ ] Decide `versionCode`/`versionName` for the first Play upload (note the
       Shizuku AIDL-restart side effect of any `versionCode` bump).
 - [ ] Privacy policy URL + Data safety form (ads, VPN, DNS, usage-stats,
@@ -361,13 +383,20 @@ HYGIENE (required regardless):
   exists); this `PLAYSTORE.md` record created; decision matrix (§5) adopted;
   AdMob switch landed (uncommitted at time of writing); **all §8 REMOVE
   rows landed 2026-09-13** (spoof/LSPosed/Magisk/updater stripped, copy
-  scrubbed — see §11). REVIEW rows (§8 🟡) and hygiene items are untouched.
-- Pending: §8 REVIEW + HYGIENE rows. Order suggested: REVIEW rows next
-  (narrow + document), then hygiene (signing, policy, listing, tests).
+  scrubbed — see §11); **release signing landed 2026-09-13** (permanent
+  `key0` key, §4). REVIEW rows (§8 🟡) and remaining hygiene items are
+  untouched.
+- Pending: §8 REVIEW + remaining HYGIENE rows; package-name registration
+  (blocked on the lost `26:C4` key — new-key registration or appeal, see §4).
+  Order suggested: registration next (determines the signing story for
+  uploads), then REVIEW rows (narrow + document), then hygiene (policy,
+  listing, tests).
 - Verification status (honest): `compileDebugKotlin` is green on
   `playstore` after the 2026-09-13 `[PLAY-SAFE]` pick (`ed02f8a`).
-  `assembleRelease`, `testDebugUnitTest`, `lintDebug`, and the on-device
-  `verify` pass are all still pending before any upload.
+  `:app:assembleRelease` is green as of 2026-09-13 with the new `key0`
+  signing (`apksigner` confirms signer `C6:D3:…`). `testDebugUnitTest`,
+  `lintDebug`, and the on-device `verify` pass are all still pending before
+  any upload.
 - Known issues / risks:
   - Spoof/Magisk/updater code is deeply referenced (strings in 4 locales,
     ProGuard, manifest, tests) — removal must touch all split `strings_*`
@@ -411,6 +440,20 @@ HYGIENE (required regardless):
   + Ads declaration / Data safety entry are pending before upload.
 
 ## 11. Changelog (newest first)
+
+- 2026-09-13: Designated the permanent release/upload key and wired release
+  signing. Key: PKCS#12 outside the repo (alias `key0`, created 2026-09-12,
+  `O=catsmoker`), SHA-256 `C6:D3:…:39:FA`, SHA-1 `2C:B4:…:7C:75` (full prints
+  in §4 — no secrets in git). `app/build.gradle.kts` gains
+  `signingConfigs.release` from the git-ignored `signing.properties`
+  (debug fallback without the file); `.gitignore` already covered
+  `signing.properties`. `:app:assembleRelease` green, `apksigner` confirms
+  the new signer. Finding that forced this: past GitHub releases were
+  debug-signed with throwaway per-machine keys (v1.8.1 = `26:C4:…:F6:ED`,
+  v1.7.2 = `B3:ED:…`, local = `DC:E1:…`); the `26:C4` private key is lost,
+  so the package-registration proof APK cannot be built for that
+  fingerprint — new-key registration or appeal pending (§4). §8 signing
+  hygiene row done.
 
 - 2026-09-13: Cherry-picked `[PLAY-SAFE] 643cd0c` from `main`
   (`ed02f8a`, zero conflicts; `libs.versions.toml` hunk empty —

@@ -20,9 +20,9 @@ object AppearanceStore {
 
     /** Empty means "follow the system". Otherwise a BCP-47 tag resolvable by Resources. */
     const val LANGUAGE_SYSTEM = ""
-    const val LANGUAGE_ENGLISH = "en"
-    const val LANGUAGE_ARABIC = "ar"
-    const val LANGUAGE_SPANISH = "es"
+    const val LANGUAGE_ENGLISH = "en-GB"
+    const val LANGUAGE_ARABIC = "ar-SA"
+    const val LANGUAGE_SPANISH = "es-ES"
     const val LANGUAGE_CHINESE = "zh-CN"
 
     private const val PREFS = "appearance_prefs"

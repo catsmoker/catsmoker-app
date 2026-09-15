@@ -968,16 +968,11 @@ class GamingToolsViewModel @Inject constructor(
     }
 
     /**
-     * The three Developer Options gaming switches, each reporting what the device actually allows.
+     * The two Developer Options gaming switches, each reporting what the device actually allows.
      *
      * This replaces a "Refresh Rate Lock" card that wrote both refresh-rate keys fire-and-forget and
      * flipped its own switch regardless of the result. [GameDeveloperOptions] verifies every write.
      */
-    fun setShowRefreshRate(enabled: Boolean) = viewModelScope.launch {
-        val result = gameDeveloperOptions.setShowRefreshRate(enabled)
-        _toasts.tryEmit(devOptionToast(context.getString(R.string.gt_dev_show_rr), enabled, result))
-    }
-
     fun setForcePeakRefreshRate(enabled: Boolean) = viewModelScope.launch {
         val result = gameDeveloperOptions.setForcePeakRefreshRate(enabled)
         _toasts.tryEmit(devOptionToast(context.getString(R.string.gt_dev_peak), enabled, result))

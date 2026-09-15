@@ -85,9 +85,10 @@ fun GamingToolsRoute(onNavigate: (String) -> Unit, onBack: () -> Unit) {
         viewModel.scanForJunk()
     }
 
-    // Developer options owns the same refresh-rate overlay switch this app cannot reach without a
-    // privileged channel. Coming back, the whole state is re-read rather than assumed: the user may
-    // have turned it on, turned it off, or not found it at all, and only a fresh read knows which.
+    // Some of these switches live on Android's own Developer options screen, which this app
+    // cannot reach without a privileged channel. Coming back, the whole state is re-read rather
+    // than assumed: the user may have turned one on, turned it off, or not found it at all, and
+    // only a fresh read knows which.
     val developerOptionsLauncher = rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) {
         viewModel.syncState()
     }
@@ -193,7 +194,6 @@ fun GamingToolsRoute(onNavigate: (String) -> Unit, onBack: () -> Unit) {
         onSetAnimationScale = viewModel::setAnimationScale,
         onToggleAlwaysFinish = viewModel::toggleAlwaysFinish,
         onToggleBackgroundLimit = viewModel::toggleBackgroundLimit,
-        onSetShowRefreshRate = viewModel::setShowRefreshRate,
         onSetForcePeakRefreshRate = viewModel::setForcePeakRefreshRate,
         onSetGameDefaultFrameRateDisabled = viewModel::setGameDefaultFrameRateDisabled,
         onOpenDeveloperOptions = {
@@ -309,7 +309,6 @@ fun GamingToolsScreen(
     onSetAnimationScale: (AnimationScaleKind, Float) -> Unit,
     onToggleAlwaysFinish: (Boolean) -> Unit,
     onToggleBackgroundLimit: (Boolean) -> Unit,
-    onSetShowRefreshRate: (Boolean) -> Unit,
     onSetForcePeakRefreshRate: (Boolean) -> Unit,
     onSetGameDefaultFrameRateDisabled: (Boolean) -> Unit,
     /** Opens Android's Developer options screen for the switches this app cannot reach itself. */
@@ -440,7 +439,6 @@ fun GamingToolsScreen(
                         onSetAnimationScale = onSetAnimationScale,
                         onToggleAlwaysFinish = onToggleAlwaysFinish,
                         onToggleBackgroundLimit = onToggleBackgroundLimit,
-                        onSetShowRefreshRate = onSetShowRefreshRate,
                         onSetForcePeakRefreshRate = onSetForcePeakRefreshRate,
                         onSetGameDefaultFrameRateDisabled = onSetGameDefaultFrameRateDisabled,
                         onOpenDeveloperOptions = onOpenDeveloperOptions
@@ -1669,7 +1667,6 @@ fun DeveloperOptionsContent(
     onSetAnimationScale: (AnimationScaleKind, Float) -> Unit,
     onToggleAlwaysFinish: (Boolean) -> Unit,
     onToggleBackgroundLimit: (Boolean) -> Unit,
-    onSetShowRefreshRate: (Boolean) -> Unit,
     onSetForcePeakRefreshRate: (Boolean) -> Unit,
     onSetGameDefaultFrameRateDisabled: (Boolean) -> Unit,
     /**
@@ -1723,19 +1720,6 @@ fun DeveloperOptionsContent(
             explanation = listOf(
                 stringResource(R.string.gt_dev_close_1),
                 stringResource(R.string.gt_dev_close_2)
-            )
-        )
-
-        HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
-
-        DevOptionSwitchRow(
-            label = stringResource(R.string.gt_dev_show_rr),
-            state = gameDevOptions.showRefreshRate,
-            onCheckedChange = onSetShowRefreshRate,
-            onOpenDeveloperOptions = onOpenDeveloperOptions,
-            explanation = listOf(
-                stringResource(R.string.gt_dev_show_rr_1),
-                stringResource(R.string.gt_dev_show_rr_2)
             )
         )
 
@@ -2551,7 +2535,6 @@ fun GamingToolsPreview() {
             onSetAnimationScale = { _, _ -> },
             onToggleAlwaysFinish = {},
             onToggleBackgroundLimit = {},
-            onSetShowRefreshRate = {},
             onSetForcePeakRefreshRate = {},
             onSetGameDefaultFrameRateDisabled = {},
             onOpenDeveloperOptions = {},

@@ -260,9 +260,6 @@
     <string name="gt_dev_close_2">El costo: las apps a las que vuelves empiezan desde el principio, y pierdes lo que tenías en pantalla. Bien antes de un juego grande, mejor desactivarlo después.</string>
     <string name="gt_dev_on">Activado</string>
     <string name="gt_dev_off">Desactivado</string>
-    <string name="gt_dev_show_rr">Mostrar frecuencia de actualización</string>
-    <string name="gt_dev_show_rr_1">Pone un número pequeño en la esquina de tu pantalla que muestra cuántas veces por segundo se redibuja. Útil para comprobar que tu teléfono va de verdad a su máximo.</string>
-    <string name="gt_dev_show_rr_2">Android cuida mucho esto, y las versiones nuevas más: desde Android 14 solo pasa root, porque Shizuku ejecuta comandos como \"shell\" y eso ya no puede acercarse. Cuando esta app no puede hacerlo, el botón de abajo abre la pantalla propia de Android, donde siempre funciona — busca \"Mostrar frecuencia de actualización\".</string>
     <string name="gt_dev_peak">Usar siempre la velocidad máxima de pantalla</string>
     <string name="gt_dev_peak_1">Los teléfonos bajan la velocidad de pantalla para ahorrar batería cuando no se mueve mucho. Esto lo impide, así la pantalla siempre va al máximo y se siente más fluida.</string>
     <string name="gt_dev_peak_2">El costo: gasta más batería mientras está activo. Desactivarlo devuelve lo que tu teléfono tenía antes.</string>
@@ -276,18 +273,6 @@
     <string name="gt_dev_open_developer">Abrir los ajustes de desarrollador de Android</string>
 
     <!-- Developer options engine facts -->
-    <string name="gt_gdo_live_at">La pantalla va ahora a %1$s</string>
-    <string name="gt_gdo_live_unknown">Este dispositivo no informó su frecuencia de actualización actual</string>
-    <string name="gt_gdo_no_priv">Esta app no puede activarlo sola. Toca el botón para activarlo en los propios ajustes de Android.</string>
-    <string name="gt_gdo_confirmed">%1$s · Android confirmó que este es el estado real</string>
-    <string name="gt_gdo_detail_join">%1$s · %2$s</string>
-    <string name="gt_gdo_refused_detail">%1$s %2$s</string>
-    <string name="gt_gdo_src_refused">tu teléfono rechazó el último intento</string>
-    <string name="gt_gdo_src_recorded">mostrado como lo pusiste la última vez — no se puede preguntar a Android %1$s por ello</string>
-    <string name="gt_gdo_src_boot">mostrado según cómo arranca tu teléfono — no se puede preguntar a Android %1$s por ello</string>
-    <string name="gt_gdo_src_fresh">mostrado como desactivado hasta que uses el interruptor — siempre empieza desactivado tras reiniciar, y no se puede preguntar a Android %1$s por ello</string>
-    <string name="gt_gdo_advice_root">La pantalla de ajustes de tu propio teléfono aún puede hacerlo.</string>
-    <string name="gt_gdo_advice_shell">Shizuku ejecuta comandos como \"shell\", algo que las versiones nuevas de Android no dejan acercarse a esta parte del sistema. Root, o la pantalla de ajustes de Android, aún pueden.</string>
     <string name="gt_gdo_single_speed">Tu pantalla tiene una sola velocidad, así que no hay nada más rápido a lo que cambiar.</string>
     <string name="gt_gdo_runs_at">Tu pantalla va a %1$s</string>
     <string name="gt_gdo_need_sys">Necesita root o Shizuku, o permiso para cambiar ajustes del sistema.</string>
