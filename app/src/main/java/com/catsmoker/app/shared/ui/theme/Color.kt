@@ -13,10 +13,5 @@ val NothingGreyLight = Color(0xFF1E1E1E)
 val PressPink = Color(0xFFFF999C)
 
 // Semantic colors
-val DarkBackground = NothingBlack
-val DarkSurface = NothingGrey
-val DarkSurfaceVariant = NothingGreyLight
-
 val AccentPrimary = NothingRed
-val AccentSecondary = NothingWhite
 val AccentTertiary = NothingGreyLight

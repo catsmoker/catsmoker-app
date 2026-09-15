@@ -7,6 +7,8 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import java.io.File
 import javax.inject.Inject
 import javax.inject.Singleton
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 /**
  * Root-only bridge to Honkai: Star Rail's Unity `playerprefs.xml`: detect the install, locate
@@ -121,8 +123,7 @@ class HsrGameManager @Inject constructor(
             val result = shellRunner.execSafeResult("pm", "list", "packages", "hkrpg")
             val discovered = result.stdout.lineSequence()
                 .map { it.removePrefix("package:").trim() }
-                .filter { it.contains("hkrpg", ignoreCase = true) }
-                .firstOrNull()
+                .firstOrNull { it.contains("hkrpg", ignoreCase = true) }
             if (discovered != null) {
                 cachedPackage = discovered
                 return discovered
@@ -255,14 +256,14 @@ class HsrGameManager @Inject constructor(
      * Restore the newest backup for the detected package, through the same copy path as a
      * normal write. Returns null when no backup exists, with failures carried for the UI.
      */
-    suspend fun restoreLatestBackup(): HsrWriteResult? {
-        if (!isRootAvailable()) return HsrWriteResult.Failure(HsrWriteResult.Stage.NO_ROOT, "root shell unavailable")
+    suspend fun restoreLatestBackup(): HsrWriteResult? = withContext(Dispatchers.IO) {
+        if (!isRootAvailable()) return@withContext HsrWriteResult.Failure(HsrWriteResult.Stage.NO_ROOT, "root shell unavailable")
         val pkg = detectInstalledPackage()
-            ?: return HsrWriteResult.Failure(HsrWriteResult.Stage.GAME_NOT_INSTALLED, "no HSR package found")
+            ?: return@withContext HsrWriteResult.Failure(HsrWriteResult.Stage.GAME_NOT_INSTALLED, "no HSR package found")
         val path = findPrefsPath()
-            ?: return HsrWriteResult.Failure(HsrWriteResult.Stage.PREFS_NOT_FOUND, "playerprefs.xml not found in any known location")
+            ?: return@withContext HsrWriteResult.Failure(HsrWriteResult.Stage.PREFS_NOT_FOUND, "playerprefs.xml not found in any known location")
         val bytes = backupStore.list(pkg).firstOrNull()?.let { backupStore.readBytes(it) }
-            ?: return null
+            ?: return@withContext null
 
         val tempFile = File.createTempFile("hsr_restore_", ".xml", context.cacheDir)
         val copyResult = try {
@@ -273,7 +274,7 @@ class HsrGameManager @Inject constructor(
         } finally {
             tempFile.delete()
         }
-        return if (copyResult.isSuccess) {
+        if (copyResult.isSuccess) {
             HsrWriteResult.Success(backup = null, verified = true, verificationDetail = "backup restored")
         } else {
             HsrWriteResult.Failure(
@@ -352,16 +353,16 @@ class HsrGameManager @Inject constructor(
      */
     private suspend fun backupAndPush(
         map: Map<String, HsrPlayerPrefsXml.Value>
-    ): Pair<ConfigBackupStore.Entry?, HsrWriteResult.Failure?> {
+    ): Pair<ConfigBackupStore.Entry?, HsrWriteResult.Failure?> = withContext(Dispatchers.IO) {
         val pkg = cachedPackage
-            ?: return null to HsrWriteResult.Failure(HsrWriteResult.Stage.GAME_NOT_INSTALLED, "no HSR package found")
+            ?: return@withContext null to HsrWriteResult.Failure(HsrWriteResult.Stage.GAME_NOT_INSTALLED, "no HSR package found")
         val path = cachedPrefsPath
-            ?: return null to HsrWriteResult.Failure(HsrWriteResult.Stage.PREFS_NOT_FOUND, "playerprefs.xml not found in any known location")
+            ?: return@withContext null to HsrWriteResult.Failure(HsrWriteResult.Stage.PREFS_NOT_FOUND, "playerprefs.xml not found in any known location")
 
         val currentBytes = readPrefsBytes(path)
         val backup = if (currentBytes != null && currentBytes.isNotEmpty()) {
             backupStore.save(pkg, File(path).name, currentBytes)
-                ?: return null to HsrWriteResult.Failure(
+                ?: return@withContext null to HsrWriteResult.Failure(
                     HsrWriteResult.Stage.BACKUP_FAILED,
                     "could not store a backup of $path — refusing to overwrite"
                 )
@@ -380,7 +381,7 @@ class HsrGameManager @Inject constructor(
         } finally {
             tempFile.delete()
         }
-        return if (copyResult.isSuccess) {
+        if (copyResult.isSuccess) {
             backup to null
         } else {
             backup to HsrWriteResult.Failure(

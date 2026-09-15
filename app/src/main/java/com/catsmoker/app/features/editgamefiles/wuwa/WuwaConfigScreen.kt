@@ -29,7 +29,6 @@ import com.catsmoker.app.shared.ui.components.SectionCard
 import kotlinx.coroutines.flow.collectLatest
 import java.text.SimpleDateFormat
 import java.util.Date
-import java.util.Locale
 import com.catsmoker.app.shared.ui.components.CatsmokerButton
 import com.catsmoker.app.shared.ui.components.CatsmokerOutlinedButton
 
@@ -1030,7 +1029,6 @@ private fun AutoTuneCard(
                     }
                 }
             }
-            WuwaBenchmarkTuner.TunerStage.IDLE -> {}
         }
 
         if (tuner.results.isNotEmpty()) {

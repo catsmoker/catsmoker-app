@@ -54,8 +54,6 @@ class WuwaCommunityPackStore(private val storeFile: File) {
         }
     }
 
-    fun getPack(id: String): StoredPack? = synchronized(lock) { loadLocked().firstOrNull { it.id == id } }
-
     fun getAllPacks(): List<StoredPack> = synchronized(lock) { loadLocked().toList() }
 
     fun delete(id: String): Boolean {

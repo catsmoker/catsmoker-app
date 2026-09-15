@@ -75,7 +75,6 @@
 - [Screenshots](#-screenshots)
 - [How It Works](#-how-it-works)
 - [Installation Guide](#-installation-guide)
-- [Usage](#usage)
 - [Supported Games](#-supported-games)
 - [Device Compatibility](#-device-compatibility)
 - [Build From Source](#build-from-source)

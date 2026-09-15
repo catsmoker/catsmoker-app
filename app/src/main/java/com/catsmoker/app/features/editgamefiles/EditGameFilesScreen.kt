@@ -86,7 +86,7 @@ fun EditGameFilesRoute(onBack: () -> Unit) {
             when (event) {
                 is EditGameFilesViewModel.EditEvent.Toast -> Toast.makeText(context, event.message, if (event.isLong) Toast.LENGTH_LONG else Toast.LENGTH_SHORT).show()
                 EditGameFilesViewModel.EditEvent.LaunchFilePicker -> filePicker.launch("*/*")
-                is EditGameFilesViewModel.EditEvent.LaunchSafPicker -> safPicker.launch(null)
+                EditGameFilesViewModel.EditEvent.LaunchSafPicker -> safPicker.launch(null)
                 EditGameFilesViewModel.EditEvent.LaunchFolderPicker -> folderPicker.launch(null)
                 EditGameFilesViewModel.EditEvent.LaunchAllFilesAccess -> {
                     val intent = viewModel.launchAllFilesAccess()

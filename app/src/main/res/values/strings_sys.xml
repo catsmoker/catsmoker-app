@@ -12,7 +12,6 @@
     <string name="sys_logs_subtitle">View app and system diagnostics.</string>
     <string name="sys_section_appearance">Appearance</string>
     <string name="sys_theme_title">Theme</string>
-    <string name="sys_theme_subtitle">Dark or light screens.</string>
     <string name="sys_theme_system">System default</string>
     <string name="sys_theme_dark">Dark</string>
     <string name="sys_theme_light">Light</string>
@@ -20,10 +19,6 @@
     <string name="sys_language_title">Language</string>
     <string name="sys_language_subtitle">App language. Takes effect right away.</string>
     <string name="sys_lang_system">System default</string>
-    <string name="sys_lang_english">English</string>
-    <string name="sys_lang_arabic">العربية</string>
-    <string name="sys_lang_spanish">Español</string>
-    <string name="sys_lang_chinese">中文 (简体)</string>
     <string name="sys_support_title">Support the Developer</string>
     <string name="sys_support_text">Please star the project on GitHub and donate to help the dev on PayPal.</string>
     <string name="sys_support_star">Star</string>

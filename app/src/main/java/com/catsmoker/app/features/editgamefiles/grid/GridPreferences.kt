@@ -1,5 +1,7 @@
 package com.catsmoker.app.features.editgamefiles.grid
 
+import kotlin.math.roundToInt
+
 /**
  * GRID Autosport's graphics settings, as Feral Interactive stores them.
  *
@@ -241,9 +243,9 @@ object GridPreferences {
      */
     fun deriveWidth(currentWidth: Int?, currentHeight: Int?, newHeight: Int): Int {
         if (currentWidth != null && currentHeight != null && currentHeight > 0 && currentWidth > 0) {
-            return Math.round(newHeight.toLong() * currentWidth / currentHeight.toDouble()).toInt()
+            return (newHeight.toLong() * currentWidth / currentHeight.toDouble()).roundToInt()
         }
-        return Math.round(newHeight * 16.0 / 9.0).toInt()
+        return (newHeight * 16.0 / 9.0).roundToInt()
     }
 
     /**

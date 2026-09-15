@@ -325,7 +325,7 @@ class GamingToolsViewModel @Inject constructor(
 
     // ---- Privilege / Shizuku ----
 
-    private suspend fun checkRootStatus() {
+    private fun checkRootStatus() {
         val rooted = try { shellRunner.isRootAvailable() } catch (_: Exception) { false }
         _uiState.update {
             it.copy(isRooted = rooted, canWriteGlobalSettings = gamingEngine.canWriteAnimationScales())
@@ -587,7 +587,7 @@ class GamingToolsViewModel @Inject constructor(
         viewModelScope.launch { startVpnFirewall() }
     }
 
-    private suspend fun startVpnFirewall() {
+    private fun startVpnFirewall() {
         _uiState.update { it.copy(isChangingVpnFirewall = true) }
         val refusal = vpnFirewall.start(_uiState.value.games.map { it.packageName })
         _uiState.update { it.copy(isChangingVpnFirewall = false) }

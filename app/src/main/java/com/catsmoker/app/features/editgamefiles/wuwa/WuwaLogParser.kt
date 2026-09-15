@@ -333,7 +333,7 @@ object WuwaLogParser {
     private val VIEWPORT_RE =
         Regex("""ViewportSize\s+([\d.]+),\s*([\d.]+)""", RegexOption.IGNORE_CASE)
     private val DEV_PROFILE_RE =
-        Regex("""Selected Device Profile:\s*\[([^\]]+)\]""", RegexOption.IGNORE_CASE)
+        Regex("""Selected Device Profile:\s*\[([^]]+)]""", RegexOption.IGNORE_CASE)
     private val FRAME_PACE_RE =
         Regex(
             """r\.FramePace\s*:\s*(?:requesting\s+\d+,\s*)?set\s*(?:as\s+)?(\d+)""",
@@ -347,7 +347,7 @@ object WuwaLogParser {
     private val QUALITY_MODE_RE =
         Regex("""sg\.KuroRenderQuality\s*=\s*"(.*)"""", RegexOption.IGNORE_CASE)
     private val CVar_SETTING_RE =
-        Regex("""Setting CVar \[\[([^:]+):([^\]]+)\]\]""", RegexOption.IGNORE_CASE)
+        Regex("""Setting CVar \[\[([^:]+):([^]]+)]]""", RegexOption.IGNORE_CASE)
     private val CVar_VALUE_RE =
         Regex("""Value remains '([^']+)' .* variable '([^']+)'""", RegexOption.IGNORE_CASE)
     private val RHI_RE =

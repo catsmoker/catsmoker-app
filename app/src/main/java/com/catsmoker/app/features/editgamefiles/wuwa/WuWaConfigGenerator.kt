@@ -257,11 +257,11 @@ object WuWaConfigGenerator {
         val isHighEnd = HIGH_END_GPU_PATTERNS.any { it.containsMatchIn(gpu) }
         val isMid = MID_GPU_PATTERNS.any { it.containsMatchIn(gpu) }
         return if (isHighEnd) {
-            DeviceTier(true, false, 800, 16, 8000, 384, 14000, 18000, 2000, 15000)
+            DeviceTier(isHighEnd = true, isMid = false, 800, 16, 8000, 384, 14000, 18000, 2000, 15000)
         } else if (isMid) {
-            DeviceTier(false, true, 500, 8, 6000, 256, 10000, 13000, 1200, 10000)
+            DeviceTier(isHighEnd = false, isMid = true, 500, 8, 6000, 256, 10000, 13000, 1200, 10000)
         } else {
-            DeviceTier(false, false, 380, 4, 4000, 192, 7000, 9000, 800, 7000)
+            DeviceTier(isHighEnd = false, isMid = false, 380, 4, 4000, 192, 7000, 9000, 800, 7000)
         }
     }
 
@@ -300,7 +300,7 @@ object WuWaConfigGenerator {
         lines.addAll(buildAnimationBlueprintSection(p))
         lines.addAll(buildFrameDisplaySection(p, opts, dt))
         lines.addAll(buildPipelineRhiSection())
-        lines.addAll(buildThermalStabilitySection(opts, dt, hasVulkan))
+        lines.addAll(buildThermalStabilitySection(opts, hasVulkan))
         lines.addAll(buildForbiddenCvarOverridesSection())
         lines.addAll(buildPerformanceTweaksSection(p, preset))
         lines.addAll(buildExperimentalCvarsSection(opts))
@@ -643,7 +643,7 @@ object WuWaConfigGenerator {
         ""
     )
 
-    private fun buildThermalStabilitySection(opts: Options, dt: DeviceTier, hasVulkan: Boolean): List<String> {
+    private fun buildThermalStabilitySection(opts: Options, hasVulkan: Boolean): List<String> {
         val lines = mutableListOf<String>()
         lines.add("; ── THERMAL & STABILITY ──────────────────────────────")
         if (opts.disableAutoAdjust) {

@@ -59,7 +59,7 @@ import com.catsmoker.app.shared.util.formatBytes
 import com.catsmoker.app.shared.ui.theme.CatsmokerTheme
 
 @Composable
-fun GamingToolsRoute(onNavigate: (String) -> Unit, onBack: () -> Unit) {
+fun GamingToolsRoute(onBack: () -> Unit) {
     val viewModel: GamingToolsViewModel = hiltViewModel()
     val uiState by viewModel.uiState.collectAsState()
     val context = LocalContext.current

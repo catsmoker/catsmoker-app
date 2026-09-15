@@ -4,6 +4,7 @@ import android.content.Context
 import android.content.pm.ApplicationInfo
 import android.content.pm.PackageManager
 import android.net.ConnectivityManager
+import androidx.core.content.edit
 import com.catsmoker.app.R
 import com.catsmoker.app.system.shell.ShellRunner
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -169,20 +170,20 @@ class BackgroundDataRestrictor @Inject constructor(
             }
         }
 
-        prefs.edit()
+        prefs.edit {
             // Only worth restoring to "off" if it was off; null means the reading failed, and
             // guessing either way would be inventing the previous state.
-            .putString("data_saver_was", wasOn?.toString() ?: "unknown")
-            .putStringSet("uids_we_added", exempted.map { it.toString() }.toSet())
+            putString("data_saver_was", wasOn?.toString() ?: "unknown")
+            putStringSet("uids_we_added", exempted.map { it.toString() }.toSet())
             // Union, not overwrite: a previous revert may have retained verified-still-blocked
             // UIDs for retry, and dropping them here would forget apps that never got unblocked.
-            .putStringSet(
+            putStringSet(
                 "uids_we_blocked",
                 blacklisted.map { it.toString() }.toSet() +
                     prefs.getStringSet("uids_we_blocked", emptySet()).orEmpty()
             )
-            .putBoolean("engaged", true)
-            .apply()
+            putBoolean("engaged", true)
+        }
 
         val saverNote = when {
             !dataSaverOn -> context.getString(R.string.gt_bdr_saver_off)
@@ -230,19 +231,19 @@ class BackgroundDataRestrictor @Inject constructor(
             saverNote = context.getString(R.string.gt_bdr_saver_was_on)
         }
 
-        prefs.edit()
+        prefs.edit {
             // A leftover block is still ours, so the record — and the engaged flag the Gaming Mode
             // snapshot reads — stays until a disable actually lifts it. Only a verified-clean
             // revert clears the evidence.
-            .putBoolean("engaged", stillBlocked.isNotEmpty())
-            .remove("uids_we_added")
-            .apply()
+            putBoolean("engaged", stillBlocked.isNotEmpty())
+            remove("uids_we_added")
+        }
         if (stillBlocked.isEmpty()) {
-            prefs.edit().remove("uids_we_blocked").apply()
+            prefs.edit { remove("uids_we_blocked") }
         } else {
-            prefs.edit()
-                .putStringSet("uids_we_blocked", stillBlocked.map { it.toString() }.toSet())
-                .apply()
+            prefs.edit {
+                putStringSet("uids_we_blocked", stillBlocked.map { it.toString() }.toSet())
+            }
         }
 
         val unblockNote = when {

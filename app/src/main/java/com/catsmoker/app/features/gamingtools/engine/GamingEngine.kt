@@ -317,7 +317,7 @@ class GamingEngine(
             scope.launch { reapplyFixedPerformanceMode() }
         }
 
-        _alwaysFinishActivities.value = getGlobalInt(android.provider.Settings.Global.ALWAYS_FINISH_ACTIVITIES) == 1
+        _alwaysFinishActivities.value = getGlobalInt(Settings.Global.ALWAYS_FINISH_ACTIVITIES) == 1
         _backgroundProcessLimit.value = getGlobalString("activity_manager_constants")?.contains("max_cached_processes=1") == true
 
         refreshAnimationScales()
@@ -326,7 +326,7 @@ class GamingEngine(
     }
 
     private fun getGlobalInt(key: String): Int {
-        return try { android.provider.Settings.Global.getInt(context.contentResolver, key, 0) } catch (_: Exception) { 0 }
+        return try { Settings.Global.getInt(context.contentResolver, key, 0) } catch (_: Exception) { 0 }
     }
 
     /**
@@ -340,11 +340,7 @@ class GamingEngine(
             .contains(context.packageName)
 
     private fun getGlobalString(key: String): String? {
-        return android.provider.Settings.Global.getString(context.contentResolver, key)
-    }
-
-    private fun getSystemString(key: String): String? {
-        return android.provider.Settings.System.getString(context.contentResolver, key)
+        return Settings.Global.getString(context.contentResolver, key)
     }
 
     val googleSafeToSuspend = listOf(
@@ -953,7 +949,7 @@ class GamingEngine(
                 return
             }
 
-            val apps = eligibleBoosterPackages(mode, force)
+            val apps = eligibleBoosterPackages(force)
             if (apps.isEmpty()) {
                 val reason = context.getString(R.string.gt_eng_booster_no_apps)
                 fail(BoosterOutcome.Unavailable(reason), context.getString(R.string.gt_eng_booster_unavail, reason))
@@ -1095,7 +1091,7 @@ class GamingEngine(
      * "already done" and not a failure — and neither is filtered in a forced run, where the user
      * explicitly asked for every package.
      */
-    private fun eligibleBoosterPackages(mode: String = "speed-profile", force: Boolean = false): List<String> {
+    private fun eligibleBoosterPackages(force: Boolean = false): List<String> {
         val userAdded = context.getSharedPreferences("AppPrefs", Context.MODE_PRIVATE)
             .getStringSet("user_games", emptySet()) ?: emptySet()
         return context.packageManager.getInstalledApplications(PackageManager.GET_META_DATA)
@@ -1325,8 +1321,6 @@ class GamingEngine(
     }
 
     suspend fun execute(command: String): String = shellRunner.exec(command)
-
-    suspend fun executeSafe(vararg args: String): String = shellRunner.execSafe(*args)
 
     private fun getSuspendTargets(activeGamePkg: String?): List<String> {
         val pm = context.packageManager

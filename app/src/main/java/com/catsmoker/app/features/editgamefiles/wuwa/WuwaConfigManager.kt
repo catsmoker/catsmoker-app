@@ -346,7 +346,7 @@ class WuwaConfigManager @Inject constructor(
         if (!canDeployViaShell()) {
             return@withContext DeployResult.Failure("channel", "Neither root nor Shizuku is available — use SAF instead.")
         }
-        deployOver(ShellChannel(), Channel.ROOT_OR_SHIZUKU, configs)
+        deployOver(ShellChannel(), configs)
     }
 
     /**
@@ -355,7 +355,6 @@ class WuwaConfigManager @Inject constructor(
      */
     private suspend fun deployOver(
         channel: DeviceChannel,
-        channelKind: Channel,
         configs: Map<String, String>
     ): DeployResult {
         val mkdir = channel.run("mkdir", "-p", CONFIG_DIR)
@@ -370,7 +369,7 @@ class WuwaConfigManager @Inject constructor(
         // Snapshot the game's own hash monitor before touching anything: after the deploy,
         // a changed snapshot means the game wrote concurrently and ModifyCount must NOT be
         // incremented (the reference's reconcile rule).
-        val hashSnapshot = readFileViaChannel(channel, HASH_MONITOR_PATH)
+        val hashSnapshot = readFileViaChannel(channel)
 
         val results = mutableListOf<FileDeployResult>()
         for ((name, content) in configs) {
@@ -399,10 +398,10 @@ class WuwaConfigManager @Inject constructor(
             return DeployResult.Failure("push", results.firstOrNull()?.detail ?: "no files were written")
         }
 
-        val hashOutcome = refreshConfigHashes(channel, incrementModifyCount = gameTouchedHashFile(channel, hashSnapshot) == false)
+        val hashOutcome = refreshConfigHashes(channel, incrementModifyCount = !gameTouchedHashFile(channel, hashSnapshot))
         return DeployResult.Success(
             DeploySuccess(
-                channel = channelKind,
+                channel = Channel.ROOT_OR_SHIZUKU,
                 gameStopped = stop.isSuccess,
                 files = results,
                 hashSynced = hashOutcome.first,
@@ -786,7 +785,7 @@ class WuwaConfigManager @Inject constructor(
     suspend fun verifyRecord(record: WuwaDeployHistoryStore.Record): WuwaDeployHistoryStore.Record? =
         withContext(Dispatchers.IO) {
             val verification = when {
-                canDeployViaShell() -> verifyViaDeviceChannel(ShellChannel(), record, "root / Shizuku shell")
+                canDeployViaShell() -> verifyViaDeviceChannel(ShellChannel(), record)
                 else -> verifyViaSaf(record)
             } ?: return@withContext null
             historyStore.updateVerification(record.id, verification)
@@ -794,8 +793,7 @@ class WuwaConfigManager @Inject constructor(
 
     private suspend fun verifyViaDeviceChannel(
         channel: DeviceChannel,
-        record: WuwaDeployHistoryStore.Record,
-        channelLabel: String
+        record: WuwaDeployHistoryStore.Record
     ): WuwaDeployHistoryStore.Verification {
         val files = record.files.map { f ->
             if (f.md5.isBlank()) {
@@ -826,7 +824,7 @@ class WuwaConfigManager @Inject constructor(
                 }
             }
         }
-        return WuwaDeployHistoryStore.Verification(System.currentTimeMillis(), channelLabel, files)
+        return WuwaDeployHistoryStore.Verification(System.currentTimeMillis(), "root / Shizuku shell", files)
     }
 
     private fun verifyViaSaf(record: WuwaDeployHistoryStore.Record): WuwaDeployHistoryStore.Verification? {
@@ -878,14 +876,14 @@ class WuwaConfigManager @Inject constructor(
         return digests.size >= 2 && digests[0] == digests[1]
     }
 
-    private suspend fun readFileViaChannel(channel: DeviceChannel, path: String): String {
-        val r = channel.run("cat", path)
+    private suspend fun readFileViaChannel(channel: DeviceChannel): String {
+        val r = channel.run("cat", HASH_MONITOR_PATH)
         return if (r.isSuccess) r.stdout else ""
     }
 
     /** True only when the game rewrote the hash file between snapshot and now. */
     private suspend fun gameTouchedHashFile(channel: DeviceChannel, snapshot: String): Boolean =
-        readFileViaChannel(channel, HASH_MONITOR_PATH) != snapshot
+        readFileViaChannel(channel) != snapshot
 
     /**
      * Scoped storage on some ROMs refuses shell writes under `Android/data` even for root
@@ -917,7 +915,7 @@ class WuwaConfigManager @Inject constructor(
         return hashMutex.withLock {
             try {
                 val now = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.US).format(Date())
-                val existing = readFileViaChannel(channel, HASH_MONITOR_PATH)
+                val existing = readFileViaChannel(channel)
                 val existingLines = existing.lines().toMutableList()
                 val hasExistingContent = existingLines.any { it.trim().startsWith("[") }
 
@@ -1008,7 +1006,7 @@ class WuwaConfigManager @Inject constructor(
                     channel.run("rm", "-f", newTempPath)
                     return@withLock false to "hash refresh failed: ${mv.text.ifBlank { "mv exited ${mv.exitCode}" }}"
                 }
-                val readBack = readFileViaChannel(channel, HASH_MONITOR_PATH)
+                val readBack = readFileViaChannel(channel)
                 if (readBack.isBlank()) {
                     return@withLock true to "hash synced (could not verify — read-back empty)"
                 }
@@ -1073,7 +1071,7 @@ class WuwaConfigManager @Inject constructor(
         /** Community pack walk bound: root README + variant folders is two levels; anything past this is not a pack. */
         private const val MAX_PACK_WALK_DEPTH = 3
 
-        private val HASH_SECTION_REGEX = Regex("^\\[[A-Za-z0-9_\\-]+\\.ini\\]$", RegexOption.IGNORE_CASE)
+        private val HASH_SECTION_REGEX = Regex("^\\[[A-Za-z0-9_\\-]+\\.ini]$", RegexOption.IGNORE_CASE)
         private val HASH_KEYS = listOf("Hash", "ModifyCount", "LastModifiedTime")
 
         // Shared across ViewModel instances: every deploy stages to the same device paths.

@@ -12,7 +12,6 @@
     <string name="sys_logs_subtitle">Ver diagnósticos de la app y del sistema.</string>
     <string name="sys_section_appearance">Apariencia</string>
     <string name="sys_theme_title">Tema</string>
-    <string name="sys_theme_subtitle">Pantallas claras u oscuras.</string>
     <string name="sys_theme_system">Predeterminado del sistema</string>
     <string name="sys_theme_dark">Oscuro</string>
     <string name="sys_theme_light">Claro</string>
@@ -20,10 +19,6 @@
     <string name="sys_language_title">Idioma</string>
     <string name="sys_language_subtitle">Idioma de la app. Se aplica al instante.</string>
     <string name="sys_lang_system">Predeterminado del sistema</string>
-    <string name="sys_lang_english">English</string>
-    <string name="sys_lang_arabic">العربية</string>
-    <string name="sys_lang_spanish">Español</string>
-    <string name="sys_lang_chinese">中文 (简体)</string>
     <string name="sys_support_title">Apoya al desarrollador</string>
     <string name="sys_support_text">Dale una estrella al proyecto en GitHub y dona para apoyar al desarrollador en PayPal.</string>
     <string name="sys_support_star">Estrella</string>

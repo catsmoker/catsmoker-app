@@ -112,7 +112,7 @@ class AutoForceStopService : Service() {
     }
 
     private suspend fun pollLoop() {
-        val usageStatsManager = getSystemService(Context.USAGE_STATS_SERVICE) as UsageStatsManager
+        val usageStatsManager = getSystemService(USAGE_STATS_SERVICE) as UsageStatsManager
         var previousForegroundPackage: String? = null
         var lastEventTime = System.currentTimeMillis() - POLL_INTERVAL_MS
         var stoppedCount = 0
@@ -216,7 +216,7 @@ class AutoForceStopService : Service() {
      * reports it denied, so the op has to be read from [AppOpsManager] instead.
      */
     private fun hasUsageAccess(): Boolean {
-        val appOps = getSystemService(Context.APP_OPS_SERVICE) as? AppOpsManager ?: return false
+        val appOps = getSystemService(APP_OPS_SERVICE) as? AppOpsManager ?: return false
         val mode = try {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
                 appOps.unsafeCheckOpNoThrow(

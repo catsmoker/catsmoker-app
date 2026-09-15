@@ -60,8 +60,7 @@ class DexoptSweepScheduler @Inject constructor(
                 .getWorkInfosForUniqueWork(DexoptSweepWorker.UNIQUE_WORK_NAME)
                 .get()
                 .asSequence()
-                .filter { !it.state.isFinished }
-                .map { it.nextScheduleTimeMillis }
+                .mapNotNull { if (!it.state.isFinished) it.nextScheduleTimeMillis else null }
                 .minOrNull()
         } catch (_: Exception) {
             // WorkManager not reachable (or not yet initialized) — no estimate exists, and null

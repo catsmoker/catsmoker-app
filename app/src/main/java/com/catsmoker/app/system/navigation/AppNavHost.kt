@@ -38,7 +38,6 @@ fun AppNavHost(navController: NavHostController, startDestination: String) {
         }
         composable(Routes.GAMING_TOOLS) {
             GamingToolsRoute(
-                onNavigate = { navController.navigate(it) },
                 onBack = { navController.popBackStack() }
             )
         }

@@ -20,7 +20,6 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import java.io.File
-import java.util.Locale
 import kotlin.math.abs
 import kotlin.math.roundToInt
 import kotlin.time.Duration
@@ -686,7 +685,7 @@ class MetricsEngine(
         // µA × mV is 10^-9 W. The sign only says charging or discharging, so the magnitude is the
         // draw either way.
         val watts = abs(currentUa.toDouble()) * voltageMv.toDouble() / MICRO_AMP_MILLI_VOLT_PER_WATT
-        if (watts < MIN_PLAUSIBLE_WATTS || watts > MAX_PLAUSIBLE_WATTS) {
+        if (watts !in MIN_PLAUSIBLE_WATTS..MAX_PLAUSIBLE_WATTS) {
             Log.w(
                 TAG,
                 "Discarding implausible power reading: current_now=$currentUa uA, " +

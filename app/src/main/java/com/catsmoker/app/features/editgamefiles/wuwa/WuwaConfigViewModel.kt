@@ -172,8 +172,6 @@ class WuwaConfigViewModel @Inject constructor(
                 // A refresh keeps the log axes an earlier analysis earned — only a fresh
                 // analyzeGameLog() changes them.
                 val rec = computeRecommendation(
-                    gpu = null,
-                    resolution = null,
                     log = _uiState.value.logAnalysis?.info
                 )
                 RefreshOutcome(
@@ -214,8 +212,6 @@ class WuwaConfigViewModel @Inject constructor(
      * conservative −20, so the ladder never emits tiers needing unmeasured evidence.
      */
     private suspend fun computeRecommendation(
-        gpu: String?,
-        resolution: String?,
         log: WuwaLogParser.LogInfo?
     ): WuwaSmartBrain.Recommendation = withContext(Dispatchers.IO) {
         val activityManager = context.getSystemService(Context.ACTIVITY_SERVICE) as android.app.ActivityManager
@@ -224,9 +220,9 @@ class WuwaConfigViewModel @Inject constructor(
         val ramMb = (memInfo.totalMem / (1024L * 1024L)).toInt()
         WuwaSmartBrain.recommend(
             WuwaSmartBrain.DeviceSignals(
-                gpu = gpu ?: log?.gpu,
+                gpu = log?.gpu,
                 ramMb = ramMb,
-                resolution = resolution ?: log?.resolution,
+                resolution = log?.resolution,
                 vulkanAvailable = try {
                     context.packageManager.hasSystemFeature(
                         android.content.pm.PackageManager.FEATURE_VULKAN_HARDWARE_VERSION
@@ -480,7 +476,7 @@ class WuwaConfigViewModel @Inject constructor(
                             decrypted = decode == WuwaLogDecryptor.DecodeResult.DECRYPTED,
                             lineCount = text.lineSequence().count()
                         )
-                        val rec = computeRecommendation(null, null, info)
+                        val rec = computeRecommendation(info)
                         withContext(Dispatchers.Main) {
                             _uiState.update { it.copy(logAnalysis = analysis, recommendation = rec) }
                         }

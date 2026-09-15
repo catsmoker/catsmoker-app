@@ -212,6 +212,4 @@ class PermissionViewModel @Inject constructor(
     } catch (_: Exception) {
         false
     }
-
-    private fun checkShizukuPermission(): Boolean = shellRunner.shizukuHasPermission.value
 }

@@ -12,7 +12,6 @@
     <string name="sys_logs_subtitle">عرض تشخيصات التطبيق والنظام.</string>
     <string name="sys_section_appearance">المظهر</string>
     <string name="sys_theme_title">السمة</string>
-    <string name="sys_theme_subtitle">شاشات داكنة أو فاتحة.</string>
     <string name="sys_theme_system">افتراضي النظام</string>
     <string name="sys_theme_dark">داكن</string>
     <string name="sys_theme_light">فاتح</string>
@@ -20,10 +19,6 @@
     <string name="sys_language_title">اللغة</string>
     <string name="sys_language_subtitle">لغة التطبيق. تُطبق فورًا.</string>
     <string name="sys_lang_system">افتراضي النظام</string>
-    <string name="sys_lang_english">English</string>
-    <string name="sys_lang_arabic">العربية</string>
-    <string name="sys_lang_spanish">Español</string>
-    <string name="sys_lang_chinese">中文 (简体)</string>
     <string name="sys_support_title">ادعم المطوّر</string>
     <string name="sys_support_text">يرجى منح المشروع نجمة على GitHub والتبرع لدعم المطوّر عبر PayPal.</string>
     <string name="sys_support_star">نجمة</string>

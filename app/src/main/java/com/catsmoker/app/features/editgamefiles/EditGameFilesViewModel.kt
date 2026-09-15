@@ -54,7 +54,7 @@ class EditGameFilesViewModel @Inject constructor(
     sealed class EditEvent {
         data class Toast(val message: String, val isLong: Boolean = false) : EditEvent()
         object LaunchFilePicker : EditEvent()
-        data class LaunchSafPicker(val dir: String) : EditEvent()
+        data object LaunchSafPicker : EditEvent()
         object LaunchFolderPicker : EditEvent()
         object LaunchAllFilesAccess : EditEvent()
         object ShowZArchiverDialog : EditEvent()
@@ -590,7 +590,7 @@ class EditGameFilesViewModel @Inject constructor(
     fun dismissMethodChooser() = _uiState.update { it.copy(showMethodChooser = false) }
 
     /**
-     * Entry point for the reset channel (TODO.md B14): deletes the game's own `Active.sav` so
+     * Entry point for the reset channel: deletes the game's own `Active.sav` so
      * it regenerates one from defaults on the next launch — the clean revert for everything
      * this screen pushed, which the reference implements as `deleteActiveSavWithShizuku()` /
      * `deleteActiveSavWithSAF()` in `referance/gamingtools/BattleGrounds_GFX-main`.
@@ -719,7 +719,7 @@ class EditGameFilesViewModel @Inject constructor(
     }
 
     /**
-     * Backup & restore channel (TODO.md B13). Every overwrite this screen performs first saves
+     * Backup & restore channel. Every overwrite this screen performs first saves
      * the game's current file through [ConfigBackupStore]; this is the way back. From the
      * references' safety-backup systems — `hsrgraphicdroid-main` ("Safety Backup System") and
      * `WuWa-Config-Android-main/config/BackupStore.kt` — which both restore by pushing the saved
@@ -860,8 +860,7 @@ class EditGameFilesViewModel @Inject constructor(
             0 -> performRootAction { checkAndStartShizukuAction() }
             1 -> checkAndStartShizukuAction()
             2 -> {
-                val config = gameConfigs[_uiState.value.selectedGame]
-                _events.tryEmit(EditEvent.LaunchSafPicker(config?.saveDir ?: ""))
+                _events.tryEmit(EditEvent.LaunchSafPicker)
             }
             3 -> {
                 pendingAction = { handleZArchiverAction() }
@@ -1054,12 +1053,9 @@ class EditGameFilesViewModel @Inject constructor(
                 return false
             }
             // Safety backup before the overwrite: the bytes the device actually held, fetched by
-            // the same probe — no second pull, and only a real file is ever backed up.
-            if (existingBytes.isNotEmpty()) {
-                runCatching { existingBytes }.getOrNull()?.let { bytes ->
-                    backupStore.save(config.packageName, config.saveFile, bytes)
-                }
-            }
+            // the same probe — no second pull, and only a real file is ever backed up
+            // (null/empty was excluded above).
+            backupStore.save(config.packageName, config.saveFile, existingBytes)
             shellRunner.execSafe("mkdir", "-p", saveDir)
             shellRunner.execSafe("cp", "-f", tempFile.absolutePath, targetPath)
             true
@@ -1251,7 +1247,7 @@ class EditGameFilesViewModel @Inject constructor(
     fun launchZArchiver(): Boolean {
         val intent = context.packageManager.getLaunchIntentForPackage(ZARCHIVER_PACKAGE)
         return if (intent != null) {
-            intent.addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK)
+            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
             context.startActivity(intent)
             true
         } else {
