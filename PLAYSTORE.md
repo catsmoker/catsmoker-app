@@ -441,6 +441,31 @@ HYGIENE (required regardless):
 
 ## 11. Changelog (newest first)
 
+- 2026-09-16: Cherry-picked `[PLAY-SAFE] dd26377` from `main`
+  (`63151b6`, ten conflicts, all resolved for Play). The pick clears the
+  IDE-inspection debt in shared code: HSR write paths confined to
+  `Dispatchers.IO`, redundant `suspend` dropped, dead branches removed,
+  15 unused imports + dead symbols/params removed, KTX `edit {}`/`toUri()`,
+  qualifier/template/regex simplifications, dead `strings_sys` keys
+  removed, `translatable="false"` on English-only keys, `targetSdk 37`,
+  `LocalWindowInfo` container size for the banner, dead README ToC links
+  dropped. Conflict resolutions, none dropping a Play restriction:
+  `proguard-rules.pro` kept HEAD (Play already fixed the same R8 error
+  with the `ShizukuRemoteProcess` return type); `AppNavHost.kt` kept
+  HEAD (spoof routes absent by design) plus re-applied the
+  `GamingToolsRoute` call-site fix in an amend; `SettingsViewModel.kt`
+  kept HEAD (GitHub self-updater absent by design;
+  `onBuildTypeChanged` does not exist here); `values/strings.xml` kept
+  HEAD (LSPosed scope array absent by design; `translatable` flags
+  already present); `strings_sys.xml` dead keys deleted from all five
+  Play locale files (`values`, `ar-rSA`, `en-rGB`, `es-rES`, `zh-rCN`,
+  verified zero code references on this branch);
+  `StartAppBanner.kt` (Start.io) and `ScreenRefreshRateConfigTest.kt`
+  (spoof-adjacent) accepted as deleted; `GameDeveloperOptions.kt` kept
+  HEAD (SurfaceFlinger overlay-probe block absent here) plus the two
+  peak-refresh-rate KTX conversions. `compileDebugKotlin` green and
+  `testDebugUnitTest` green (0 failures) after the pick.
+
 - 2026-09-15: Cherry-picked `[PLAY-SAFE] 135cf6d` from `main`
   (`1b27214`, one conflict). The pick brings the Dynamic color theme option
   (`AppearanceStore.ThemeMode.DYNAMIC` → `CatsmokerTheme(dynamicColor)`,
