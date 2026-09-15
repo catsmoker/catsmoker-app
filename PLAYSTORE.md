@@ -441,6 +441,21 @@ HYGIENE (required regardless):
 
 ## 11. Changelog (newest first)
 
+- 2026-09-15: Cherry-picked `[PLAY-SAFE] 135cf6d` from `main`
+  (`1b27214`, one conflict). The pick brings the Dynamic color theme option
+  (`AppearanceStore.ThemeMode.DYNAMIC` → `CatsmokerTheme(dynamicColor)`,
+  Material You `dynamicDark/LightColorScheme` on API 31+ with the Nothing
+  brand schemes as fallback; option row + `sys_theme_dynamic` in all 4
+  locales; adds the missing `displayMedium` Ndot type). Conflict in
+  `PerformanceOverlayService.kt`: both sides already carried the identical
+  lazy-`prefs` fix — `playstore` additionally had a 3-line NPE crash-loop
+  comment, so kept the comment plus the shared lazy line; no Play
+  restriction involved, nothing dropped. Locale renames (`values-ar` →
+  `values-ar-rSA`, `values-es` → `values-es-rES`) auto-merged. The
+  `MainScreen.kt` dashboard rework (`91cf187 [MAIN-ONLY]`) was intentionally
+  not picked (spoof entry stays main-only). `compileDebugKotlin` / unit
+  tests / lint / on-device `verify` still pending after this pick.
+
 - 2026-09-13: Designated the permanent release/upload key and wired release
   signing. Key: PKCS#12 outside the repo (alias `key0`, created 2026-09-12,
   `O=catsmoker`), SHA-256 `C6:D3:…:39:FA`, SHA-1 `2C:B4:…:7C:75` (full prints
