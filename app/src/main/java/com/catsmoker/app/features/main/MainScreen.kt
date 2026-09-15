@@ -4,10 +4,10 @@ import androidx.activity.compose.BackHandler
 import androidx.compose.animation.*
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -22,7 +22,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.drawscope.Stroke
-import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -36,6 +35,7 @@ import com.catsmoker.app.shared.data.model.FpsSource
 import com.catsmoker.app.shared.data.model.MetricReadStatus
 import com.catsmoker.app.shared.data.model.MetricsState
 import com.catsmoker.app.shared.ui.components.QuickActionButton
+import com.catsmoker.app.shared.ui.components.SectionCard
 import com.catsmoker.app.shared.ui.components.StartAppBanner
 import com.catsmoker.app.system.navigation.Routes
 import com.catsmoker.app.shared.ui.theme.CatsmokerTheme
@@ -143,55 +143,43 @@ fun MainScreen(
     val actionsAlpha by animateFloatAsState(if (hydrationPhase >= 2) 1f else 0f, tween(300), label = "actions")
     val chartAlpha by animateFloatAsState(if (hydrationPhase >= 3) 1f else 0f, tween(500), label = "chart")
 
-    // No-scroll dashboard that fills the viewport with content, not gaps: the performance
-    // card and the actions block split leftover height by weight (1 : 1.5), and the chart,
-    // grid gap, and full-width tiles absorb their share inside their own bounds. Fixed 4-6dp
-    // spacers only separate sections. Ad slot stays reserved at the bottom.
-    Column(
+    LazyColumn(
         modifier = Modifier
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
             .systemBarsPadding()
-            .padding(horizontal = 16.dp)
     ) {
         // 1. Header (Always Instant)
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 8.dp, vertical = 8.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Text(
-                text = stringResource(R.string.app_name),
-                style = MaterialTheme.typography.titleLarge,
-                color = MaterialTheme.colorScheme.onSurface
-            )
+        item {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 24.dp, vertical = 20.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = stringResource(R.string.app_name),
+                    style = MaterialTheme.typography.titleLarge,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
 
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                StatusBadge(label = stringResource(R.string.res_method_root), active = state.hasRoot, activeColor = NothingRed)
-                StatusBadge(label = stringResource(R.string.res_method_shizuku), active = state.hasShizuku, activeColor = NothingRed)
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    StatusBadge(label = stringResource(R.string.res_method_root), active = state.hasRoot, activeColor = NothingRed)
+                    StatusBadge(label = stringResource(R.string.res_method_shizuku), active = state.hasShizuku, activeColor = NothingRed)
+                }
             }
         }
 
-        // 2. Performance Monitor (Progressive, compact: small fixed chart, no weight —
-        // leftover height belongs to the actions block and the reserved bottom gap)
+        // 2. Performance Monitor (Progressive)
         if (hydrationPhase >= 1) {
-            Column(
-                modifier = Modifier.graphicsLayer { alpha = metricsAlpha }
-            ) {
-                // Same look as SectionCard, inlined to keep this screen's density local.
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(20.dp),
-                    colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.surface
-                    ),
-                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline)
+            item {
+                Column(
+                    modifier = Modifier
+                        .padding(horizontal = 24.dp)
+                        .graphicsLayer { alpha = metricsAlpha }
                 ) {
-                    Column(
-                        modifier = Modifier.padding(12.dp)
-                    ) {
+                    SectionCard {
                         Row(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.SpaceBetween,
@@ -208,7 +196,7 @@ fun MainScreen(
                                     // the reason takes the label's place rather than a 0 appearing here.
                                     Text(
                                         text = state.fps?.toString() ?: "—",
-                                        style = MaterialTheme.typography.displayMedium,
+                                        style = MaterialTheme.typography.displayLarge,
                                         color = NothingRed
                                     )
                                     Text(
@@ -222,11 +210,11 @@ fun MainScreen(
                                         },
                                         style = MaterialTheme.typography.titleMedium,
                                         color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                        modifier = Modifier.padding(start = 4.dp, bottom = 8.dp)
+                                        modifier = Modifier.padding(start = 4.dp, bottom = 12.dp)
                                     )
                                 }
                             }
-
+                            
                             Column(horizontalAlignment = Alignment.End, verticalArrangement = Arrangement.spacedBy(8.dp)) {
                                 Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
                                     CompactStat(
@@ -264,12 +252,10 @@ fun MainScreen(
                             }
                         }
 
-                        Spacer(modifier = Modifier.height(6.dp))
+                        Spacer(modifier = Modifier.height(16.dp))
 
                         if (hydrationPhase >= 4) {
-                            Box(
-                                modifier = Modifier.graphicsLayer { alpha = chartAlpha }
-                            ) {
+                            Box(modifier = Modifier.graphicsLayer { alpha = chartAlpha }) {
                                 CombinedChart(
                                     fpsHistory = fpsHistory,
                                     // No privilege gate needed: the engine only appends readings it
@@ -278,127 +264,113 @@ fun MainScreen(
                                     ramHistory = ramHistory,
                                     tempHistory = tempHistory,
                                     pingHistory = pingHistory,
-                                    ramTotal = state.ramTotalGb,
-                                    modifier = Modifier.height(90.dp)
+                                    ramTotal = state.ramTotalGb
                                 )
                             }
                         } else {
-                            Spacer(modifier = Modifier.height(90.dp))
+                            Spacer(modifier = Modifier.height(120.dp))
                         }
                     }
                 }
             }
         }
 
-        // 3. Quick Actions (Progressive, compact wrap-content tiles — leftover height goes
-        // to the flexible gap above the reserved bottom slot)
+        // 3. Quick Actions (Progressive)
         if (hydrationPhase >= 2) {
-            Column(
-                modifier = Modifier.graphicsLayer { alpha = actionsAlpha }
-            ) {
-                Text(
-                    text = stringResource(R.string.dash_quick_actions),
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.padding(start = 4.dp, top = 6.dp, bottom = 6.dp)
-                )
-
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+            item {
+                Column(
+                    modifier = Modifier
+                        .padding(horizontal = 24.dp)
+                        .graphicsLayer { alpha = actionsAlpha }
                 ) {
-                    QuickActionButton(
-                        title = stringResource(R.string.dash_spoof_title),
-                        subtitle = stringResource(R.string.dash_spoof_subtitle),
-                        iconContainerColor = MaterialTheme.colorScheme.surfaceVariant,
-                        iconContentColor = MaterialTheme.colorScheme.onSurface,
-                        onClick = onOpenSpoofDevice,
-                        modifier = Modifier.weight(1f, fill = true),
-                        contentPadding = 16.dp,
-                        iconSize = 44.dp,
-                        gridTitleGap = 14.dp,
-                        icon = { Icon(Icons.Default.SettingsInputComponent, null) }
+                    Spacer(modifier = Modifier.height(28.dp))
+                    Text(
+                        text = stringResource(R.string.dash_quick_actions),
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.padding(start = 4.dp, bottom = 12.dp)
                     )
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth().height(IntrinsicSize.Max),
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        QuickActionButton(
+                            title = stringResource(R.string.dash_spoof_title),
+                            subtitle = stringResource(R.string.dash_spoof_subtitle),
+                            iconContainerColor = MaterialTheme.colorScheme.surfaceVariant,
+                            iconContentColor = MaterialTheme.colorScheme.onSurface,
+                            onClick = onOpenSpoofDevice,
+                            modifier = Modifier.weight(1f).fillMaxHeight(),
+                            icon = { Icon(Icons.Default.SettingsInputComponent, null) }
+                        )
+                        QuickActionButton(
+                            title = stringResource(R.string.dash_edit_files_title),
+                            subtitle = stringResource(R.string.dash_edit_files_subtitle),
+                            iconContainerColor = MaterialTheme.colorScheme.surfaceVariant,
+                            iconContentColor = MaterialTheme.colorScheme.onSurface,
+                            onClick = onOpenEditGameFiles,
+                            modifier = Modifier.weight(1f).fillMaxHeight(),
+                            icon = { Icon(Icons.Default.FolderOpen, null) }
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    // HSR / WuWa / GRID live inside File Engineering's "Advanced Editors" section
+                    // now — one place for every game-file tool, instead of three dashboard cards.
+
+                    Spacer(modifier = Modifier.height(12.dp))
+
                     QuickActionButton(
-                        title = stringResource(R.string.dash_edit_files_title),
-                        subtitle = stringResource(R.string.dash_edit_files_subtitle),
+                        title = stringResource(R.string.Gaming_tools_title),
+                        subtitle = stringResource(R.string.dash_gaming_tools_subtitle),
                         iconContainerColor = MaterialTheme.colorScheme.surfaceVariant,
                         iconContentColor = MaterialTheme.colorScheme.onSurface,
-                        onClick = onOpenEditGameFiles,
-                        modifier = Modifier.weight(1f, fill = true),
-                        contentPadding = 16.dp,
-                        iconSize = 44.dp,
-                        gridTitleGap = 14.dp,
-                        icon = { Icon(Icons.Default.FolderOpen, null) }
+                        onClick = onOpenGamingTools,
+                        isFullWidth = true,
+                        showChevron = true,
+                        icon = { Icon(Icons.Default.SportsEsports, null) }
+                    )
+
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    QuickActionButton(
+                        title = stringResource(R.string.core_settings_title),
+                        subtitle = stringResource(R.string.core_settings_subtitle),
+                        iconContainerColor = MaterialTheme.colorScheme.surfaceVariant,
+                        iconContentColor = MaterialTheme.colorScheme.onSurface,
+                        onClick = onOpenSettings,
+                        isFullWidth = true,
+                        showChevron = true,
+                        icon = { Icon(Icons.Default.Settings, null) }
+                    )
+
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    QuickActionButton(
+                        title = stringResource(R.string.about_header_title),
+                        subtitle = stringResource(R.string.dash_about_subtitle),
+                        iconContainerColor = MaterialTheme.colorScheme.surfaceVariant,
+                        iconContentColor = MaterialTheme.colorScheme.onSurface,
+                        onClick = onOpenAbout,
+                        isFullWidth = true,
+                        showChevron = true,
+                        icon = { Icon(Icons.Default.Info, null) }
                     )
                 }
-
-                Spacer(modifier = Modifier.height(6.dp))
-
-                // HSR / WuWa / GRID live inside File Engineering's "Advanced Editors" section
-                // now — one place for every game-file tool, instead of three dashboard cards.
-
-                QuickActionButton(
-                    title = stringResource(R.string.Gaming_tools_title),
-                    subtitle = stringResource(R.string.dash_gaming_tools_subtitle),
-                    iconContainerColor = MaterialTheme.colorScheme.surfaceVariant,
-                    iconContentColor = MaterialTheme.colorScheme.onSurface,
-                    onClick = onOpenGamingTools,
-                    isFullWidth = true,
-                    showChevron = true,
-                    contentPadding = 16.dp,
-                    iconSize = 44.dp,
-                    icon = { Icon(Icons.Default.SportsEsports, null) }
-                )
-
-                Spacer(modifier = Modifier.height(4.dp))
-
-                QuickActionButton(
-                    title = stringResource(R.string.core_settings_title),
-                    subtitle = stringResource(R.string.core_settings_subtitle),
-                    iconContainerColor = MaterialTheme.colorScheme.surfaceVariant,
-                    iconContentColor = MaterialTheme.colorScheme.onSurface,
-                    onClick = onOpenSettings,
-                    isFullWidth = true,
-                    showChevron = true,
-                    contentPadding = 16.dp,
-                    iconSize = 44.dp,
-                    icon = { Icon(Icons.Default.Settings, null) }
-                )
-
-                Spacer(modifier = Modifier.height(4.dp))
-
-                QuickActionButton(
-                    title = stringResource(R.string.about_header_title),
-                    subtitle = stringResource(R.string.dash_about_subtitle),
-                    iconContainerColor = MaterialTheme.colorScheme.surfaceVariant,
-                    iconContentColor = MaterialTheme.colorScheme.onSurface,
-                    onClick = onOpenAbout,
-                    isFullWidth = true,
-                    showChevron = true,
-                    contentPadding = 16.dp,
-                    iconSize = 44.dp,
-                    icon = { Icon(Icons.Default.Info, null) }
-                )
             }
         }
 
-        // Flexible gap: absorbs leftover height on tall screens, sits between the last
-        // button and the reserved bottom slot. On short screens it can shrink to zero.
-        Spacer(modifier = Modifier.weight(1f))
-
-        // 4. Bottom gap: always reserved, ads on or off. With ads the slot holds the deferred
-        // banner (50dp / 90dp) so the layout never jumps when it arrives; without ads the same
-        // slot stays as breathing room so the dashboard always ends short of the screen edge.
-        val adSlotHeight = if (LocalConfiguration.current.screenWidthDp >= 600) 90.dp else 50.dp
-        if (adsEnabled && hydrationPhase >= 3 && showAdsDeferred) {
-            StartAppBanner(modifier = Modifier.padding(top = 6.dp, bottom = 8.dp))
-        } else {
-            Spacer(
-                modifier = Modifier
-                    .padding(top = 6.dp, bottom = 8.dp)
-                    .height(adSlotHeight)
-            )
+        // 4. Ads (Ultra Deferred)
+        if (hydrationPhase >= 3) {
+            item {
+                if (adsEnabled && showAdsDeferred) {
+                    Spacer(modifier = Modifier.height(24.dp))
+                    StartAppBanner(modifier = Modifier.padding(bottom = 8.dp))
+                }
+                Spacer(modifier = Modifier.height(40.dp))
+            }
         }
     }
 }
@@ -411,15 +383,14 @@ fun CombinedChart(
     tempHistory: List<Float>,
     pingHistory: List<Int>,
     /** Total RAM, used as the y-scale. Null when it could not be read. */
-    ramTotal: Float?,
-    modifier: Modifier = Modifier
+    ramTotal: Float?
 ) {
     val nothingRed = NothingRed
-
+    
     Spacer(
-        modifier = modifier
+        modifier = Modifier
             .fillMaxWidth()
-            .heightIn(min = 48.dp)
+            .height(120.dp)
             .clip(RoundedCornerShape(12.dp))
             // Theme panel, not a fixed tint: the old white-3% wash was invisible on a
             // light card, leaving the lines floating on the card itself.
