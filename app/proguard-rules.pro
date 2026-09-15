@@ -42,9 +42,11 @@
 
 -dontwarn de.robv.android.xposed.**
 
-# ShellRunner reflects Shizuku's private newProcess(String[], String[], String) — the one-shot
+# ShellRunner reflects Shizuku's newProcess(String[], String[], String) — the one-shot
 # remote-shell channel (BattleGrounds_GFX's mechanism) that works when the user-service helper
-# will not start. R8 must not rename/remove the method on the library class.
+# will not start. R8 must not rename/remove the method on the library class. No visibility
+# modifier: the method's visibility changed across shizuku-api releases, and pinning one
+# (e.g. `private`) makes the rule match nothing on versions that declared it otherwise.
 -keepclassmembers class rikka.shizuku.Shizuku {
-    private static java.lang.Process newProcess(java.lang.String[], java.lang.String[], java.lang.String);
+    static java.lang.Process newProcess(java.lang.String[], java.lang.String[], java.lang.String);
 }

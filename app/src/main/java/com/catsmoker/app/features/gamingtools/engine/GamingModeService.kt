@@ -5,7 +5,6 @@ import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
 import android.app.Service
-import android.content.Context
 import android.content.Intent
 import android.content.pm.ServiceInfo
 import android.os.Build
@@ -18,9 +17,6 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -34,7 +30,6 @@ class GamingModeService : Service() {
 
     override fun onCreate() {
         super.onCreate()
-        _isRunning.value = true
         createNotificationChannel()
 
         val notification = buildNotification()
@@ -62,7 +57,6 @@ class GamingModeService : Service() {
     }
 
     override fun onDestroy() {
-        _isRunning.value = false
         serviceScope.cancel()
         super.onDestroy()
     }
@@ -117,8 +111,5 @@ class GamingModeService : Service() {
         const val NOTIFICATION_ID = 102
         const val ACTION_STOP = "com.catsmoker.app.ACTION_STOP_GAMING_MODE"
         private const val REQUEST_STOP = 0
-
-        private val _isRunning = MutableStateFlow(false)
-        val isRunning: StateFlow<Boolean> = _isRunning.asStateFlow()
     }
 }

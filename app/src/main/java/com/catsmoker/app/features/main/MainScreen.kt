@@ -1,7 +1,6 @@
 package com.catsmoker.app.features.main
 
 import androidx.activity.compose.BackHandler
-import androidx.compose.animation.*
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
@@ -425,9 +424,9 @@ private fun createPath(history: List<Float>, size: androidx.compose.ui.geometry.
     val h = size.height
     val currentMax = history.maxOrNull()?.coerceAtLeast(baseMax)?.coerceAtLeast(1f) ?: 1f
     
-    history.forEachIndexed { i, val_ ->
+    history.forEachIndexed { i, value ->
         val x = w * i / (history.size - 1).toFloat()
-        val y = h * (1f - val_ / currentMax)
+        val y = h * (1f - value / currentMax)
         if (i == 0) path.moveTo(x, y) else path.lineTo(x, y)
     }
     return path

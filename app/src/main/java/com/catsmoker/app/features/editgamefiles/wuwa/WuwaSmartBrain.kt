@@ -91,7 +91,7 @@ object WuwaSmartBrain {
         Regex("""tensor\s*g[345]""") to "flagship",
         Regex("""dimensity\s*9[3-9]\d\d?""") to "flagship",
         Regex("""apple\s*(m[34]|a18)""") to "flagship",
-        Regex("""adreno.*7[5-9]\d|adreno.*8[0]\d""") to "high",
+        Regex("""adreno.*7[5-9]\d|adreno.*80\d""") to "high",
         Regex("""tensor\s*g[12]""") to "high",
         Regex("""dimensity\s*(9[0-2]\d|8[5-9]\d)""") to "high",
         Regex("""exynos\s*2200""") to "high",
@@ -440,9 +440,7 @@ object WuwaSmartBrain {
             score >= 40 -> "balanced"
             (s.autoAdjustTriggers ?: 0) > 10 && score >= 25 -> "endurance"
             thermal != null && thermal >= 3 && score >= 30 -> "endurance"
-            (s.autoAdjustTriggers ?: 0) > 10 -> "performance"
-            score >= 20 -> "performance"
-            else -> "potato"
+            else -> "performance"
         }
     }
 

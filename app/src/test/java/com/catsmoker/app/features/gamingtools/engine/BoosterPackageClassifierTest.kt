@@ -45,7 +45,7 @@ class BoosterPackageClassifierTest {
             "/odm/overlay/OdmOverlay.apk",
             "/overlay/AccentColorOverlay.apk"
         )) {
-            assertTrue("$path", BoosterPackageClassifier.isOverlayLike("com.example.quiet", path))
+            assertTrue(path, BoosterPackageClassifier.isOverlayLike("com.example.quiet", path))
         }
     }
 

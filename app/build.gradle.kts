@@ -14,7 +14,7 @@ android {
     defaultConfig {
         applicationId = "com.catsmoker.app"
         minSdk = 27
-        targetSdk = 36
+        targetSdk = 37
         // versionCode 7: IFileService gained readFile/writeFile — the bump is what forces
         // Shizuku to restart the daemonized helper whose AIDL no longer matches (see the
         // ShellRunner KDoc). Shipped helpers keep serving the old AIDL until this moves.

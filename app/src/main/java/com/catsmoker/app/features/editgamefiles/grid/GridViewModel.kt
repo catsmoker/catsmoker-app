@@ -37,10 +37,7 @@ data class GridUiState(
     val hasBackup: Boolean = false,
     val canUseShell: Boolean = false,
     val hasSafGrant: Boolean = false
-) {
-    /** A value group is editable only when the file actually carries its keys. */
-    fun ladderEnabled(name: String): Boolean = "$name" !in missingKeys && "high_$name" !in missingKeys
-}
+)
 
 @HiltViewModel
 class GridViewModel @Inject constructor(
@@ -185,8 +182,6 @@ class GridViewModel @Inject constructor(
             }
         }
     }
-
-    fun hasBackup(): Boolean = manager.hasBackup()
 
     /** The SAF path needs a one-time pick of the game's Android/data root. */
     fun onSafFolderPicked(uri: android.net.Uri) {

@@ -160,7 +160,7 @@ object WuwaBenchmarkTuner {
         if (idx < 0) return currentPreset
         if (avgFps >= targetFps && idx > 0) {
             val stepUp = (avgFps - targetFps) / targetFps
-            return if (stepUp > 0.15f && idx > 0) PRESET_ORDER[idx - 1] else currentPreset
+            return if (stepUp > 0.15f) PRESET_ORDER[idx - 1] else currentPreset
         }
         if (avgFps < targetFps * 0.85f && idx < PRESET_ORDER.lastIndex) {
             return PRESET_ORDER[idx + 1]

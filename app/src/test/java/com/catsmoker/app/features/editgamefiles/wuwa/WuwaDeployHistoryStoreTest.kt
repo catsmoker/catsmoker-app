@@ -51,7 +51,7 @@ class WuwaDeployHistoryStoreTest {
 
         // A fresh instance reads from disk — the fields that survive the round trip are the
         // ones a later verify relies on: names, digests, and the tri-states.
-        val reloaded = WuwaDeployHistoryStore(storeFileOf(store)).getAllRecords()
+        val reloaded = WuwaDeployHistoryStore(storeFileOf()).getAllRecords()
         assertEquals(listOf(original), reloaded)
         // verification is absent from the JSON until one is attached — null, not a crash.
         assertNull(reloaded.single().verification)
@@ -99,7 +99,7 @@ class WuwaDeployHistoryStoreTest {
             files = listOf(FileVerification("Engine.ini", Status.CHANGED, "now aaa (was bbb)"))
         )
         assertEquals(second, store.updateVerification("r1", second)?.verification)
-        assertEquals(second, WuwaDeployHistoryStore(storeFileOf(store)).getRecord("r1")?.verification)
+        assertEquals(second, WuwaDeployHistoryStore(storeFileOf()).getRecord("r1")?.verification)
 
         // An id that no longer exists (trimmed or cleared) is null, not an exception.
         assertNull(store.updateVerification("gone", second))
@@ -118,7 +118,7 @@ class WuwaDeployHistoryStoreTest {
         store.clear()
         assertTrue(store.getAllRecords().isEmpty())
         // clear persists: a reload also sees an empty store.
-        assertTrue(WuwaDeployHistoryStore(storeFileOf(store)).getAllRecords().isEmpty())
+        assertTrue(WuwaDeployHistoryStore(storeFileOf()).getAllRecords().isEmpty())
     }
 
     @Test
@@ -134,7 +134,7 @@ class WuwaDeployHistoryStoreTest {
     }
 
     /** The store keeps its file private; the test needs the path to build a second reader. */
-    private fun storeFileOf(store: WuwaDeployHistoryStore): java.io.File {
+    private fun storeFileOf(): java.io.File {
         // The constructor's file is not exposed, so find it by name in the temp root — the
         // TemporaryFolder root is the only directory this test writes into.
         return folder.root.listFiles()!!.first { it.isFile && it.name == "wuwa_deploy_history.json" }

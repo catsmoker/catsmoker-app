@@ -105,11 +105,6 @@ class SettingsViewModel @Inject constructor(
         _uiState.update { it.copy(autoCheck = enabled) }
     }
 
-    fun onBuildTypeChanged(isPreRelease: Boolean) {
-        prefs.edit { putBoolean("use_prerelease", isPreRelease) }
-        _uiState.update { it.copy(isPreRelease = isPreRelease) }
-    }
-
     fun onCheckUpdates() {
         _toasts.tryEmit(context.getString(R.string.sys_checking_updates))
         performUpdateCheck(_uiState.value.isPreRelease)

@@ -64,9 +64,6 @@ class GridPreferencesManager @Inject constructor(
 
     fun hasSafGrant(): Boolean = safTreeUri() != null
 
-    /** Whether any channel at all can reach the file — the UI's capability headline. */
-    fun anyChannelAvailable(): Boolean = canUseShell() || hasSafGrant()
-
     /**
      * Persists the SAF grant the folder picker returned — the same store and key shape the
      * custom-upload flow uses, so a grant taken here also serves that flow and vice versa.
@@ -86,8 +83,6 @@ class GridPreferencesManager @Inject constructor(
 
     /** Whether any backup exists for this game — the restore button's gate. */
     fun hasBackup(): Boolean = backupStore.list(GridPreferences.PACKAGE).isNotEmpty()
-
-    fun backups(): List<ConfigBackupStore.Entry> = backupStore.list(GridPreferences.PACKAGE)
 
     // ------------------------------------------------------------------ read
 
@@ -289,7 +284,7 @@ class GridPreferencesManager @Inject constructor(
     suspend fun restoreLatestBackup(): WriteResult? = withContext(Dispatchers.IO) {
         val bytes = backupStore.list(GridPreferences.PACKAGE)
             .firstOrNull()?.let { backupStore.readBytes(it) } ?: return@withContext null
-        pushBytes(bytes, "backup restored")
+        pushBytes(bytes)
     }
 
     // ------------------------------------------------------------------ internals
@@ -378,12 +373,12 @@ class GridPreferencesManager @Inject constructor(
     }
 
     /** Bytes up through root/Shizuku or SAF, for restores. */
-    private suspend fun pushBytes(bytes: ByteArray, what: String): WriteResult {
+    private suspend fun pushBytes(bytes: ByteArray): WriteResult {
         if (canUseShell()) {
             val outcome = pushViaShell(bytes)
             if (outcome != null) {
                 return WriteResult.Success(
-                    backup = null, changed = listOf(what), refused = emptyList(),
+                    backup = null, changed = listOf("backup restored"), refused = emptyList(),
                     verified = outcome, channelUsed = "root / Shizuku shell", gameStopped = null
                 )
             }
@@ -399,7 +394,7 @@ class GridPreferencesManager @Inject constructor(
             context.contentResolver.openOutputStream(target.uri, "w")?.use { it.write(bytes) }
             val readBack = context.contentResolver.openInputStream(target.uri)?.use { it.readBytes() }
             WriteResult.Success(
-                backup = null, changed = listOf(what), refused = emptyList(),
+                backup = null, changed = listOf("backup restored"), refused = emptyList(),
                 verified = readBack?.contentEquals(bytes) == true,
                 channelUsed = "SAF", gameStopped = null
             )

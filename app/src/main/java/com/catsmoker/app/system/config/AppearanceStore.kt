@@ -1,6 +1,7 @@
 package com.catsmoker.app.system.config
 
 import android.content.Context
+import androidx.core.content.edit
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -53,16 +54,12 @@ object AppearanceStore {
     }
 
     fun setThemeMode(context: Context, mode: ThemeMode) {
-        prefs(context).edit().putString(KEY_THEME, mode.name).apply()
+        prefs(context).edit { putString(KEY_THEME, mode.name) }
         _themeMode.value = mode
     }
 
     fun languageTag(context: Context): String =
         prefs(context).getString(KEY_LANGUAGE, LANGUAGE_SYSTEM).orEmpty()
-
-    /** Whether the first-run appearance gate was already answered. */
-    fun isChosen(context: Context): Boolean =
-        prefs(context).getBoolean(KEY_CHOSEN, false)
 
     /**
      * Marks the gate answered. Synchronous commit, not apply: the language path recreates
@@ -70,11 +67,11 @@ object AppearanceStore {
      * if the process dies mid-restart.
      */
     fun setChosen(context: Context) {
-        prefs(context).edit().putBoolean(KEY_CHOSEN, true).commit()
+        prefs(context).edit(commit = true) { putBoolean(KEY_CHOSEN, true) }
     }
 
     fun setLanguage(context: Context, tag: String) {
-        prefs(context).edit().putString(KEY_LANGUAGE, tag).apply()
+        prefs(context).edit { putString(KEY_LANGUAGE, tag) }
     }
 
     // NOTE: uses the passed context directly, never context.applicationContext — during

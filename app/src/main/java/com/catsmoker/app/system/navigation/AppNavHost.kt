@@ -49,7 +49,6 @@ fun AppNavHost(navController: NavHostController, startDestination: String) {
         }
         composable(Routes.GAMING_TOOLS) {
             GamingToolsRoute(
-                onNavigate = { navController.navigate(it) },
                 onBack = { navController.popBackStack() }
             )
         }
@@ -62,8 +61,8 @@ fun AppNavHost(navController: NavHostController, startDestination: String) {
                 onBack = { navController.popBackStack() }
             )
         }
-        composable(Routes.SPOOF_PROFILES) {
-            val parentEntry = remember(it) { navController.getBackStackEntry(Routes.SPOOF_DEVICE) }
+        composable(Routes.SPOOF_PROFILES) { backStackEntry ->
+            val parentEntry = remember(backStackEntry) { navController.getBackStackEntry(Routes.SPOOF_DEVICE) }
             val viewModel: SpoofDeviceViewModel = hiltViewModel(parentEntry)
             val uiState by viewModel.uiState.collectAsState()
             ProfilesListScreen(

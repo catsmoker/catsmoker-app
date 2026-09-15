@@ -1,6 +1,5 @@
 package com.catsmoker.app.features.editgamefiles.service
 
-import android.content.Context
 import com.catsmoker.app.IFileService
 import com.catsmoker.app.shizuku.CommandResult
 import java.io.File
@@ -15,7 +14,6 @@ import java.util.concurrent.TimeUnit
 class FileService : IFileService.Stub {
 
     constructor() : super()
-    constructor(context: Context) : super()
 
     override fun destroy() {
         android.os.Process.killProcess(android.os.Process.myPid())

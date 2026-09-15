@@ -52,10 +52,10 @@ object WuWaForbiddenCvars {
         for (key in ALL) {
             val lower = key.lowercase()
             variants.add(lower)
-            variants.add("+" + lower)
-            variants.add("-" + lower)
+            variants.add("+$lower")
+            variants.add("-$lower")
             if (!lower.startsWith("r.") && !lower.startsWith("kuro.")) {
-                variants.add("r." + lower)
+                variants.add("r.$lower")
             }
         }
         variants

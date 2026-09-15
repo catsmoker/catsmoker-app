@@ -23,6 +23,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeoutOrNull
 import javax.inject.Inject
 import kotlin.math.roundToInt
+import kotlin.time.Duration.Companion.milliseconds
 
 /**
  * Runs the ART dexopt sweep in the foreground, so closing the screen does not abandon a
@@ -91,7 +92,7 @@ class AppBoosterService : Service() {
     private fun stopWorkAndSelf() {
         serviceScope.launch {
             gamingEngine.cancelArtOptimization()
-            withTimeoutOrNull(STOP_GRACE_MS) { workJob?.join() }
+            withTimeoutOrNull(STOP_GRACE_MS.milliseconds) { workJob?.join() }
             workJob?.cancel()
             stopSelf()
         }

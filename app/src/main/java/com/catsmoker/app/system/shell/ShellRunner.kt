@@ -262,8 +262,6 @@ class ShellRunner @Inject constructor(
                     }
                     if (bound != null) break
                 }
-
-                if (attempt < MAX_BIND_RETRIES) delay(BIND_RETRY_DELAY_MS)
             }
             if (bound == null) {
                 Log.w(TAG, "Shizuku user service did not bind after $MAX_BIND_RETRIES attempts")
@@ -366,7 +364,7 @@ class ShellRunner @Inject constructor(
 
         return try {
             val process = newProcess.invoke(null, arrayOf("sh", "-c", command), null, null)
-                as? java.lang.Process ?: return null
+                as? Process ?: return null
             // Both pipes must be drained concurrently; reading stdout to EOF first deadlocks
             // the moment stderr fills its 64 KB buffer.
             val stderr = StringBuilder()
@@ -451,7 +449,7 @@ class ShellRunner @Inject constructor(
      * those differently. The staging file is unlinked in a finally so no shell-owned leftover
      * accumulates in /data/local/tmp.
      */
-    private suspend fun writeFileViaRemoteShell(path: String, bytes: ByteArray): Boolean? {
+    private fun writeFileViaRemoteShell(path: String, bytes: ByteArray): Boolean? {
         val stage = "/data/local/tmp/catsmoker_write_" + System.currentTimeMillis() + ".tmp"
         val write = execShizukuRemoteRaw("cat > $stage", bytes)
             ?: return null // binder/permission never answered — no channel at all
@@ -621,8 +619,6 @@ class ShellRunner @Inject constructor(
         // one 3 s attempt distinguishes "alive" from "wedged" just as well.
         const val MAX_BIND_RETRIES = 1
         val BIND_TIMEOUT_MS = 3000.milliseconds
-        val BIND_RETRY_DELAY_MS = 500.milliseconds
-        val BIND_POLL_MS = 50.milliseconds
         /** How long a failed bind stops further attempts — see [bindBlockedUntil]. */
         val BIND_BLOCK_MS = 10_000.milliseconds
         val REMOTE_COMMAND_TIMEOUT_SECONDS = 30L

@@ -38,6 +38,11 @@ import com.google.gson.reflect.TypeToken
  */
 object WuwaGacha {
 
+    private const val CHARACTER_HARD_PITY = 80
+    private const val CHARACTER_SOFT_PITY_START = 66
+    private const val WEAPON_HARD_PITY = 70
+    private const val WEAPON_SOFT_PITY_START = 57
+
     data class GachaUrlParams(
         val playerId: String,
         val recordId: String,
@@ -287,8 +292,6 @@ object WuwaGacha {
         pool: GachaPool,
         standardFiveStars: Set<String>,
     ): PityPrediction {
-        val HARD_PITY = 80
-        val SOFT_PITY_START = 66
         val sorted = records.sortedBy { it.time }
         val fiveStarRecords = sorted.filter { it.qualityLevel == 5 }
 
@@ -322,8 +325,7 @@ object WuwaGacha {
         // non-standard ★5 pulled. Falls back to "" (the UI then uses the pool label).
         val currentCharacterName =
             fiveStarRecords
-                .filter { it.name !in standardFiveStars }
-                .lastOrNull()
+                .lastOrNull { it.name !in standardFiveStars }
                 ?.name ?: ""
 
         val nearbyFives = fiveStarRecords.filter { it.name !in standardFiveStars }.toSet()
@@ -338,16 +340,16 @@ object WuwaGacha {
                         cnt = 0
                     }
                 }
-                if (pityGroups.isNotEmpty()) pityGroups.average().toInt() else HARD_PITY
+                if (pityGroups.isNotEmpty()) pityGroups.average().toInt() else CHARACTER_HARD_PITY
             } else {
-                HARD_PITY
+                CHARACTER_HARD_PITY
             }
 
-        val isInSoftPity = pullsSinceLastFive >= SOFT_PITY_START
-        val pullsUntilHardPity = maxOf(HARD_PITY - pullsSinceLastFive, 0)
+        val isInSoftPity = pullsSinceLastFive >= CHARACTER_SOFT_PITY_START
+        val pullsUntilHardPity = maxOf(CHARACTER_HARD_PITY - pullsSinceLastFive, 0)
         val estimated =
             if (isInSoftPity) {
-                maxOf(SOFT_PITY_START - pullsSinceLastFive + 4, 1) + 6
+                maxOf(CHARACTER_SOFT_PITY_START - pullsSinceLastFive + 4, 1) + 6
             } else {
                 maxOf(avgCharPity - pullsSinceLastFive, 1)
             }
@@ -363,8 +365,8 @@ object WuwaGacha {
             currentCharacterName = currentCharacterName,
             pullsSinceLastFive = pullsSinceLastFive,
             estimatedNextFive = estimated,
-            hardPity = HARD_PITY,
-            softPityThreshold = SOFT_PITY_START,
+            hardPity = CHARACTER_HARD_PITY,
+            softPityThreshold = CHARACTER_SOFT_PITY_START,
             isInSoftPity = isInSoftPity,
             pullsUntilHardPity = pullsUntilHardPity,
             pullsSinceLastFourStar = pulls4,
@@ -376,8 +378,6 @@ object WuwaGacha {
         records: List<GachaRecord>,
         pool: GachaPool,
     ): PityPrediction {
-        val HARD_PITY = 70
-        val SOFT_PITY_START = 57
         val sorted = records.sortedBy { it.time }
         val fiveStarRecords = sorted.filter { it.qualityLevel == 5 }
 
@@ -397,11 +397,11 @@ object WuwaGacha {
             pullsSinceLastFive = sorted.size
         }
 
-        val isInSoftPity = pullsSinceLastFive >= SOFT_PITY_START
-        val pullsUntilHardPity = maxOf(HARD_PITY - pullsSinceLastFive, 0)
+        val isInSoftPity = pullsSinceLastFive >= WEAPON_SOFT_PITY_START
+        val pullsUntilHardPity = maxOf(WEAPON_HARD_PITY - pullsSinceLastFive, 0)
         val estimated =
             if (isInSoftPity) {
-                maxOf(SOFT_PITY_START - pullsSinceLastFive + 4, 1) + 4
+                maxOf(WEAPON_SOFT_PITY_START - pullsSinceLastFive + 4, 1) + 4
             } else {
                 maxOf(65 - pullsSinceLastFive, 1)
             }
@@ -416,8 +416,8 @@ object WuwaGacha {
             lastFiveStarTime = lastFiveTime,
             pullsSinceLastFive = pullsSinceLastFive,
             estimatedNextFive = estimated,
-            hardPity = HARD_PITY,
-            softPityThreshold = SOFT_PITY_START,
+            hardPity = WEAPON_HARD_PITY,
+            softPityThreshold = WEAPON_SOFT_PITY_START,
             isInSoftPity = isInSoftPity,
             pullsUntilHardPity = pullsUntilHardPity,
             pullsSinceLastFourStar = pulls4,

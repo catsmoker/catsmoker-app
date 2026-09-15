@@ -16,6 +16,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.core.content.edit
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.core.view.WindowCompat
 import androidx.navigation.compose.rememberNavController
@@ -31,17 +32,14 @@ import kotlin.time.Duration.Companion.milliseconds
 
 import android.app.ActivityManager
 import android.content.Intent
-import android.net.Uri
 import android.os.Build
+import androidx.core.net.toUri
 import com.catsmoker.app.R
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.unit.dp
-import androidx.compose.foundation.layout.padding
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
@@ -98,14 +96,14 @@ class MainActivity : ComponentActivity() {
                             Row {
                                 TextButton(onClick = {
                                     try {
-                                        val intent = Intent(Intent.ACTION_VIEW, Uri.parse(githubUrl))
+                                        val intent = Intent(Intent.ACTION_VIEW, githubUrl.toUri())
                                         startActivity(intent)
                                     } catch (_: Exception) {}
                                     showSupportDialog = false
                                 }) { Text(stringResource(R.string.sys_support_star), color = MaterialTheme.colorScheme.onSurface) }
                                 TextButton(onClick = {
                                     try {
-                                        val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://www.paypal.com/paypalme/catsmoker"))
+                                        val intent = Intent(Intent.ACTION_VIEW, "https://www.paypal.com/paypalme/catsmoker".toUri())
                                         startActivity(intent)
                                     } catch (_: Exception) {}
                                     showSupportDialog = false
@@ -165,7 +163,7 @@ class MainActivity : ComponentActivity() {
     private fun incrementLaunchCount() {
         val prefs = getSharedPreferences("app_prefs", MODE_PRIVATE)
         val count = prefs.getInt("app_launch_count", 0) + 1
-        prefs.edit().putInt("app_launch_count", count).apply()
+        prefs.edit { putInt("app_launch_count", count) }
     }
 
     private fun shouldShowSupportDialog(): Boolean {

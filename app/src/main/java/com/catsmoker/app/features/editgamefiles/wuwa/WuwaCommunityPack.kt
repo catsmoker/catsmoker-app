@@ -6,7 +6,7 @@ package com.catsmoker.app.features.editgamefiles.wuwa
  * [WuWaForbiddenCvars] before any of it can be deployed.
  *
  * The pack shape comes from `referance/gamingtools/Mobile-WuWa-Config-main/Community Configs/`
- * (both packs read in full before this file was written), which is the TODO's named source:
+ * (both packs read in full before this file was written):
  *
  * - **Mythos Overdrive Config** — `README.md` + `Engine.ini` at the pack root. One variant.
  * - **@Kodoupulse LowEnd Config** — `README.md` at the root, then variant *folders*: `No Vulkan/`

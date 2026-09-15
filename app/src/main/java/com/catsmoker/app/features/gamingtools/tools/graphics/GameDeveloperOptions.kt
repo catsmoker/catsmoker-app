@@ -5,6 +5,7 @@ import android.content.SharedPreferences
 import android.os.Build
 import android.os.SystemClock
 import android.provider.Settings
+import androidx.core.content.edit
 import com.catsmoker.app.R
 import com.catsmoker.app.features.gamingtools.engine.DisplayRefreshRateProvider
 import com.catsmoker.app.system.shell.ShellRunner
@@ -239,7 +240,7 @@ class GameDeveloperOptions @Inject constructor(
             )
         }
         val refusal = transactionRefusal(call)
-        prefs.edit().apply {
+        prefs.edit {
             if (refusal == null) {
                 // Recorded against the boot it applies to: the overlay lives only in SurfaceFlinger's
                 // memory, so after a reboot this record would claim an overlay that is no longer there.
@@ -255,7 +256,7 @@ class GameDeveloperOptions @Inject constructor(
                 remove(PREF_OVERLAY_ON)
                 remove(PREF_OVERLAY_BOOT)
             }
-        }.apply()
+        }
 
         val result = readShowRefreshRate()
         _state.value = _state.value.copy(showRefreshRate = result)
@@ -364,7 +365,7 @@ class GameDeveloperOptions @Inject constructor(
             // Skip the capture when it is already forced, or this would record our own value.
             if (readForcePeakRefreshRate().enabled != true) {
                 val previous = readSystemFloat(KEY_MIN_REFRESH_RATE)
-                prefs.edit().putString(PREF_PREVIOUS_MIN_HZ, previous?.toString() ?: "").apply()
+                prefs.edit { putString(PREF_PREVIOUS_MIN_HZ, previous?.toString() ?: "") }
             }
             writeSystemFloat(KEY_MIN_REFRESH_RATE, peak)
         } else {
@@ -379,7 +380,7 @@ class GameDeveloperOptions @Inject constructor(
                 // "no minimum" value and is what Developer Options writes when switched off.
                 else -> writeSystemFloat(KEY_MIN_REFRESH_RATE, NO_CONFIG)
             }
-            prefs.edit().remove(PREF_PREVIOUS_MIN_HZ).apply()
+            prefs.edit { remove(PREF_PREVIOUS_MIN_HZ) }
         }
         val result = readForcePeakRefreshRate()
         _state.value = _state.value.copy(forcePeakRefreshRate = result)

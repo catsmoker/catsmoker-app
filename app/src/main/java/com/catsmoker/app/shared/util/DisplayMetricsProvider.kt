@@ -171,7 +171,7 @@ class DisplayMetricsProvider @Inject constructor(
         val height = (snapshot.heightPixels * factor).roundToInt().roundToEven()
         val density = (snapshot.densityDpi * factor).roundToInt()
         if (width < MIN_DIMENSION_PX || height < MIN_DIMENSION_PX) return null
-        if (density < MIN_DENSITY_DPI || density > MAX_DENSITY_DPI) return null
+        if (density !in MIN_DENSITY_DPI..MAX_DENSITY_DPI) return null
         return snapshot.copy(widthPixels = width, heightPixels = height, densityDpi = density)
     }
 
