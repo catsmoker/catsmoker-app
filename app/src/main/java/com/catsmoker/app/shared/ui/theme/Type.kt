@@ -20,6 +20,13 @@ val Typography = Typography(
         lineHeight = 64.sp,
         letterSpacing = (-0.25).sp
     ),
+    displayMedium = TextStyle(
+        fontFamily = NdotFontFamily,
+        fontWeight = FontWeight.Normal,
+        fontSize = 45.sp,
+        lineHeight = 52.sp,
+        letterSpacing = 0.sp
+    ),
     headlineLarge = TextStyle(
         fontFamily = NdotFontFamily,
         fontWeight = FontWeight.Normal,

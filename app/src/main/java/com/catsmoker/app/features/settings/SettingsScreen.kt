@@ -241,6 +241,7 @@ private fun themeModeLabel(mode: AppearanceStore.ThemeMode): String = when (mode
     AppearanceStore.ThemeMode.SYSTEM -> stringResource(R.string.sys_theme_system)
     AppearanceStore.ThemeMode.DARK -> stringResource(R.string.sys_theme_dark)
     AppearanceStore.ThemeMode.LIGHT -> stringResource(R.string.sys_theme_light)
+    AppearanceStore.ThemeMode.DYNAMIC -> stringResource(R.string.sys_theme_dynamic)
 }
 
 @Composable

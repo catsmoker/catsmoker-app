@@ -16,7 +16,7 @@ import kotlinx.coroutines.flow.asStateFlow
  */
 object AppearanceStore {
 
-    enum class ThemeMode { SYSTEM, DARK, LIGHT }
+    enum class ThemeMode { SYSTEM, DARK, LIGHT, DYNAMIC }
 
     /** Empty means "follow the system". Otherwise a BCP-47 tag resolvable by Resources. */
     const val LANGUAGE_SYSTEM = ""

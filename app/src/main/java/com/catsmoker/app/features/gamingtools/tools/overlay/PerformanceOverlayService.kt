@@ -35,7 +35,7 @@ class PerformanceOverlayService : Service() {
     private var windowManager: WindowManager? = null
     private var overlayView: View? = null
     private val serviceScope = CoroutineScope(Dispatchers.Main + Job())
-    private val prefs = getSharedPreferences(PREFS_NAME, MODE_PRIVATE)
+    private val prefs by lazy { getSharedPreferences(PREFS_NAME, MODE_PRIVATE) }
 
     override fun onCreate() {
         super.onCreate()

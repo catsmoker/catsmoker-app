@@ -23,6 +23,7 @@
     <string name="sys_theme_system">跟随系统</string>
     <string name="sys_theme_dark">深色</string>
     <string name="sys_theme_light">浅色</string>
+    <string name="sys_theme_dynamic">动态颜色</string>
     <string name="sys_language_title">语言</string>
     <string name="sys_language_subtitle">应用语言，立即生效。</string>
     <string name="sys_lang_system">跟随系统</string>
