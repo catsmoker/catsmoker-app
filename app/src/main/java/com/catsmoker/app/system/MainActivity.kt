@@ -70,10 +70,16 @@ class MainActivity : ComponentActivity() {
             val darkTheme = when (themeMode) {
                 AppearanceStore.ThemeMode.DARK -> true
                 AppearanceStore.ThemeMode.LIGHT -> false
-                // System default — the phone's own dark/light setting wins.
-                AppearanceStore.ThemeMode.SYSTEM -> isSystemInDarkTheme()
+                // System default and Dynamic — the phone's own dark/light setting wins.
+                // Dynamic differs only in palette (wallpaper colors, API 31+), not in
+                // which side of dark/light is picked.
+                AppearanceStore.ThemeMode.SYSTEM,
+                AppearanceStore.ThemeMode.DYNAMIC -> isSystemInDarkTheme()
             }
-            CatsmokerTheme(darkTheme = darkTheme) {
+            CatsmokerTheme(
+                darkTheme = darkTheme,
+                dynamicColor = themeMode == AppearanceStore.ThemeMode.DYNAMIC
+            ) {
                 var showStartup by remember { mutableStateOf(true) }
                 var showSupportDialog by remember { mutableStateOf(shouldShowSupportDialog()) }
 

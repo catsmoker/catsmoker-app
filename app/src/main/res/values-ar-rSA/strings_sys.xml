@@ -16,6 +16,7 @@
     <string name="sys_theme_system">افتراضي النظام</string>
     <string name="sys_theme_dark">داكن</string>
     <string name="sys_theme_light">فاتح</string>
+    <string name="sys_theme_dynamic">لون ديناميكي</string>
     <string name="sys_language_title">اللغة</string>
     <string name="sys_language_subtitle">لغة التطبيق. تُطبق فورًا.</string>
     <string name="sys_lang_system">افتراضي النظام</string>

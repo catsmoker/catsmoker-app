@@ -16,6 +16,7 @@
     <string name="sys_theme_system">Predeterminado del sistema</string>
     <string name="sys_theme_dark">Oscuro</string>
     <string name="sys_theme_light">Claro</string>
+    <string name="sys_theme_dynamic">Color dinámico</string>
     <string name="sys_language_title">Idioma</string>
     <string name="sys_language_subtitle">Idioma de la app. Se aplica al instante.</string>
     <string name="sys_lang_system">Predeterminado del sistema</string>

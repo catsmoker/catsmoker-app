@@ -66,6 +66,11 @@ fun ThemeModeOptions(
             label = stringResource(R.string.sys_theme_light),
             onClick = { onSelect(AppearanceStore.ThemeMode.LIGHT) }
         )
+        SelectableOptionRow(
+            selected = selected == AppearanceStore.ThemeMode.DYNAMIC,
+            label = stringResource(R.string.sys_theme_dynamic),
+            onClick = { onSelect(AppearanceStore.ThemeMode.DYNAMIC) }
+        )
     }
 }
 

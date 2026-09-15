@@ -16,6 +16,7 @@
     <string name="sys_theme_system">System default</string>
     <string name="sys_theme_dark">Dark</string>
     <string name="sys_theme_light">Light</string>
+    <string name="sys_theme_dynamic">Dynamic color</string>
     <string name="sys_language_title">Language</string>
     <string name="sys_language_subtitle">App language. Takes effect right away.</string>
     <string name="sys_lang_system">System default</string>
