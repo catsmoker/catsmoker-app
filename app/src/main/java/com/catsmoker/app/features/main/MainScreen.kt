@@ -22,6 +22,7 @@ import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.res.stringResource
@@ -29,6 +30,7 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import android.app.Activity
 import android.widget.Toast
+import androidx.compose.ui.platform.LocalConfiguration
 import com.catsmoker.app.R
 import com.catsmoker.app.shared.data.model.FpsSource
 import com.catsmoker.app.shared.data.model.MetricReadStatus
@@ -115,7 +117,8 @@ fun MainScreen(
     onOpenAbout: () -> Unit,
     onOpenSettings: () -> Unit
 ) {
-    var hydrationPhase by remember { mutableIntStateOf(0) }
+    val isPreview = LocalInspectionMode.current
+    var hydrationPhase by remember { mutableIntStateOf(if (isPreview) 4 else 0) }
     var showAdsDeferred by remember { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
@@ -144,156 +147,171 @@ fun MainScreen(
     val actionsAlpha by animateFloatAsState(if (hydrationPhase >= 2) 1f else 0f, tween(300), label = "actions")
     val chartAlpha by animateFloatAsState(if (hydrationPhase >= 3) 1f else 0f, tween(500), label = "chart")
 
-    LazyColumn(
+    // No-scroll dashboard that fills the viewport with content, not gaps: the performance
+    // card and the actions block split leftover height by weight (1 : 1.5), and the chart,
+    // grid gap, and tiles absorb their share inside their own bounds. Fixed spacers
+    // separate sections. Ad slot stays reserved at the bottom.
+    Column(
         modifier = Modifier
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
             .systemBarsPadding()
+            .padding(horizontal = 24.dp)
     ) {
         // 1. Header (Always Instant)
-        item {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 24.dp, vertical = 20.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = stringResource(R.string.app_name),
-                    style = MaterialTheme.typography.titleLarge,
-                    color = MaterialTheme.colorScheme.onSurface
-                )
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = 20.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = stringResource(R.string.app_name),
+                style = MaterialTheme.typography.titleLarge,
+                color = MaterialTheme.colorScheme.onSurface
+            )
 
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    StatusBadge(label = stringResource(R.string.res_method_root), active = state.hasRoot, activeColor = NothingRed)
-                    StatusBadge(label = stringResource(R.string.res_method_shizuku), active = state.hasShizuku, activeColor = NothingRed)
-                }
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                StatusBadge(label = stringResource(R.string.res_method_root), active = state.hasRoot, activeColor = NothingRed)
+                StatusBadge(label = stringResource(R.string.res_method_shizuku), active = state.hasShizuku, activeColor = NothingRed)
             }
         }
 
         // 2. Performance Monitor (Progressive)
         if (hydrationPhase >= 1) {
-            item {
-                Column(
-                    modifier = Modifier
-                        .padding(horizontal = 24.dp)
-                        .graphicsLayer { alpha = metricsAlpha }
-                ) {
-                    SectionCard {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Column {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .weight(1f)
+                    .graphicsLayer { alpha = metricsAlpha }
+            ) {
+                SectionCard(modifier = Modifier.fillMaxSize(), contentPadding = 16.dp) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Column {
+                            Text(
+                                text = stringResource(R.string.dash_live_performance),
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                            Row(verticalAlignment = Alignment.Bottom) {
+                                // The number is whatever was actually measured; when nothing was,
+                                // the reason takes the label's place rather than a 0 appearing here.
                                 Text(
-                                    text = stringResource(R.string.dash_live_performance),
-                                    style = MaterialTheme.typography.labelSmall,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    text = state.fps?.toString() ?: "—",
+                                    style = MaterialTheme.typography.displayLarge,
+                                    color = NothingRed
                                 )
-                                Row(verticalAlignment = Alignment.Bottom) {
-                                    // The number is whatever was actually measured; when nothing was,
-                                    // the reason takes the label's place rather than a 0 appearing here.
-                                    Text(
-                                        text = state.fps?.toString() ?: "—",
-                                        style = MaterialTheme.typography.displayLarge,
-                                        color = NothingRed
-                                    )
-                                    Text(
-                                        text = when {
-                                            state.fps == null -> stringResource(state.fpsReadStatus.labelRes)
-                                            // The vsync fallback counts this app's frames, not the
-                                            // game's, so it is never labelled plain "FPS".
-                                            state.fpsSource == FpsSource.Choreographer ->
-                                                stringResource(R.string.dash_fps_label_ui)
-                                            else -> stringResource(R.string.dash_fps_label)
-                                        },
-                                        style = MaterialTheme.typography.titleMedium,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                        modifier = Modifier.padding(start = 4.dp, bottom = 12.dp)
-                                    )
-                                }
-                            }
-                            
-                            Column(horizontalAlignment = Alignment.End, verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                                Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-                                    CompactStat(
-                                        label = stringResource(R.string.core_metric_cpu),
-                                        value = state.cpuPercentage
-                                            ?.let { "$it%" }
-                                            ?: state.cpuReadStatus.compactLabel(),
-                                        color = Color(0xFF22C55E)
-                                    )
-                                    CompactStat(
-                                        label = stringResource(R.string.core_metric_ram),
-                                        value = state.ramUsedGb
-                                            ?.let { String.format(Locale.US, "%.1fG", it) }
-                                            ?: state.ramReadStatus.compactLabel(),
-                                        color = Color(0xFF3B82F6)
-                                    )
-                                }
-                                Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-                                    // Label doubles as the source: SoC sensor when available, else battery.
-                                    CompactStat(
-                                        label = if (state.displayTempIsSoc) stringResource(R.string.core_metric_soc) else stringResource(R.string.core_metric_temp),
-                                        value = state.displayTempC
-                                            ?.let { "${it.toInt()}°" }
-                                            ?: state.displayTempReadStatus.compactLabel(),
-                                        color = Color(0xFFF59E0B)
-                                    )
-                                    CompactStat(
-                                        label = stringResource(R.string.core_metric_ping),
-                                        value = state.pingMs
-                                            ?.let { "${it}ms" }
-                                            ?: state.pingReadStatus.compactLabel(),
-                                        color = Color(0xFF8B5CF6)
-                                    )
-                                }
-                            }
-                        }
-
-                        Spacer(modifier = Modifier.height(16.dp))
-
-                        if (hydrationPhase >= 4) {
-                            Box(modifier = Modifier.graphicsLayer { alpha = chartAlpha }) {
-                                CombinedChart(
-                                    fpsHistory = fpsHistory,
-                                    // No privilege gate needed: the engine only appends readings it
-                                    // actually took, so an unreadable channel contributes no line.
-                                    cpuHistory = cpuHistory,
-                                    ramHistory = ramHistory,
-                                    tempHistory = tempHistory,
-                                    pingHistory = pingHistory,
-                                    ramTotal = state.ramTotalGb
+                                Text(
+                                    text = when {
+                                        state.fps == null -> stringResource(state.fpsReadStatus.labelRes)
+                                        // The vsync fallback counts this app's frames, not the
+                                        // game's, so it is never labelled plain "FPS".
+                                        state.fpsSource == FpsSource.Choreographer ->
+                                            stringResource(R.string.dash_fps_label_ui)
+                                        else -> stringResource(R.string.dash_fps_label)
+                                    },
+                                    style = MaterialTheme.typography.titleMedium,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    modifier = Modifier.padding(start = 4.dp, bottom = 12.dp)
                                 )
                             }
-                        } else {
-                            Spacer(modifier = Modifier.height(120.dp))
                         }
+                        
+                        Column(horizontalAlignment = Alignment.End, verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                            Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+                                CompactStat(
+                                    label = stringResource(R.string.core_metric_cpu),
+                                    value = state.cpuPercentage
+                                        ?.let { "$it%" }
+                                        ?: state.cpuReadStatus.compactLabel(),
+                                    color = Color(0xFF22C55E)
+                                )
+                                CompactStat(
+                                    label = stringResource(R.string.core_metric_ram),
+                                    value = state.ramUsedGb
+                                        ?.let { String.format(Locale.US, "%.1fG", it) }
+                                        ?: state.ramReadStatus.compactLabel(),
+                                    color = Color(0xFF3B82F6)
+                                )
+                            }
+                            Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+                                // Label doubles as the source: SoC sensor when available, else battery.
+                                CompactStat(
+                                    label = if (state.displayTempIsSoc) stringResource(R.string.core_metric_soc) else stringResource(R.string.core_metric_temp),
+                                    value = state.displayTempC
+                                        ?.let { "${it.toInt()}°" }
+                                        ?: state.displayTempReadStatus.compactLabel(),
+                                    color = Color(0xFFF59E0B)
+                                )
+                                CompactStat(
+                                    label = stringResource(R.string.core_metric_ping),
+                                    value = state.pingMs
+                                        ?.let { "${it}ms" }
+                                        ?: state.pingReadStatus.compactLabel(),
+                                    color = Color(0xFF8B5CF6)
+                                )
+                            }
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    if (hydrationPhase >= 4) {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .weight(1f)
+                                .graphicsLayer { alpha = chartAlpha }
+                        ) {
+                            CombinedChart(
+                                fpsHistory = fpsHistory,
+                                // No privilege gate needed: the engine only appends readings it
+                                // actually took, so an unreadable channel contributes no line.
+                                cpuHistory = cpuHistory,
+                                ramHistory = ramHistory,
+                                tempHistory = tempHistory,
+                                pingHistory = pingHistory,
+                                ramTotal = state.ramTotalGb,
+                                modifier = Modifier.fillMaxSize()
+                            )
+                        }
+                    } else {
+                        Spacer(modifier = Modifier.weight(1f))
                     }
                 }
             }
+        } else {
+            Spacer(modifier = Modifier.weight(1f))
         }
+
+        Spacer(modifier = Modifier.height(16.dp))
 
         // 3. Quick Actions (Progressive)
         if (hydrationPhase >= 2) {
-            item {
-                Column(
-                    modifier = Modifier
-                        .padding(horizontal = 24.dp)
-                        .graphicsLayer { alpha = actionsAlpha }
-                ) {
-                    Spacer(modifier = Modifier.height(28.dp))
-                    Text(
-                        text = stringResource(R.string.dash_quick_actions),
-                        style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.padding(start = 4.dp, bottom = 12.dp)
-                    )
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .weight(1.5f)
+                    .graphicsLayer { alpha = actionsAlpha }
+            ) {
+                Text(
+                    text = stringResource(R.string.dash_quick_actions),
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(start = 4.dp, bottom = 8.dp)
+                )
 
+                Column(
+                    modifier = Modifier.weight(1f),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
                     Row(
-                        modifier = Modifier.fillMaxWidth().height(IntrinsicSize.Max),
+                        modifier = Modifier.weight(1f),
                         horizontalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
                         QuickActionButton(
@@ -303,6 +321,9 @@ fun MainScreen(
                             iconContentColor = MaterialTheme.colorScheme.onSurface,
                             onClick = onOpenSpoofDevice,
                             modifier = Modifier.weight(1f).fillMaxHeight(),
+                            spreadGridContent = true,
+                            contentPadding = 12.dp,
+                            iconSize = 40.dp,
                             icon = { Icon(Icons.Default.SettingsInputComponent, null) }
                         )
                         QuickActionButton(
@@ -312,66 +333,73 @@ fun MainScreen(
                             iconContentColor = MaterialTheme.colorScheme.onSurface,
                             onClick = onOpenEditGameFiles,
                             modifier = Modifier.weight(1f).fillMaxHeight(),
+                            spreadGridContent = true,
+                            contentPadding = 12.dp,
+                            iconSize = 40.dp,
                             icon = { Icon(Icons.Default.FolderOpen, null) }
                         )
                     }
 
-                    Spacer(modifier = Modifier.height(12.dp))
-
-                    // HSR / WuWa / GRID live inside File Engineering's "Advanced Editors" section
-                    // now — one place for every game-file tool, instead of three dashboard cards.
-
-                    Spacer(modifier = Modifier.height(12.dp))
-
-                    QuickActionButton(
-                        title = stringResource(R.string.Gaming_tools_title),
-                        subtitle = stringResource(R.string.dash_gaming_tools_subtitle),
-                        iconContainerColor = MaterialTheme.colorScheme.surfaceVariant,
-                        iconContentColor = MaterialTheme.colorScheme.onSurface,
-                        onClick = onOpenGamingTools,
-                        isFullWidth = true,
-                        showChevron = true,
-                        icon = { Icon(Icons.Default.SportsEsports, null) }
-                    )
-
-                    Spacer(modifier = Modifier.height(12.dp))
-
-                    QuickActionButton(
-                        title = stringResource(R.string.core_settings_title),
-                        subtitle = stringResource(R.string.core_settings_subtitle),
-                        iconContainerColor = MaterialTheme.colorScheme.surfaceVariant,
-                        iconContentColor = MaterialTheme.colorScheme.onSurface,
-                        onClick = onOpenSettings,
-                        isFullWidth = true,
-                        showChevron = true,
-                        icon = { Icon(Icons.Default.Settings, null) }
-                    )
-
-                    Spacer(modifier = Modifier.height(12.dp))
-
-                    QuickActionButton(
-                        title = stringResource(R.string.about_header_title),
-                        subtitle = stringResource(R.string.dash_about_subtitle),
-                        iconContainerColor = MaterialTheme.colorScheme.surfaceVariant,
-                        iconContentColor = MaterialTheme.colorScheme.onSurface,
-                        onClick = onOpenAbout,
-                        isFullWidth = true,
-                        showChevron = true,
-                        icon = { Icon(Icons.Default.Info, null) }
-                    )
+                    Row(
+                        modifier = Modifier.weight(1f),
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        QuickActionButton(
+                            title = stringResource(R.string.Gaming_tools_title),
+                            subtitle = stringResource(R.string.dash_gaming_tools_subtitle),
+                            iconContainerColor = MaterialTheme.colorScheme.surfaceVariant,
+                            iconContentColor = MaterialTheme.colorScheme.onSurface,
+                            onClick = onOpenGamingTools,
+                            modifier = Modifier.weight(1f).fillMaxHeight(),
+                            spreadGridContent = true,
+                            contentPadding = 12.dp,
+                            iconSize = 40.dp,
+                            icon = { Icon(Icons.Default.SportsEsports, null) }
+                        )
+                        QuickActionButton(
+                            title = stringResource(R.string.core_settings_title),
+                            subtitle = stringResource(R.string.core_settings_subtitle),
+                            iconContainerColor = MaterialTheme.colorScheme.surfaceVariant,
+                            iconContentColor = MaterialTheme.colorScheme.onSurface,
+                            onClick = onOpenSettings,
+                            modifier = Modifier.weight(1f).fillMaxHeight(),
+                            spreadGridContent = true,
+                            contentPadding = 12.dp,
+                            iconSize = 40.dp,
+                            icon = { Icon(Icons.Default.Settings, null) }
+                        )
+                    }
                 }
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                QuickActionButton(
+                    title = stringResource(R.string.about_header_title),
+                    subtitle = stringResource(R.string.dash_about_subtitle),
+                    iconContainerColor = MaterialTheme.colorScheme.surfaceVariant,
+                    iconContentColor = MaterialTheme.colorScheme.onSurface,
+                    onClick = onOpenAbout,
+                    isFullWidth = true,
+                    showChevron = true,
+                    icon = { Icon(Icons.Default.Info, null) }
+                )
             }
+        } else {
+            Spacer(modifier = Modifier.weight(1.5f))
         }
 
+        Spacer(modifier = Modifier.weight(0.1f))
+
         // 4. Ads (Ultra Deferred)
-        if (hydrationPhase >= 3) {
-            item {
-                if (adsEnabled && showAdsDeferred) {
-                    Spacer(modifier = Modifier.height(24.dp))
-                    StartAppBanner(modifier = Modifier.padding(bottom = 8.dp))
-                }
-                Spacer(modifier = Modifier.height(40.dp))
-            }
+        val adSlotHeight = if (LocalConfiguration.current.screenWidthDp >= 600) 90.dp else 50.dp
+        if (adsEnabled && hydrationPhase >= 3 && showAdsDeferred) {
+            StartAppBanner(modifier = Modifier.padding(bottom = 8.dp))
+        } else {
+            Spacer(
+                modifier = Modifier
+                    .padding(bottom = 8.dp)
+                    .height(adSlotHeight)
+            )
         }
     }
 }
@@ -384,14 +412,15 @@ fun CombinedChart(
     tempHistory: List<Float>,
     pingHistory: List<Int>,
     /** Total RAM, used as the y-scale. Null when it could not be read. */
-    ramTotal: Float?
+    ramTotal: Float?,
+    modifier: Modifier = Modifier
 ) {
     val nothingRed = NothingRed
     
     Spacer(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
-            .height(120.dp)
+            .height(100.dp)
             .clip(RoundedCornerShape(12.dp))
             // Theme panel, not a fixed tint: the old white-3% wash was invisible on a
             // light card, leaving the lines floating on the card itself.

@@ -12,7 +12,7 @@
             The games whose install state the File Engineering screen probes with
             PackageManager.getPackageInfo. The blanket MAIN/GAME intent below made them
             visible in practice, but visibility by intent-match is implicit; a stricter
-            OEM filter would turn a real install into a silent NameNotFoundException and
+            OEM filter would turn a real installation into a silent NameNotFoundException and
             a false "not installed" dot. Naming the packages makes the probe's world
             explicit: Genshin + five PUBG variants, GRID, WuWa, five HSR variants.
         -->
@@ -81,6 +81,9 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:localeConfig="@xml/locales_config"
+        android:appComponentFactory="androidx.core.app.CoreComponentFactory"
+        tools:replace="android:appComponentFactory"
+        tools:targetApi="p"
         tools:ignore="UnusedAttribute"
         android:theme="@style/Theme.Catsmoker">
 

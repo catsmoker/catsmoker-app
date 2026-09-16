@@ -52,4 +52,6 @@
 -keepclassmembers class rikka.shizuku.Shizuku {
     static rikka.shizuku.ShizukuRemoteProcess newProcess(java.lang.String[], java.lang.String[], java.lang.String);
 }
-}
+
+-keep class androidx.core.app.CoreComponentFactory { *; }
+
