@@ -47,6 +47,9 @@
 # will not start. R8 must not rename/remove the method on the library class. No visibility
 # modifier: the method's visibility changed across shizuku-api releases, and pinning one
 # (e.g. `private`) makes the rule match nothing on versions that declared it otherwise.
+# Return type is ShizukuRemoteProcess (a java.lang.Process), not Process itself — spelling it
+# as java.lang.Process matches nothing and R8 fails the build ("matches no class members").
 -keepclassmembers class rikka.shizuku.Shizuku {
-    static java.lang.Process newProcess(java.lang.String[], java.lang.String[], java.lang.String);
+    static rikka.shizuku.ShizukuRemoteProcess newProcess(java.lang.String[], java.lang.String[], java.lang.String);
+}
 }
