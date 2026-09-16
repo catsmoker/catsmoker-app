@@ -1,8 +1,13 @@
 package com.catsmoker.app.features.main
 
 import androidx.activity.compose.BackHandler
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
@@ -58,6 +63,9 @@ fun MainRoute(onNavigate: (String) -> Unit) {
     val exitTapFormat = stringResource(R.string.core_exit_tap)
     var backPressedCount by remember { mutableIntStateOf(0) }
     var lastBackPressedTime by remember { mutableLongStateOf(0L) }
+    // Plain holder, not state: a new toast cancels the previous one so rapid
+    // back presses can't queue up toasts that linger after the app closes.
+    var currentToast: Toast? = remember { null }
 
     BackHandler {
         val currentTime = System.currentTimeMillis()
@@ -69,13 +77,15 @@ fun MainRoute(onNavigate: (String) -> Unit) {
         lastBackPressedTime = currentTime
 
         if (backPressedCount >= 3) {
+            currentToast?.cancel()
             (context as? Activity)?.finish()
         } else {
-            Toast.makeText(
+            currentToast?.cancel()
+            currentToast = Toast.makeText(
                 context,
                 String.format(Locale.getDefault(), exitTapFormat, 3 - backPressedCount),
                 Toast.LENGTH_SHORT
-            ).show()
+            ).also { it.show() }
         }
     }
 
@@ -141,17 +151,21 @@ fun MainScreen(
     val actionsAlpha by animateFloatAsState(if (hydrationPhase >= 2) 1f else 0f, tween(300), label = "actions")
     val chartAlpha by animateFloatAsState(if (hydrationPhase >= 3) 1f else 0f, tween(500), label = "chart")
 
+    // No-scroll dashboard: the whole screen fits one viewport. The performance
+    // card is fixed (chart is 100dp), the 2x2 action grid takes whatever
+    // height is left via weight, and every button gets an equal share of it.
     Column(
         modifier = Modifier
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
             .systemBarsPadding()
+            .padding(horizontal = 16.dp)
     ) {
         // 1. Header (Always Instant)
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 24.dp, vertical = 20.dp),
+                .padding(horizontal = 8.dp, vertical = 12.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
@@ -171,10 +185,9 @@ fun MainScreen(
         if (hydrationPhase >= 1) {
             Column(
                 modifier = Modifier
-                    .padding(horizontal = 24.dp)
                     .graphicsLayer { alpha = metricsAlpha }
             ) {
-                    SectionCard {
+                    SectionCard(contentPadding = 16.dp) {
                         Row(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.SpaceBetween,
@@ -247,7 +260,7 @@ fun MainScreen(
                             }
                         }
 
-                        Spacer(modifier = Modifier.height(16.dp))
+                        Spacer(modifier = Modifier.height(12.dp))
 
                         if (hydrationPhase >= 4) {
                             Box(modifier = Modifier.graphicsLayer { alpha = chartAlpha }) {
@@ -263,95 +276,119 @@ fun MainScreen(
                                 )
                             }
                         } else {
-                            Spacer(modifier = Modifier.height(120.dp))
+                            Spacer(modifier = Modifier.height(100.dp))
                         }
                     }
             }
         }
 
-        // 3. Quick Actions (Progressive)
+        // 3. Quick Actions (Progressive) — 2x2 grid; every tile gets an equal
+        // share of the leftover height so all four buttons are the same size.
+        // HSR / WuWa / GRID live inside File Engineering's "Advanced Editors"
+        // section now — one place for every game-file tool.
         if (hydrationPhase >= 2) {
             Column(
                 modifier = Modifier
-                    .padding(horizontal = 24.dp)
+                    .weight(1f)
+                    .fillMaxWidth()
                     .graphicsLayer { alpha = actionsAlpha }
             ) {
-                    Spacer(modifier = Modifier.height(28.dp))
+                    Spacer(modifier = Modifier.height(16.dp))
                     Text(
                         text = stringResource(R.string.dash_quick_actions),
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.padding(start = 4.dp, bottom = 12.dp)
+                        modifier = Modifier.padding(start = 4.dp, bottom = 8.dp)
                     )
 
-                    Row(
-                        modifier = Modifier.fillMaxWidth().height(IntrinsicSize.Max),
-                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .weight(1f),
+                        verticalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
-                        QuickActionButton(
-                            title = stringResource(R.string.dash_edit_files_title),
-                            subtitle = stringResource(R.string.dash_edit_files_subtitle),
-                            iconContainerColor = MaterialTheme.colorScheme.surfaceVariant,
-                            iconContentColor = MaterialTheme.colorScheme.onSurface,
-                            onClick = onOpenEditGameFiles,
-                            modifier = Modifier.weight(1f).fillMaxHeight(),
-                            icon = { Icon(Icons.Default.FolderOpen, null) }
-                        )
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .weight(1f),
+                            horizontalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
+                            QuickActionButton(
+                                title = stringResource(R.string.dash_edit_files_title),
+                                subtitle = stringResource(R.string.dash_edit_files_subtitle),
+                                iconContainerColor = MaterialTheme.colorScheme.surfaceVariant,
+                                iconContentColor = MaterialTheme.colorScheme.onSurface,
+                                onClick = onOpenEditGameFiles,
+                                modifier = Modifier.weight(1f).fillMaxHeight(),
+                                contentPadding = 16.dp,
+                                iconSize = 48.dp,
+                                spreadGridContent = true,
+                                icon = { Icon(Icons.Default.FolderOpen, null) }
+                            )
+                            QuickActionButton(
+                                title = stringResource(R.string.Gaming_tools_title),
+                                subtitle = stringResource(R.string.dash_gaming_tools_subtitle),
+                                iconContainerColor = MaterialTheme.colorScheme.surfaceVariant,
+                                iconContentColor = MaterialTheme.colorScheme.onSurface,
+                                onClick = onOpenGamingTools,
+                                modifier = Modifier.weight(1f).fillMaxHeight(),
+                                contentPadding = 16.dp,
+                                iconSize = 48.dp,
+                                spreadGridContent = true,
+                                icon = { Icon(Icons.Default.SportsEsports, null) }
+                            )
+                        }
+
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .weight(1f),
+                            horizontalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
+                            QuickActionButton(
+                                title = stringResource(R.string.core_settings_title),
+                                subtitle = stringResource(R.string.core_settings_subtitle),
+                                iconContainerColor = MaterialTheme.colorScheme.surfaceVariant,
+                                iconContentColor = MaterialTheme.colorScheme.onSurface,
+                                onClick = onOpenSettings,
+                                modifier = Modifier.weight(1f).fillMaxHeight(),
+                                contentPadding = 16.dp,
+                                iconSize = 48.dp,
+                                spreadGridContent = true,
+                                icon = { Icon(Icons.Default.Settings, null) }
+                            )
+                            QuickActionButton(
+                                title = stringResource(R.string.about_header_title),
+                                subtitle = stringResource(R.string.dash_about_subtitle),
+                                iconContainerColor = MaterialTheme.colorScheme.surfaceVariant,
+                                iconContentColor = MaterialTheme.colorScheme.onSurface,
+                                onClick = onOpenAbout,
+                                modifier = Modifier.weight(1f).fillMaxHeight(),
+                                contentPadding = 16.dp,
+                                iconSize = 48.dp,
+                                spreadGridContent = true,
+                                icon = { Icon(Icons.Default.Info, null) }
+                            )
+                        }
                     }
-
-                    Spacer(modifier = Modifier.height(12.dp))
-
-                    // HSR / WuWa / GRID live inside File Engineering's "Advanced Editors" section
-                    // now — one place for every game-file tool, instead of three dashboard cards.
-
-                    Spacer(modifier = Modifier.height(12.dp))
-
-                    QuickActionButton(
-                        title = stringResource(R.string.Gaming_tools_title),
-                        subtitle = stringResource(R.string.dash_gaming_tools_subtitle),
-                        iconContainerColor = MaterialTheme.colorScheme.surfaceVariant,
-                        iconContentColor = MaterialTheme.colorScheme.onSurface,
-                        onClick = onOpenGamingTools,
-                        isFullWidth = true,
-                        showChevron = true,
-                        icon = { Icon(Icons.Default.SportsEsports, null) }
-                    )
-
-                    Spacer(modifier = Modifier.height(12.dp))
-
-                    QuickActionButton(
-                        title = stringResource(R.string.core_settings_title),
-                        subtitle = stringResource(R.string.core_settings_subtitle),
-                        iconContainerColor = MaterialTheme.colorScheme.surfaceVariant,
-                        iconContentColor = MaterialTheme.colorScheme.onSurface,
-                        onClick = onOpenSettings,
-                        isFullWidth = true,
-                        showChevron = true,
-                        icon = { Icon(Icons.Default.Settings, null) }
-                    )
-
-                    Spacer(modifier = Modifier.height(12.dp))
-
-                    QuickActionButton(
-                        title = stringResource(R.string.about_header_title),
-                        subtitle = stringResource(R.string.dash_about_subtitle),
-                        iconContainerColor = MaterialTheme.colorScheme.surfaceVariant,
-                        iconContentColor = MaterialTheme.colorScheme.onSurface,
-                        onClick = onOpenAbout,
-                        isFullWidth = true,
-                        showChevron = true,
-                        icon = { Icon(Icons.Default.Info, null) }
-                    )
             }
         }
 
-        // 4. Ads (Ultra Deferred)
+        // 4. Ads (Ultra Deferred) — fixed slot at the bottom; collapses silently
+        // when disabled or unfilled so the grid above keeps its fit. Entry is
+        // animated (expand + fade) so the grid compresses smoothly instead of
+        // snapping when the banner arrives after the ~5s deferral.
         if (hydrationPhase >= 3) {
-            if (adsEnabled && showAdsDeferred) {
-                Spacer(modifier = Modifier.height(24.dp))
-                AdMobBanner(modifier = Modifier.padding(bottom = 8.dp))
+            AnimatedVisibility(
+                visible = adsEnabled && showAdsDeferred,
+                enter = expandVertically(tween(300)) + fadeIn(tween(300)),
+                exit = shrinkVertically(tween(300)) + fadeOut(tween(300))
+            ) {
+                AdMobBanner(modifier = Modifier.padding(top = 8.dp, bottom = 8.dp))
             }
-            Spacer(modifier = Modifier.height(40.dp))
+            if (!adsEnabled || !showAdsDeferred) {
+                Spacer(modifier = Modifier.height(8.dp))
+            }
         }
     }
 }
@@ -371,7 +408,7 @@ fun CombinedChart(
     Spacer(
         modifier = Modifier
             .fillMaxWidth()
-            .height(120.dp)
+            .height(100.dp)
             .clip(RoundedCornerShape(12.dp))
             // Theme panel, not a fixed tint: the old white-3% wash was invisible on a
             // light card, leaving the lines floating on the card itself.

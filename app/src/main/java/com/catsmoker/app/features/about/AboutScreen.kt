@@ -27,12 +27,12 @@ import com.catsmoker.app.shared.ui.components.SectionCard
 import com.catsmoker.app.shared.ui.theme.CatsmokerTheme
 
 @Composable
-fun AboutRoute(onBack: () -> Unit, onOpenLogs: () -> Unit) {
-    AboutScreen(onBack = onBack, onOpenLogs = onOpenLogs)
+fun AboutRoute(onBack: () -> Unit, onOpenLogs: () -> Unit, onDonate: () -> Unit) {
+    AboutScreen(onBack = onBack, onOpenLogs = onOpenLogs, onDonate = onDonate)
 }
 
 @Composable
-fun AboutScreen(onBack: () -> Unit, onOpenLogs: () -> Unit) {
+fun AboutScreen(onBack: () -> Unit, onOpenLogs: () -> Unit, onDonate: () -> Unit) {
     val uriHandler = LocalUriHandler.current
     val githubUrl = stringResource(R.string.url_github)
 
@@ -58,7 +58,6 @@ fun AboutScreen(onBack: () -> Unit, onOpenLogs: () -> Unit) {
                     val webUrl = stringResource(R.string.url_webpage)
                     val discordUrl = stringResource(R.string.url_discord)
                     val telegramUrl = stringResource(R.string.url_telegram)
-                    val paypalUrl = stringResource(R.string.url_paypal)
 
                     SocialIcon(
                         painter = painterResource(R.drawable.ic_github),
@@ -77,8 +76,8 @@ fun AboutScreen(onBack: () -> Unit, onOpenLogs: () -> Unit) {
                         onClick = { uriHandler.openUri(telegramUrl) }
                     )
                     SocialIcon(
-                        painter = painterResource(R.drawable.ic_paypal),
-                        onClick = { uriHandler.openUri(paypalUrl) }
+                        imageVector = Icons.Default.Favorite,
+                        onClick = onDonate
                     )
                 }
             }
@@ -171,6 +170,6 @@ fun SocialIcon(
 @Composable
 fun AboutPreview() {
     CatsmokerTheme {
-        AboutScreen(onBack = {}, onOpenLogs = {})
+        AboutScreen(onBack = {}, onOpenLogs = {}, onDonate = {})
     }
 }

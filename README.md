@@ -22,7 +22,7 @@
 [![Shizuku](https://img.shields.io/badge/access-Shizuku-2E7D32?style=flat-square)](https://shizuku.rikka.app/)
 [![Discord](https://img.shields.io/badge/community-Discord-5865F2?style=flat-square&logo=discord&logoColor=white)](https://discord.com/invite/HQC5BwcXtS)
 [![Telegram](https://img.shields.io/badge/chat-Telegram-26A5E4?style=flat-square&logo=telegram&logoColor=white)](https://t.me/CATSM0KER)
-[![PayPal](https://img.shields.io/badge/support-PayPal-00457C?style=flat-square&logo=paypal&logoColor=white)](https://www.paypal.me/catsmoker)
+[![Donate](https://img.shields.io/badge/support-Donate-F7931A?style=flat-square&logo=bitcoin&logoColor=white)](https://catsmoker.vercel.app/#donate-section)
 
 [![Typing effect](https://readme-typing-svg.demolab.com?font=Fira+Code&size=20&duration=2800&pause=900&color=0EA5E9&center=true&vCenter=true&width=620&lines=Tune+your+game.+Measure+your+device.;Android+gaming+tools+for+serious+sessions.)](https://github.com/catsmoker/com.catsmoker.app)
 
@@ -192,7 +192,7 @@ Licensed under the **Creative Commons Attribution-NonCommercial-ShareAlike 4.0 I
 
 ## 🤝 Contributing & Support
 
-- **Donate**: Support the project via [PayPal](https://www.paypal.me/catsmoker)
+- **Donate**: Support the project from the in-app Donate screen (Binance & crypto), or on the web at [catsmoker.vercel.app](https://catsmoker.vercel.app/#donate-section)
 - **Report Bugs**: [GitHub Issues](https://github.com/catsmoker/com.catsmoker.app/issues)
 - Contributions are welcome. Please open an issue before starting a large change.
 

@@ -20,9 +20,20 @@
     <string name="sys_language_subtitle">لغة التطبيق. تُطبق فورًا.</string>
     <string name="sys_lang_system">افتراضي النظام</string>
     <string name="sys_support_title">ادعم المطوّر</string>
-    <string name="sys_support_text">يرجى منح المشروع نجمة على GitHub والتبرع لدعم المطوّر عبر PayPal.</string>
+    <string name="sys_support_text">يرجى منح المشروع نجمة على GitHub والتبرع لدعم التطوير.</string>
     <string name="sys_support_star">نجمة</string>
     <string name="sys_support_donate">تبرع</string>
+    <string name="sys_support_never">عدم الإظهار مرة أخرى</string>
+    <string name="donate_title">تبرع</string>
+    <string name="donate_subtitle">ادعم التطوير بالعملات الرقمية.</string>
+    <string name="donate_binance">Binance</string>
+    <string name="donate_binance_id">معرّف Binance (UID)</string>
+    <string name="donate_qr">رابط الإيداع</string>
+    <string name="donate_crypto">عناوين العملات الرقمية</string>
+    <string name="donate_copy">نسخ</string>
+    <string name="donate_copied">تم النسخ</string>
+    <string name="donate_open">فتح</string>
+    <string name="donate_paypal">PayPal</string>
     <!-- First-run onboarding step one. -->
     <string name="sys_first_run_title">مرحبًا بك في CatSmoker</string>
     <string name="sys_first_run_subtitle">اختر مظهر التطبيق ولغته. يمكنك تغيير هذا لاحقًا من الإعدادات.</string>

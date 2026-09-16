@@ -12,16 +12,17 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.res.stringResource
 import com.catsmoker.app.R
+import com.catsmoker.app.features.gamingtools.engine.GamingModeNotice
 import com.catsmoker.app.features.gamingtools.engine.GamingModeReport
 import com.catsmoker.app.features.gamingtools.engine.GamingModeState
 import com.catsmoker.app.shared.ui.components.SectionCard
+import com.catsmoker.app.shared.ui.components.SquigglyProgressBar
 
 /**
  * The Gaming Mode card.
@@ -133,29 +134,13 @@ fun GamingModeCard(
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            // Animated Status Bar
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(8.dp)
-                    .clip(CircleShape)
-                    .background(MaterialTheme.colorScheme.surfaceVariant)
-            ) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth(animatedProgress)
-                        .fillMaxHeight()
-                        .clip(CircleShape)
-                        .background(
-                            Brush.horizontalGradient(
-                                listOf(
-                                    MaterialTheme.colorScheme.primary.copy(alpha = 0.7f),
-                                    MaterialTheme.colorScheme.primary
-                                )
-                            )
-                        )
-                )
-            }
+            // Android 13 media-player squiggle: the played stretch waves while the
+            // engine is working and relaxes to a line when idle, like a paused track.
+            SquigglyProgressBar(
+                progress = animatedProgress.coerceIn(0f, 1f),
+                animate = isBusy,
+                modifier = Modifier.fillMaxWidth()
+            )
 
             if (gamingState is GamingModeState.Error) {
                 Spacer(modifier = Modifier.height(16.dp))
@@ -271,9 +256,10 @@ fun GamingModeCard(
 
                 if (report.unavailable.isNotEmpty()) {
                     Spacer(modifier = Modifier.height(16.dp))
+                    val reasons = report.unavailable.map { resolveNotice(it) }
                     NoticeBlock(
                         text = stringResource(R.string.gt_gm_unavailable_title) + "\n" +
-                            report.unavailable.joinToString("\n") { "• $it" },
+                            reasons.joinToString("\n") { "• $it" },
                         tint = Color(0xFFFFB300)
                     )
                 }
@@ -284,9 +270,10 @@ fun GamingModeCard(
             // device that looks clean is exactly how apps stay stopped with no explanation.
             if (!isActive && report.unavailable.isNotEmpty()) {
                 Spacer(modifier = Modifier.height(16.dp))
+                val leftovers = report.unavailable.map { resolveNotice(it) }
                 NoticeBlock(
                     text = stringResource(R.string.gt_gm_revert_leftovers) + "\n" +
-                        report.unavailable.joinToString("\n") { "• $it" },
+                        leftovers.joinToString("\n") { "• $it" },
                     tint = Color(0xFFFFB300)
                 )
             }
@@ -294,8 +281,21 @@ fun GamingModeCard(
     }
 }
 
-/** Small tinted panel used for an activation error or the list of refused optimizations. */
+/**
+ * Resolves a refusal notice in the current language, at composition time — never earlier. An
+ * argument that is itself a notice (the frame-cap refusal nests its detail) resolves
+ * recursively; device-text arguments (counts, shell words) pass through verbatim.
+ */
 @Composable
+private fun resolveNotice(notice: GamingModeNotice): String = when (notice) {
+    is GamingModeNotice.Raw -> notice.text
+    is GamingModeNotice.Res -> stringResource(
+        notice.resId,
+        *notice.args.map { if (it is GamingModeNotice) resolveNotice(it) else it }.toTypedArray()
+    )
+}
+
+/** Small tinted panel used for an activation error or the list of refused optimizations. */@Composable
 private fun NoticeBlock(text: String, tint: Color) {
     Box(
         modifier = Modifier

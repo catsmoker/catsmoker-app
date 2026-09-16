@@ -7,6 +7,7 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import com.catsmoker.app.features.about.AboutRoute
+import com.catsmoker.app.features.about.DonateRoute
 import com.catsmoker.app.features.settings.SettingsRoute
 import com.catsmoker.app.features.logs.LogsRoute
 import com.catsmoker.app.features.main.MainRoute
@@ -47,7 +48,8 @@ fun AppNavHost(navController: NavHostController, startDestination: String) {
         composable(Routes.ABOUT) {
             AboutRoute(
                 onBack = { navController.popBackStack() },
-                onOpenLogs = { navController.navigate(Routes.LOGS) }
+                onOpenLogs = { navController.navigate(Routes.LOGS) },
+                onDonate = { navController.navigate(Routes.DONATE) }
             )
         }
         composable(Routes.SETTINGS) {
@@ -59,6 +61,9 @@ fun AppNavHost(navController: NavHostController, startDestination: String) {
         }
         composable(Routes.LOGS) {
             LogsRoute(onBack = { navController.popBackStack() })
+        }
+        composable(Routes.DONATE) {
+            DonateRoute(onBack = { navController.popBackStack() })
         }
     }
 }

@@ -23,7 +23,7 @@ android {
         versionName = "2.0.0"
 
         // Only locales the app actually ships (see res/xml/locales_config.xml): strips the
-        // dozens of transitive locales dragged in by material/startio/splashscreen/work.
+        // dozens of transitive locales dragged in by material/splashscreen/work.
         // Shrinking alone cannot do this.
         resConfigs("en", "en-rGB", "ar-rSA", "es-rES", "zh-rCN")
 

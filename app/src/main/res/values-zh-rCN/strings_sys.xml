@@ -20,9 +20,20 @@
     <string name="sys_language_subtitle">应用语言，立即生效。</string>
     <string name="sys_lang_system">跟随系统</string>
     <string name="sys_support_title">支持开发者</string>
-    <string name="sys_support_text">请在 GitHub 上为项目点星，并通过 PayPal 捐赠以支持开发者。</string>
+    <string name="sys_support_text">请在 GitHub 上为项目点星，或捐赠以支持开发。</string>
     <string name="sys_support_star">点星</string>
     <string name="sys_support_donate">捐赠</string>
+    <string name="sys_support_never">不再显示</string>
+    <string name="donate_title">捐赠</string>
+    <string name="donate_subtitle">用加密货币支持开发。</string>
+    <string name="donate_binance">Binance</string>
+    <string name="donate_binance_id">币安 ID（UID）</string>
+    <string name="donate_qr">充值链接</string>
+    <string name="donate_crypto">加密货币地址</string>
+    <string name="donate_copy">复制</string>
+    <string name="donate_copied">已复制</string>
+    <string name="donate_open">打开</string>
+    <string name="donate_paypal">PayPal</string>
     <!-- First-run onboarding step one. -->
     <string name="sys_first_run_title">欢迎使用 CatSmoker</string>
     <string name="sys_first_run_subtitle">选择应用的外观和语言，稍后可在设置中更改。</string>

@@ -444,6 +444,16 @@ HYGIENE (required regardless):
 
 ## 11. Changelog (newest first)
 
+- 2026-09-16: In-app Donate screen (`Routes.DONATE`, Binance UID + crypto
+  addresses with copy/open, no external PayPal flow) + README badge/support
+  copy updated in both locales; support dialog gains a do-not-show-again
+  checkbox from its 2nd appearance (policy unit-tested in
+  `SupportPromptTest`); new `SquigglyProgressBar` replaces the linear
+  indicators in file engineering; game-profile labels carried as `@StringRes`
+  IDs so a language switch re-renders them; MainScreen back-press toast +
+  dashboard polish. `testDebugUnitTest` fresh green (236/236).
+  `compileDebugKotlin` green.
+
 - 2026-09-16: Cleared the IDE-inspection export (`../errors/`, uncommitted,
   all actionable items; noise excluded: spelling/Grazie/`PluralsCandidate`
   ×122, `.xml` Hilt/`@Preview`/service false positives). Fixed: the
@@ -469,8 +479,12 @@ HYGIENE (required regardless):
   `showInterstitial` (ads roadmap), `FileService` (Shizuku reflection),
   general helpers (`getGlobalInt`, `putSettingVerified`, `writeSystemFloat`,
   `publishFps`, `absoluteDir`), `ArrayInDataClass` ×3, shell `$`-escaping.
-  Deleted unreferenced Start.io leftover
-  `assets/adi-registration.properties`. Reverted the `mipmap-anydpi-v26` →
+  Deleted `assets/adi-registration.properties` as an apparent unreferenced
+  Start.io leftover — then restored it the same day: the author confirmed
+  it is an intentional Play Store file. Its `UnusedProperty` /
+  `WrongPropertyKeyValueDelimiter` lint warnings are accepted as-is (lint
+  is non-blocking); the bare-token format must not be "fixed" into
+  `key=value` form. Reverted the `mipmap-anydpi-v26` →
   `mipmap-anydpi` move: it drops `R.mipmap` from the generated R class
   (build failure), so the `ObsoleteSdkInt` warning stays by decision.
   Two agent-introduced regressions caught by verification and fixed:

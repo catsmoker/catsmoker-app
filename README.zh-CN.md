@@ -22,7 +22,7 @@
 [![Shizuku](https://img.shields.io/badge/access-Shizuku-2E7D32?style=flat-square)](https://shizuku.rikka.app/)
 [![Discord](https://img.shields.io/badge/community-Discord-5865F2?style=flat-square&logo=discord&logoColor=white)](https://discord.com/invite/HQC5BwcXtS)
 [![Telegram](https://img.shields.io/badge/chat-Telegram-26A5E4?style=flat-square&logo=telegram&logoColor=white)](https://t.me/CATSM0KER)
-[![PayPal](https://img.shields.io/badge/support-PayPal-00457C?style=flat-square&logo=paypal&logoColor=white)](https://www.paypal.me/catsmoker)
+[![Donate](https://img.shields.io/badge/support-Donate-F7931A?style=flat-square&logo=bitcoin&logoColor=white)](https://catsmoker.vercel.app/#donate-section)
 
 [![Typing effect](https://readme-typing-svg.demolab.com?font=Fira+Code&size=20&duration=2800&pause=900&color=0EA5E9&center=true&vCenter=true&width=620&lines=%E8%B0%83%E4%BC%98%E4%BD%A0%E7%9A%84%E6%B8%B8%E6%88%8F%E3%80%82%E6%8E%8C%E6%8F%A1%E4%BD%A0%E7%9A%84%E8%AE%BE%E5%A4%87%E3%80%82;%E4%B8%BA%E8%AE%A4%E7%9C%9F%E6%B8%B8%E6%88%8F%E7%9A%84%E4%BD%A0%E8%80%8C%E7%94%9F%E7%9A%84%20Android%20%E5%B7%A5%E5%85%B7%E3%80%82)](https://github.com/catsmoker/com.catsmoker.app)
 
@@ -189,7 +189,7 @@ Play 版本规则（作者决定，详见 `PLAYSTORE.md`）：
 
 ## 🤝 贡献与支持
 
-- **捐赠**：通过 [PayPal](https://www.paypal.me/catsmoker) 支持本项目
+- **捐赠**：通过应用内的捐赠页面支持本项目（Binance 和加密货币），或访问[网页捐赠入口](https://catsmoker.vercel.app/#donate-section)
 - **反馈 Bug**：[GitHub Issues](https://github.com/catsmoker/com.catsmoker.app/issues)
 - 欢迎参与贡献。在开始大型改动之前，请先提交 Issue 讨论。
 

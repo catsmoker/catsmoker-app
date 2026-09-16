@@ -8,6 +8,7 @@ import android.content.pm.PackageManager
 import android.media.AudioManager
 import android.os.Build
 import android.provider.Settings
+import androidx.annotation.StringRes
 import androidx.core.content.edit
 import com.catsmoker.app.R
 import com.catsmoker.app.shared.data.model.GamingOptimizationSnapshot
@@ -38,6 +39,23 @@ sealed class GamingModeState {
     object Active : GamingModeState()
     object Disabling : GamingModeState()
     data class Error(val message: String) : GamingModeState()
+}
+
+/**
+ * One entry of the Gaming Mode refusal note, in a form that survives a language switch.
+ *
+ * The engine (and the ViewModel holding its report) lives on the application context, whose
+ * locale is frozen at process start, and both survive the activity `recreate()` a language
+ * change performs — a `context.getString` resolved here would stay in the previous language no
+ * matter what the user picks (the PUBG-profile-label bug of 2026-09-16 was the same shape).
+ * So the engine carries the string-resource ID plus its format arguments, and the card resolves
+ * them with `stringResource` at composition, which always follows the current language.
+ * [Raw] is the escape hatch for text that is not ours to translate: the device's own refusal
+ * words (shell output, exception messages), carried verbatim per the honesty rules.
+ */
+sealed interface GamingModeNotice {
+    data class Res(@StringRes val resId: Int, val args: List<Any> = emptyList()) : GamingModeNotice
+    data class Raw(val text: String) : GamingModeNotice
 }
 
 /**
@@ -133,7 +151,12 @@ data class GamingModeReport(
      * swallowed.
      */
     val notificationSuppression: Boolean? = null,
-    val unavailable: List<String> = emptyList()
+    /**
+     * Refused optimizations, as resource IDs resolved by the card at composition — never
+     * pre-resolved strings (see [GamingModeNotice] for why resolving here would freeze the
+     * previous language across a language switch).
+     */
+    val unavailable: List<GamingModeNotice> = emptyList()
 )
 
 /**
@@ -433,7 +456,7 @@ class GamingEngine(
                 _state.value = GamingModeState.Error(context.getString(R.string.gt_eng_snapshot_fail))
                 return
             }
-            val unavailable = mutableListOf<String>()
+            val unavailable = mutableListOf<GamingModeNotice>()
 
             _state.value = GamingModeState.Enabling(0.15f, context.getString(R.string.gt_eng_trim))
             execute("pm trim-caches 4G")
@@ -460,7 +483,7 @@ class GamingEngine(
             }
             prefs.edit { putStringSet("affected_pkgs", currentlyAffected) }
             if (suspendFailures > 0) {
-                unavailable += context.getString(R.string.gt_eng_un_suspend, suspendFailures)
+                unavailable += GamingModeNotice.Res(R.string.gt_eng_un_suspend, listOf(suspendFailures))
             }
 
             _state.value = GamingModeState.Enabling(0.6f, context.getString(R.string.gt_eng_focus))
@@ -472,9 +495,9 @@ class GamingEngine(
                 // back on the next line often still returns the old value — that race is why DND
                 // "sometimes failed" while actually being applied. Poll briefly instead.
                 dndEngaged = awaitInterruptionFilter(nm)
-                if (!dndEngaged) unavailable += context.getString(R.string.gt_eng_un_dnd_off)
+                if (!dndEngaged) unavailable += GamingModeNotice.Res(R.string.gt_eng_un_dnd_off)
             } else {
-                unavailable += context.getString(R.string.gt_eng_un_dnd_perm)
+                unavailable += GamingModeNotice.Res(R.string.gt_eng_un_dnd_perm)
             }
 
             // Second layer beyond DND, from the reference's GamingNotificationListener: some
@@ -492,17 +515,17 @@ class GamingEngine(
             val minOk = putSettingVerified("system", "min_refresh_rate", maxHz.toString())
             val lockedHz = if (peakOk || minOk) maxHz else null
             if (lockedHz == null) {
-                unavailable += context.getString(R.string.gt_eng_un_refresh)
+                unavailable += GamingModeNotice.Res(R.string.gt_eng_un_refresh)
             }
             // Touch sampling boost. Only OEMs that ship the key honour it; captureAndSaveSnapshot
             // already recorded the old value, so disableGamingMode puts it back.
             val touchOk = putSettingVerified("system", "touch_response_speed", "2")
-            if (!touchOk) unavailable += context.getString(R.string.gt_eng_un_touch)
+            if (!touchOk) unavailable += GamingModeNotice.Res(R.string.gt_eng_un_touch)
 
             val fixedPerfOk = shellRunner
                 .execSafeResult("cmd", "power", "set-fixed-performance-mode-enabled", "true")
                 .isSuccess
-            if (!fixedPerfOk) unavailable += context.getString(R.string.gt_eng_un_fixed)
+            if (!fixedPerfOk) unavailable += GamingModeNotice.Res(R.string.gt_eng_un_fixed)
 
             // Qualcomm's vendor GPU mode. The payload is the reference daemon's whole job (see
             // [GamingModeReport.gpuPerformanceMode] for the lineage); gated on the property
@@ -510,14 +533,14 @@ class GamingEngine(
             // switch it never had.
             val gpuPerfOk = applyVendorGpuPerformance()
             if (gpuPerfOk == false) {
-                unavailable += context.getString(R.string.gt_eng_un_gpu)
+                unavailable += GamingModeNotice.Res(R.string.gt_eng_un_gpu)
             }
 
             // Qualcomm's game FPS hint, from the same reference's boot script (see
             // [GamingModeReport.qtiGameFps] for the lineage and the persist-twin decision).
             val qtiFpsOk = applyQtiGameFpsHint(maxHz)
             if (qtiFpsOk == false) {
-                unavailable += context.getString(R.string.gt_eng_un_qti)
+                unavailable += GamingModeNotice.Res(R.string.gt_eng_un_qti)
             }
 
             // The two developer options, applied through the same verified helpers the Developer
@@ -525,11 +548,11 @@ class GamingEngine(
             _state.value = GamingModeState.Enabling(0.92f, context.getString(R.string.gt_eng_dev))
             val discardOk = toggleAlwaysFinishActivities(true)
             if (!discardOk) {
-                unavailable += context.getString(R.string.gt_eng_un_discard)
+                unavailable += GamingModeNotice.Res(R.string.gt_eng_un_discard)
             }
             val processLimitOk = toggleBackgroundProcessLimit(true)
             if (!processLimitOk) {
-                unavailable += context.getString(R.string.gt_eng_un_limit)
+                unavailable += GamingModeNotice.Res(R.string.gt_eng_un_limit)
             }
 
             // Metered-background data. Left entirely alone when the user's own switch was already on:
@@ -537,16 +560,16 @@ class GamingEngine(
             _state.value = GamingModeState.Enabling(0.95f, context.getString(R.string.gt_eng_data))
             var backgroundDataRestricted: Boolean? = null
             if (restrictedBefore) {
-                unavailable += context.getString(R.string.gt_eng_un_data_on)
+                unavailable += GamingModeNotice.Res(R.string.gt_eng_un_data_on)
             } else {
                 val outcome = runCatching {
                     backgroundDataRestrictor.enable(listOfNotNull(packageName))
                 }.getOrNull()
                 backgroundDataRestricted = outcome?.success == true
                 if (outcome == null) {
-                    unavailable += context.getString(R.string.gt_eng_un_data_silent)
+                    unavailable += GamingModeNotice.Res(R.string.gt_eng_un_data_silent)
                 } else if (!outcome.success) {
-                    unavailable += context.getString(R.string.gt_eng_un_data_fail, outcome.message)
+                    unavailable += GamingModeNotice.Res(R.string.gt_eng_un_data_fail, listOf(outcome.message))
                 }
             }
 
@@ -566,10 +589,14 @@ class GamingEngine(
                     val outcome = gameInterventions.apply(packageName, maxHz)
                     gameInterventionApplied = outcome.applied
                     if (!outcome.applied) {
-                        unavailable += context.getString(
+                        unavailable += GamingModeNotice.Res(
                             R.string.gt_eng_un_framecap,
-                            outcome.refusal?.let { context.getString(R.string.gt_eng_un_framecap_no, it) }
-                                ?: context.getString(R.string.gt_eng_un_framecap_kept)
+                            listOf(
+                                outcome.refusal?.let {
+                                    GamingModeNotice.Res(R.string.gt_eng_un_framecap_no, listOf(it))
+                                }
+                                    ?: GamingModeNotice.Res(R.string.gt_eng_un_framecap_kept)
+                            )
                         )
                     }
                 }
@@ -643,7 +670,7 @@ class GamingEngine(
         _notificationSuppressionActive.value = false
         // Anything gathered here survives into the report even when a later step throws, so a
         // half-finished revert still says what it did not get to.
-        val revertProblems = mutableListOf<String>()
+        val revertProblems = mutableListOf<GamingModeNotice>()
         try {
             // Every unsuspend is verified by what the shell answered — the same standard
             // activation holds suspends to. A package that refused to wake stays in the record
@@ -681,7 +708,7 @@ class GamingEngine(
             } else {
                 prefs.edit { putStringSet("affected_pkgs", stillSuspended) }
                 revertProblems +=
-                    context.getString(R.string.gt_eng_still_suspended, stillSuspended.size)
+                    GamingModeNotice.Res(R.string.gt_eng_still_suspended, listOf(stillSuspended.size))
             }
             execute("cmd deviceidle unforce")
             execute("cmd power set-fixed-performance-mode-enabled false")
@@ -689,7 +716,7 @@ class GamingEngine(
             // before activation — not to INTERRUPTION_FILTER_ALL, which would cancel a DND the user set.
             revertProblems += revertFromSnapshot()
             val thermalRefusal = if (!recoverThermalOverrideIfNeeded()) {
-                context.getString(R.string.gt_eng_thermal)
+                GamingModeNotice.Res(R.string.gt_eng_thermal)
             } else {
                 null
             }
@@ -697,7 +724,10 @@ class GamingEngine(
             // refusal text and belongs in front of the user rather than in a silent state change.
             _report.value = GamingModeReport(unavailable = revertProblems + listOfNotNull(thermalRefusal))
         } catch (e: Exception) {
-            revertProblems += context.getString(R.string.gt_eng_revert_fail, e.message ?: e.javaClass.simpleName)
+            revertProblems += GamingModeNotice.Res(
+                R.string.gt_eng_revert_fail,
+                listOf(e.message ?: e.javaClass.simpleName)
+            )
             _report.value = GamingModeReport(unavailable = revertProblems)
         } finally {
             prefs.edit { putBoolean("is_active", false); putBoolean("fixed_perf_manual", false) }
@@ -1567,14 +1597,15 @@ class GamingEngine(
     /**
      * Restores everything the snapshot recorded, reporting what refused to go back.
      *
-     * @return human-readable problems for the deactivation report; empty when everything landed.
-     *   A missing or unparsable snapshot answers empty rather than accusing the device — there
-     *   is no record to restore from, so there is nothing to verify against.
+     * @return problems for the deactivation report as notices resolved by the card at
+     *   composition (see [GamingModeNotice]); empty when everything landed. A missing or
+     *   unparsable snapshot answers empty rather than accusing the device — there is no record
+     *   to restore from, so there is nothing to verify against.
      */
-    private suspend fun revertFromSnapshot(): List<String> {
+    private suspend fun revertFromSnapshot(): List<GamingModeNotice> {
         val json = prefs.getString("last_snapshot", null) ?: return emptyList()
         val snapshot = GamingOptimizationSnapshot.fromJson(json) ?: return emptyList()
-        val problems = mutableListOf<String>()
+        val problems = mutableListOf<GamingModeNotice>()
         
         // Restore volume
         snapshot.originalRingtoneVolume?.let { vol ->
@@ -1619,9 +1650,10 @@ class GamingEngine(
         if (!snapshot.backgroundDataRestrictedBefore || backgroundDataRestrictor.hasRetainedBlocks()) {
             val dataOutcome = runCatching { backgroundDataRestrictor.disable() }.getOrNull()
             if (dataOutcome == null) {
-                problems += context.getString(R.string.gt_eng_un_data_revert)
+                problems += GamingModeNotice.Res(R.string.gt_eng_un_data_revert)
             } else if (!dataOutcome.success) {
-                problems += dataOutcome.message
+                // The restrictor's own words (already resolved where it runs) — carried verbatim.
+                problems += GamingModeNotice.Raw(dataOutcome.message)
             }
         }
 
@@ -1808,33 +1840,33 @@ class GamingEngine(
      */
     private suspend fun recoverPersistedState() {
         try {
-            val unavailable = mutableListOf<String>()
+            val unavailable = mutableListOf<GamingModeNotice>()
             val maxHz = refreshRates.getMaxHardwareRefreshRate().toInt()
             val peakOk = putSettingVerified("system", "peak_refresh_rate", maxHz.toString())
             val minOk = putSettingVerified("system", "min_refresh_rate", maxHz.toString())
             val lockedHz = if (peakOk || minOk) maxHz else null
             if (lockedHz == null) {
-                unavailable += context.getString(R.string.gt_eng_un_refresh)
+                unavailable += GamingModeNotice.Res(R.string.gt_eng_un_refresh)
             }
 
             val touchOk = putSettingVerified("system", "touch_response_speed", "2")
-            if (!touchOk) unavailable += context.getString(R.string.gt_eng_un_touch)
+            if (!touchOk) unavailable += GamingModeNotice.Res(R.string.gt_eng_un_touch)
 
             val fixedPerfOk = shellRunner
                 .execSafeResult("cmd", "power", "set-fixed-performance-mode-enabled", "true")
                 .isSuccess
-            if (!fixedPerfOk) unavailable += context.getString(R.string.gt_eng_un_fixed)
+            if (!fixedPerfOk) unavailable += GamingModeNotice.Res(R.string.gt_eng_un_fixed)
             // The Qualcomm GPU switch too, under the same re-assert-everything rule as the rest
             // of this recovery — the snapshot still holds the vendor's originals, so the eventual
             // deactivation restores them either way.
             val gpuPerfOk = applyVendorGpuPerformance()
             if (gpuPerfOk == false) {
-                unavailable += context.getString(R.string.gt_eng_un_gpu)
+                unavailable += GamingModeNotice.Res(R.string.gt_eng_un_gpu)
             }
             // The game FPS hint with the same rule; maxHz above is this run's measured peak.
             val qtiFpsOk = applyQtiGameFpsHint(maxHz)
             if (qtiFpsOk == false) {
-                unavailable += context.getString(R.string.gt_eng_un_qti)
+                unavailable += GamingModeNotice.Res(R.string.gt_eng_un_qti)
             }
             execute("cmd deviceidle force-idle")
 
@@ -1850,11 +1882,11 @@ class GamingEngine(
             // user's originals from the previous process, so deactivation restores those either way.
             val discardOk = toggleAlwaysFinishActivities(true)
             if (!discardOk) {
-                unavailable += context.getString(R.string.gt_eng_un_discard)
+                unavailable += GamingModeNotice.Res(R.string.gt_eng_un_discard)
             }
             val processLimitOk = toggleBackgroundProcessLimit(true)
             if (!processLimitOk) {
-                unavailable += context.getString(R.string.gt_eng_un_limit)
+                unavailable += GamingModeNotice.Res(R.string.gt_eng_un_limit)
             }
 
             val snapshot = prefs.getString("last_snapshot", null)

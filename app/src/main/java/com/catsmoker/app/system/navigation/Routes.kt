@@ -8,4 +8,5 @@ object Routes {
     const val ABOUT = "about"
     const val SETTINGS = "settings"
     const val LOGS = "logs"
+    const val DONATE = "donate"
 }
