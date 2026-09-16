@@ -33,9 +33,20 @@
     <string name="sys_update_check_failed">Update check failed: %1$s</string>
     <string name="sys_download_failed">Download failed: %1$s</string>
     <string name="sys_support_title">Support the Developer</string>
-    <string name="sys_support_text">Please star the project on GitHub and donate to help the dev on PayPal.</string>
+    <string name="sys_support_text">Please star the project on GitHub and donate to support development.</string>
     <string name="sys_support_star">Star</string>
     <string name="sys_support_donate">Donate</string>
+    <string name="sys_support_never">Do not show again</string>
+    <string name="donate_title">Donate</string>
+    <string name="donate_subtitle">Support development with crypto.</string>
+    <string name="donate_binance">Binance</string>
+    <string name="donate_binance_id">Binance ID (UID)</string>
+    <string name="donate_qr">Deposit link</string>
+    <string name="donate_crypto">Crypto addresses</string>
+    <string name="donate_copy">Copy</string>
+    <string name="donate_copied">Copied</string>
+    <string name="donate_open">Open</string>
+    <string name="donate_paypal">PayPal</string>
     <!-- First-run onboarding step one. -->
     <string name="sys_first_run_title">Welcome to CatSmoker</string>
     <string name="sys_first_run_subtitle">Choose how the app looks and which language it speaks. You can change this later in Settings.</string>

@@ -2266,10 +2266,11 @@ fun AppBoosterContent(
             Spacer(modifier = Modifier.height(8.dp))
             val progress = state.progress
             if (progress == null) {
-                // Still querying the app list: there is no percentage yet, so nothing pretends there is.
-                LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
+                // Still querying the app list: there is no percentage yet, so a
+                // travelling wave shows work without pretending a percentage.
+                SquigglyProgressBar(progress = null, animate = true)
             } else {
-                LinearProgressIndicator(progress = { progress }, modifier = Modifier.fillMaxWidth())
+                SquigglyProgressBar(progress = progress, animate = true)
             }
         }
 

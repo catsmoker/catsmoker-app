@@ -54,7 +54,14 @@ fun QuickActionButton(
      */
     contentPadding: Dp = 18.dp,
     iconSize: Dp = 46.dp,
-    gridTitleGap: Dp = 22.dp
+    gridTitleGap: Dp = 22.dp,
+    /**
+     * Pin the icon to the top and the texts to the bottom, spreading to fill
+     * whatever height the parent gives the tile. Only set this when the caller
+     * fixes the tile height (e.g. `weight` in a no-scroll grid) — in a
+     * wrap-content parent the content would collapse.
+     */
+    spreadGridContent: Boolean = false
 ) {
     val clickable = enabled && !isLoading
     Card(
@@ -121,35 +128,59 @@ fun QuickActionButton(
                         )
                     }
                 }
+            } else if (spreadGridContent) {
+                // Fixed-height host (e.g. weight in a no-scroll grid): pin the
+                // icon to the top and the texts to the bottom so the content
+                // fills the tile instead of bunching up.
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(contentPadding),
+                    horizontalAlignment = Alignment.Start,
+                    verticalArrangement = Arrangement.SpaceBetween
+                ) {
+                    ActionIconBadge(
+                        iconSize = iconSize,
+                        containerColor = iconContainerColor,
+                        contentColor = iconContentColor,
+                        isLoading = isLoading,
+                        icon = icon
+                    )
+                    Column {
+                        Text(
+                            text = title,
+                            style = MaterialTheme.typography.titleMedium,
+                            color = MaterialTheme.colorScheme.onSurface,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                        Spacer(modifier = Modifier.height(3.dp))
+                        if (statusTag != null) {
+                            statusTag()
+                        } else {
+                            Text(
+                                text = subtitle,
+                                style = MaterialTheme.typography.bodySmall.copy(fontSize = 12.sp),
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                minLines = 2,
+                                maxLines = 2,
+                                overflow = TextOverflow.Ellipsis
+                            )
+                        }
+                    }
+                }
             } else {
                 Column(
                     modifier = Modifier.padding(contentPadding),
                     horizontalAlignment = Alignment.Start
                 ) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        Box(
-                            modifier = Modifier
-                                .size(iconSize)
-                                .clip(RoundedCornerShape(14.dp))
-                                .background(iconContainerColor)
-                                .border(1.dp, iconContentColor.copy(alpha = 0.28f), RoundedCornerShape(14.dp)),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            CompositionLocalProvider(LocalContentColor provides iconContentColor) {
-                                icon()
-                            }
-                        }
-                        if (isLoading) {
-                            CircularProgressIndicator(
-                                modifier = Modifier.size(20.dp),
-                                strokeWidth = 2.dp
-                            )
-                        }
-                    }
+                    ActionIconBadge(
+                        iconSize = iconSize,
+                        containerColor = iconContainerColor,
+                        contentColor = iconContentColor,
+                        isLoading = isLoading,
+                        icon = icon
+                    )
                     Spacer(modifier = Modifier.height(gridTitleGap))
                     Text(
                         text = title,
@@ -175,14 +206,59 @@ fun QuickActionButton(
             }
 
             if (isLoading) {
-                LinearProgressIndicator(
+                // Android 13 squiggle in a compact strip so the travelling wave fits
+                // the tile's rounded bottom edge instead of a flat bar.
+                SquigglyProgressBar(
+                    progress = null,
+                    animate = true,
+                    strokeWidth = 2.dp,
+                    waveLength = 12.dp,
+                    waveAmplitude = 1.5.dp,
+                    barHeight = 8.dp,
                     modifier = Modifier
                         .align(Alignment.BottomCenter)
                         .fillMaxWidth()
-                        .height(3.dp)
                         .clip(RoundedCornerShape(bottomStart = 20.dp, bottomEnd = 20.dp))
                 )
             }
+        }
+    }
+}
+
+/**
+ * The rounded icon badge plus the optional busy spinner, shared by both grid
+ * layouts so the two branches can never drift apart.
+ */
+@Composable
+private fun ActionIconBadge(
+    iconSize: Dp,
+    containerColor: Color,
+    contentColor: Color,
+    isLoading: Boolean,
+    icon: @Composable () -> Unit
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.SpaceBetween
+    ) {
+        Box(
+            modifier = Modifier
+                .size(iconSize)
+                .clip(RoundedCornerShape(14.dp))
+                .background(containerColor)
+                .border(1.dp, contentColor.copy(alpha = 0.28f), RoundedCornerShape(14.dp)),
+            contentAlignment = Alignment.Center
+        ) {
+            CompositionLocalProvider(LocalContentColor provides contentColor) {
+                icon()
+            }
+        }
+        if (isLoading) {
+            CircularProgressIndicator(
+                modifier = Modifier.size(20.dp),
+                strokeWidth = 2.dp
+            )
         }
     }
 }

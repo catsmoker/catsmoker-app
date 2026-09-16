@@ -1,13 +1,21 @@
 package com.catsmoker.app.shared.data.model
 
+import androidx.annotation.StringRes
+
 /**
  * One editable thing about a game, as the Edit Game Files screen offers it.
  *
  * A profile pairs the label the user picks with the bundled asset that carries it. PUBG has two
  * (max-FPS and iPad-view saves); Genshin Impact has one (the tuned `hardware_model_config.json`).
+ *
+ * The label travels as a string-resource ID, never a resolved string: these configs are built in
+ * a ViewModel with the application context, whose locale is frozen at process start, and the
+ * ViewModel survives the activity `recreate()` a language switch performs — a resolved label
+ * would stay in the previous language no matter what the user picks. The screen resolves the
+ * ID with `stringResource`, which always follows the current language.
  */
 data class GameProfile(
-    val label: String,
+    @StringRes val labelRes: Int,
     val assetPath: String
 )
 

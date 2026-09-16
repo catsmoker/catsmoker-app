@@ -3,10 +3,14 @@ package com.catsmoker.app.system
 import android.os.Bundle
 import android.view.Window
 import android.content.Context
+import android.content.SharedPreferences
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.Checkbox
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.LaunchedEffect
@@ -15,7 +19,9 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
 import androidx.core.content.edit
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.core.view.WindowCompat
@@ -41,9 +47,29 @@ import androidx.compose.material3.TextButton
 import androidx.compose.foundation.layout.Row
 import androidx.compose.ui.res.stringResource
 
+/**
+ * Support-dialog prompt state, persisted in `app_prefs` next to `app_launch_count`.
+ *
+ * The dialog shows every 5th launch; from its second showing it offers a "Do not show
+ * again" checkbox. Pure data + pure policy below so the rules stay unit-tested — the
+ * Activity only reads/writes the prefs.
+ */
+internal data class SupportPromptState(
+    val timesShown: Int = 0,
+    val neverAskAgain: Boolean = false
+)
+
+internal fun shouldShowSupportDialog(launchCount: Int, state: SupportPromptState): Boolean =
+    !state.neverAskAgain && launchCount > 0 && launchCount % 5 == 0
+
+internal fun showNeverAskOption(state: SupportPromptState): Boolean =
+    state.timesShown >= 1
+
+internal fun onSupportDialogShown(state: SupportPromptState): SupportPromptState =
+    state.copy(timesShown = state.timesShown + 1)
+
 @AndroidEntryPoint
-class MainActivity : ComponentActivity() {
-    override fun attachBaseContext(newBase: Context) {
+class MainActivity : ComponentActivity() {    override fun attachBaseContext(newBase: Context) {
         super.attachBaseContext(LocaleHelper.wrap(newBase))
     }
 
@@ -80,17 +106,47 @@ class MainActivity : ComponentActivity() {
             ) {
                 var showStartup by remember { mutableStateOf(true) }
                 var showSupportDialog by remember { mutableStateOf(shouldShowSupportDialog()) }
+                // Prompt state read once: it decides whether this showing offers the
+                // "Do not show again" checkbox (2nd showing on). The shown-count itself
+                // is recorded by the LaunchedEffect below, once per actual display.
+                val supportState = remember { supportPromptState() }
+                var neverAskChecked by remember { mutableStateOf(false) }
+                val closeSupportDialog: () -> Unit = {
+                    if (neverAskChecked) setSupportNeverAsk()
+                    showSupportDialog = false
+                }
+                // Hoisted above the dialog so Donate can navigate: the dialog lives outside
+                // the NavHost, and creating a second controller here would split the back stack.
+                val navController = rememberNavController()
 
                 if (!showStartup && showSupportDialog) {
+                    LaunchedEffect(Unit) { markSupportDialogShown() }
                     val githubUrl = stringResource(R.string.url_github)
                     AlertDialog(
-                        onDismissRequest = { showSupportDialog = false },
+                        onDismissRequest = { closeSupportDialog() },
                         title = { Text(stringResource(R.string.sys_support_title), color = MaterialTheme.colorScheme.onSurface) },
                         text = {
-                            Text(
-                                stringResource(R.string.sys_support_text),
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
+                            Column {
+                                Text(
+                                    stringResource(R.string.sys_support_text),
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                                if (showNeverAskOption(supportState)) {
+                                    Row(
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        modifier = Modifier.padding(top = 8.dp)
+                                    ) {
+                                        Checkbox(
+                                            checked = neverAskChecked,
+                                            onCheckedChange = { neverAskChecked = it }
+                                        )
+                                        Text(
+                                            stringResource(R.string.sys_support_never),
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                                        )
+                                    }
+                                }
+                            }
                         },
                         confirmButton = {
                             Row {
@@ -99,19 +155,16 @@ class MainActivity : ComponentActivity() {
                                         val intent = Intent(Intent.ACTION_VIEW, githubUrl.toUri())
                                         startActivity(intent)
                                     } catch (_: Exception) {}
-                                    showSupportDialog = false
+                                    closeSupportDialog()
                                 }) { Text(stringResource(R.string.sys_support_star), color = MaterialTheme.colorScheme.onSurface) }
                                 TextButton(onClick = {
-                                    try {
-                                        val intent = Intent(Intent.ACTION_VIEW, "https://www.paypal.com/paypalme/catsmoker".toUri())
-                                        startActivity(intent)
-                                    } catch (_: Exception) {}
-                                    showSupportDialog = false
+                                    closeSupportDialog()
+                                    navController.navigate(Routes.DONATE)
                                 }) { Text(stringResource(R.string.sys_support_donate), color = MaterialTheme.colorScheme.onSurface) }
                             }
                         },
                         dismissButton = {
-                            TextButton(onClick = { showSupportDialog = false }) {
+                            TextButton(onClick = { closeSupportDialog() }) {
                                 Text(stringResource(R.string.sys_later), color = MaterialTheme.colorScheme.onSurfaceVariant)
                             }
                         },
@@ -137,7 +190,6 @@ class MainActivity : ComponentActivity() {
                     if (showStartup) {
                         StartupScreen(onFinished = { showStartup = false })
                     } else {
-                        val navController = rememberNavController()
                         AppNavHost(navController = navController, startDestination = startDestination)
                     }
                 }
@@ -167,7 +219,25 @@ class MainActivity : ComponentActivity() {
     }
 
     private fun shouldShowSupportDialog(): Boolean {
-        val count = getSharedPreferences("app_prefs", MODE_PRIVATE).getInt("app_launch_count", 0)
-        return count > 0 && count % 5 == 0
+        val prefs = getSharedPreferences("app_prefs", MODE_PRIVATE)
+        val count = prefs.getInt("app_launch_count", 0)
+        return shouldShowSupportDialog(count, supportPromptState(prefs))
+    }
+
+    private fun supportPromptState(
+        prefs: SharedPreferences = getSharedPreferences("app_prefs", MODE_PRIVATE)
+    ): SupportPromptState = SupportPromptState(
+        timesShown = prefs.getInt("support_shown_count", 0),
+        neverAskAgain = prefs.getBoolean("support_never_ask", false)
+    )
+
+    private fun markSupportDialogShown() {
+        val prefs = getSharedPreferences("app_prefs", MODE_PRIVATE)
+        val next = onSupportDialogShown(supportPromptState(prefs))
+        prefs.edit { putInt("support_shown_count", next.timesShown) }
+    }
+
+    private fun setSupportNeverAsk() {
+        getSharedPreferences("app_prefs", MODE_PRIVATE).edit { putBoolean("support_never_ask", true) }
     }
 }

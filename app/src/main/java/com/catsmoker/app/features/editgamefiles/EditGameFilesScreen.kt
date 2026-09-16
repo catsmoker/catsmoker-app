@@ -44,6 +44,7 @@ import com.catsmoker.app.shared.ui.theme.CatsmokerTheme
 import kotlinx.coroutines.flow.collectLatest
 import com.catsmoker.app.shared.ui.components.CatsmokerButton
 import com.catsmoker.app.shared.ui.components.CatsmokerOutlinedButton
+import com.catsmoker.app.shared.ui.components.SquigglyProgressBar
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -474,18 +475,18 @@ fun EditGameFilesScreen(
                                 uiState.busyArea == EditGameFilesViewModel.BusyArea.BACKUP_DELETE
                             if (profileBusy) {
                                 Spacer(modifier = Modifier.height(8.dp))
-                                LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
+                                SquigglyProgressBar(progress = null, animate = true, modifier = Modifier.fillMaxWidth())
                             }
                             Spacer(modifier = Modifier.height(10.dp))
-                            // Per-game labels from the view model — PUBG has two profiles, Genshin one —
-                            // so the list is whatever the selected game actually offers.
-                            uiState.profileLabels.forEachIndexed { index, profile ->
+                            // Per-game label IDs from the view model — PUBG has two profiles, Genshin one —
+                            // resolved here (not in the ViewModel) so they follow the current language.
+                            uiState.profileLabelResIds.forEachIndexed { index, labelResId ->
                                 Row(
                                     modifier = Modifier.fillMaxWidth().clickable { onProfileSelected(index) }.padding(vertical = 10.dp),
                                     verticalAlignment = Alignment.CenterVertically
                                 ) {
                                     RadioButton(selected = uiState.selectedProfile == index, onClick = { onProfileSelected(index) })
-                                    Text(profile, color = MaterialTheme.colorScheme.onSurface)
+                                    Text(stringResource(labelResId), color = MaterialTheme.colorScheme.onSurface)
                                 }
                             }
                             Spacer(modifier = Modifier.height(12.dp))
@@ -554,7 +555,7 @@ fun EditGameFilesScreen(
                                 Text(stringResource(R.string.gf_custom_upload), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary)
                                 if (uiState.busyArea == EditGameFilesViewModel.BusyArea.CUSTOM_UPLOAD) {
                                     Spacer(modifier = Modifier.height(8.dp))
-                                    LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
+                                    SquigglyProgressBar(progress = null, animate = true, modifier = Modifier.fillMaxWidth())
                                 }
                                 Spacer(modifier = Modifier.height(10.dp))
                                 Text(uiState.selectedItemText, fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f))
@@ -756,7 +757,7 @@ private fun PubgSaveEditorSection(
                 uiState.busyArea == EditGameFilesViewModel.BusyArea.SAVE_APPLY
             if (saveBusy) {
                 Spacer(modifier = Modifier.height(8.dp))
-                LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
+                SquigglyProgressBar(progress = null, animate = true, modifier = Modifier.fillMaxWidth())
             }
             Spacer(modifier = Modifier.height(10.dp))
             Text(
@@ -893,7 +894,7 @@ fun EditGameFilesPreview() {
             uiState = EditGameFilesViewModel.UiState(
                 selectedGame = GameType.PUBG_GLOBAL,
                 installedGames = mapOf(GameType.PUBG_GLOBAL to true),
-                profileLabels = listOf("Unlock 120 FPS", "Tablet View (Wide)"),
+                profileLabelResIds = listOf(R.string.gf_profile_unlock_120, R.string.gf_profile_tablet),
                 configFileLabel = "Active.sav",
                 canReset = true,
                 selectedItemText = "Active.sav selected",

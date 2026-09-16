@@ -84,8 +84,8 @@ class EditGameFilesViewModel @Inject constructor(
          */
         val installedGames: Map<GameType, Boolean> = emptyMap(),
         val selectedProfile: Int = 0,
-        /** Labels of the selected game's profiles — per-game, since Genshin has one and PUBG two. */
-        val profileLabels: List<String> = emptyList(),
+        /** String-resource IDs of the selected game's profile labels — resolved in Compose so a language switch re-renders them (a resolved string cached here would survive `recreate()` in the old language). */
+        val profileLabelResIds: List<Int> = emptyList(),
         /**
          * The selected game's own config-file name for UI labels — the reset button and its
          * dialog once hardcoded "ACTIVE.SAV" and showed it under Genshin too. Null when no
@@ -192,8 +192,8 @@ class EditGameFilesViewModel @Inject constructor(
             saveDir = "/Android/data/$packageName/files/UE4Game/ShadowTrackerExtra/ShadowTrackerExtra/Saved/SaveGames/",
             saveFile = "Active.sav",
             profiles = listOf(
-                GameProfile(context.getString(R.string.gf_profile_unlock_120), "PUBG/MaxFPS/Active.sav"),
-                GameProfile(context.getString(R.string.gf_profile_tablet), "PUBG/TabletView/Active.sav")
+                GameProfile(R.string.gf_profile_unlock_120, "PUBG/MaxFPS/Active.sav"),
+                GameProfile(R.string.gf_profile_tablet, "PUBG/TabletView/Active.sav")
             ),
             resetFilePath = "/storage/emulated/0/Android/data/$packageName" +
                 "/files/UE4Game/ShadowTrackerExtra/ShadowTrackerExtra/Saved/SaveGames/Active.sav",
@@ -225,7 +225,7 @@ class EditGameFilesViewModel @Inject constructor(
             saveDir = "/Android/data/com.miHoYo.GenshinImpact/files/",
             saveFile = "hardware_model_config.json",
             profiles = listOf(
-                GameProfile(context.getString(R.string.gf_profile_genshin), "Genshin/hardware_model_config.json")
+                GameProfile(R.string.gf_profile_genshin, "Genshin/hardware_model_config.json")
             ),
             requiresDeviceModel = true
         )
@@ -305,7 +305,7 @@ class EditGameFilesViewModel @Inject constructor(
             it.copy(
                 selectedGame = game,
                 selectedProfile = 0,
-                profileLabels = config?.profiles?.map(GameProfile::label).orEmpty(),
+                profileLabelResIds = config?.profiles?.map(GameProfile::labelRes).orEmpty(),
                 configFileLabel = config?.resetFileLabel,
                 // The exact package the GAME NOT FOUND card should name — the one the probe
                 // actually checked, not a family-level guess.
