@@ -68,7 +68,12 @@ class LocaleParityTest {
         "donate_copy",
         "donate_copied",
         "donate_open",
-        "donate_paypal"
+        "donate_paypal",
+        // About screen community-button titles (icon-only before; now labeled).
+        "about_social_github",
+        "about_social_website",
+        "about_social_discord",
+        "about_social_telegram",
     )
 
     private fun keysIn(dir: String): Set<String> {

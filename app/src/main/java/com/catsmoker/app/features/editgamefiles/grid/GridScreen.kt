@@ -372,7 +372,7 @@ private fun StatusCard(uiState: GridUiState) {
         )
         if (uiState.gameVersion != null) {
             Text(
-                uiState.gameVersion ?: "",
+                uiState.gameVersion,
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )

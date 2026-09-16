@@ -111,7 +111,6 @@ object HsrPlayerPrefsXml {
                         is Value.LongValue -> "long"
                         is Value.FloatValue -> "float"
                         is Value.BooleanValue -> "boolean"
-                        else -> "string"
                     }
                     serializer.startTag(null, tag)
                     serializer.attribute(null, "name", key)

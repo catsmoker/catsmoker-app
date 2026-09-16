@@ -46,6 +46,7 @@ import com.catsmoker.app.shared.ui.theme.NothingRed
 import java.util.Locale
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
+import kotlinx.coroutines.delay
 
 @Composable
 fun MainRoute(onNavigate: (String) -> Unit) {
@@ -127,22 +128,22 @@ fun MainScreen(
 
     LaunchedEffect(Unit) {
         // One-frame "breath" to let the system settle after splash removal
-        kotlinx.coroutines.delay(16.milliseconds) 
+        delay(16.milliseconds) 
         
         // Progressive Hydration Timeline
-        kotlinx.coroutines.delay(50.milliseconds) 
+        delay(50.milliseconds) 
         hydrationPhase = 1
-        kotlinx.coroutines.delay(100.milliseconds) 
+        delay(100.milliseconds) 
         hydrationPhase = 2
-        kotlinx.coroutines.delay(150.milliseconds) 
+        delay(150.milliseconds) 
         hydrationPhase = 3
-        kotlinx.coroutines.delay(300.milliseconds) 
+        delay(300.milliseconds) 
         hydrationPhase = 4
     }
 
     LaunchedEffect(adsEnabled) {
         if (adsEnabled) {
-            kotlinx.coroutines.delay(5.seconds)
+            delay(5.seconds)
             showAdsDeferred = true
         }
     }

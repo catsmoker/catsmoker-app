@@ -1,0 +1,11 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <!-- Concentric ring with a centre dot. evenOdd cuts the moat between them. -->
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:fillType="evenOdd"
+        android:pathData="M12,2C6.5,2 2,6.5 2,12s4.5,10 10,10 10,-4.5 10,-10S17.5,2 12,2Z M12,5.5a6.5,6.5 0 1,0 0,13a6.5,6.5 0 1,0 0,-13Z M12,9.7a2.3,2.3 0 1,0 0,4.6a2.3,2.3 0 1,0 0,-4.6Z" />
+</vector>

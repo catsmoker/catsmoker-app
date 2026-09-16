@@ -29,6 +29,12 @@
     <string name="core_about_dev_logs">View logs</string>
     <string name="core_about_dev_report">Report on GitHub</string>
 
+    <!-- About screen community-button titles (brand names stay verbatim). -->
+    <string name="about_social_github">GitHub</string>
+    <string name="about_social_website">Website</string>
+    <string name="about_social_discord">Discord</string>
+    <string name="about_social_telegram">Telegram</string>
+
     <!-- Logs screen ViewModel messages (%1$s = detail). -->
     <string name="core_logs_fetch_error">Error fetching logs: %1$s</string>
     <string name="core_logs_share_title">Share Logs</string>

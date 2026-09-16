@@ -352,6 +352,30 @@ REVIEW / GATE (🟡 — justify, narrow, or gate; record outcome per item):
 - [ ] `device_config` / `setprop` / `wm size|density` — publish the exact
       allow-listed commands + keys and their snapshot-revert pairing; drop
       the rest on this branch.
+      — Inventoried 2026-09-16 (code-cited, decision to drop/keep still
+      pending — checkbox stays open):
+      `device_config` namespace `game_overlay` only (`get`/`put`/`delete`
+      per-package mode strings, `GameInterventions.kt:73-132`, read-back
+      verified, revert restores the prior entry or deletes);
+      `setprop` keys `vendor.gpu.mode=performance`,
+      `vendor.gfx.low_quality=1` (both gated on prop existence,
+      `GamingEngine.kt:1759-1774`, snapshot-reverted),
+      `debug.vendor.qti.game.fps=<measured peak Hz>` (Qualcomm only,
+      `persist.` twin deliberately never set, `GamingEngine.kt:1785-1788`),
+      `debug.graphics.game_default_frame_rate.disabled=true|false`
+      (`GameDeveloperOptions.kt:200`, read via `getprop`);
+      `ro.surface_flinger.game_default_frame_rate_override` is read-only
+      (never written); `wm size|density` read + set + `reset`
+      (`GamingToolsViewModel.kt:1289-1363`, safe-range gated, reset
+      restores native panel mode); dexopt is
+      `cmd package compile -m <mode> [-f] <pkg>` — manual defaults to
+      `speed-profile` with user-chosen `-f`, the scheduled sweep is
+      `speed` never `-f` (`DexoptScheduleStore.SCHEDULED_MODE`,
+      `DexoptSweepWorker.kt:87`); `settings put/delete` only restores
+      measured snapshot values (`GamingEngine.kt:1742-1749`); plus
+      `am force-stop <pkg>` (user-initiated), `pm suspend --user 0`
+      (session-scoped, snapshot-reverted), `cmd netpolicy` restrict /
+      whitelist add-remove (`BackgroundDataRestrictor.kt:160-225`).
 - [ ] Notification listener — finalise the "exact purpose" sentence for the
       listing and in-app disclosure.
 - [ ] VPN firewall — add the Play VPN disclosure + Data safety entry (KEEP +
@@ -392,14 +416,21 @@ HYGIENE (required regardless):
   uploads), then REVIEW rows (narrow + document), then hygiene (policy,
   listing, tests).
 - Verification status (honest): `compileDebugKotlin` is green on
-  `playstore` after the 2026-09-16 inspection sweep (uncommitted, §11).
+  `playstore` as of 2026-09-16 (post warning-fix session, §11).
   `:app:assembleRelease` is green as of 2026-09-13 with the new `key0`
   signing (`apksigner` confirms signer `C6:D3:…`). `testDebugUnitTest`
-  is green as of 2026-09-16 (221 tests, 0 failures/errors). `lintDebug`
-  ran 2026-09-16: only `PluralsCandidate` ×122 (i18n nicety, deferred)
-  and `ObsoleteSdkInt` ×1 (`mipmap-anydpi-v26`, kept deliberately — see
-  §11) remain. The on-device `verify` pass is still pending before
-  any upload.
+  is green as of 2026-09-16 (236 tests / 29 classes, 0 failures/errors —
+  this supersedes the stale `221` figure elsewhere in this section, which
+  predated the Donate/`SupportPromptTest` additions). `lintDebug`
+  ran 2026-09-16: `PluralsCandidate` ×122 (i18n nicety, deferred),
+  `ObsoleteSdkInt` ×1 (`mipmap-anydpi-v26`, kept deliberately — see
+  §11),   plus one new `UnusedResources` (`R.drawable.ic_paypal`, orphaned
+  by the Donate redesign — deleted, then restored later the same day as
+  the PayPal row icon once the Donate screen gained icons, §11; lint
+  re-run pending). The on-device `verify` pass is still pending before
+  any upload. UMP consent flow still absent (verified: no
+  `UserMessagingPlatform`/`ConsentInformation` references in
+  `app/src/main`; the only `ump_` hits are `dumpsys` substrings).
 - Known issues / risks:
   - Spoof/Magisk/updater code is deeply referenced (strings in 4 locales,
     ProGuard, manifest, tests) — removal must touch all split `strings_*`
@@ -443,6 +474,46 @@ HYGIENE (required regardless):
   + Ads declaration / Data safety entry are pending before upload.
 
 ## 11. Changelog (newest first)
+
+- 2026-09-16: About community buttons labeled (uncommitted). The icon-only
+  `SocialIcon` row (no content descriptions, low-contrast boxes) is now
+  five full-width `FilledTonalButton`s with titles — GitHub, Website,
+  Discord, Telegram (brand icon + open-in-new trailing) and Donate
+  (heart + chevron, in-app). Four new `about_social_*` title keys in
+  `strings_core.xml` ×5 locales (brand names verbatim; only "Website" is
+  translated), pinned by extending `LocaleParityTest` (TDD red→green).
+  Donate reuses `donate_title`. Verified: `testDebugUnitTest` 237/237,
+  `assembleDebug` + install, About screen screenshotted on-device.
+
+- 2026-09-16: Donate-screen icons (uncommitted). Every donate row shows a
+  leading brand mark in the About screen's 40dp rounded-box style:
+  restored `ic_paypal` (known-good monogram, now referenced) plus eight
+  original 24dp white single-path glyphs — `ic_binance` (five-diamond
+  mark), `ic_id_card`, `ic_qr`, `ic_bitcoin`, `ic_ethereum`, `ic_binancecoin`,
+  `ic_tether`, `ic_usdc` — tinted per brand in Compose. `DonateRow` gains
+  optional `iconRes`/`iconTint` (decorative, `contentDescription = null`
+  per the app's icon convention); coin→icon mapping is
+  `cryptoIconFor`/`cryptoTintFor`, pinned by new
+  `DonateDataTest.everyCoinHasItsOwnIcon` (TDD red→green). No strings
+  touched, no address touched. Verified: `testDebugUnitTest` 237/237,
+  `assembleDebug` + install, Donate screen screenshotted on-device
+  (all nine rows render correctly with readable tints).
+
+- 2026-09-16: Warning/lint hygiene + fresh verification evidence (uncommitted).
+  Deleted orphaned `R.drawable.ic_paypal` (Donate redesign uses text rows;
+  zero `ic_paypal` references in `app/src` — new `UnusedResources` lint hit
+  resolved; lint re-run pending). Removed three redundant constructs the
+  compiler flagged (no behaviour change, `compileDebugKotlin` +
+  `testDebugUnitTest` 236/236 green after): smart-cast `?: ""` in
+  `EditGameFilesScreen.kt:522` and `GridScreen.kt:375`, redundant `else`
+  in the exhaustive `HsrPlayerPrefsXml.kt:109` serializer `when` (a future
+  `Value` subtype now fails compile instead of silently mapping to
+  `"string"`), and the fully-qualified `kotlinx.coroutines.delay` ×6 in
+  `MainScreen.kt` folded into an import (one self-broken import line
+  caught by `compileDebugKotlin` and repaired same session). Published the exact `device_config`/`setprop`/`wm`/dexopt/
+  `settings`/`am`/`pm`/`netpolicy` allow-list under the §8 REVIEW row
+  (decision still pending). Reconciled the test count (236, not the stale
+  221) and confirmed UMP still absent.
 
 - 2026-09-16: In-app Donate screen (`Routes.DONATE`, Binance UID + crypto
   addresses with copy/open, no external PayPal flow) + README badge/support
