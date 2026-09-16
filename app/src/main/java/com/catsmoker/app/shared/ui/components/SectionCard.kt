@@ -6,10 +6,8 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 
 /**
  * The rounded surface every card on every screen is built from.
@@ -37,33 +35,5 @@ fun SectionCard(
             modifier = Modifier.padding(contentPadding),
             content = content
         )
-    }
-}
-
-/** A [SectionCard] preset for a heading plus a paragraph of explanatory text. */
-@Composable
-fun InfoCard(
-    title: String,
-    content: String,
-    color: Color = MaterialTheme.colorScheme.primary
-) {
-    SectionCard(
-        modifier = Modifier.padding(vertical = 8.dp)
-    ) {
-        Column(modifier = Modifier.padding(4.dp)) {
-            Text(
-                text = title,
-                style = MaterialTheme.typography.labelSmall,
-                color = color,
-                letterSpacing = 1.sp
-            )
-            Spacer(modifier = Modifier.height(8.dp))
-            Text(
-                text = content,
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f),
-                lineHeight = 20.sp
-            )
-        }
     }
 }

@@ -14,7 +14,6 @@ import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
@@ -621,8 +620,8 @@ class ShellRunner @Inject constructor(
         val BIND_TIMEOUT_MS = 3000.milliseconds
         /** How long a failed bind stops further attempts — see [bindBlockedUntil]. */
         val BIND_BLOCK_MS = 10_000.milliseconds
-        val REMOTE_COMMAND_TIMEOUT_SECONDS = 30L
-        val DRAIN_JOIN_MILLIS = 1000L
+        const val REMOTE_COMMAND_TIMEOUT_SECONDS = 30L
+        const val DRAIN_JOIN_MILLIS = 1000L
         val SHELL_METACHARACTERS = charArrayOf(
             '"', '\'', '$', '`', '\\', '!', '*', '?', '[', ']', '(', ')', '{', '}',
             '|', '&', ';', '<', '>', '~', '#'

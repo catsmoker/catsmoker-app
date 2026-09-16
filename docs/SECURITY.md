@@ -20,12 +20,12 @@ game, and a ping to `8.8.8.8` for the latency metric.
 
 There are four execution channels, in ascending order of privilege:
 
-| Channel | Privilege | Used for |
-| --- | --- | --- |
-| Plain shell | none — app sandbox | fallback command execution |
-| SAF / manual | user-granted file access | file engineering when no root/Shizuku |
-| Shizuku | `shell`/elevated UID binder | non-root privileged commands |
-| Root (libsu) | UID 0 | everything, preferred when present |
+| Channel      | Privilege                   | Used for                              |
+| ------------ | --------------------------- | ------------------------------------- |
+| Plain shell  | none — app sandbox          | fallback command execution            |
+| SAF / manual | user-granted file access    | file engineering when no root/Shizuku |
+| Shizuku      | `shell`/elevated UID binder | non-root privileged commands          |
+| Root (libsu) | UID 0                       | everything, preferred when present    |
 
 `ShellRunner` (`system/shell/ShellRunner.kt`) is the **single choke point**.
 It picks the best available channel, caches which one works, and routes every
@@ -141,14 +141,14 @@ The state machine in `GamingEngine` has security-adjacent guarantees:
 
 ## Risk assessment (honest)
 
-| Risk | Severity | Mitigation |
-| --- | --- | --- |
-| Privilege escalation bug in `ShellRunner`'s command construction | High (root context) | Single choke point; `joinArgs` quoting; code review on the quoting path |
-| Exported provider leaks spoof config to other apps | High | `resolvePackageName` UID scoping; documented invariant |
-| Third-party SDK (Start.io) supply chain / data flow | Medium | Pinned version; manual init; review dependency changes |
-| Malicious app tricking the local VPN or overlays | Medium | All overlay/FGS services are `exported="false"`; `BIND_VPN_SERVICE` enforced by the system; user must consent to the VPN |
-| Regression in Gaming Mode allowlist bricks session | Medium | `hardWhitelist` + system-critical exclusion keep essential packages alive; snapshot revert |
-| Shell injection from an untrusted profile/game value | High (root context) | `joinArgs` quoting on all dynamic args; treat any value sourced from files or user input as untrusted |
+| Risk                                                             | Severity            | Mitigation                                                                                                               |
+| ---------------------------------------------------------------- | ------------------- | ------------------------------------------------------------------------------------------------------------------------ |
+| Privilege escalation bug in `ShellRunner`'s command construction | High (root context) | Single choke point; `joinArgs` quoting; code review on the quoting path                                                  |
+| Exported provider leaks spoof config to other apps               | High                | `resolvePackageName` UID scoping; documented invariant                                                                   |
+| Third-party SDK (Start.io) supply chain / data flow              | Medium              | Pinned version; manual init; review dependency changes                                                                   |
+| Malicious app tricking the local VPN or overlays                 | Medium              | All overlay/FGS services are `exported="false"`; `BIND_VPN_SERVICE` enforced by the system; user must consent to the VPN |
+| Regression in Gaming Mode allowlist bricks session               | Medium              | `hardWhitelist` + system-critical exclusion keep essential packages alive; snapshot revert                               |
+| Shell injection from an untrusted profile/game value             | High (root context) | `joinArgs` quoting on all dynamic args; treat any value sourced from files or user input as untrusted                    |
 
 ## Hard rules for contributors
 

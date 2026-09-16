@@ -11,6 +11,8 @@ import java.util.concurrent.TimeUnit
  * stdout and stderr, otherwise a chatty command fills the 64 KB pipe buffer and blocks
  * forever, taking the binder thread with it.
  */
+// Shizuku user-service entry point, instantiated by the Shizuku framework via reflection.
+@Suppress("unused")
 class FileService : IFileService.Stub {
 
     constructor() : super()

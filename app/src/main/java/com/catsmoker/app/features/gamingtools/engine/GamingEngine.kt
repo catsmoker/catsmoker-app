@@ -1,5 +1,6 @@
 package com.catsmoker.app.features.gamingtools.engine
 
+import android.annotation.SuppressLint
 import android.app.NotificationManager
 import android.content.Context
 import android.content.pm.ApplicationInfo
@@ -325,6 +326,7 @@ class GamingEngine(
         scope.launch { _boosterHistory.value = boosterHistoryStore.load() }
     }
 
+    @Suppress("SameParameterValue") // general settings reader
     private fun getGlobalInt(key: String): Int {
         return try { Settings.Global.getInt(context.contentResolver, key, 0) } catch (_: Exception) { 0 }
     }
@@ -469,7 +471,7 @@ class GamingEngine(
                 // The filter change travels through ZenModeHelper and a config write, so reading it
                 // back on the next line often still returns the old value — that race is why DND
                 // "sometimes failed" while actually being applied. Poll briefly instead.
-                dndEngaged = awaitInterruptionFilter(nm, NotificationManager.INTERRUPTION_FILTER_NONE)
+                dndEngaged = awaitInterruptionFilter(nm)
                 if (!dndEngaged) unavailable += context.getString(R.string.gt_eng_un_dnd_off)
             } else {
                 unavailable += context.getString(R.string.gt_eng_un_dnd_perm)
@@ -612,7 +614,7 @@ class GamingEngine(
     }
 
     /**
-     * Waits, briefly, for the notification interruption filter to actually reach [wanted].
+     * Waits, briefly, for the notification interruption filter to actually reach INTERRUPTION_FILTER_NONE.
      *
      * `setInterruptionFilter` returns as soon as NotificationManagerService has the request; the zen
      * state it changes is published a moment later. Reading `currentInterruptionFilter` on the very
@@ -620,18 +622,17 @@ class GamingEngine(
      * exactly how "DND sometimes fails" presented. Six 50 ms checks cover that gap without turning a
      * genuinely refused filter into a long stall.
      *
-     * @return whether the filter is [wanted] now. A false here is a real failure, not a race.
+     * @return whether the filter is INTERRUPTION_FILTER_NONE now. A false here is a real failure, not a race.
      */
     private suspend fun awaitInterruptionFilter(
         nm: NotificationManager,
-        wanted: Int,
         attempts: Int = 6
     ): Boolean {
         repeat(attempts) {
-            if (runCatching { nm.currentInterruptionFilter }.getOrNull() == wanted) return true
+            if (runCatching { nm.currentInterruptionFilter }.getOrNull() == NotificationManager.INTERRUPTION_FILTER_NONE) return true
             delay(50.milliseconds)
         }
-        return runCatching { nm.currentInterruptionFilter }.getOrNull() == wanted
+        return runCatching { nm.currentInterruptionFilter }.getOrNull() == NotificationManager.INTERRUPTION_FILTER_NONE
     }
 
     private suspend fun disableGamingMode() {
@@ -895,9 +896,9 @@ class GamingEngine(
     suspend fun toggleBackgroundProcessLimit(enabled: Boolean): Boolean {
         val current = getGlobalString("activity_manager_constants").orEmpty()
         val merged = if (enabled) {
-            upsertCsvKey(current, "max_cached_processes", "1")
+            upsertCsvKey(current)
         } else {
-            removeCsvKey(current, "max_cached_processes")
+            removeCsvKey(current)
         }
         if (merged.isBlank()) {
             execute("settings delete global activity_manager_constants")
@@ -1091,6 +1092,8 @@ class GamingEngine(
      * "already done" and not a failure — and neither is filtered in a forced run, where the user
      * explicitly asked for every package.
      */
+    // Partial visibility is fine: an invisible app simply misses this sweep.
+    @SuppressLint("QueryPermissionsNeeded")
     private fun eligibleBoosterPackages(force: Boolean = false): List<String> {
         val userAdded = context.getSharedPreferences("AppPrefs", Context.MODE_PRIVATE)
             .getStringSet("user_games", emptySet()) ?: emptySet()
@@ -1322,6 +1325,8 @@ class GamingEngine(
 
     suspend fun execute(command: String): String = shellRunner.exec(command)
 
+    // Partial visibility is fine: invisible packages are excluded, never suspended.
+    @SuppressLint("QueryPermissionsNeeded")
     private fun getSuspendTargets(activeGamePkg: String?): List<String> {
         val pm = context.packageManager
         val installedApps = pm.getInstalledApplications(PackageManager.GET_META_DATA)
@@ -1511,6 +1516,7 @@ class GamingEngine(
      * drop an unknown key, so the read-back is the only honest success signal. Numbers are compared
      * numerically because some providers normalise `120` to `120.0`.
      */
+    @Suppress("SameParameterValue") // general settings writer
     private suspend fun putSettingVerified(namespace: String, key: String, value: String): Boolean {
         shellRunner.execSafeResult("settings", "put", namespace, key, value)
         val readBack = readSettingOrNull(namespace, key)?.takeIf { it.existed }?.value ?: return false
@@ -1678,18 +1684,18 @@ class GamingEngine(
     /** CSV append now lives in [OemPackageResolver.appendPackage] (pure, and pinned by tests). */
     private fun appendToCsv(list: String, pkg: String): String = OemPackageResolver.appendPackage(list, pkg)
 
-    private fun upsertCsvKey(csv: String, key: String, value: String): String {
+    private fun upsertCsvKey(csv: String): String {
         val kept = csv.split(",")
             .map { it.trim() }
-            .filter { it.isNotEmpty() && !it.startsWith("$key=") }
-        return (kept + "$key=$value").joinToString(",")
+            .filter { it.isNotEmpty() && !it.startsWith("max_cached_processes=") }
+        return (kept + "max_cached_processes=1").joinToString(",")
     }
 
-    private fun removeCsvKey(csv: String, key: String): String {
+    private fun removeCsvKey(csv: String): String {
         return csv.split(",")
             .asSequence()
             .map { it.trim() }
-            .filter { it.isNotEmpty() && !it.startsWith("$key=") }
+            .filter { it.isNotEmpty() && !it.startsWith("max_cached_processes=") }
             .joinToString(",")
     }
 

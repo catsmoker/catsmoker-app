@@ -3,7 +3,7 @@
          Owned by the editgamefiles feature; do not reuse names from strings.xml. -->
 
     <!-- Shared across game-file screens -->
-    <string name="gf_cancel">CANCEL</string>
+    <string name="gf_cancel">Cancel</string>
     <string name="gf_retry">RETRY</string>
     <string name="gf_apply">APPLY</string>
     <string name="gf_applying">APPLYING…</string>

@@ -6,10 +6,14 @@
     row it cannot address would sit there showing its placeholder forever, which is how Power,
     Memory and Temp used to read as empty.
 -->
+<!-- Inflated by PerformanceOverlayService into a TYPE_APPLICATION_OVERLAY window, not an
+    Activity, so the theme background never paints behind it: this fill is the only background. -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="wrap_content"
     android:layout_height="wrap_content"
     android:background="#99000000"
+    tools:ignore="Overdraw"
     android:importantForAccessibility="noHideDescendants"
     android:orientation="vertical"
     android:padding="8dp">

@@ -203,7 +203,7 @@ object WuWaConfigGenerator {
         var engine = buildEngineIni(p, preset, opts, deviceInfo, corePaths)
         var deviceProfiles = buildDeviceProfilesIni(p, preset, opts, deviceInfo)
         val gameUserSettings = buildGameUserSettingsIni(p, opts, deviceInfo)
-        var scalability = if (opts.generateScalability) buildScalabilityIni(p, opts) else ""
+        var scalability = if (opts.generateScalability) buildScalabilityIni(p) else ""
         var hardware = if (opts.generateHardware) buildHardwareIni(p, preset, opts, deviceInfo) else ""
 
         // Same post-processing order as the reference: dedup, then the forbidden-cvar strip
@@ -1024,7 +1024,7 @@ object WuWaConfigGenerator {
 
     // ── Scalability.ini ─────────────────────────────────────────────────────────
 
-    private fun buildScalabilityIni(p: PresetProfile, @Suppress("UNUSED_PARAMETER") opts: Options): String {
+    private fun buildScalabilityIni(p: PresetProfile): String {
         val viewQ = if (p.q1) 3 else if (p.q0) 2 else 1
         val shadowQ = if (p.shadow >= 4) 3 else if (p.shadow >= 2) 2 else 1
         val postQ = p.postProcess.coerceIn(0, 3)

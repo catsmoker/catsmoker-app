@@ -136,7 +136,7 @@ class GameDeveloperOptions @Inject constructor(
                 // A recorded value goes back verbatim.
                 previous != null -> writeSystemFloat(KEY_MIN_REFRESH_RATE, previous)
                 // Recorded as unset: remove the key, which is what "unset" means.
-                stashed != null -> deleteSystemSetting(KEY_MIN_REFRESH_RATE)
+                stashed != null -> deleteSystemSetting()
                 // No record at all — the force predates this build. 0 is the platform's own
                 // "no minimum" value and is what Developer Options writes when switched off.
                 else -> writeSystemFloat(KEY_MIN_REFRESH_RATE, NO_CONFIG)
@@ -230,7 +230,8 @@ class GameDeveloperOptions @Inject constructor(
     }
 
     /** Writes [value] through the shell, then the framework, and leaves the read-back to the caller. */
-    private suspend fun writeSystemFloat(key: String, value: Float) = withContext(Dispatchers.IO) {
+    // SameParameterValue: min_refresh_rate is the only system key this screen ever writes.
+    private suspend fun writeSystemFloat(@Suppress("SameParameterValue") key: String, value: Float) = withContext(Dispatchers.IO) {
         val formatted = String.format(Locale.US, "%.2f", value)
         if (shellRunner.hasPrivilege()) {
             shellRunner.execSafeResult("settings", "put", "system", key, formatted)
@@ -241,8 +242,8 @@ class GameDeveloperOptions @Inject constructor(
         }
     }
 
-    private suspend fun deleteSystemSetting(key: String) = withContext(Dispatchers.IO) {
-        shellRunner.execSafeResult("settings", "delete", "system", key)
+    private suspend fun deleteSystemSetting() = withContext(Dispatchers.IO) {
+        shellRunner.execSafeResult("settings", "delete", "system", KEY_MIN_REFRESH_RATE)
         Unit
     }
 

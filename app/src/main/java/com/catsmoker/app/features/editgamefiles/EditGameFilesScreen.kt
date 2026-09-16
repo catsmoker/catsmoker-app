@@ -1,6 +1,7 @@
 package com.catsmoker.app.features.editgamefiles
 
 import android.content.Intent
+import android.os.Build
 import android.provider.Settings
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -50,6 +51,7 @@ fun EditGameFilesRoute(onBack: () -> Unit) {
     val viewModel: EditGameFilesViewModel = hiltViewModel()
     val uiState by viewModel.uiState.collectAsState()
     val context = LocalContext.current
+    val zarchiverCopied = stringResource(R.string.gf_zarchiver_copied)
 
     val filePicker = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri ->
         uri?.let { viewModel.onCustomFilePicked(it) }
@@ -95,7 +97,12 @@ fun EditGameFilesRoute(onBack: () -> Unit) {
                             allFilesPicker.launch(intent)
                         } catch (_: Exception) {
                             try {
-                                allFilesPicker.launch(Intent(Settings.ACTION_MANAGE_ALL_FILES_ACCESS_PERMISSION))
+                                // API 30+ only; launchAllFilesAccess() is null below R so this is unreachable there.
+                                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                                    allFilesPicker.launch(Intent(Settings.ACTION_MANAGE_ALL_FILES_ACCESS_PERMISSION))
+                                } else {
+                                    allFilesPicker.launch(Intent(Settings.ACTION_SETTINGS))
+                                }
                             } catch (_: Exception) {
                                 allFilesPicker.launch(Intent(Settings.ACTION_SETTINGS))
                             }
@@ -103,7 +110,7 @@ fun EditGameFilesRoute(onBack: () -> Unit) {
                     }
                 }
                 EditGameFilesViewModel.EditEvent.ShowZArchiverDialog -> {
-                    Toast.makeText(context, context.getString(R.string.gf_zarchiver_copied), Toast.LENGTH_LONG).show()
+                    Toast.makeText(context, zarchiverCopied, Toast.LENGTH_LONG).show()
                     viewModel.launchZArchiver()
                 }
             }

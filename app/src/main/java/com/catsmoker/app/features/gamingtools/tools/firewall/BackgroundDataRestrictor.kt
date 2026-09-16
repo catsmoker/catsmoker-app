@@ -1,5 +1,6 @@
 package com.catsmoker.app.features.gamingtools.tools.firewall
 
+import android.annotation.SuppressLint
 import android.content.Context
 import android.content.pm.ApplicationInfo
 import android.content.pm.PackageManager
@@ -273,6 +274,8 @@ class BackgroundDataRestrictor @Inject constructor(
      * System apps are skipped on purpose — see the class limitations. Apps without `INTERNET` are
      * skipped because denying data to them would be a no-op that still shows up in the count.
      */
+    // Partial visibility is fine: invisible apps are skipped, never restricted.
+    @SuppressLint("QueryPermissionsNeeded")
     private fun restrictableUids(gamePackages: List<String>): Set<Int> {
         val games = gamePackages.toSet()
         val pm = context.packageManager

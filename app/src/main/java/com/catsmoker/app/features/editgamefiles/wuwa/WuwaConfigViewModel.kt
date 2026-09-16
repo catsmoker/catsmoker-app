@@ -350,9 +350,9 @@ class WuwaConfigViewModel @Inject constructor(
                     if (failed.isNotEmpty()) append(context.getString(R.string.gf_dep_refused, failed.size, failed.joinToString { "${it.name} (${it.detail})" }))
                     append(context.getString(R.string.gf_dep_dot))
                     append(
-                        when {
-                            s.gameStopped == true -> context.getString(R.string.gf_dep_stopped)
-                            s.gameStopped == false -> context.getString(R.string.gf_dep_stop_refused)
+                        when (s.gameStopped) {
+                            true -> context.getString(R.string.gf_dep_stopped)
+                            false -> context.getString(R.string.gf_dep_stop_refused)
                             else -> context.getString(R.string.gf_dep_saf)
                         }
                     )
@@ -461,8 +461,7 @@ class WuwaConfigViewModel @Inject constructor(
         viewModelScope.launch {
             _uiState.update { it.copy(analyzingLog = true, logFailure = null) }
             try {
-                val read = manager.readClientLog()
-                when (read) {
+                when (val read = manager.readClientLog()) {
                     is WuwaConfigManager.ClientLogResult.Failure -> {
                         _uiState.update { it.copy(logFailure = read.detail) }
                         _events.emit(WuwaEvent.Toast(read.detail, true))
@@ -936,17 +935,21 @@ class WuwaConfigViewModel @Inject constructor(
                 backups = manager.backups()
             )
         }
-        when {
-            next.stage == WuwaBenchmarkTuner.TunerStage.WAITING_FOR_PLAY ->
+        when (next.stage) {
+            WuwaBenchmarkTuner.TunerStage.WAITING_FOR_PLAY ->
                 _events.emit(
                     WuwaEvent.Toast(
                         context.getString(R.string.gf_tuner_round_done, next.round),
                         true
                     )
                 )
-            next.stage == WuwaBenchmarkTuner.TunerStage.COMPLETE && next.error != null ->
-                _events.emit(WuwaEvent.Toast(context.getString(R.string.gf_tuner_stopped_toast, next.error), true))
+            WuwaBenchmarkTuner.TunerStage.COMPLETE ->
+                if (next.error != null) {
+                    _events.emit(WuwaEvent.Toast(context.getString(R.string.gf_tuner_stopped_toast, next.error), true))
+                }
             // A completed loop is announced by the card itself, next to its results.
+            // IDLE / DEPLOYING / CAPTURING need no event.
+            else -> Unit
         }
     }
 }

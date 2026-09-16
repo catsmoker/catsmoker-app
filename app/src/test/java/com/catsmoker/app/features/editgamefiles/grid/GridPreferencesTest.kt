@@ -150,7 +150,7 @@ class GridPreferencesTest {
         // README's editable list does not name them. The fixture holds TWO MaxFramesPerSecond
         // entries (Setup: 0, IndirectX\Direct3D\Config: 60) — neither moves.
         assertEquals("0", readValue(applied.xml, "MaxFramesPerSecond"))
-        assertEquals(60, readLastValue(applied.xml, "MaxFramesPerSecond")!!.toInt())
+        assertEquals(60, readLastValue(applied.xml)!!.toInt())
         assertEquals(30, readValue(applied.xml, "gfxconfigpowersaver_max_fps")!!.toInt())
     }
 
@@ -245,8 +245,8 @@ class GridPreferencesTest {
     }
 
     /** The last occurrence — the second of a duplicated name lives in a deeper scope. */
-    private fun readLastValue(xml: String, name: String): String? {
-        val matches = Regex("""<value name="$name" type="[^"]*">([^<]*)</value>""").findAll(xml).toList()
+    private fun readLastValue(xml: String): String? {
+        val matches = Regex("""<value name="MaxFramesPerSecond" type="[^"]*">([^<]*)</value>""").findAll(xml).toList()
         return matches.lastOrNull()?.groupValues?.get(1)
     }
 }

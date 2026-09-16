@@ -392,10 +392,13 @@ HYGIENE (required regardless):
   uploads), then REVIEW rows (narrow + document), then hygiene (policy,
   listing, tests).
 - Verification status (honest): `compileDebugKotlin` is green on
-  `playstore` after the 2026-09-13 `[PLAY-SAFE]` pick (`ed02f8a`).
+  `playstore` after the 2026-09-16 inspection sweep (uncommitted, §11).
   `:app:assembleRelease` is green as of 2026-09-13 with the new `key0`
-  signing (`apksigner` confirms signer `C6:D3:…`). `testDebugUnitTest`,
-  `lintDebug`, and the on-device `verify` pass are all still pending before
+  signing (`apksigner` confirms signer `C6:D3:…`). `testDebugUnitTest`
+  is green as of 2026-09-16 (221 tests, 0 failures/errors). `lintDebug`
+  ran 2026-09-16: only `PluralsCandidate` ×122 (i18n nicety, deferred)
+  and `ObsoleteSdkInt` ×1 (`mipmap-anydpi-v26`, kept deliberately — see
+  §11) remain. The on-device `verify` pass is still pending before
   any upload.
 - Known issues / risks:
   - Spoof/Magisk/updater code is deeply referenced (strings in 4 locales,
@@ -440,6 +443,41 @@ HYGIENE (required regardless):
   + Ads declaration / Data safety entry are pending before upload.
 
 ## 11. Changelog (newest first)
+
+- 2026-09-16: Cleared the IDE-inspection export (`../errors/`, uncommitted,
+  all actionable items; noise excluded: spelling/Grazie/`PluralsCandidate`
+  ×122, `.xml` Hilt/`@Preview`/service false positives). Fixed: the
+  `RemoveWorkManagerInitializer` ERROR (manifest already removes the
+  initializer — added `tools:ignore`), 2 `LocalContext` ERRORs
+  (`stringResource` hoisting), `InlinedApi` ×2 (API-30 guards),
+  `BlockingMethod` ×7 (`createTempFile` → `withContext(Dispatchers.IO)`),
+  `QueryPermissionsNeeded` ×6 (function-scope suppress; manifest
+  `<queries>` verified, all sites fail-open), `SdCardPath` (other-app
+  paths via root shell — suppress), `Untranslatable` ×8 (dropped
+  `translatable="false"` dupes from `values-en-rGB` only), `ButtonCase` +
+  typos (`ok`→`OK`, `CANCEL`→`Cancel` in `values` + `en-rGB`),
+  `UnusedAttribute` (`localeConfig`), `Overdraw` (overlay window bg,
+  suppress), dead code (`InfoCard`, `isOk`, `WriteResult.Success.changed`,
+  `HsrWriteResult.Stage.PARSE_FAILED`, 4 unused params —
+  `PubgSavePatcher.reason/applied`, `WuWaConfigGenerator.opts`,
+  `GridPreferencesTest.readLastValue` name), `delay` import, single-caller
+  inlines (`awaitInterruptionFilter`, `upsert/removeCsvKey`,
+  `deleteSystemSetting`), `currentCoroutineContext()` ×3, `const val`,
+  `when` subjects, docs Markdown. Kept with suppressions + comments (no
+  Play restriction dropped): `MANAGE_EXTERNAL_STORAGE`,
+  `REQUEST_IGNORE_BATTERY_OPTIMIZATIONS` (§8 REVIEW rows still pending),
+  `showInterstitial` (ads roadmap), `FileService` (Shizuku reflection),
+  general helpers (`getGlobalInt`, `putSettingVerified`, `writeSystemFloat`,
+  `publishFps`, `absoluteDir`), `ArrayInDataClass` ×3, shell `$`-escaping.
+  Deleted unreferenced Start.io leftover
+  `assets/adi-registration.properties`. Reverted the `mipmap-anydpi-v26` →
+  `mipmap-anydpi` move: it drops `R.mipmap` from the generated R class
+  (build failure), so the `ObsoleteSdkInt` warning stays by decision.
+  Two agent-introduced regressions caught by verification and fixed:
+  manifest comment inside `<application>` tag, non-exhaustive `when`
+  in `WuwaConfigViewModel.finishTunerStep`, `Result.failure` type args in
+  `WuwaGachaTest`. `compileDebugKotlin` green, `testDebugUnitTest` green
+  (221/221), `lintDebug` down to the 2 deferred items above.
 
 - 2026-09-16: Cherry-picked `[PLAY-SAFE] dd26377` from `main`
   (`63151b6`, ten conflicts, all resolved for Play). The pick clears the

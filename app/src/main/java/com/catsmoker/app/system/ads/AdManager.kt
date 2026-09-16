@@ -37,6 +37,8 @@ class AdManager @Inject constructor(
      * Loads an interstitial and shows it as soon as it is ready. No-op when ads are
      * disabled, when no ad unit is configured, or without an [Activity] to present on.
      */
+    // Interstitial wiring pending per PLAYSTORE.md; kept loaded-but-uncalled until then.
+    @Suppress("unused")
     fun showInterstitial(context: Context) {
         if (!isEnabled()) return
         val activity = context as? Activity ?: return

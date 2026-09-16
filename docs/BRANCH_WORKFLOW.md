@@ -145,15 +145,15 @@ When working on a new feature:
 3. Determine whether the resulting commit is Play Store compatible.
 4. If it is safe for Play Store, commit it as:
 
-```text
-[PLAY-SAFE] Description
-```
+   ```text
+   [PLAY-SAFE] Description
+   ```
 
 5. If it is intentionally only for the full version, commit it as:
 
-```text
-[MAIN-ONLY] Description
-```
+   ```text
+   [MAIN-ONLY] Description
+   ```
 
 6. Only `[PLAY-SAFE]` commits may be synchronized to `playstore`.
 

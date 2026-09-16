@@ -30,6 +30,4 @@ enum class MetricReadStatus(@StringRes val labelRes: Int) {
 
     /** This device or Android version does not expose the value at all. */
     Unsupported(R.string.core_read_unsupported);
-
-    val isOk: Boolean get() = this == Ok
 }
