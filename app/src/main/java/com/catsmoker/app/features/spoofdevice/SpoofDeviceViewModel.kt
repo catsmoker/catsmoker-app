@@ -8,6 +8,7 @@ import android.content.pm.ApplicationInfo
 import android.graphics.Bitmap
 import android.os.Build
 import android.os.Environment
+import android.os.SystemClock
 import android.provider.MediaStore
 import android.util.Base64
 import androidx.core.content.edit
@@ -62,6 +63,13 @@ class SpoofDeviceViewModel @Inject constructor(
 
     data class UiState(
         val isRooted: Boolean = false,
+        /**
+         * Whether the Xposed module recorded its loaded-heartbeat this boot.
+         * False covers "LSPosed not installed", "module not enabled", "scope not
+         * ticked" and "no reboot since enabling" alike — the status card cannot
+         * tell those apart, so it says "not loaded" for all of them.
+         */
+        val moduleActive: Boolean = false,
         val isRefreshing: Boolean = false,
         /** True while the Magisk ZIP is being built + written, so the card can show busy. */
         val isGeneratingMagisk: Boolean = false,
@@ -208,8 +216,14 @@ class SpoofDeviceViewModel @Inject constructor(
         _uiState.update { it.copy(isRefreshing = true) }
         viewModelScope.launch(Dispatchers.IO) {
             val rooted = shellRunner.isRootAvailable(force = true)
+            // Own prefs file, own UID on both sides: the module writes it from inside
+            // our process, we read it here. Absent/stale reads as not loaded.
+            val moduleActive = LSPosedConfig.isHeartbeatFresh(
+                openLsposedPrefs(context).getLong(LSPosedConfig.KEY_MODULE_HEARTBEAT_ELAPSED, 0L),
+                SystemClock.elapsedRealtime()
+            )
             withContext(Dispatchers.Main) {
-                _uiState.update { it.copy(isRooted = rooted, isRefreshing = false) }
+                _uiState.update { it.copy(isRooted = rooted, moduleActive = moduleActive, isRefreshing = false) }
                 // Naming the verdict is the point of the refresh: "Status Refreshed" alone left a
                 // user staring at a hidden root-only button with no idea the probe said no.
                 _toasts.tryEmit(

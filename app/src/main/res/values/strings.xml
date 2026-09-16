@@ -150,6 +150,9 @@
         nothing here to keep index-synchronised with anything else.
     -->
     <array name="scope">
+        <!-- Our own process: the module records its loaded-heartbeat here and installs
+             no spoof hooks, so the status card can answer "is the module active". -->
+        <item>com.catsmoker.app</item>
         <item>com.cpuid.cpu_z</item>
         <item>com.activision.callofduty.shooter</item>
         <item>com.activision.callofduty.warzone</item>

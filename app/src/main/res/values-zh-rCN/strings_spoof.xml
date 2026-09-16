@@ -2,6 +2,8 @@
     <string name="spoof_home_subtitle">设备身份与 Root 隐藏套件。</string>
     <string name="spoof_home_status">环境状态</string>
     <string name="spoof_home_root">Root 权限</string>
+    <string name="spoof_home_lsposed_on">LSPosed 模块已激活</string>
+    <string name="spoof_home_lsposed_off">LSPosed 模块未加载</string>
     <string name="spoof_home_management">管理</string>
     <string name="spoof_home_advanced">高级工具</string>
     <string name="spoof_menu_profiles">配置文件</string>

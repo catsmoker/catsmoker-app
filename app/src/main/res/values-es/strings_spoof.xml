@@ -2,6 +2,8 @@
     <string name="spoof_home_subtitle">Suite de identidad del dispositivo y ocultamiento de root.</string>
     <string name="spoof_home_status">Estado del entorno</string>
     <string name="spoof_home_root">Acceso root</string>
+    <string name="spoof_home_lsposed_on">Módulo LSPosed activo</string>
+    <string name="spoof_home_lsposed_off">Módulo LSPosed no cargado</string>
     <string name="spoof_home_management">Gestión</string>
     <string name="spoof_home_advanced">Herramientas avanzadas</string>
     <string name="spoof_menu_profiles">Perfiles</string>

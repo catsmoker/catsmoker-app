@@ -29,6 +29,28 @@ object LSPosedConfig {
     /** Broadcast that tells already-running targets to re-read their profile. */
     const val ACTION_CONFIG_CHANGED = "com.catsmoker.app.action.CONFIG_CHANGED"
 
+    /**
+     * `elapsedRealtime` the module wrote when it last loaded into our own process.
+     *
+     * The app cannot query LSPosed for "is my module active", so the module reports
+     * itself: [com.catsmoker.app.features.spoofdevice.root.LSPosedModule] records this
+     * on every load of our own package (which the scope array includes for exactly this
+     * purpose) and installs no spoof hooks there. Boot-relative clock, not wall time:
+     * `elapsedRealtime` resets on every reboot, so a stored value greater than now can
+     * only predate the last boot.
+     */
+    const val KEY_MODULE_HEARTBEAT_ELAPSED = "module_heartbeat_elapsed"
+
+    /**
+     * Whether a stored heartbeat proves the module loaded during *this* boot.
+     *
+     * Absent/non-positive never counts, and greater-than-now means a reboot happened
+     * since the write — until then an enabled module cannot unload (LSPosed only
+     * loads/unloads at boot), so "fresh" and "loaded" coincide.
+     */
+    fun isHeartbeatFresh(storedElapsed: Long, nowElapsed: Long): Boolean =
+        storedElapsed in 1..nowElapsed
+
     /** Key inside a rendered profile listing packages the user opted out of spoofing. */
     const val KEY_SAFE_MODE_PACKAGES = "safe_mode.packages"
 

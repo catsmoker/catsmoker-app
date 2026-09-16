@@ -78,6 +78,14 @@ fun SpoofDeviceScreen(
                             StatusIndicator(active = uiState.isRooted)
                             Text(stringResource(R.string.spoof_home_root), color = MaterialTheme.colorScheme.onSurface, fontSize = 14.sp)
                         }
+                        Spacer(modifier = Modifier.height(6.dp))
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            StatusIndicator(active = uiState.moduleActive)
+                            Text(
+                                stringResource(if (uiState.moduleActive) R.string.spoof_home_lsposed_on else R.string.spoof_home_lsposed_off),
+                                color = MaterialTheme.colorScheme.onSurface, fontSize = 14.sp
+                            )
+                        }
                     }
                     if (uiState.isRefreshing) {
                         CircularProgressIndicator(

@@ -4,6 +4,8 @@
     <string name="spoof_home_subtitle">Device identity and root masking suite.</string>
     <string name="spoof_home_status">Environment Status</string>
     <string name="spoof_home_root">Root Access</string>
+    <string name="spoof_home_lsposed_on">LSPosed Module Active</string>
+    <string name="spoof_home_lsposed_off">LSPosed Module Not Loaded</string>
     <string name="spoof_home_management">Management</string>
     <string name="spoof_home_advanced">Advanced Tools</string>
     <string name="spoof_menu_profiles">Profiles</string>

@@ -2,6 +2,8 @@
     <string name="spoof_home_subtitle">حزمة هوية الجهاز وإخفاء الروت.</string>
     <string name="spoof_home_status">حالة البيئة</string>
     <string name="spoof_home_root">صلاحيات الروت</string>
+    <string name="spoof_home_lsposed_on">وحدة LSPosed نشطة</string>
+    <string name="spoof_home_lsposed_off">وحدة LSPosed غير محمّلة</string>
     <string name="spoof_home_management">الإدارة</string>
     <string name="spoof_home_advanced">أدوات متقدمة</string>
     <string name="spoof_menu_profiles">الملفات التعريفية</string>

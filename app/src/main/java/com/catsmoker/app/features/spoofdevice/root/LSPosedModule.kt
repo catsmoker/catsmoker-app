@@ -7,6 +7,7 @@ import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.os.Build
+import android.os.SystemClock
 import android.provider.Settings
 import android.util.Base64
 import android.view.Display
@@ -51,7 +52,14 @@ class LSPosedModule : IXposedHookLoadPackage {
 
     override fun handleLoadPackage(lpparam: XC_LoadPackage.LoadPackageParam) {
         val pkg = lpparam.packageName
-        if (pkg == "android" || pkg == OWN_PACKAGE) return
+        if (pkg == "android") return
+        // Our own process is never spoofed — but its load is the module-active signal
+        // the status card reads (there is no API to ask LSPosed "am I active"), so a
+        // load here records a heartbeat and installs nothing else.
+        if (pkg == OWN_PACKAGE) {
+            markOwnProcessLoaded(lpparam.classLoader)
+            return
+        }
 
         try {
             XposedHelpers.findAndHookMethod(
@@ -72,6 +80,47 @@ class LSPosedModule : IXposedHookLoadPackage {
     }
 
     // ------------------------------------------------------------------- config
+
+    /**
+     * Records that the module loaded into our own process, so the app can answer
+     * "is the module active" without asking LSPosed (which offers no such query).
+     *
+     * Hooks `Application.attach` only to learn a Context, then writes one
+     * boot-relative timestamp into our own prefs and stops: no profile is read and
+     * no spoof hook is installed here, so our own process keeps its real identity
+     * (own platform checks, attestation reads and the config provider itself must
+     * never see spoofed values). The write is best-effort —
+     * a missing heartbeat reads as "not loaded", never as a crash.
+     */
+    private fun markOwnProcessLoaded(classLoader: ClassLoader) {
+        try {
+            XposedHelpers.findAndHookMethod(
+                "android.app.Application",
+                classLoader,
+                "attach",
+                Context::class.java,
+                object : XC_MethodHook() {
+                    override fun afterHookedMethod(param: MethodHookParam) {
+                        val context = param.args[0] as? Context ?: return
+                        try {
+                            context.getSharedPreferences(
+                                LSPosedConfig.PREFS_NAME, Context.MODE_PRIVATE
+                            ).edit()
+                                .putLong(
+                                    LSPosedConfig.KEY_MODULE_HEARTBEAT_ELAPSED,
+                                    SystemClock.elapsedRealtime()
+                                )
+                                .apply()
+                        } catch (_: Throwable) {
+                            // Best-effort: the status card treats absence as "not loaded".
+                        }
+                        XposedBridge.log("$TAG: module loaded in own process, heartbeat recorded")
+                    }
+                })
+        } catch (e: Throwable) {
+            XposedBridge.log("$TAG: cannot hook Application.attach in own process: ${e.message}")
+        }
+    }
 
     private fun reload(context: Context, lpparam: XC_LoadPackage.LoadPackageParam) {
         val resolved = readConfig(context, lpparam.packageName)
