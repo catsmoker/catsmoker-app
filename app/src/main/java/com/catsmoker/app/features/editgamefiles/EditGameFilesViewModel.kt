@@ -448,6 +448,8 @@ class EditGameFilesViewModel @Inject constructor(
      * which read as nonsense on a device where root and Shizuku were both gone.
      */
     private sealed interface PullOutcome {
+        // Bytes are carried, never compared: only presence/absence reaches the UI.
+        @Suppress("ArrayInDataClass")
         data class Ok(val bytes: ByteArray) : PullOutcome
         data object Missing : PullOutcome
         data object NoChannel : PullOutcome
@@ -472,7 +474,9 @@ class EditGameFilesViewModel @Inject constructor(
         // Root path (readFileDirect returns null without any Shizuku channel): a straight
         // read through the root shell's own process.
         if (shellRunner.isRootAvailable()) {
-            val pull = File.createTempFile("pubgread_", "_" + config.saveFile, context.externalCacheDir ?: context.cacheDir)
+            val pull = withContext(Dispatchers.IO) {
+                File.createTempFile("pubgread_", "_" + config.saveFile, context.externalCacheDir ?: context.cacheDir)
+            }
             try {
                 pull.delete()
                 val result = shellRunner.execSafeResult("cp", "-f", destPath, pull.absolutePath)
@@ -547,7 +551,9 @@ class EditGameFilesViewModel @Inject constructor(
         // null = no Shizuku channel answered; fall through to the root channel.
 
         if (shellRunner.isRootAvailable()) {
-            val pushFile = File.createTempFile("pubgpush_", "_" + config.saveFile, context.externalCacheDir ?: context.cacheDir)
+            val pushFile = withContext(Dispatchers.IO) {
+                File.createTempFile("pubgpush_", "_" + config.saveFile, context.externalCacheDir ?: context.cacheDir)
+            }
             try {
                 pushFile.writeBytes(bytes)
                 val mkdir = shellRunner.execSafeResult("mkdir", "-p", destDir)
@@ -570,7 +576,9 @@ class EditGameFilesViewModel @Inject constructor(
             }
         }
 
-        val pushFile = File.createTempFile("pubgpush_", "_" + config.saveFile, context.externalCacheDir ?: context.cacheDir)
+        val pushFile = withContext(Dispatchers.IO) {
+            File.createTempFile("pubgpush_", "_" + config.saveFile, context.externalCacheDir ?: context.cacheDir)
+        }
         try {
             pushFile.writeBytes(bytes) // written fresh by this app, so no privileged-uid leftover sits on it
             shellRunner.execSafe("mkdir", "-p", destDir)

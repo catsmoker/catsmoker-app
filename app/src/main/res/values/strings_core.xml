@@ -70,7 +70,7 @@
     <!-- MetricReadStatus full labels: the reason shown in place of a value on the dashboard
          and in the performance overlay, when the device never reported a number. -->
     <string name="core_read_loading">reading…</string>
-    <string name="core_read_ok">ok</string>
+    <string name="core_read_ok">OK</string>
     <string name="core_read_empty">no data</string>
     <string name="core_read_parse">unreadable</string>
     <string name="core_read_privilege">needs root/Shizuku</string>

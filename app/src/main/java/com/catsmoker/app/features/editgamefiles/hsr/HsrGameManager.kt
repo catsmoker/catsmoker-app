@@ -1,5 +1,6 @@
 package com.catsmoker.app.features.editgamefiles.hsr
 
+import android.annotation.SuppressLint
 import android.content.Context
 import com.catsmoker.app.features.editgamefiles.ConfigBackupStore
 import com.catsmoker.app.system.shell.ShellRunner
@@ -62,7 +63,7 @@ sealed interface HsrWriteResult {
 
     data class Failure(val stage: Stage, val detail: String) : HsrWriteResult
 
-    enum class Stage { NO_ROOT, GAME_NOT_INSTALLED, PREFS_NOT_FOUND, READ_FAILED, PARSE_FAILED, BACKUP_FAILED, COPY_FAILED }
+    enum class Stage { NO_ROOT, GAME_NOT_INSTALLED, PREFS_NOT_FOUND, READ_FAILED, BACKUP_FAILED, COPY_FAILED }
 }
 
 @Singleton
@@ -465,6 +466,8 @@ class HsrGameManager @Inject constructor(
 
     private companion object {
         /** Same order as the reference: /data_mirror crosses the mount-namespace boundary first. */
+        // Other apps' paths via root shell — getFilesDir() cannot address them.
+        @SuppressLint("SdCardPath")
         private val PREFS_PATH_TEMPLATES = listOf(
             "/data_mirror/data_ce/null/0/%s/shared_prefs/%s",
             "/data/user/0/%s/shared_prefs/%s",

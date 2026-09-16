@@ -51,6 +51,7 @@ class GridPreferencesManager @Inject constructor(
         context.getSharedPreferences("custom_upload_prefs", Context.MODE_PRIVATE)
     }
 
+    @Suppress("SameReturnValue") // fixed GRID install path
     private val absoluteDir: String get() = "/storage/emulated/0/${GridPreferences.RELATIVE_DIR}"
     private val absolutePath: String get() = "$absoluteDir/${GridPreferences.FILE_NAME}"
 
@@ -162,7 +163,6 @@ class GridPreferencesManager @Inject constructor(
     sealed class WriteResult {
         data class Success(
             val backup: ConfigBackupStore.Entry?,
-            val changed: List<String>,
             val refused: List<String>,
             /** Read-back verdict: the written bytes were compared against what was pushed. */
             val verified: Boolean,
@@ -206,7 +206,7 @@ class GridPreferencesManager @Inject constructor(
         // Shell channel: backup from the live file, stop the game, stage-and-cp, verify by md5.
         if (canUseShell()) {
             val backup = backupViaShell()
-            if (backup === BACKUP_FAILED) {
+            if (backup === backupFailed) {
                 return@withContext WriteResult.Failure(
                     WriteResult.Stage.BACKUP_FAILED,
                     "could not store a backup of the current file — refusing to overwrite"
@@ -214,15 +214,12 @@ class GridPreferencesManager @Inject constructor(
             }
             val stop = shellRunner.execSafeResult("am", "force-stop", GridPreferences.PACKAGE)
             val outcome = pushViaShell(newBytes)
-            if (outcome == null) {
-                return@withContext WriteResult.Failure(
+                ?: return@withContext WriteResult.Failure(
                     WriteResult.Stage.WRITE_FAILED,
                     "the shell refused the write — check the storage path"
                 )
-            }
             return@withContext WriteResult.Success(
                 backup = backup as? ConfigBackupStore.Entry,
-                changed = applied.changed,
                 refused = applied.refused,
                 verified = outcome,
                 channelUsed = "root / Shizuku shell",
@@ -272,7 +269,6 @@ class GridPreferencesManager @Inject constructor(
         val verified = readBack?.contentEquals(newBytes) == true
         WriteResult.Success(
             backup = backup,
-            changed = applied.changed,
             refused = applied.refused,
             verified = verified,
             channelUsed = "SAF",
@@ -297,17 +293,17 @@ class GridPreferencesManager @Inject constructor(
     }
 
     /** Sentinel for a backup attempt that read the file but could not store it. */
-    private val BACKUP_FAILED = Any()
+    private val backupFailed = Any()
 
     /**
      * Backs up the file through the shell channel. Returns the entry, null when there was
-     * nothing to back up, or [BACKUP_FAILED] when a storeable file could not be stored.
+     * nothing to back up, or [backupFailed] when a storeable file could not be stored.
      */
     private suspend fun backupViaShell(): Any? {
         val bytes = pullViaShell() ?: return null
         if (bytes.isEmpty()) return null
         return backupStore.save(GridPreferences.PACKAGE, GridPreferences.FILE_NAME, bytes)
-            ?: BACKUP_FAILED
+            ?: backupFailed
     }
 
     /**
@@ -317,7 +313,9 @@ class GridPreferencesManager @Inject constructor(
      */
     private suspend fun pullViaShell(): ByteArray? {
         val tempDir = context.externalCacheDir ?: context.cacheDir
-        val temp = File.createTempFile("grid_pull_", null, tempDir)
+        val temp = withContext(Dispatchers.IO) {
+            File.createTempFile("grid_pull_", null, tempDir)
+        }
         return try {
             temp.delete()
             val cp = shellRunner.execSafeResult("cp", "-f", absolutePath, temp.absolutePath)
@@ -330,7 +328,9 @@ class GridPreferencesManager @Inject constructor(
 
     private suspend fun pushViaShell(bytes: ByteArray): Boolean? {
         val tempDir = context.externalCacheDir ?: context.cacheDir
-        val temp = File.createTempFile("grid_push_", null, tempDir)
+        val temp = withContext(Dispatchers.IO) {
+            File.createTempFile("grid_push_", null, tempDir)
+        }
         return try {
             temp.writeBytes(bytes)
             shellRunner.execSafeResult("mkdir", "-p", absoluteDir)
@@ -378,7 +378,7 @@ class GridPreferencesManager @Inject constructor(
             val outcome = pushViaShell(bytes)
             if (outcome != null) {
                 return WriteResult.Success(
-                    backup = null, changed = listOf("backup restored"), refused = emptyList(),
+                    backup = null, refused = emptyList(),
                     verified = outcome, channelUsed = "root / Shizuku shell", gameStopped = null
                 )
             }
@@ -394,7 +394,7 @@ class GridPreferencesManager @Inject constructor(
             context.contentResolver.openOutputStream(target.uri, "w")?.use { it.write(bytes) }
             val readBack = context.contentResolver.openInputStream(target.uri)?.use { it.readBytes() }
             WriteResult.Success(
-                backup = null, changed = listOf("backup restored"), refused = emptyList(),
+                backup = null, refused = emptyList(),
                 verified = readBack?.contentEquals(bytes) == true,
                 channelUsed = "SAF", gameStopped = null
             )

@@ -10,7 +10,7 @@
     <string name="gt_dialog_aggressive_title">Aggressive Cleaning Warning</string>
     <string name="gt_dialog_aggressive_text">You have selected aggressive cleaning categories. Proceed?</string>
     <string name="gt_dialog_clean">CLEAN</string>
-    <string name="gt_dialog_cancel">CANCEL</string>
+    <string name="gt_dialog_cancel">Cancel</string>
     <string name="gt_dialog_res_title">Check this resolution</string>
     <string name="gt_dialog_apply">APPLY</string>
     <string name="gt_picker_add_app">Add App</string>

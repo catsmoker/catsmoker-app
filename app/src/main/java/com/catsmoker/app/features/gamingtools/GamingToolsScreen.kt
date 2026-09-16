@@ -2,6 +2,7 @@ package com.catsmoker.app.features.gamingtools
 
 import android.content.Intent
 import android.graphics.BitmapFactory
+import android.os.Build
 import android.provider.Settings
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -63,6 +64,7 @@ fun GamingToolsRoute(onBack: () -> Unit) {
     val viewModel: GamingToolsViewModel = hiltViewModel()
     val uiState by viewModel.uiState.collectAsState()
     val context = LocalContext.current
+    val noDevOptions = stringResource(R.string.gt_dialog_no_dev_options)
 
     val gamingState by viewModel.gamingState.collectAsState()
     val gamingReport by viewModel.gamingReport.collectAsState()
@@ -177,7 +179,12 @@ fun GamingToolsRoute(onBack: () -> Unit) {
                 try {
                     storageAccessLauncher.launch(intent)
                 } catch (_: Exception) {
-                    storageAccessLauncher.launch(Intent(Settings.ACTION_MANAGE_ALL_FILES_ACCESS_PERMISSION))
+                    // API 30+ only; allFilesAccessIntent() is null below R so this is unreachable there.
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                        storageAccessLauncher.launch(Intent(Settings.ACTION_MANAGE_ALL_FILES_ACCESS_PERMISSION))
+                    } else {
+                        context.startActivity(Intent(Settings.ACTION_SETTINGS))
+                    }
                 }
             }
         },
@@ -206,7 +213,7 @@ fun GamingToolsRoute(onBack: () -> Unit) {
                 try {
                     developerOptionsLauncher.launch(Intent(Settings.ACTION_SETTINGS))
                 } catch (_: Exception) {
-                    Toast.makeText(context, context.getString(R.string.gt_dialog_no_dev_options), Toast.LENGTH_LONG).show()
+                    Toast.makeText(context, noDevOptions, Toast.LENGTH_LONG).show()
                 }
             }
         },

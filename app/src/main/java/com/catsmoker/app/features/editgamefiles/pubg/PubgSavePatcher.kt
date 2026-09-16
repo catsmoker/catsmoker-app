@@ -103,7 +103,7 @@ object PubgSavePatcher {
         object Absent : FieldOutcome()
 
         /** The name matched, but the bytes around it are not the verified IntProperty layout. */
-        data class Unrecognized(val reason: String) : FieldOutcome()
+        data object Unrecognized : FieldOutcome()
     }
 
     data class ReadResult(
@@ -151,12 +151,14 @@ object PubgSavePatcher {
     fun readField(data: ByteArray, name: String): FieldOutcome = when (val located = locate(data, name)) {
         is Locate.Found -> FieldOutcome.Value(getIntLE(data, located.valueOffset))
         is Locate.Missing ->
-            if (located.absent) FieldOutcome.Absent else FieldOutcome.Unrecognized(located.reason)
+            if (located.absent) FieldOutcome.Absent else FieldOutcome.Unrecognized
     }
 
     sealed class PatchResult {
         /** A copy of the input with every requested field rewritten to its new value. */
-        data class Ok(val data: ByteArray, val applied: Map<String, Int>) : PatchResult()
+        // ByteArray kept for zero-copy handoff; content equality is never relied upon.
+        @Suppress("ArrayInDataClass")
+        data class Ok(val data: ByteArray) : PatchResult()
 
         /** Nothing was written; every refusal is named so the UI can carry the reasons through. */
         data class Refused(val reasons: Map<String, String>) : PatchResult()
@@ -169,7 +171,7 @@ object PubgSavePatcher {
      * inside one file), and a half-patched save is a worse state than an unpatched one.
      */
     fun patch(data: ByteArray, edits: Map<String, Int>): PatchResult {
-        if (edits.isEmpty()) return PatchResult.Ok(data, emptyMap())
+        if (edits.isEmpty()) return PatchResult.Ok(data)
         val offsets = mutableMapOf<String, Int>()
         val reasons = mutableMapOf<String, String>()
         for (name in edits.keys) {
@@ -181,7 +183,7 @@ object PubgSavePatcher {
         if (reasons.isNotEmpty()) return PatchResult.Refused(reasons)
         val out = data.copyOf()
         for ((name, value) in edits) putIntLE(out, offsets.getValue(name), value)
-        return PatchResult.Ok(out, edits)
+        return PatchResult.Ok(out)
     }
 
     /**

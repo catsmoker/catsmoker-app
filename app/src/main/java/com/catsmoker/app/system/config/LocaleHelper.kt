@@ -1,5 +1,6 @@
 package com.catsmoker.app.system.config
 
+import android.annotation.SuppressLint
 import android.content.Context
 import android.content.res.Configuration
 import java.util.Locale
@@ -16,6 +17,8 @@ import java.util.Locale
  */
 object LocaleHelper {
 
+    // In-app switcher covers all API levels with activity recreate(); no Play Core language delivery.
+    @SuppressLint("AppBundleLocaleChanges")
     fun wrap(base: Context): Context {
         val tag = AppearanceStore.languageTag(base)
         if (tag.isEmpty()) return base

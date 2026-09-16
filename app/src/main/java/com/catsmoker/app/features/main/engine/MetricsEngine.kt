@@ -292,10 +292,11 @@ class MetricsEngine(
         }
     }
 
+    // SameParameterValue: this publisher only ever reports the SurfaceFlinger channel.
     private suspend fun publishFps(
         fps: Int?,
         jankyFrames: Int?,
-        source: FpsSource,
+        @Suppress("SameParameterValue") source: FpsSource,
         status: MetricReadStatus
     ) = withContext(Dispatchers.Main) {
         _state.update {

@@ -7,20 +7,20 @@ keeps the UI honest.
 
 ## What it measures
 
-| Metric | Primary source | Privilege needed |
-| --- | --- | --- |
-| FPS | `dumpsys SurfaceFlinger --timestats` | Yes |
-| FPS (fallback) | this process's `Choreographer` vsync callbacks | No |
-| Missed frames | `SurfaceFlinger --timestats` | Yes |
-| CPU total | delta between two `/proc/stat` samples | Root/Shizuku or readable proc |
-| CPU total (fallback) | `top -n 1 -b`, then `dumpsys cpuinfo` | Yes |
-| Top process (CPU) | same `top` output | Yes |
-| RAM | `/proc/meminfo` → `ActivityManager` fallback | No |
-| Battery temp / level | sticky `ACTION_BATTERY_CHANGED` | No |
-| Power draw (W) | `BATTERY_PROPERTY_CURRENT_NOW` × voltage | No |
-| Thermal (CPU/GPU/skin/NPU) | `ThermalServiceParser` over sysfs/dumpsys | Varies |
-| Ping | `ping -c 1 -W 2 8.8.8.8` | No |
-| Network Rx/Tx | `TrafficStats` deltas | No |
+| Metric                     | Primary source                                 | Privilege needed              |
+| -------------------------- | ---------------------------------------------- | ----------------------------- |
+| FPS                        | `dumpsys SurfaceFlinger --timestats`           | Yes                           |
+| FPS (fallback)             | this process's `Choreographer` vsync callbacks | No                            |
+| Missed frames              | `SurfaceFlinger --timestats`                   | Yes                           |
+| CPU total                  | delta between two `/proc/stat` samples         | Root/Shizuku or readable proc |
+| CPU total (fallback)       | `top -n 1 -b`, then `dumpsys cpuinfo`          | Yes                           |
+| Top process (CPU)          | same `top` output                              | Yes                           |
+| RAM                        | `/proc/meminfo` → `ActivityManager` fallback   | No                            |
+| Battery temp / level       | sticky `ACTION_BATTERY_CHANGED`                | No                            |
+| Power draw (W)             | `BATTERY_PROPERTY_CURRENT_NOW` × voltage       | No                            |
+| Thermal (CPU/GPU/skin/NPU) | `ThermalServiceParser` over sysfs/dumpsys      | Varies                        |
+| Ping                       | `ping -c 1 -W 2 8.8.8.8`                       | No                            |
+| Network Rx/Tx              | `TrafficStats` deltas                          | No                            |
 
 ## Status model: honesty over invention
 
@@ -57,14 +57,14 @@ Key behaviors:
 `start()` launches several staggered, independent loops on `Dispatchers.IO`
 so a single bad reading (or a slow shell) can't stall or kill the rest:
 
-| Loop | Interval | Stagger |
-| --- | --- | --- |
-| Privileges & status | 5 s | 0 |
-| Heavy (top processes, detailed CPU) | 10 s | 1 s |
-| System stats (RAM, battery, power, network) | 5 s | 0 |
-| High-cadence (CPU delta) | 4 s | 500 ms |
-| Background shell (thermal, ping) | 10 s | 2 s |
-| FPS channel selector | 1 s | 1 s |
+| Loop                                        | Interval | Stagger |
+| ------------------------------------------- | -------- | ------- |
+| Privileges & status                         | 5 s      | 0       |
+| Heavy (top processes, detailed CPU)         | 10 s     | 1 s     |
+| System stats (RAM, battery, power, network) | 5 s      | 0       |
+| High-cadence (CPU delta)                    | 4 s      | 500 ms  |
+| Background shell (thermal, ping)            | 10 s     | 2 s     |
+| FPS channel selector                        | 1 s      | 1 s     |
 
 Each `pollLoop` body is wrapped in `guarded()`, which swallows *any*
 `Throwable` (catching even an `ExceptionInInitializerError` from a parser —

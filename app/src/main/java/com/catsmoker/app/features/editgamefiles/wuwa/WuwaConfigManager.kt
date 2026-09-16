@@ -121,7 +121,9 @@ class WuwaConfigManager @Inject constructor(
             // cp to an app-owned temp, then read in-process — byte-exact, unlike cat output.
             // null = unreadable or absent; an empty-but-present file comes back as an empty
             // array so callers can tell "no prior file" apart from "prior file, zero bytes".
-            val temp = File.createTempFile("wuwa_pull_", null, tempDir)
+            val temp = withContext(Dispatchers.IO) {
+                File.createTempFile("wuwa_pull_", null, tempDir)
+            }
             return try {
                 temp.delete()
                 val cp = shellRunner.execSafeResult("cp", "-f", path, temp.absolutePath)
@@ -136,7 +138,9 @@ class WuwaConfigManager @Inject constructor(
         }
 
         override suspend fun writeBytes(path: String, bytes: ByteArray): WriteOutcome {
-            val temp = File.createTempFile("wuwa_push_", null, tempDir)
+            val temp = withContext(Dispatchers.IO) {
+                File.createTempFile("wuwa_push_", null, tempDir)
+            }
             return try {
                 temp.writeBytes(bytes)
                 val cp = shellRunner.execSafeResult("cp", "-f", temp.absolutePath, path)
@@ -558,6 +562,8 @@ class WuwaConfigManager @Inject constructor(
     /** What reading Client.log actually did. */
     sealed class ClientLogResult {
         /** The log's exact bytes, and which channel read them. */
+        // Raw log bytes are an identity carry for the decryptor, never compared.
+        @Suppress("ArrayInDataClass")
         data class Read(val bytes: ByteArray, val channelUsed: String) : ClientLogResult()
 
         /**

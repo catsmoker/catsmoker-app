@@ -4,18 +4,18 @@ A high-level map of the CatSmoker Android codebase and how the layers fit togeth
 
 ## Stack
 
-| Concern | Choice |
-| --- | --- |
-| Language | Kotlin 2.4 |
-| UI | Jetpack Compose (Material 3, BOM 2026.08) |
-| Navigation | `androidx.navigation:navigation-compose` |
-| DI | Hilt (Dagger) |
-| Async | Kotlin Coroutines + Flow |
-| JSON | Gson |
-| Root | libsu (`com.github.topjohnwu.libsu:core`) |
+| Concern              | Choice                                         |
+| -------------------- | ---------------------------------------------- |
+| Language             | Kotlin 2.4                                     |
+| UI                   | Jetpack Compose (Material 3, BOM 2026.08)      |
+| Navigation           | `androidx.navigation:navigation-compose`       |
+| DI                   | Hilt (Dagger)                                  |
+| Async                | Kotlin Coroutines + Flow                       |
+| JSON                 | Gson                                           |
+| Root                 | libsu (`com.github.topjohnwu.libsu:core`)      |
 | Piecemeal privileges | Shizuku (`dev.rikka.shizuku:api` + `provider`) |
-| Runtime hooking | LSPosed (Xposed API, `compileOnly`) |
-| Min / target SDK | API 27 / API 36 |
+| Runtime hooking      | LSPosed (Xposed API, `compileOnly`)            |
+| Min / target SDK     | API 27 / API 36                                |
 
 ## Module layout
 

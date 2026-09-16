@@ -16,11 +16,11 @@ Configuration lives in `SpoofConfigProvider`
 
 ## Three application channels
 
-| Channel | When it's used | How it works |
-| --- | --- | --- |
+| Channel              | When it's used               | How it works                                                                                           |
+| -------------------- | ---------------------------- | ------------------------------------------------------------------------------------------------------ |
 | **LSPosed / Xposed** | Rooted devices (recommended) | Hooks the target game at runtime and overrides `getprop` for the spoofed keys. Zero file modification. |
-| **Shizuku** | Non-rooted, Android 11+ | Uses the Shizuku binder to run privileged commands that write/oversee system or game data. |
-| **Magisk module** | Offline / system-level | `MagiskModuleBuilder` generates a flashable `.zip` that applies the spoof at boot via `system.prop`. |
+| **Shizuku**          | Non-rooted, Android 11+      | Uses the Shizuku binder to run privileged commands that write/oversee system or game data.             |
+| **Magisk module**    | Offline / system-level       | `MagiskModuleBuilder` generates a flashable `.zip` that applies the spoof at boot via `system.prop`.   |
 
 Plus **SAF / export mode** for manually granting access to game data folders.
 

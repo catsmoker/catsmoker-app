@@ -1,5 +1,6 @@
 package com.catsmoker.app.features.gamingtools.tools.firewall
 
+import android.annotation.SuppressLint
 import android.content.Context
 import android.content.Intent
 import android.content.pm.ApplicationInfo
@@ -100,6 +101,8 @@ class VpnFirewall @Inject constructor(
      *
      * @param gamePackages the user's library, which is exempted so games keep working.
      */
+    // Partial visibility is fine: invisible apps are skipped, never blocked.
+    @SuppressLint("QueryPermissionsNeeded")
     fun blockTargets(gamePackages: List<String>): List<String> {
         val games = gamePackages.toSet()
         val pm = context.packageManager
