@@ -20,7 +20,7 @@ android {
         // Shizuku to restart the daemonized helper whose AIDL no longer matches (see the
         // ShellRunner KDoc). Shipped helpers keep serving the old AIDL until this moves.
         versionCode = 7
-        versionName = "2.0.0"
+        versionName = "2.0.1"
 
         // Only locales the app actually ships (see res/xml/locales_config.xml): strips the
         // dozens of transitive locales dragged in by material/splashscreen/work.

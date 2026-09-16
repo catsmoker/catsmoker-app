@@ -20,7 +20,7 @@ Requirements and commands for building CatSmoker locally.
 | Min SDK     | 27 (Android 8.1) |
 | Target SDK  | 36               |
 | Compile SDK | 37               |
-| Version     | 2.0.0 (code 7)   |
+| Version     | 2.0.1 (code 7)   |
 | NDK         | 27.0.12077973    |
 
 ## Build

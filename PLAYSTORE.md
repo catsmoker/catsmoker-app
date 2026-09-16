@@ -72,7 +72,7 @@ Sources: `app/build.gradle.kts`, `gradle.properties`, `docs/BUILD.md`,
 | `targetSdk` | 36 |
 | `compileSdk` | 37 |
 | `versionCode` | 7 (comment notes the bump forces Shizuku to restart the AIDL helper; do not bump casually — `app/build.gradle.kts:18-21`, `AGENTS.md`) |
-| `versionName` | `2.0.0` |
+| `versionName` | `2.0.1` |
 | AGP / Kotlin / KSP / Compose BOM / NDK | 9.4.0 / 2.4.20 / 2.3.10 / 2026.08.00 / 27.0.12077973 (per `docs/BUILD.md`; Kotlin bumped on this branch in `57bccfd`) |
 | `release` build type | `isMinifyEnabled = true`, `isShrinkResources = true`, `isDebuggable = false`, ProGuard `proguard-android-optimize.txt` + `proguard-rules.pro` — signed by `signingConfigs.release` from the git-ignored `signing.properties` (permanent `key0` key, see §4), falling back to debug signing without that file (`app/build.gradle.kts`) |
 | `debug` build type | no minify, debuggable, debug signing |
@@ -453,7 +453,7 @@ HYGIENE (required regardless):
     for the Play build, including locale `en` + one mirrored locale.
 - Publishing status: **not published.** No Play track, no upload key, no
   Data safety submission, no content rating — all pending. Current
-  `versionCode 7 / versionName 2.0.0` has **not** been uploaded to Play.
+   `versionCode 7 / versionName 2.0.1` has **not** been uploaded to Play.
 
 ## 10. Important decisions
 
@@ -474,6 +474,12 @@ HYGIENE (required regardless):
   + Ads declaration / Data safety entry are pending before upload.
 
 ## 11. Changelog (newest first)
+
+- 2026-09-16: `versionName` 2.0.0 → 2.0.1 (uncommitted). `versionCode`
+  stays 7 — nothing has been uploaded to Play yet, so code 7 is still
+  fresh, and holding it avoids the Shizuku AIDL-helper restart a code
+  bump forces. `docs/BUILD.md` version cell and §3/§9 updated to match;
+  the §11 historical `v2.0.0` entry is left as-was (it records the past).
 
 - 2026-09-16: About community buttons labeled (uncommitted). The icon-only
   `SocialIcon` row (no content descriptions, low-contrast boxes) is now
