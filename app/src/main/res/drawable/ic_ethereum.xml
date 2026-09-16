@@ -1,0 +1,10 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <!-- Faceted gem: upper and lower pyramids sharing the middle edge. -->
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M12,2L17.8,12L12,15.8L6.2,12Z M12,17.2L17.8,13.6L12,22L6.2,13.6Z" />
+</vector>

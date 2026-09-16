@@ -29,6 +29,12 @@
     <string name="core_about_dev_logs">查看日志</string>
     <string name="core_about_dev_report">在 GitHub 反馈</string>
 
+    <!-- About screen community-button titles (brand names stay verbatim). -->
+    <string name="about_social_github">GitHub</string>
+    <string name="about_social_website">网站</string>
+    <string name="about_social_discord">Discord</string>
+    <string name="about_social_telegram">Telegram</string>
+
     <!-- Logs screen ViewModel messages (%1$s = detail). -->
     <string name="core_logs_fetch_error">获取日志失败：%1$s</string>
     <string name="core_logs_share_title">分享日志</string>

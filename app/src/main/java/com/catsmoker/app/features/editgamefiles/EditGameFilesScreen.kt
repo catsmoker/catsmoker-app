@@ -519,7 +519,7 @@ fun EditGameFilesScreen(
                                         Spacer(modifier = Modifier.width(8.dp))
                                         Text(stringResource(R.string.gf_working))
                                     } else {
-                                        Text(stringResource(R.string.gf_reset_file, uiState.configFileLabel ?: "").uppercase())
+                                        Text(stringResource(R.string.gf_reset_file, uiState.configFileLabel).uppercase())
                                     }
                                 }
                             }

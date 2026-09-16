@@ -59,4 +59,16 @@ class DonateDataTest {
             assertTrue(it.address.isNotBlank())
         }
     }
+
+    /**
+     * Every coin row on the Donate screen shows an icon. Five distinct coins
+     * (the two USDT networks share one icon), so a new coin without a mapping
+     * fails here instead of shipping a row with a missing icon.
+     */
+    @Test
+    fun everyCoinHasItsOwnIcon() {
+        val icons = DonateData.crypto.map { cryptoIconFor(it.id) }
+        assertTrue(icons.all { it != 0 })
+        assertEquals(5, icons.toSet().size)
+    }
 }

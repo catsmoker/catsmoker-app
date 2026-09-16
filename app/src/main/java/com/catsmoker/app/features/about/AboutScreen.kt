@@ -1,6 +1,5 @@
 package com.catsmoker.app.features.about
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -12,6 +11,8 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.res.painterResource
@@ -48,35 +49,46 @@ fun AboutScreen(onBack: () -> Unit, onOpenLogs: () -> Unit, onDonate: () -> Unit
                 Text(text = "v${BuildConfig.VERSION_NAME}", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 
                 Spacer(modifier = Modifier.height(16.dp))
-                
-                // Social Links Row
-                Row(
+
+                // Community links: full-width labeled buttons. Visible at a glance
+                // and announced with their title by TalkBack — the icon-only row
+                // they replace carried no content descriptions at all.
+                Column(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.Center,
-                    verticalAlignment = Alignment.CenterVertically
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     val webUrl = stringResource(R.string.url_webpage)
                     val discordUrl = stringResource(R.string.url_discord)
                     val telegramUrl = stringResource(R.string.url_telegram)
 
-                    SocialIcon(
+                    AboutLinkButton(
+                        title = stringResource(R.string.about_social_github),
                         painter = painterResource(R.drawable.ic_github),
                         onClick = { uriHandler.openUri(githubUrl) }
                     )
-                    SocialIcon(
+                    AboutLinkButton(
+                        title = stringResource(R.string.about_social_website),
                         imageVector = Icons.Default.Language,
+                        iconTint = MaterialTheme.colorScheme.primary,
                         onClick = { uriHandler.openUri(webUrl) }
                     )
-                    SocialIcon(
+                    AboutLinkButton(
+                        title = stringResource(R.string.about_social_discord),
                         painter = painterResource(R.drawable.ic_discord),
+                        iconTint = Color(0xFF5865F2),
                         onClick = { uriHandler.openUri(discordUrl) }
                     )
-                    SocialIcon(
+                    AboutLinkButton(
+                        title = stringResource(R.string.about_social_telegram),
                         painter = painterResource(R.drawable.ic_telegram),
+                        iconTint = Color(0xFF229ED9),
                         onClick = { uriHandler.openUri(telegramUrl) }
                     )
-                    SocialIcon(
+                    AboutLinkButton(
+                        title = stringResource(R.string.donate_title),
                         imageVector = Icons.Default.Favorite,
+                        iconTint = MaterialTheme.colorScheme.primary,
+                        external = false,
                         onClick = onDonate
                     )
                 }
@@ -135,34 +147,47 @@ fun AboutScreen(onBack: () -> Unit, onOpenLogs: () -> Unit, onDonate: () -> Unit
 }
 
 @Composable
-fun SocialIcon(
+fun AboutLinkButton(
+    title: String,
     onClick: () -> Unit,
-    painter: androidx.compose.ui.graphics.painter.Painter? = null,
-    imageVector: ImageVector? = null
+    painter: Painter? = null,
+    imageVector: ImageVector? = null,
+    iconTint: Color = MaterialTheme.colorScheme.onSurface,
+    /** True for browser links (trailing open-in-new); false for in-app destinations (chevron). */
+    external: Boolean = true
 ) {
-    IconButton(
+    FilledTonalButton(
         onClick = onClick,
-        modifier = Modifier
-            .padding(horizontal = 4.dp)
-            .size(40.dp)
-            .clip(RoundedCornerShape(10.dp))
-            .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
+        modifier = Modifier.fillMaxWidth(),
+        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 12.dp)
     ) {
         if (painter != null) {
             Icon(
                 painter = painter,
                 contentDescription = null,
-                tint = MaterialTheme.colorScheme.onSurface,
-                modifier = Modifier.size(20.dp)
+                tint = iconTint,
+                modifier = Modifier.size(22.dp)
             )
         } else if (imageVector != null) {
             Icon(
                 imageVector = imageVector,
                 contentDescription = null,
-                tint = MaterialTheme.colorScheme.onSurface,
-                modifier = Modifier.size(20.dp)
+                tint = iconTint,
+                modifier = Modifier.size(22.dp)
             )
         }
+        Spacer(modifier = Modifier.width(12.dp))
+        Text(
+            text = title,
+            modifier = Modifier.weight(1f),
+            style = MaterialTheme.typography.titleSmall
+        )
+        Icon(
+            imageVector = if (external) Icons.Default.OpenInNew else Icons.Default.ChevronRight,
+            contentDescription = null,
+            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.size(20.dp)
+        )
     }
 }
 
