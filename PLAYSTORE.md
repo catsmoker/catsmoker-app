@@ -25,9 +25,11 @@ Play-policy-compliant listing:
 - testing evidence and publishing status.
 
 `main` (and feature branches) remain the development line. `playstore`
-receives only cherry-picked `[PLAY-SAFE]` commits from `main` (see
-`docs/BRANCH_WORKFLOW.md`) — never a merge, never a rebase, and never the
-other way around.
+receives cherry-picked `[PLAY-SAFE]` commits from `main` (see
+`docs/BRANCH_WORKFLOW.md`) — never a merge, never a rebase. Reverse
+`playstore → main` flow is a narrow cherry-pick-only exception for
+individually reviewed safe fixes (same file); merges/rebases into `main`
+stay banned and Play-compliance removals never flow back.
 
 ## 2. Relationship to other branches
 
@@ -56,6 +58,13 @@ Workflow:
    reach this branch. On conflict: stop, assess per `docs/BRANCH_WORKFLOW.md`,
    and record the outcome in §12 — never silently drop a Play restriction
    to make the pick succeed.
+2b. Reverse (exception only): cherry-pick an individually reviewed safe
+   fix from `playstore` to `main` via `git switch main && git cherry-pick
+   <commit>`, adapted for `main` (Start.io, spoof present, no
+   `adi-registration.properties`). Never `git merge playstore`, never
+   rebase onto `playstore`, never flow back compliance removals — on
+   conflict stop per `docs/BRANCH_WORKFLOW.md` and never silently drop
+   `main`-only functionality to make the pick succeed.
 3. Never commit secrets (keystores, passwords, `local.properties` values).
    `local.properties` is git-ignored (see `.gitignore`) and carries
    `sdk.dir` plus the `ADMOB_*` IDs on this branch.
@@ -472,8 +481,21 @@ HYGIENE (required regardless):
   (`ADMOB_APP_ID` / `ADMOB_BANNER_ID` / `ADMOB_INTERSTITIAL_ID`) with
   Google's sample (test) IDs as fallback. Production IDs + UMP consent flow
   + Ads declaration / Data safety entry are pending before upload.
+- 2026-09-16: Sync policy gains a narrow `playstore → main` cherry-pick
+  exception (`docs/BRANCH_WORKFLOW.md` + §§1–2 here). Forward flow stays
+  the default; reverse is per-commit, manual, cherry-pick-only —
+  merges/rebases into `main` stay banned and Play-compliance removals
+  (spoof strip, AdMob swap, updater removal, `adi-registration.properties`,
+  Play-only permission/locale trims, version bumps) never flow back.
 
 ## 11. Changelog (newest first)
+
+- 2026-09-16: Sync policy amendment (uncommitted). `docs/BRANCH_WORKFLOW.md`
+  Critical Rule / Reverse Direction / Conflict Handling / Automation /
+  Final Invariant plus §§1–2/10 here now permit narrow `playstore → main`
+  cherry-picks of reviewed safe fixes (manual, per-commit, adapted for
+  `main`); merges/rebases into `main` stay banned, compliance removals
+  never flow back.
 
 - 2026-09-16: `versionName` 2.0.0 → 2.0.1 (uncommitted). `versionCode`
   stays 7 — nothing has been uploaded to Play yet, so code 7 is still
