@@ -26,6 +26,7 @@ import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.res.stringResource
@@ -123,21 +124,22 @@ fun MainScreen(
     onOpenAbout: () -> Unit,
     onOpenSettings: () -> Unit
 ) {
-    var hydrationPhase by remember { mutableIntStateOf(0) }
+    val isPreview = LocalInspectionMode.current
+    var hydrationPhase by remember { mutableIntStateOf(if (isPreview) 4 else 0) }
     var showAdsDeferred by remember { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
         // One-frame "breath" to let the system settle after splash removal
-        delay(16.milliseconds) 
+        delay(16.milliseconds)
         
         // Progressive Hydration Timeline
-        delay(50.milliseconds) 
+        delay(50.milliseconds)
         hydrationPhase = 1
-        delay(100.milliseconds) 
+        delay(100.milliseconds)
         hydrationPhase = 2
         delay(150.milliseconds) 
         hydrationPhase = 3
-        delay(300.milliseconds) 
+        delay(300.milliseconds)
         hydrationPhase = 4
     }
 
@@ -284,7 +286,8 @@ fun MainScreen(
         }
 
         // 3. Quick Actions (Progressive) — 2x2 grid; every tile gets an equal
-        // share of the leftover height so all four buttons are the same size.
+        // share of the leftover height, capped so tall screens get empty space
+        // below the grid instead of stretched tiles. Short screens still squeeze.
         // HSR / WuWa / GRID live inside File Engineering's "Advanced Editors"
         // section now — one place for every game-file tool.
         if (hydrationPhase >= 2) {
@@ -302,12 +305,21 @@ fun MainScreen(
                         modifier = Modifier.padding(start = 4.dp, bottom = 8.dp)
                     )
 
-                    Column(
+                    // Capped stretch: the grid takes the leftover height on short
+                    // screens (tiles squeeze) but at most 280dp on tall ones.
+                    // (A plain heightIn cap can't limit weight children — the
+                    // weight share is an exact measurement — hence the min.)
+                    BoxWithConstraints(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .weight(1f),
-                        verticalArrangement = Arrangement.spacedBy(12.dp)
+                            .weight(1f)
                     ) {
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(minOf(maxHeight, 280.dp)),
+                            verticalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
@@ -321,8 +333,8 @@ fun MainScreen(
                                 iconContentColor = MaterialTheme.colorScheme.onSurface,
                                 onClick = onOpenEditGameFiles,
                                 modifier = Modifier.weight(1f).fillMaxHeight(),
-                                contentPadding = 16.dp,
-                                iconSize = 48.dp,
+                                contentPadding = 12.dp,
+                                iconSize = 40.dp,
                                 spreadGridContent = true,
                                 icon = { Icon(Icons.Default.FolderOpen, null) }
                             )
@@ -333,8 +345,8 @@ fun MainScreen(
                                 iconContentColor = MaterialTheme.colorScheme.onSurface,
                                 onClick = onOpenGamingTools,
                                 modifier = Modifier.weight(1f).fillMaxHeight(),
-                                contentPadding = 16.dp,
-                                iconSize = 48.dp,
+                                contentPadding = 12.dp,
+                                iconSize = 40.dp,
                                 spreadGridContent = true,
                                 icon = { Icon(Icons.Default.SportsEsports, null) }
                             )
@@ -353,8 +365,8 @@ fun MainScreen(
                                 iconContentColor = MaterialTheme.colorScheme.onSurface,
                                 onClick = onOpenSettings,
                                 modifier = Modifier.weight(1f).fillMaxHeight(),
-                                contentPadding = 16.dp,
-                                iconSize = 48.dp,
+                                contentPadding = 12.dp,
+                                iconSize = 40.dp,
                                 spreadGridContent = true,
                                 icon = { Icon(Icons.Default.Settings, null) }
                             )
@@ -365,13 +377,14 @@ fun MainScreen(
                                 iconContentColor = MaterialTheme.colorScheme.onSurface,
                                 onClick = onOpenAbout,
                                 modifier = Modifier.weight(1f).fillMaxHeight(),
-                                contentPadding = 16.dp,
-                                iconSize = 48.dp,
+                                contentPadding = 12.dp,
+                                iconSize = 40.dp,
                                 spreadGridContent = true,
                                 icon = { Icon(Icons.Default.Info, null) }
                             )
                         }
                     }
+                }
             }
         }
 
@@ -402,12 +415,13 @@ fun CombinedChart(
     tempHistory: List<Float>,
     pingHistory: List<Int>,
     /** Total RAM, used as the y-scale. Null when it could not be read. */
-    ramTotal: Float?
+    ramTotal: Float?,
+    modifier: Modifier = Modifier
 ) {
     val nothingRed = NothingRed
-    
+
     Spacer(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
             .height(100.dp)
             .clip(RoundedCornerShape(12.dp))
@@ -417,7 +431,7 @@ fun CombinedChart(
             .padding(8.dp)
             .drawWithCache {
                 val stroke = Stroke(width = 2.dp.toPx(), cap = StrokeCap.Round)
-                
+
                 val fpsP = createPath(fpsHistory.map { it.toFloat() }, size, 60f)
                 val cpuP = createPath(cpuHistory.map { it.toFloat() }, size, 100f)
                 // With no total there is no scale, and with no total there are also no samples —
@@ -443,7 +457,7 @@ private fun createPath(history: List<Float>, size: androidx.compose.ui.geometry.
     val w = size.width
     val h = size.height
     val currentMax = history.maxOrNull()?.coerceAtLeast(baseMax)?.coerceAtLeast(1f) ?: 1f
-    
+
     history.forEachIndexed { i, value ->
         val x = w * i / (history.size - 1).toFloat()
         val y = h * (1f - value / currentMax)

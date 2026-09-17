@@ -490,6 +490,30 @@ HYGIENE (required regardless):
 
 ## 11. Changelog (newest first)
 
+- 2026-09-16: Ported safe dashboard/build refinements from `main`
+  (`6991412`, `50406ef`), adapted for this branch — no cherry-pick (both
+  commits are unclassified, so per `docs/BRANCH_WORKFLOW.md` they were
+  ported by hand, not picked). `app/proguard-rules.pro`: Shizuku
+  `newProcess` keep rule no longer pins `private` (visibility changed
+  across shizuku-api releases; pinning it matches nothing on versions
+  that declared it otherwise). `MainScreen`: Compose preview renders the
+  full dashboard via `LocalInspectionMode` (hydration starts at phase 4
+  in preview, zero runtime effect); `CombinedChart` takes a defaulted
+  `modifier` param. Deliberately NOT ported: `StartAppBanner` ad slot
+  (this branch serves `AdMobBanner` with expand+fade entry), Jetifier
+  (Start.io-driven; this branch needs none), explicit
+  `CoreComponentFactory` (no evidence needed here), Magisk-mentioning
+  `GamingEngine` KDoc tweak, and the main-line `GameDeveloperOptions`
+  refresh-rate / `SettingsViewModel` deltas (unclassified new work, not
+  fixes). No action needed elsewhere: Donate/About/GamingMode-card/
+  QuickAction/Squiggly/MainActivity and the inspection-debt engine files
+  show no functional delta versus `main` at this commit (verified via
+  `git diff playstore main` — only expected compliance divergence
+  remains: spoof strip, AdMob swap, updater removal, Play locale trims);
+  the exit-toast formatting from `6991412` is already here and ahead
+  (this branch additionally cancels the previous toast). `versionName`
+  2.0.1 already landed here as `ac9861a`.
+
 - 2026-09-16: Sync policy amendment (uncommitted). `docs/BRANCH_WORKFLOW.md`
   Critical Rule / Reverse Direction / Conflict Handling / Automation /
   Final Invariant plus §§1–2/10 here now permit narrow `playstore → main`
