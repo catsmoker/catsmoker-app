@@ -93,7 +93,7 @@ Utilizes the LSPosed framework to hook into game processes at runtime. This allo
 1. **Prerequisites**: [Magisk](https://github.com/topjohnwu/Magisk/releases) (v24+) installed.
 2. **Setup Zygisk**: Enable [ReZygisk](https://github.com/PerformanC/ReZygisk) in your root manager settings.
 3. **Install LSPosed**: Flash the latest [LSPosed](https://github.com/LSPosed/LSPosed/releases) module and reboot.
-optional. **Setup Shamiko**: Enable [Shamiko](https://github.com/LSPosed/LSPosed.github.io/releases) in your root manager settings.
+4. *optional*: **Setup Shamiko**: Enable [Shamiko](https://github.com/LSPosed/LSPosed.github.io/releases) in your root manager settings.
 5. **Enable CatSmoker**:
   - Grant it root access in your root manager.
    - Open the **LSPosed Manager**.
