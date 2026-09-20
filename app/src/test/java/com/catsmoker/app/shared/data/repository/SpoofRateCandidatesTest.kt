@@ -184,4 +184,57 @@ class SpoofRateCandidatesTest {
         val back = gson.fromJson(gson.toJson(original), SpoofRepository.StoreData::class.java)
         assertEquals(original.rateAssignments, back.rateAssignments)
     }
+
+    // ── release-R8 self-heal ──────────────────────────────────────────────────
+    //
+    // A release build whose generic signatures were stripped materializes ladder rungs
+    // as Gson LinkedTreeMaps instead of RateCandidates; touching such a ladder then
+    // crashes with ClassCastException (seen on-device, retraced to assignedLabelFor).
+    // `repaired` is the single place JSON enters the app, so it coerces those maps back.
+
+    @Suppress("UNCHECKED_CAST")
+    private fun releaseShapedStore(): SpoofRepository.StoreData {
+        // Exactly what stripped-signatures Gson leaves behind: a map, not a RateCandidate.
+        val gson = Gson()
+        val rawRung = gson.fromJson(
+            """{"profileId":"a","rateHz":90}""",
+            Map::class.java
+        )
+        val ladder = listOf(rawRung) as List<SpoofRepository.RateCandidate>
+        return store(
+            rateAssignments = mapOf("com.game" to ladder),
+            profileIds = arrayOf("a")
+        )
+    }
+
+    @Test
+    fun repairedCoercesMapShapedRungsBackIntoRateCandidates() {
+        val healed = SpoofRepository.repaired(releaseShapedStore())
+        assertEquals(
+            mapOf("com.game" to ladderOf(rung("a", 90))),
+            healed.rateAssignments
+        )
+        // The healed ladder must be safe for every reader — no cast left to throw.
+        assertEquals("a", SpoofRepository.pickRateCandidate(healed.rateAssignments["com.game"].orEmpty(), 144f)?.profileId)
+    }
+
+    @Test
+    fun repairedDropsRungsThatAreNeitherCandidatesNorMaps() {
+        val data = store(profileIds = arrayOf("a"))
+        @Suppress("UNCHECKED_CAST")
+        val ladder = listOf("not-a-rung", 42) as List<SpoofRepository.RateCandidate>
+        val healed = SpoofRepository.repaired(
+            data.copy(rateAssignments = mapOf("com.game" to ladder))
+        )
+        assertEquals(mapOf("com.game" to emptyList<SpoofRepository.RateCandidate>()), healed.rateAssignments)
+    }
+
+    @Test
+    fun repairedKeepsWellFormedLaddersUntouched() {
+        val original = store(
+            rateAssignments = mapOf("com.game" to ladderOf(rung("a", 90))),
+            profileIds = arrayOf("a")
+        )
+        assertEquals(original, SpoofRepository.repaired(original))
+    }
 }

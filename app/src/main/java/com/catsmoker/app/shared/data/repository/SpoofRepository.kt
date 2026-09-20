@@ -545,16 +545,37 @@ class SpoofRepository @Inject constructor(
         }
 
         /**
-         * Fills in the field defaults Gson skips.
+         * Fills in the field defaults Gson skips, and heals rungs a signature-stripped
+         * release deserialized as maps.
          *
          * Gson bypasses the constructor, so a store saved before [StoreData.rateAssignments]
          * existed deserializes that field as null despite the non-null type — every reader would
-         * then have to defend against a value the type promises cannot happen. Repairing it once,
-         * at the single place JSON enters the app, keeps the promise true everywhere else.
+         * then have to defend against a value the type promises cannot happen. Likewise, when
+         * the release dex carries no generic signatures Gson materializes ladder rungs as
+         * `LinkedTreeMap`s instead of [RateCandidate]s, and the first ladder touch crashes with
+         * `ClassCastException`. Repairing both once, at the single place JSON enters the app,
+         * keeps the promise true everywhere else.
          */
         internal fun repaired(parsed: StoreData): StoreData {
             val legacyRates: Map<String, List<RateCandidate>>? = parsed.rateAssignments
-            return if (legacyRates == null) parsed.copy(rateAssignments = emptyMap()) else parsed
+            val rates = legacyRates ?: emptyMap()
+            val healed = rates.mapValues { (_, ladder) -> ladder.mapNotNull(::coerceRung) }
+            return if (healed == legacyRates) parsed else parsed.copy(rateAssignments = healed)
+        }
+
+        /**
+         * A rung back into the type the store promises. Map-shaped rungs (Gson with no
+         * generic signature to aim at) are coerced when they carry a usable id and rate;
+         * anything else is dropped so a corrupt rung can never reach a reader's cast.
+         */
+        private fun coerceRung(raw: Any?): RateCandidate? {
+            if (raw is RateCandidate) return raw
+            val map = raw as? Map<*, *> ?: return null
+            val profileId = map["profileId"] as? String ?: return null
+            val rateHz = (map["rateHz"] as? Number)?.toInt()
+                ?: (map["rateHz"] as? String)?.toIntOrNull()
+                ?: return null
+            return RateCandidate(profileId, rateHz)
         }
     }
 }

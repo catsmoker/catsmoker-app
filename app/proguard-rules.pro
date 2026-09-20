@@ -40,6 +40,18 @@
 -keep class com.catsmoker.app.features.spoofdevice.root.LSPosedModule { *; }
 -keep class com.catsmoker.app.shared.data.model.LSPosedConfig { *; }
 
+# Gson persists these models by field name and generic signature (SpoofRepository reads
+# StoreData with StoreData::class.java; GamingOptimizationSnapshot the same way). The
+# release dex otherwise carries neither, so ladder rungs deserialize as LinkedTreeMap —
+# the first ladder touch then crashes with ClassCastException — while profile fields
+# silently load empty. Narrow per-class keeps: no broad-rule inspection debt.
+-keep class com.catsmoker.app.shared.data.repository.SpoofRepository$StoreData { *; }
+-keep class com.catsmoker.app.shared.data.repository.SpoofRepository$ProfileEntry { *; }
+-keep class com.catsmoker.app.shared.data.repository.SpoofRepository$RateCandidate { *; }
+-keep class com.catsmoker.app.shared.data.model.DeviceProfile { *; }
+-keep class com.catsmoker.app.shared.data.model.GamingOptimizationSnapshot { *; }
+-keep class com.catsmoker.app.shared.data.model.SettingValue { *; }
+
 -dontwarn de.robv.android.xposed.**
 
 # ShellRunner reflects Shizuku's newProcess(String[], String[], String) — the one-shot
