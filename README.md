@@ -91,7 +91,7 @@ Utilizes the LSPosed framework to hook into game processes at runtime. This allo
 
 ### For Rooted Devices (Recommended)
 1. **Prerequisites**: [Magisk](https://github.com/topjohnwu/Magisk/releases) (v24+) installed.
-2. **Setup Zygisk**: Enable [ZygiskNext](https://github.com/Dr-TSNG/ZygiskNext/releases) in your root manager settings.
+2. **Setup Zygisk**: Enable [ReZygisk](https://github.com/PerformanC/ReZygisk) in your root manager settings.
 3. **Install LSPosed**: Flash the latest [LSPosed](https://github.com/LSPosed/LSPosed/releases) module and reboot.
 4. **Enable CatSmoker**:
   - Grant it root access in your root manager.
