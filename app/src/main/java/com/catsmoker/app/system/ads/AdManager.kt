@@ -36,6 +36,7 @@ class AdManager @Inject constructor(
     /**
      * Loads an interstitial and shows it as soon as it is ready. No-op when ads are
      * disabled, when no ad unit is configured, or without an [Activity] to present on.
+     * An SDK-side throw degrades to a no-op as well — an ad must never crash the app.
      */
     // Interstitial wiring pending per PLAYSTORE.md; kept loaded-but-uncalled until then.
     @Suppress("unused")
@@ -44,19 +45,23 @@ class AdManager @Inject constructor(
         val activity = context as? Activity ?: return
         val adUnitId = BuildConfig.ADMOB_INTERSTITIAL_ID
         if (adUnitId.isEmpty()) return
-        InterstitialAd.load(
-            context,
-            adUnitId,
-            AdRequest.Builder().build(),
-            object : InterstitialAdLoadCallback() {
-                override fun onAdLoaded(ad: InterstitialAd) {
-                    ad.show(activity)
-                }
+        try {
+            InterstitialAd.load(
+                context,
+                adUnitId,
+                AdRequest.Builder().build(),
+                object : InterstitialAdLoadCallback() {
+                    override fun onAdLoaded(ad: InterstitialAd) {
+                        runCatching { ad.show(activity) }
+                    }
 
-                override fun onAdFailedToLoad(error: LoadAdError) {
-                    // Nothing to show — the app simply continues without an ad.
+                    override fun onAdFailedToLoad(error: LoadAdError) {
+                        // Nothing to show — the app simply continues without an ad.
+                    }
                 }
-            }
-        )
+            )
+        } catch (_: Exception) {
+            // Nothing to show — the app simply continues without an ad.
+        }
     }
 }

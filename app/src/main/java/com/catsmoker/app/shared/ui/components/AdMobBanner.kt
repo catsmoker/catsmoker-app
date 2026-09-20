@@ -1,5 +1,6 @@
 package com.catsmoker.app.shared.ui.components
 
+import android.view.View
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -26,6 +27,11 @@ import com.google.android.gms.ads.LoadAdError
  * The slot is reserved up front so a successful ad never shifts content, but it
  * collapses when no ad unit is configured or no ad arrives (offline, no fill),
  * or the gap would stay forever. Callers additionally gate on `ads_enabled`.
+ *
+ * A throwing SDK call degrades to the same collapse: `getCurrentOrientation...`
+ * and the [AdView] factory are guarded so an SDK-side failure (bad WebView,
+ * R8-shrunk SDK types, missing application ID) hides the slot instead of
+ * crashing the host activity — the banner must never take the app down.
  */
 @Composable
 fun AdMobBanner(modifier: Modifier = Modifier) {
@@ -39,26 +45,38 @@ fun AdMobBanner(modifier: Modifier = Modifier) {
     BoxWithConstraints(modifier = modifier.fillMaxWidth()) {
         val widthDp = maxWidth.value.toInt()
         // Anchored adaptive size for the current width — the Play-recommended banner sizing.
-        val adSize = AdSize.getCurrentOrientationAnchoredAdaptiveBannerAdSize(context, widthDp)
+        // Null when the SDK itself throws: the slot below collapses like a no-fill.
+        val adSize = try {
+            AdSize.getCurrentOrientationAnchoredAdaptiveBannerAdSize(context, widthDp)
+        } catch (_: Exception) {
+            null
+        }
+        if (adSize == null) return@BoxWithConstraints
 
         key(widthDp, adUnitId) {
-            AndroidView(
+            AndroidView<View>(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(adSize.height.dp),
                 factory = { ctx ->
-                    AdView(ctx).apply {
-                        setAdSize(adSize)
-                        setAdUnitId(adUnitId)
-                        adListener = object : AdListener() {
-                            override fun onAdFailedToLoad(error: LoadAdError) {
-                                loadFailed = true
+                    try {
+                        AdView(ctx).apply {
+                            setAdSize(adSize)
+                            setAdUnitId(adUnitId)
+                            adListener = object : AdListener() {
+                                override fun onAdFailedToLoad(error: LoadAdError) {
+                                    loadFailed = true
+                                }
                             }
+                            loadAd(AdRequest.Builder().build())
                         }
-                        loadAd(AdRequest.Builder().build())
+                    } catch (_: Exception) {
+                        // SDK blew up while building the view — collapse the slot on recompose.
+                        loadFailed = true
+                        View(ctx)
                     }
                 },
-                onRelease = { it.destroy() }
+                onRelease = { (it as? AdView)?.destroy() }
             )
         }
     }

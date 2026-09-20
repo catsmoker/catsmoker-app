@@ -1,5 +1,5 @@
 [versions]
-agp = "9.4.0"
+agp = "9.4.1"
 core = "1.19.0"
 coreSplashscreen = "1.2.0"
 coreVersion = "6.0.0"
@@ -9,7 +9,7 @@ material = "1.14.0"
 activity = "1.13.0"
 # Play-store branch uses AdMob (Google Mobile Ads, legacy SDK 25.4.0).
 # Main keeps Start.io — do not re-add it here without updating PLAYSTORE.md.
-playServicesAds = "25.4.0"
+playServicesAds = "25.5.0"
 provider = "13.1.5"
 coreKtx = "1.19.0"
 kotlin = "2.4.20"

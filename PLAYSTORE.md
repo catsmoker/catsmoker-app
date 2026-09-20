@@ -490,6 +490,32 @@ HYGIENE (required regardless):
 
 ## 11. Changelog (newest first)
 
+- 2026-09-20: Crash hardening from the `../errors/` device logs (uncommitted).
+  Three on-device `FATAL EXCEPTION: DefaultDispatcher-worker` crashes
+  (`ClassCastException`, R8-obfuscated ad-SDK frames, ~10–14s after launch —
+  the deferred-init window) killed the process from an unguarded background
+  ad-SDK call. The logcat device build still carried Start.io
+  (`startapp-shared` threads), already gone on this branch; the same
+  uncaught-on-`Dispatchers.IO` shape applied to `MobileAds.initialize`, so
+  every deferred step in `CatsmokerApp.initDeferredTasks` is now isolated
+  with `runCatching` (SDK failure degrades to "no ads", never a crash).
+  `AdMobBanner` guards `getCurrentOrientationAnchoredAdaptiveBannerAdSize`
+  and the `AdView` factory the same way (slot collapses like a no-fill),
+  and `AdManager.showInterstitial` degrades to a no-op on SDK throws.
+  Also cleared two real IDE hits: deleted orphaned `R.drawable.ic_binance`
+  (added never-referenced; `binancecoin` uses `ic_binancecoin` — the
+  `UnusedResources` hit), and quoted the `"key"` column in
+  `WuwaConfigManager.queryDb` (the `Annotator` ERROR). Deliberately
+  untouched per prior decisions: `adi-registration.properties`
+  (`UnusedProperty`/`WrongPropertyKeyValueDelimiter` accepted),
+  `mipmap-anydpi-v26` (`ObsoleteSdkInt` accepted — moving it drops
+  `R.mipmap`), the Genshin `hardware_model_config.json`
+  (`JsonStandardCompliance` — deliberately invalid, text-substitution
+  only), `PluralsCandidate` ×122 (the `(s)` convention), and the
+  `RemoveWorkManagerInitializer` ERROR (already suppressed — the manifest
+  removes the initializer by design). Verified: `compileDebugKotlin`
+  green, `testDebugUnitTest` 237/237 green.
+
 - 2026-09-16: Ported safe dashboard/build refinements from `main`
   (`6991412`, `50406ef`), adapted for this branch — no cherry-pick (both
   commits are unclassified, so per `docs/BRANCH_WORKFLOW.md` they were

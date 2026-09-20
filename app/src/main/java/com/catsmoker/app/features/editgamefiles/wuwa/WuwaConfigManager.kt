@@ -770,7 +770,7 @@ class WuwaConfigManager @Inject constructor(
     private fun queryDb(db: android.database.sqlite.SQLiteDatabase?, key: String): String? {
         if (db == null) return null
         return try {
-            db.rawQuery("SELECT value FROM LocalStorage WHERE key=?", arrayOf(key)).use { cursor ->
+            db.rawQuery("SELECT value FROM LocalStorage WHERE \"key\"=?", arrayOf(key)).use { cursor ->
                 if (cursor.moveToFirst()) cursor.getString(0) else null
             }
         } catch (_: Exception) {

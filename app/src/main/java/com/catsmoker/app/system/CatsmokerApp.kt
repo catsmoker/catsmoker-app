@@ -70,8 +70,14 @@ class CatsmokerApp : Application(), Configuration.Provider {
     }
 
     /**
-     * Initializes heavy SDKs and privilege checks. 
+     * Initializes heavy SDKs and privilege checks.
      * Should be called when the UI is already visible and the main thread is idle.
+     *
+     * Every step is isolated with `runCatching`: this coroutine runs on
+     * `Dispatchers.IO` (a `DefaultDispatcher-worker` thread), where an uncaught
+     * throwable kills the whole process (`FATAL EXCEPTION: DefaultDispatcher-worker-1`
+     * seen on-device). A throwing ad SDK must degrade to "no ads", never a crash —
+     * the same fail-safe convention as the banner's `onAdFailedToLoad` collapse.
      */
     fun initDeferredTasks() {
         applicationScope.launch(Dispatchers.IO) {
@@ -79,15 +85,17 @@ class CatsmokerApp : Application(), Configuration.Provider {
             delay(500.milliseconds)
 
             // Pre-warm Hilt dependencies in the background
-            metricsEngine.get()
-            shellRunner.get()
+            runCatching { metricsEngine.get() }
+            runCatching { shellRunner.get() }
 
             // Initialize the AdMob SDK on a background thread (per Google's quick-start).
             // The user's ads_enabled toggle is honoured at each ad surface instead: SDK init
             // itself fetches no ad until a banner/interstitial is explicitly loaded.
-            val prefs = getSharedPreferences("app_prefs", MODE_PRIVATE)
-            if (prefs.getBoolean("ads_enabled", true)) {
-                MobileAds.initialize(this@CatsmokerApp) {}
+            val adsEnabled = runCatching {
+                getSharedPreferences("app_prefs", MODE_PRIVATE).getBoolean("ads_enabled", true)
+            }.getOrDefault(true)
+            if (adsEnabled) {
+                runCatching { MobileAds.initialize(this@CatsmokerApp) {} }
             }
         }
     }
