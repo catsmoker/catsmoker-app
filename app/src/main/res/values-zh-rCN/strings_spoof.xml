@@ -1,4 +1,4 @@
-<resources>
+﻿<resources>
     <string name="spoof_home_subtitle">设备身份与 Root 隐藏套件。</string>
     <string name="spoof_home_status">环境状态</string>
     <string name="spoof_home_root">Root 权限</string>
@@ -85,16 +85,8 @@
     <string name="spoof_apps_subtitle">将应用关联到虚拟身份。</string>
     <string name="spoof_search_apps">搜索应用</string>
     <string name="spoof_assign_title">为 %1$s 分配配置</string>
-    <string name="spoof_ladder_title">帧率阶梯</string>
-    <string name="spoof_ladder_desc">有些游戏会根据机型提供不同的帧率档。为该游戏配置多个身份，每档一个——应用会读取你屏幕的峰值刷新率，并伪装成该档位允许的最强身份。</string>
-    <string name="spoof_ladder_empty">无阶梯——游戏将使用你在下方选择的单个配置。</string>
-    <string name="spoof_ladder_rung">%1$s @ %2$d Hz</string>
-    <string name="spoof_ladder_deleted">（已删除的配置）</string>
-    <string name="spoof_action_remove">移除</string>
-    <string name="spoof_ladder_winner">屏幕峰值 %1$d Hz → 该游戏将使用 %2$s @ %3$d Hz</string>
-    <string name="spoof_ladder_profile">配置</string>
-    <string name="spoof_ladder_hz">Hz</string>
-    <string name="spoof_action_add">添加</string>
+    <string name="spoof_assign_current">Current: %1$s</string>
+    <string name="spoof_action_assign">Assign</string>
     <string name="spoof_assign_none">无（未分配）</string>
     <string name="spoof_safe_subtitle">为所选应用绕过版本伪装。</string>
     <string name="spoof_safe_desc">安全模式可防止应用看到可能导致其崩溃的伪装 Android 版本。其他伪装（型号、IMEI）仍然生效。</string>
@@ -130,4 +122,28 @@
     <string name="spoof_error_no_manager">未找到 Root 管理器</string>
     <string name="spoof_error_publish">无法发布伪装配置 (%1$s)</string>
     <string name="spoof_ladder_label">帧率阶梯</string>
+    <string name="spoof_action_share">Share</string>
+    <string name="spoof_action_delete">Delete</string>
+    <string name="spoof_action_import">Import</string>
+    <string name="spoof_create_choose_preset">Choose preset</string>
+    <string name="spoof_selector_saved">Saved presets</string>
+    <string name="spoof_dialog_delete_preset_title">Delete preset \'%1$s\'?</string>
+    <string name="spoof_dialog_delete_preset_text">This will remove the preset. Existing profiles created from this preset will not be affected.</string>
+    <string name="spoof_dialog_delete_title">Delete \'%1$s\'?</string>
+    <string name="spoof_dialog_delete_text">The profile and its app assignments will be removed. This cannot be undone.</string>
+    <string name="spoof_action_save_preset">Save as preset</string>
+    <string name="spoof_dialog_save_preset">Save as preset</string>
+    <string name="spoof_field_preset_name">Preset name</string>
+    <string name="spoof_toast_preset_saved">Preset \'%1$s\' saved</string>
+    <string name="spoof_toast_preset_deleted">Preset deleted</string>
+    <string name="spoof_import_title">Import Profile</string>
+    <string name="spoof_import_source">Source</string>
+    <string name="spoof_import_fields">Fields</string>
+    <string name="spoof_import_save_profile">Save as profile</string>
+    <string name="spoof_import_save_preset">Save as preset</string>
+    <string name="spoof_import_invalid_title">Cannot import profile</string>
+    <string name="spoof_import_name_taken">That name is taken — edit it or keep the suggested one.</string>
+    <string name="spoof_toast_imported">Profile \'%1$s\' imported</string>
+    <string name="spoof_error_export_failed">Could not export \'%1$s\'</string>
+    <string name="spoof_error_no_share_target">No app available to share with</string>
 </resources>

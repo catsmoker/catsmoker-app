@@ -120,4 +120,15 @@ class ThermalServiceParserTest {
         assertTrue(ThermalServiceParser.parse("IsStatusOverride: false\nHAL Ready: false")!!.halNotReady)
         assertTrue(!ThermalServiceParser.parse("Temperature{mValue=40.0, mType=0}")!!.halNotReady)
     }
+
+    @Test
+    fun statusOnlyLineParsesWithoutSensors() {
+        // What the PowerManager status rung emits: no zones, just the platform's own
+        // throttle state. Sensors stay null with entryCount 0 (callers report that as
+        // sensor-less, never as 0 C), while thermalStatus carries the real reading.
+        val result = ThermalServiceParser.parse("Thermal Status: 3")!!
+        assertEquals(3, result.thermalStatus)
+        assertEquals(0, result.entryCount)
+        assertTrue(!result.hasAnySensor)
+    }
 }

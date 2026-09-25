@@ -1,4 +1,4 @@
-package com.catsmoker.app.features.spoofdevice
+﻿package com.catsmoker.app.features.spoofdevice
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
@@ -18,11 +18,8 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.catsmoker.app.R
-import com.catsmoker.app.shared.data.repository.SpoofRepository
 import com.catsmoker.app.shared.ui.components.ScreenScaffold
 import com.catsmoker.app.shared.ui.components.SectionCard
-import kotlin.math.roundToInt
-import com.catsmoker.app.shared.ui.components.CatsmokerOutlinedButton
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -30,8 +27,6 @@ fun AppAssignmentScreen(
     uiState: SpoofDeviceViewModel.UiState,
     onLoadApps: () -> Unit,
     onAssignProfile: (String, String?) -> Unit,
-    onAssignRateCandidate: (String, String, Int) -> Unit,
-    onRemoveRateCandidate: (String, String, Int) -> Unit,
     onBack: () -> Unit
 ) {
     var searchQuery by remember { mutableStateOf("") }
@@ -97,43 +92,39 @@ fun AppAssignmentScreen(
                 onAssignProfile(app.packageName, profileId)
                 selectedApp = null
             },
-            onDismiss = { selectedApp = null },
-            onAssignRateCandidate = { profileId, rateHz ->
-                onAssignRateCandidate(app.packageName, profileId, rateHz)
-            },
-            onRemoveRateCandidate = { profileId, rateHz ->
-                onRemoveRateCandidate(app.packageName, profileId, rateHz)
-            }
+            onDismiss = { selectedApp = null }
         )
     }
 }
 
 /**
- * The per-app assignment dialog: a single-profile pick, and above it the frame-rate ladder.
+ * The per-app assignment dialog answers exactly one question: which spoofing
+ * PROFILE should this app use. A direct single-choice list with an explicit
+ * Assign confirmation — no nested pickers, no tier controls.
  *
- * The ladder is the `zygisk-Tweaker-main` mechanism — a game whose device table offers several
- * tiers gets a different identity per tier, and the winner is picked against the panel's measured
- * peak — so the dialog states which rung the panel currently earns rather than leaving the choice
- * looking arbitrary. Building a ladder clears the single assignment and vice versa, because a
- * non-empty ladder owns the package.
+ * A package may still carry a frame-rate ladder built by an older version (see
+ * `SpoofRepository.rateAssignments`): such a ladder keeps resolving through the
+ * normal publish path and is named as the current state, but this dialog neither
+ * builds nor edits ladders — assigning a profile here replaces the ladder, and
+ * clearing the assignment leaves the ladder alone.
  */
 @Composable
 private fun AssignProfileDialog(
     app: SpoofDeviceViewModel.AppEntry,
     uiState: SpoofDeviceViewModel.UiState,
     onAssignProfile: (String?) -> Unit,
-    onDismiss: () -> Unit,
-    onAssignRateCandidate: (String, Int) -> Unit,
-    onRemoveRateCandidate: (String, Int) -> Unit
+    onDismiss: () -> Unit
 ) {
-    val ladder = uiState.rateAssignments[app.packageName].orEmpty()
-    // The rung the panel's measured peak actually earns, so the stated pick is the one that
-    // would publish — not a guess at which tier the user probably wanted.
-    val winner = if (uiState.panelPeakHz > 0f) SpoofRepository.pickRateCandidate(ladder, uiState.panelPeakHz) else null
+    val hasLadder = uiState.rateAssignments[app.packageName].orEmpty().isNotEmpty()
+    val currentId = uiState.assignments[app.packageName]
 
-    var addProfileId by remember(app.packageName) { mutableStateOf<String?>(null) }
-    var rateText by remember(app.packageName) { mutableStateOf("") }
-    val rateHz = rateText.trim().toIntOrNull()
+    var selectedId by remember(app.packageName) { mutableStateOf<String?>(currentId) }
+
+    val currentLabel = when {
+        hasLadder -> stringResource(R.string.spoof_ladder_label)
+        currentId != null -> uiState.profiles.firstOrNull { it.id == currentId }?.name
+        else -> null
+    }
 
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -141,123 +132,57 @@ private fun AssignProfileDialog(
         text = {
             Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
                 Text(
-                    stringResource(R.string.spoof_ladder_title),
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.primary,
-                    letterSpacing = 1.sp
-                )
-                Spacer(modifier = Modifier.height(4.dp))
-                Text(
-                    stringResource(R.string.spoof_ladder_desc),
-                    fontSize = 12.sp,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    lineHeight = 17.sp
+                    stringResource(
+                        R.string.spoof_assign_current,
+                        currentLabel ?: stringResource(R.string.spoof_assign_none)
+                    ),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
                 Spacer(modifier = Modifier.height(8.dp))
-                if (ladder.isEmpty()) {
-                    Text(
-                        stringResource(R.string.spoof_ladder_empty),
-                        fontSize = 12.sp,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                } else {
-                    ladder.forEach { rung ->
-                        val profileName = uiState.profiles.firstOrNull { it.id == rung.profileId }?.name
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(8.dp)
-                        ) {
-                            Text(
-                                text = stringResource(
-                                    R.string.spoof_ladder_rung,
-                                    profileName ?: stringResource(R.string.spoof_ladder_deleted),
-                                    rung.rateHz
-                                ),
-                                fontSize = 13.sp,
-                                color = if (profileName != null) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurfaceVariant,
-                                modifier = Modifier.weight(1f)
-                            )
-                            TextButton(
-                                onClick = { onRemoveRateCandidate(rung.profileId, rung.rateHz) }
-                            ) { Text(stringResource(R.string.spoof_action_remove), fontSize = 12.sp) }
-                        }
-                    }
-                    if (winner != null) {
-                        val winnerName = uiState.profiles.firstOrNull { it.id == winner.profileId }?.name
-                        if (winnerName != null) {
-                            Spacer(modifier = Modifier.height(4.dp))
-                            Text(
-                                stringResource(
-                                    R.string.spoof_ladder_winner,
-                                    uiState.panelPeakHz.roundToInt(),
-                                    winnerName,
-                                    winner.rateHz
-                                ),
-                                fontSize = 12.sp,
-                                color = MaterialTheme.colorScheme.primary
-                            )
-                        }
-                    }
-                }
-                Spacer(modifier = Modifier.height(8.dp))
-                // One rung at a time: each rung is a deliberate (identity, tier) pair rather than
-                // a bulk selection, and naming the pair out loud is what keeps a ladder legible.
-                var pickerExpanded by remember(app.packageName) { mutableStateOf(false) }
-                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Box {
-                        val pickerLabel = addProfileId?.let { id ->
-                            uiState.profiles.firstOrNull { it.id == id }?.name
-                        } ?: stringResource(R.string.spoof_ladder_profile)
-                        CatsmokerOutlinedButton(onClick = { pickerExpanded = true }) {
-                            Text(pickerLabel, maxLines = 1, fontSize = 12.sp)
-                        }
-                        DropdownMenu(expanded = pickerExpanded, onDismissRequest = { pickerExpanded = false }) {
-                            uiState.profiles.forEach { profile ->
-                                DropdownMenuItem(
-                                    text = { Text(profile.name) },
-                                    onClick = {
-                                        addProfileId = profile.id
-                                        pickerExpanded = false
-                                    }
-                                )
-                            }
-                        }
-                    }
-                    OutlinedTextField(
-                        value = rateText,
-                        onValueChange = { rateText = it.filter(Char::isDigit).take(3) },
-                        label = { Text(stringResource(R.string.spoof_ladder_hz)) },
-                        singleLine = true,
-                        modifier = Modifier.width(84.dp)
-                    )
-                    TextButton(
-                        onClick = {
-                            onAssignRateCandidate(addProfileId!!, rateHz!!)
-                            addProfileId = null
-                            rateText = ""
-                        },
-                        enabled = addProfileId != null && rateHz != null && rateHz > 0
-                    ) { Text(stringResource(R.string.spoof_action_add)) }
-                }
-                HorizontalDivider()
-                DropdownMenuItem(
-                    text = { Text(stringResource(R.string.spoof_assign_none), color = MaterialTheme.colorScheme.error) },
-                    onClick = { onAssignProfile(null) }
+                // Direct profile choice: tapping a row selects, Assign commits.
+                ProfileRadioRow(
+                    selected = selectedId == null,
+                    label = stringResource(R.string.spoof_assign_none),
+                    onSelect = { selectedId = null }
                 )
                 uiState.profiles.forEach { profile ->
-                    DropdownMenuItem(
-                        text = { Text(profile.name) },
-                        onClick = { onAssignProfile(profile.id) }
+                    ProfileRadioRow(
+                        selected = selectedId == profile.id,
+                        label = profile.name,
+                        onSelect = { selectedId = profile.id }
                     )
                 }
             }
         },
-        confirmButton = {},
+        confirmButton = {
+            TextButton(onClick = {
+                onAssignProfile(selectedId)
+            }) { Text(stringResource(R.string.spoof_action_assign)) }
+        },
         dismissButton = {
             TextButton(onClick = onDismiss) { Text(stringResource(R.string.spoof_action_cancel)) }
         }
     )
 }
+
+@Composable
+private fun ProfileRadioRow(selected: Boolean, label: String, onSelect: () -> Unit) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier.fillMaxWidth().clickable { onSelect() }.padding(vertical = 4.dp)
+    ) {
+        RadioButton(selected = selected, onClick = onSelect)
+        Spacer(modifier = Modifier.width(8.dp))
+        Text(
+            label,
+            style = MaterialTheme.typography.bodyLarge,
+            color = MaterialTheme.colorScheme.onSurface,
+            modifier = Modifier.weight(1f)
+        )
+    }
+}
+
 
 @Composable
 fun AppItem(app: SpoofDeviceViewModel.AppEntry, onClick: () -> Unit) {

@@ -18,6 +18,7 @@ import androidx.compose.ui.unit.sp
 import com.catsmoker.app.R
 import com.catsmoker.app.shared.data.model.DevicePreset
 import com.catsmoker.app.shared.data.model.DeviceProfile
+import com.catsmoker.app.shared.data.repository.SpoofRepository
 import com.catsmoker.app.shared.ui.components.ScreenScaffold
 import com.catsmoker.app.shared.ui.components.SectionCard
 import com.catsmoker.app.shared.util.RandomGenerator
@@ -43,6 +44,8 @@ fun ProfileEditorScreen(
     uiState: SpoofDeviceViewModel.UiState,
     presets: List<DevicePreset>,
     onSave: (String, String, DeviceProfile) -> Unit,
+    onSavePreset: (String, DeviceProfile) -> Unit,
+    onDeletePreset: (String) -> Unit,
     onBack: () -> Unit
 ) {
     val entry = uiState.profiles.find { it.id == profileId }
@@ -55,9 +58,13 @@ fun ProfileEditorScreen(
     var profile by remember { mutableStateOf(entry.profile.copy()) }
     var expandedPresets by remember { mutableStateOf(false) }
     var selectedPresetLabel by remember { mutableStateOf("") }
+    var showSavePresetDialog by remember { mutableStateOf(false) }
+    var savePresetName by remember { mutableStateOf("") }
+    var pendingDeletePreset by remember { mutableStateOf<DevicePreset?>(null) }
     val presetHint = stringResource(R.string.spoof_editor_preset_hint)
 
-    val isDefaultProfile = uiState.profiles.firstOrNull()?.id == profileId
+    // Matched by fixed name, never by position.
+    val isDefaultProfile = SpoofRepository.isDefault(entry)
 
     ScreenScaffold(
         title = stringResource(R.string.spoof_editor_title),
@@ -105,18 +112,75 @@ fun ProfileEditorScreen(
                         expanded = expandedPresets,
                         onDismissRequest = { expandedPresets = false }
                     ) {
-                        presets.forEach { preset ->
-                            DropdownMenuItem(
-                                text = { Text(preset.displayName) },
-                                onClick = {
-                                    profile = preset.profile.copy()
-                                    selectedPresetLabel = preset.displayName
-                                    expandedPresets = false
-                                }
-                            )
-                        }
+                        PresetSelectorMenu(
+                            presets = presets,
+                            hint = presetHint,
+                            onPick = {
+                                // Copy: applying a preset fills this profile's values without
+                                // touching the preset itself. Identity (name) is untouched.
+                                profile = it.profile.copy()
+                                selectedPresetLabel = it.displayName.trim()
+                                expandedPresets = false
+                            },
+                            onDeleteRequest = {
+                                expandedPresets = false
+                                pendingDeletePreset = it
+                            }
+                        )
                     }
                 }
+                Spacer(Modifier.height(8.dp))
+                CatsmokerButton(
+                    onClick = { showSavePresetDialog = true },
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = ButtonDefaults.filledTonalButtonColors()
+                ) {
+                    Icon(Icons.Default.Save, null)
+                    Spacer(Modifier.width(8.dp))
+                    Text(stringResource(R.string.spoof_action_save_preset))
+                }
+            }
+
+            if (showSavePresetDialog) {
+                AlertDialog(
+                    onDismissRequest = { showSavePresetDialog = false },
+                    title = { Text(stringResource(R.string.spoof_dialog_save_preset)) },
+                    text = {
+                        OutlinedTextField(
+                            value = savePresetName,
+                            onValueChange = { savePresetName = it },
+                            label = { Text(stringResource(R.string.spoof_field_preset_name)) },
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                    },
+                    confirmButton = {
+                        CatsmokerButton(onClick = {
+                            if (savePresetName.isNotBlank()) {
+                                onSavePreset(savePresetName, profile)
+                                savePresetName = ""
+                                showSavePresetDialog = false
+                            }
+                        }) {
+                            Text(stringResource(R.string.spoof_action_create))
+                        }
+                    },
+                    dismissButton = {
+                        TextButton(onClick = { showSavePresetDialog = false }) {
+                            Text(stringResource(R.string.spoof_action_cancel))
+                        }
+                    }
+                )
+            }
+
+            pendingDeletePreset?.let { preset ->
+                PresetDeleteDialog(
+                    preset = preset,
+                    onConfirm = {
+                        onDeletePreset(preset.id)
+                        pendingDeletePreset = null
+                    },
+                    onDismiss = { pendingDeletePreset = null }
+                )
             }
 
             EditorGroup(title = stringResource(R.string.spoof_group_hardware)) {

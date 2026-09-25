@@ -45,7 +45,7 @@ class SpoofRepository @Inject constructor(
      * new snapshot — the same approach the reference project takes with `AppProfileStore.State`.
      */
     data class StoreData(
-        val version: Int = 1,
+        val version: Int = 3,
         val profiles: List<ProfileEntry> = emptyList(),
         val assignments: Map<String, String> = emptyMap(),
         /**
@@ -63,7 +63,14 @@ class SpoofRepository @Inject constructor(
          * ladder is built, so exactly one of the two ever applies.
          */
         val rateAssignments: Map<String, List<RateCandidate>> = emptyMap(),
-        val globalProperties: Map<String, String> = emptyMap()
+        val globalProperties: Map<String, String> = emptyMap(),
+        /**
+         * User presets: templates the user saved (from any profile's values) or
+         * imported. Unlike profiles they are never assigned to apps — they only
+         * appear in preset selectors. Deleting one never touches profiles created
+         * from it, because profiles store their own copied configuration values.
+         */
+        val userPresets: List<UserPreset> = emptyList()
     )
 
     /** One rung of a package's frame-rate ladder: the profile to show the game at [rateHz]. */
@@ -77,6 +84,25 @@ class SpoofRepository @Inject constructor(
         val name: String,
         val profile: DeviceProfile
     )
+
+    /**
+     * A user-owned preset: an immutable template by id. Profiles created from it
+     * hold a copy, so deleting or renaming a preset can never alter a profile.
+     */
+    data class UserPreset(
+        val id: String,
+        val name: String,
+        val profile: DeviceProfile,
+        val imported: Boolean = false
+    ) {
+        fun toDevicePreset(): DevicePreset = DevicePreset(
+            id = "user:$id",
+            brandLabel = name,
+            modelLabel = "",
+            summary = profile.model.ifBlank { profile.brand }.ifBlank { "" },
+            profile = profile
+        )
+    }
 
     private val _state = MutableStateFlow<StoreData?>(null)
 
@@ -127,19 +153,12 @@ class SpoofRepository @Inject constructor(
     }
 
     private fun createDefaultData(): StoreData {
-        val defaultProfile = DeviceProfile(
-            brand = "Google",
-            manufacturer = "Google",
-            model = "Pixel 8 Pro",
-            productName = "husky",
-            deviceCode = "husky",
-            buildRelease = "14",
-            buildSdk = 34
-        ).apply { applyFallbacks() }
-        
+        val defaultProfile = newDefaultProfile()
+
         return StoreData(
+            version = 3,
             profiles = listOf(
-                ProfileEntry(UUID.randomUUID().toString(), "Default Profile", defaultProfile)
+                ProfileEntry(UUID.randomUUID().toString(), DEFAULT_PROFILE_NAME, defaultProfile)
             )
         )
     }
@@ -475,6 +494,70 @@ class SpoofRepository @Inject constructor(
     }
 
     companion object {
+        /** Fixed name of the undeletable, unrenamable seeded profile. */
+        const val DEFAULT_PROFILE_NAME = "Default Profile"
+
+        /** True for the Default Profile entry — matched by fixed name, never by position. */
+        fun isDefault(entry: ProfileEntry): Boolean = entry.name == DEFAULT_PROFILE_NAME
+
+        /**
+         * Guarantees the Default Profile exists at position 0. Prepends a fresh one
+         * when missing (a store with zero profiles is never a valid state); leaves
+         * everything else untouched. Idempotent.
+         */
+        fun ensureDefault(profiles: List<ProfileEntry>): List<ProfileEntry> {
+            if (profiles.any(::isDefault)) return profiles
+            return listOf(
+                ProfileEntry(UUID.randomUUID().toString(), DEFAULT_PROFILE_NAME, newDefaultProfile())
+            ) + profiles
+        }
+        /**
+         * The fresh-install default: Google Pixel 11 Pro, identical to the `pixel_11_pro`
+         * author-curated preset below. It lives here (not by copying the preset at call
+         * time) so the seed stays stable even if the preset list is reordered — and so the
+         * v1 → v2 migration below can reuse the exact same values.
+         */
+        fun newDefaultProfile(): DeviceProfile = DeviceProfile(
+            brand = "Google",
+            manufacturer = "Google",
+            model = "GM45K",
+            productName = "lynx",
+            deviceCode = "lynx",
+            board = "lynx",
+            hardware = "google",
+            boardPlatform = "gs401",
+            buildRelease = "17",
+            buildSdk = 37,
+            buildId = "UP1A.260805.001",
+            securityPatch = "2026-08-05"
+        ).apply { applyFallbacks() }
+
+        /**
+         * The "Custom" starting point for the profile UI: a blank user-defined
+         * configuration, not a device. Deliberately NOT part of [getPresets] — that list
+         * is author-curated per the spoofing rules and must stay exactly the verified
+         * models. The selector shows it under the special actions, above saved presets.
+         */
+        fun createCustomTemplate(): DevicePreset = DevicePreset(
+            id = "custom",
+            brandLabel = "Custom",
+            modelLabel = "Configuration",
+            summary = "Blank user-defined configuration — fill in the fields manually.",
+            profile = DeviceProfile().apply { applyFallbacks() }
+        )
+
+        /**
+         * The pristine v1 seed (Pixel 8 Pro / husky). Matches only an untouched default —
+         * a user who changed the model keeps their profile as-is (never migrated away).
+         */
+        fun isLegacyDefault(entry: ProfileEntry): Boolean {
+            if (entry.name != DEFAULT_PROFILE_NAME) return false
+            val p = entry.profile
+            return p.model == "Pixel 8 Pro" &&
+                p.productName == "husky" &&
+                p.deviceCode == "husky" &&
+                p.brand == "Google"
+        }
         /**
          * Picks which ladder rung the panel earns, from `zygisk-Tweaker-main`'s stated selection
          * rule (README, "Frequently Asked Questions"): *"If `refresh_rate` is set to 144, but the
@@ -560,7 +643,33 @@ class SpoofRepository @Inject constructor(
             val legacyRates: Map<String, List<RateCandidate>>? = parsed.rateAssignments
             val rates = legacyRates ?: emptyMap()
             val healed = rates.mapValues { (_, ladder) -> ladder.mapNotNull(::coerceRung) }
-            return if (healed == legacyRates) parsed else parsed.copy(rateAssignments = healed)
+            var out = if (healed == legacyRates) parsed else parsed.copy(rateAssignments = healed)
+            // v1 → v2: the seed was Pixel 8 Pro (husky); the preset list carries Pixel 11
+            // Pro, so an untouched default would otherwise strand the user on a device no
+            // preset offers. Only pristine seeds migrate — id and display name are kept so
+            // assignments survive; anything the user customized stays exactly as it was.
+            if (out.version < 2) {
+                out = out.copy(
+                    version = 2,
+                    profiles = out.profiles.map { entry ->
+                        if (isLegacyDefault(entry)) entry.copy(profile = newDefaultProfile())
+                        else entry
+                    }
+                )
+            }
+            // v2 → v3: user presets are a new collection (null in older JSON — Gson
+            // bypasses the constructor), and the Default Profile is guaranteed present.
+            // A store that lost its default (or predates the guarantee) gets a fresh one
+            // prepended rather than leaving the feature with nothing to apply.
+            if (out.version < 3) {
+                val presets: List<UserPreset>? = out.userPresets
+                out = out.copy(
+                    version = 3,
+                    userPresets = presets ?: emptyList(),
+                    profiles = ensureDefault(out.profiles)
+                )
+            }
+            return out
         }
 
         /**

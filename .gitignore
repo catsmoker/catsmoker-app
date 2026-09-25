@@ -95,6 +95,7 @@ $RECYCLE.BIN/
 ._*
 .AppleDouble
 .LSOverride
-# ai
+# ai agent notes
+.ai
 /.claude
 AGENTS.md

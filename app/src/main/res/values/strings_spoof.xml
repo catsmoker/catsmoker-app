@@ -1,4 +1,4 @@
-<resources>
+﻿<resources>
     <!-- Device spoofing feature strings. Names use the spoof_ prefix (owned by this file). -->
     <!-- Home -->
     <string name="spoof_home_subtitle">Device identity and root masking suite.</string>
@@ -90,16 +90,8 @@
     <string name="spoof_apps_subtitle">Link apps to virtual identities.</string>
     <string name="spoof_search_apps">Search Apps</string>
     <string name="spoof_assign_title">Assign Profile to %1$s</string>
-    <string name="spoof_ladder_title">FRAME-RATE LADDER</string>
-    <string name="spoof_ladder_desc">Some games list different frame rates for different phones. Give this game several identities, one per tier — the app reads your panel\'s peak refresh rate and spoofs the strongest identity that tier allows.</string>
-    <string name="spoof_ladder_empty">No ladder — the game gets whichever single profile you pick below.</string>
-    <string name="spoof_ladder_rung">%1$s @ %2$d Hz</string>
-    <string name="spoof_ladder_deleted">(deleted profile)</string>
-    <string name="spoof_action_remove">Remove</string>
-    <string name="spoof_ladder_winner">Panel peak %1$d Hz → this game gets %2$s @ %3$d Hz</string>
-    <string name="spoof_ladder_profile">Profile</string>
-    <string name="spoof_ladder_hz">Hz</string>
-    <string name="spoof_action_add">Add</string>
+    <string name="spoof_assign_current">Current: %1$s</string>
+    <string name="spoof_action_assign">Assign</string>
     <string name="spoof_assign_none">None (Unassigned)</string>
     <!-- Safe mode -->
     <string name="spoof_safe_subtitle">Bypass version spoofing for selected apps.</string>
@@ -138,4 +130,29 @@
     <string name="spoof_error_no_manager">No Root Manager found</string>
     <string name="spoof_error_publish">Could not publish spoof config (%1$s)</string>
     <string name="spoof_ladder_label">Frame-rate ladder</string>
+    <!-- Preset / profile separation + sharing -->
+    <string name="spoof_action_share">Share</string>
+    <string name="spoof_action_delete">Delete</string>
+    <string name="spoof_action_import">Import</string>
+    <string name="spoof_create_choose_preset">Choose preset</string>
+    <string name="spoof_selector_saved">Saved presets</string>
+    <string name="spoof_dialog_delete_preset_title">Delete preset \'%1$s\'?</string>
+    <string name="spoof_dialog_delete_preset_text">This will remove the preset. Existing profiles created from this preset will not be affected.</string>
+    <string name="spoof_dialog_delete_title">Delete \'%1$s\'?</string>
+    <string name="spoof_dialog_delete_text">The profile and its app assignments will be removed. This cannot be undone.</string>
+    <string name="spoof_action_save_preset">Save as preset</string>
+    <string name="spoof_dialog_save_preset">Save as preset</string>
+    <string name="spoof_field_preset_name">Preset name</string>
+    <string name="spoof_toast_preset_saved">Preset \'%1$s\' saved</string>
+    <string name="spoof_toast_preset_deleted">Preset deleted</string>
+    <string name="spoof_import_title">Import Profile</string>
+    <string name="spoof_import_source">Source</string>
+    <string name="spoof_import_fields">Fields</string>
+    <string name="spoof_import_save_profile">Save as profile</string>
+    <string name="spoof_import_save_preset">Save as preset</string>
+    <string name="spoof_import_invalid_title">Cannot import profile</string>
+    <string name="spoof_import_name_taken">That name is taken — edit it or keep the suggested one.</string>
+    <string name="spoof_toast_imported">Profile \'%1$s\' imported</string>
+    <string name="spoof_error_export_failed">Could not export \'%1$s\'</string>
+    <string name="spoof_error_no_share_target">No app available to share with</string>
 </resources>

@@ -18,6 +18,7 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.res.stringResource
 import com.catsmoker.app.R
 import com.catsmoker.app.shared.ui.components.SectionCard
+import com.catsmoker.app.shared.util.DeviceCapabilities
 
 /**
  * The standalone Fixed Performance Mode switch, with an account of what it actually does.
@@ -42,7 +43,9 @@ fun FixedPerformanceModeCard(
      */
     isGamingModeActive: Boolean = false
 ) {
-    val supported = Build.VERSION.SDK_INT >= Build.VERSION_CODES.R
+    val supported = DeviceCapabilities.detect(
+        DeviceCapabilities.DeviceInfo(sdkInt = Build.VERSION.SDK_INT)
+    ).supportsFixedPerformanceMode
 
     SectionCard {
         Column(modifier = Modifier.fillMaxWidth()) {

@@ -1,4 +1,4 @@
-<resources>
+﻿<resources>
     <string name="spoof_home_subtitle">Suite de identidad del dispositivo y ocultamiento de root.</string>
     <string name="spoof_home_status">Estado del entorno</string>
     <string name="spoof_home_root">Acceso root</string>
@@ -85,16 +85,8 @@
     <string name="spoof_apps_subtitle">Vincula apps con identidades virtuales.</string>
     <string name="spoof_search_apps">Buscar apps</string>
     <string name="spoof_assign_title">Asignar perfil a %1$s</string>
-    <string name="spoof_ladder_title">ESCALERA DE FRECUENCIA</string>
-    <string name="spoof_ladder_desc">Algunos juegos ofrecen distintas frecuencias según el teléfono. Dale a este juego varias identidades, una por nivel: la app lee la frecuencia máxima de tu pantalla y suplanta la identidad más potente que ese nivel permite.</string>
-    <string name="spoof_ladder_empty">Sin escalera: el juego usará el perfil individual que elijas abajo.</string>
-    <string name="spoof_ladder_rung">%1$s @ %2$d Hz</string>
-    <string name="spoof_ladder_deleted">(perfil eliminado)</string>
-    <string name="spoof_action_remove">Quitar</string>
-    <string name="spoof_ladder_winner">Pico del panel: %1$d Hz → este juego usará %2$s @ %3$d Hz</string>
-    <string name="spoof_ladder_profile">Perfil</string>
-    <string name="spoof_ladder_hz">Hz</string>
-    <string name="spoof_action_add">Añadir</string>
+    <string name="spoof_assign_current">Current: %1$s</string>
+    <string name="spoof_action_assign">Assign</string>
     <string name="spoof_assign_none">Ninguno (sin asignar)</string>
     <string name="spoof_safe_subtitle">Omite la suplantación de versión en las apps elegidas.</string>
     <string name="spoof_safe_desc">El Modo seguro impide que las apps vean una versión de Android suplantada si eso las haría fallar. El resto de la suplantación (Modelo, IMEI) sigue aplicándose.</string>
@@ -130,4 +122,28 @@
     <string name="spoof_error_no_manager">No se encontró gestor de root</string>
     <string name="spoof_error_publish">No se pudo publicar la config. de suplantación (%1$s)</string>
     <string name="spoof_ladder_label">Escalera de frecuencia</string>
+    <string name="spoof_action_share">Share</string>
+    <string name="spoof_action_delete">Delete</string>
+    <string name="spoof_action_import">Import</string>
+    <string name="spoof_create_choose_preset">Choose preset</string>
+    <string name="spoof_selector_saved">Saved presets</string>
+    <string name="spoof_dialog_delete_preset_title">Delete preset \'%1$s\'?</string>
+    <string name="spoof_dialog_delete_preset_text">This will remove the preset. Existing profiles created from this preset will not be affected.</string>
+    <string name="spoof_dialog_delete_title">Delete \'%1$s\'?</string>
+    <string name="spoof_dialog_delete_text">The profile and its app assignments will be removed. This cannot be undone.</string>
+    <string name="spoof_action_save_preset">Save as preset</string>
+    <string name="spoof_dialog_save_preset">Save as preset</string>
+    <string name="spoof_field_preset_name">Preset name</string>
+    <string name="spoof_toast_preset_saved">Preset \'%1$s\' saved</string>
+    <string name="spoof_toast_preset_deleted">Preset deleted</string>
+    <string name="spoof_import_title">Import Profile</string>
+    <string name="spoof_import_source">Source</string>
+    <string name="spoof_import_fields">Fields</string>
+    <string name="spoof_import_save_profile">Save as profile</string>
+    <string name="spoof_import_save_preset">Save as preset</string>
+    <string name="spoof_import_invalid_title">Cannot import profile</string>
+    <string name="spoof_import_name_taken">That name is taken — edit it or keep the suggested one.</string>
+    <string name="spoof_toast_imported">Profile \'%1$s\' imported</string>
+    <string name="spoof_error_export_failed">Could not export \'%1$s\'</string>
+    <string name="spoof_error_no_share_target">No app available to share with</string>
 </resources>

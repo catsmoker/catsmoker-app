@@ -103,6 +103,20 @@
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
+            <!-- Incoming device profiles: Catsmoker shares .catsmoker.json as application/json.
+                File-picker import inside the app covers the rest. -->
+            <intent-filter>
+                <action android:name="android.intent.action.SEND" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:mimeType="application/json" />
+                <data android:mimeType="text/plain" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:scheme="content" android:mimeType="application/json" />
+                <data android:scheme="file" android:mimeType="application/json" />
+            </intent-filter>
         </activity>
 
         <!--

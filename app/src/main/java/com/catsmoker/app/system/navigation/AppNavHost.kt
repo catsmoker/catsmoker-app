@@ -68,9 +68,18 @@ fun AppNavHost(navController: NavHostController, startDestination: String) {
             val uiState by viewModel.uiState.collectAsState()
             ProfilesListScreen(
                 uiState = uiState,
+                presets = viewModel.presetsForPicker(),
                 onNavigateToEditor = { navController.navigate(Routes.SPOOF_EDITOR.replace("{profileId}", it)) },
-                onCreateProfile = { viewModel.createProfile(it) },
+                onCreateProfile = { name, preset -> viewModel.createProfile(name, preset) },
                 onDeleteProfile = { viewModel.deleteProfile(it) },
+                onShareProfile = { viewModel.shareProfile(it) },
+                onConfirmImportProfile = { preview, chosenName ->
+                    viewModel.confirmImport(preview, chosenName)
+                },
+                onConfirmImportPreset = { preview, chosenName ->
+                    viewModel.confirmImportAsPreset(preview, chosenName)
+                },
+                onDeletePreset = { viewModel.deleteUserPreset(it) },
                 onBack = { navController.popBackStack() }
             )
         }
@@ -82,11 +91,13 @@ fun AppNavHost(navController: NavHostController, startDestination: String) {
             ProfileEditorScreen(
                 profileId = profileId,
                 uiState = uiState,
-                presets = viewModel.repository.getPresets(),
+                presets = viewModel.presetsForPicker(),
                 onSave = { id, name, profile ->
                     viewModel.updateProfile(id, name, profile)
                     navController.popBackStack()
                 },
+                onSavePreset = { name, profile -> viewModel.createUserPreset(name, profile) },
+                onDeletePreset = { viewModel.deleteUserPreset(it) },
                 onBack = { navController.popBackStack() }
             )
         }
@@ -98,8 +109,6 @@ fun AppNavHost(navController: NavHostController, startDestination: String) {
                 uiState = uiState,
                 onLoadApps = { viewModel.loadApps() },
                 onAssignProfile = { pkg, id -> viewModel.assignProfile(pkg, id) },
-                onAssignRateCandidate = { pkg, id, hz -> viewModel.assignRateCandidate(pkg, id, hz) },
-                onRemoveRateCandidate = { pkg, id, hz -> viewModel.removeRateCandidate(pkg, id, hz) },
                 onBack = { navController.popBackStack() }
             )
         }

@@ -1,4 +1,4 @@
-<resources>
+﻿<resources>
     <string name="spoof_home_subtitle">حزمة هوية الجهاز وإخفاء الروت.</string>
     <string name="spoof_home_status">حالة البيئة</string>
     <string name="spoof_home_root">صلاحيات الروت</string>
@@ -85,16 +85,8 @@
     <string name="spoof_apps_subtitle">اربط التطبيقات بهويات افتراضية.</string>
     <string name="spoof_search_apps">ابحث في التطبيقات</string>
     <string name="spoof_assign_title">تعيين ملف تعريفي لـ %1$s</string>
-    <string name="spoof_ladder_title">سلّم معدل الإطارات</string>
-    <string name="spoof_ladder_desc">تعرض بعض الألعاب معدلات إطارات مختلفة لهواتف مختلفة. امنح هذه اللعبة عدة هويات، واحدة لكل مستوى — يقرأ التطبيق ذروة تحديث شاشتك وينتحل أقوى هوية يسمح بها ذلك المستوى.</string>
-    <string name="spoof_ladder_empty">لا يوجد سلّم — ستحصل اللعبة على الملف التعريفي الفردي الذي تختاره أدناه.</string>
-    <string name="spoof_ladder_rung">%1$s @ %2$d Hz</string>
-    <string name="spoof_ladder_deleted">(ملف تعريفي محذوف)</string>
-    <string name="spoof_action_remove">إزالة</string>
-    <string name="spoof_ladder_winner">ذروة الشاشة %1$d Hz → ستحصل هذه اللعبة على %2$s @ %3$d Hz</string>
-    <string name="spoof_ladder_profile">ملف تعريفي</string>
-    <string name="spoof_ladder_hz">Hz</string>
-    <string name="spoof_action_add">إضافة</string>
+    <string name="spoof_assign_current">Current: %1$s</string>
+    <string name="spoof_action_assign">Assign</string>
     <string name="spoof_assign_none">لا شيء (غير معيّن)</string>
     <string name="spoof_safe_subtitle">تجاوز انتحال إصدار النظام للتطبيقات المحددة.</string>
     <string name="spoof_safe_desc">يمنع الوضع الآمن التطبيقات من رؤية إصدار Android مزيّف إذا كان سيتسبب في تعطلها. تبقى بقية عمليات الانتحال (الطراز، IMEI) سارية.</string>
@@ -130,4 +122,28 @@
     <string name="spoof_error_no_manager">لم يتم العثور على مدير روت</string>
     <string name="spoof_error_publish">تعذّر نشر إعدادات الانتحال (%1$s)</string>
     <string name="spoof_ladder_label">سلّم معدل الإطارات</string>
+    <string name="spoof_action_share">Share</string>
+    <string name="spoof_action_delete">Delete</string>
+    <string name="spoof_action_import">Import</string>
+    <string name="spoof_create_choose_preset">Choose preset</string>
+    <string name="spoof_selector_saved">Saved presets</string>
+    <string name="spoof_dialog_delete_preset_title">Delete preset \'%1$s\'?</string>
+    <string name="spoof_dialog_delete_preset_text">This will remove the preset. Existing profiles created from this preset will not be affected.</string>
+    <string name="spoof_dialog_delete_title">Delete \'%1$s\'?</string>
+    <string name="spoof_dialog_delete_text">The profile and its app assignments will be removed. This cannot be undone.</string>
+    <string name="spoof_action_save_preset">Save as preset</string>
+    <string name="spoof_dialog_save_preset">Save as preset</string>
+    <string name="spoof_field_preset_name">Preset name</string>
+    <string name="spoof_toast_preset_saved">Preset \'%1$s\' saved</string>
+    <string name="spoof_toast_preset_deleted">Preset deleted</string>
+    <string name="spoof_import_title">Import Profile</string>
+    <string name="spoof_import_source">Source</string>
+    <string name="spoof_import_fields">Fields</string>
+    <string name="spoof_import_save_profile">Save as profile</string>
+    <string name="spoof_import_save_preset">Save as preset</string>
+    <string name="spoof_import_invalid_title">Cannot import profile</string>
+    <string name="spoof_import_name_taken">That name is taken — edit it or keep the suggested one.</string>
+    <string name="spoof_toast_imported">Profile \'%1$s\' imported</string>
+    <string name="spoof_error_export_failed">Could not export \'%1$s\'</string>
+    <string name="spoof_error_no_share_target">No app available to share with</string>
 </resources>

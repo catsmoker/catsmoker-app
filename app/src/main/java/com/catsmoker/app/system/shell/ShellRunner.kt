@@ -464,7 +464,15 @@ class ShellRunner @Inject constructor(
 
     // ------------------------------------------------------------------ thermal
 
-    private enum class ThermalStrategy { SYSFS_DIRECT, DUMPSYS, SERVICE_SYSFS, SHELL_SYSFS }
+    private enum class ThermalStrategy {
+        SYSFS_DIRECT, DUMPSYS, SERVICE_SYSFS, SHELL_SYSFS,
+        /**
+         * Last resort, and deliberately so: the platform's own throttle state with no
+         * zone temperatures attached. It answers "is the device throttling" on builds
+         * where sysfs and dumpsys both refuse — never a substitute for real sensors.
+         */
+        POWER_MANAGER_STATUS
+    }
 
     /** Cached winning strategy; reset to null whenever it stops producing readings. */
     @Volatile
@@ -517,6 +525,26 @@ class ShellRunner @Inject constructor(
         } else {
             ""
         }
+        ThermalStrategy.POWER_MANAGER_STATUS -> readPowerManagerStatus()
+    }
+
+    /**
+     * The platform's throttle state via `PowerManager.getCurrentThermalStatus`
+     * (API 29+, no privilege — the same channel DebugOverlay's ThermalDataSource
+     * reads, adapted to this pipeline's text contract).
+     *
+     * Emits only the `Thermal Status:` line the parser already understands, so a
+     * status-only reading parses with zero sensors and a real status instead of a
+     * fabricated temperature. Out-of-range or unavailable reads as "" so the
+     * strategy loop keeps it honest.
+     */
+    private fun readPowerManagerStatus(): String {
+        if (android.os.Build.VERSION.SDK_INT < android.os.Build.VERSION_CODES.Q) return ""
+        return runCatching {
+            val pm = context.getSystemService(android.os.PowerManager::class.java) ?: return ""
+            val status = pm.currentThermalStatus
+            if (status in 0..7) "Thermal Status: $status" else ""
+        }.getOrDefault("")
     }
 
     private fun readSysfsDirect(): String {

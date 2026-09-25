@@ -76,6 +76,8 @@ class SpoofDeviceViewModel @Inject constructor(
         /** False until the store has actually been read, so an empty list is not read as "none". */
         val storeLoaded: Boolean = false,
         val profiles: List<SpoofRepository.ProfileEntry> = emptyList(),
+        /** User-owned presets (created + imported) for the preset selectors. */
+        val userPresets: List<SpoofRepository.UserPreset> = emptyList(),
         val assignments: Map<String, String> = emptyMap(),
         /** Per-package frame-rate ladders; a non-empty one owns the package over [assignments]. */
         val rateAssignments: Map<String, List<SpoofRepository.RateCandidate>> = emptyMap(),
@@ -124,6 +126,7 @@ class SpoofDeviceViewModel @Inject constructor(
                     state.copy(
                         storeLoaded = true,
                         profiles = data.profiles,
+                        userPresets = data.userPresets,
                         assignments = data.assignments,
                         rateAssignments = data.rateAssignments,
                         panelPeakHz = panelPeakHz,
@@ -148,11 +151,11 @@ class SpoofDeviceViewModel @Inject constructor(
     }
 
     /**
-     * The label an app row shows: the ladder winner with its tier when the package has a ladder,
-     * otherwise the plainly assigned profile's name.
+     * The label an app row shows: the ladder winner's profile name when the package
+     * has a ladder, otherwise the plainly assigned profile's name.
      *
-     * The winner shown is the one the picker would actually publish for the same peak, so the row
-     * can never claim a rung the panel would not earn.
+     * Only the winning profile is named — never the tier it won at. The row answers
+     * "which profile does this app use", not "at how many Hz".
      */
     private fun assignedLabelFor(
         data: SpoofRepository.StoreData,
@@ -164,9 +167,7 @@ class SpoofDeviceViewModel @Inject constructor(
         if (ladder.isNotEmpty() && panelPeakHz > 0f) {
             val winner = SpoofRepository.pickRateCandidate(ladder, panelPeakHz)
             val name = winner?.let { w -> data.profiles.firstOrNull { it.id == w.profileId }?.name }
-            if (name != null && winner != null) return context.getString(
-                R.string.spoof_ladder_rung, name, winner.rateHz
-            )
+            if (name != null) return name
             return context.getString(R.string.spoof_ladder_label)
         }
         return data.assignments[packageName]?.let { id ->
@@ -236,6 +237,18 @@ class SpoofDeviceViewModel @Inject constructor(
 
     // --- Profile Management ---
 
+    /**
+     * Presets as the UI shows them: the author-curated [SpoofRepository.getPresets],
+     * the blank Custom template, then the user's own presets (created + imported).
+     * Custom and user presets are appended here — never inside `getPresets()` — so
+     * the curated list stays exactly the verified models. Deleted user presets are
+     * gone from the store, so they never appear here.
+     */
+    fun presetsForPicker(): List<DevicePreset> =
+        repository.getPresets() +
+            SpoofRepository.createCustomTemplate() +
+            (repository.state.value?.userPresets.orEmpty().map { it.toDevicePreset() })
+
     fun createProfile(name: String, preset: DevicePreset? = null) {
         viewModelScope.launch {
             val profileName = name.trim()
@@ -243,29 +256,197 @@ class SpoofDeviceViewModel @Inject constructor(
                 _toasts.tryEmit(context.getString(R.string.spoof_error_name_empty))
                 return@launch
             }
-            val newProfile = preset?.profile?.copy() ?: DeviceProfile().apply { applyFallbacks() }
+            // Copy semantics: a preset is an immutable template — the new profile is an
+            // independent object, so later edits (or preset deletion) can never rewrite it.
+            // `user:` ids resolve against the stored user presets, not the built-ins.
+            // A null preset (Custom Configuration chosen without values) copies nothing:
+            // a blank profile for manual editing.
+            val newProfile = if (preset == null) {
+                DeviceProfile().apply { applyFallbacks() }
+            } else {
+                val presetProfile = resolvePresetProfile(preset.id) ?: preset.profile
+                presetProfile.copy()
+            }
             val entry = SpoofRepository.ProfileEntry(
                 UUID.randomUUID().toString(),
-                profileName,
+                uniqueName(profileName),
                 newProfile
             )
             // A new list rather than an in-place add: the published snapshot genuinely differs, so
             // the collector pushes it to the list screen without waiting for a navigation.
-            if (mutateStore { it.copy(profiles = it.profiles + entry) }) {
-                _toasts.tryEmit(context.getString(R.string.spoof_toast_created, profileName))
+            if (mutateStore { it.copy(profiles = SpoofRepository.ensureDefault(it.profiles) + entry) }) {
+                _toasts.tryEmit(context.getString(R.string.spoof_toast_created, entry.name))
             }
         }
     }
 
-    fun updateProfile(profileId: String, name: String, profile: DeviceProfile) {
+    private fun resolvePresetProfile(presetId: String): DeviceProfile? {
+        if (!presetId.startsWith("user:")) return null
+        val id = presetId.removePrefix("user:")
+        return repository.state.value?.userPresets?.firstOrNull { it.id == id }?.profile
+    }
+
+    /** Conflict-safe name against the current snapshot — imports/creates never overwrite. */
+    private fun uniqueName(base: String): String {
+        val existing = repository.state.value?.profiles?.map { it.name }?.toSet().orEmpty()
+        return SpoofProfileSharing.uniqueProfileName(base, existing)
+    }
+
+    /**
+     * Persists a validated import preview as a new independent profile with a fresh ID.
+     * The [chosenName] comes from the preview dialog (editable on conflict).
+     */
+    fun confirmImport(preview: SpoofProfileSharing.ImportPreview, chosenName: String) {
         viewModelScope.launch {
-            val profileName = name.trim()
-            if (profileName.isEmpty()) {
+            val entry = SpoofRepository.ProfileEntry(
+                UUID.randomUUID().toString(),
+                uniqueName(chosenName.ifBlank { preview.name }),
+                preview.profile.copy()
+            )
+            if (mutateStore { it.copy(profiles = SpoofRepository.ensureDefault(it.profiles) + entry) }) {
+                _toasts.tryEmit(context.getString(R.string.spoof_toast_imported, entry.name))
+            }
+        }
+    }
+
+    // --- User preset library (templates only — never assigned to apps) ---
+
+    /**
+     * Saves the given values as a reusable user preset. The stored preset is a copy:
+     * later profile edits cannot rewrite it, and profiles made from it hold their own
+     * copies, so deleting the preset never destroys a profile.
+     */
+    fun createUserPreset(name: String, profile: DeviceProfile, imported: Boolean = false) {
+        viewModelScope.launch {
+            val presetName = name.trim()
+            if (presetName.isEmpty()) {
                 _toasts.tryEmit(context.getString(R.string.spoof_error_name_empty))
                 return@launch
             }
-            if (repository.loadData().profiles.none { it.id == profileId }) {
+            val existing = repository.state.value?.userPresets?.map { it.name }?.toSet().orEmpty()
+            val entry = SpoofRepository.UserPreset(
+                UUID.randomUUID().toString(),
+                SpoofProfileSharing.uniqueProfileName(presetName, existing),
+                profile.copy(),
+                imported
+            )
+            if (mutateStore { it.copy(userPresets = it.userPresets + entry) }) {
+                _toasts.tryEmit(context.getString(R.string.spoof_toast_preset_saved, entry.name))
+            }
+        }
+    }
+
+    /** Removes a user preset. Profiles created from it keep their own values. */
+    fun deleteUserPreset(presetId: String) {
+        viewModelScope.launch {
+            val id = presetId.removePrefix("user:")
+            if (repository.loadData().userPresets.none { it.id == id }) {
                 _toasts.tryEmit(context.getString(R.string.spoof_error_gone))
+                return@launch
+            }
+            if (mutateStore { it.copy(userPresets = it.userPresets.filterNot { p -> p.id == id }) }) {
+                _toasts.tryEmit(context.getString(R.string.spoof_toast_preset_deleted))
+            }
+        }
+    }
+
+    /** Persists a validated import preview as a user preset (for the preset selector). */
+    fun confirmImportAsPreset(preview: SpoofProfileSharing.ImportPreview, chosenName: String) {
+        viewModelScope.launch {
+            val existing = repository.state.value?.userPresets?.map { it.name }?.toSet().orEmpty()
+            val entry = SpoofRepository.UserPreset(
+                UUID.randomUUID().toString(),
+                SpoofProfileSharing.uniqueProfileName(chosenName.ifBlank { preview.name }, existing),
+                preview.profile.copy(),
+                imported = true
+            )
+            if (mutateStore { it.copy(userPresets = it.userPresets + entry) }) {
+                _toasts.tryEmit(context.getString(R.string.spoof_toast_preset_saved, entry.name))
+            }
+        }
+    }
+
+    // --- Export / Share (FileProvider + Sharesheet, same pattern as LogsViewModel) ---
+
+    /**
+     * Writes the profile as versioned JSON to cache and opens the system Sharesheet —
+     * Messaging, Email, Telegram, WhatsApp, Quick Share, Files, anything that takes
+     * `application/json`. Only a URI crosses the binder (never the JSON itself), so
+     * large profiles cannot hit TransactionTooLarge.
+     */
+    fun shareProfile(profileId: String) {
+        viewModelScope.launch(Dispatchers.IO) {
+            val entry = repository.loadData().profiles.firstOrNull { it.id == profileId }
+                ?: run {
+                    _toasts.emit(context.getString(R.string.spoof_error_gone))
+                    return@launch
+                }
+            try {
+                val dir = File(context.cacheDir, SHARE_DIR).apply { mkdirs() }
+                dir.listFiles()
+                    ?.sortedByDescending { it.lastModified() }
+                    ?.drop(MAX_KEPT_SHARES - 1)
+                    ?.forEach { runCatching { it.delete() } }
+                val safe = entry.name.filter { it.isLetterOrDigit() || it == '-' || it == '_' }
+                    .take(32).ifBlank { "profile" }
+                val file = File(dir, "catsmoker-profile-$safe.${SpoofProfileSharing.EXPORT_EXTENSION}")
+                file.writeText(
+                    SpoofProfileSharing.exportToJson(
+                        entry,
+                        appVersion = BuildConfig.VERSION_NAME
+                    )
+                )
+                val uri = androidx.core.content.FileProvider.getUriForFile(
+                    context, "${context.packageName}.fileprovider", file
+                )
+                val intent = Intent(Intent.ACTION_SEND).apply {
+                    type = SpoofProfileSharing.EXPORT_MIME_TYPE
+                    putExtra(Intent.EXTRA_STREAM, uri)
+                    putExtra(Intent.EXTRA_SUBJECT, entry.name)
+                    addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                }
+                withContext(Dispatchers.Main) {
+                    runCatching {
+                        context.startActivity(
+                            Intent.createChooser(intent, entry.name).apply {
+                                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                            }
+                        )
+                    }.onFailure {
+                        _toasts.tryEmit(context.getString(R.string.spoof_error_no_share_target))
+                    }
+                }
+            } catch (_: Exception) {
+                _toasts.emit(context.getString(R.string.spoof_error_export_failed, entry.name))
+            }
+        }
+    }
+
+    private companion object {
+        /** Cache subdir holding shared profile files (served by the FileProvider `cache-path`). */
+        const val SHARE_DIR = "shared"
+
+        /** Old shared files kept; the newest write makes room before writing. */
+        const val MAX_KEPT_SHARES = 5
+    }
+
+    fun updateProfile(profileId: String, name: String, profile: DeviceProfile) {
+        viewModelScope.launch {
+            val data = repository.loadData()
+            val target = data.profiles.firstOrNull { it.id == profileId }
+            if (target == null) {
+                _toasts.tryEmit(context.getString(R.string.spoof_error_gone))
+                return@launch
+            }
+            // The Default Profile's name is fixed — values stay editable, the name does not.
+            val profileName = if (SpoofRepository.isDefault(target)) {
+                SpoofRepository.DEFAULT_PROFILE_NAME
+            } else {
+                name.trim()
+            }
+            if (profileName.isEmpty()) {
+                _toasts.tryEmit(context.getString(R.string.spoof_error_name_empty))
                 return@launch
             }
             val saved = mutateStore { current ->
@@ -289,12 +470,19 @@ class SpoofDeviceViewModel @Inject constructor(
     fun deleteProfile(profileId: String) {
         viewModelScope.launch {
             val data = repository.loadData()
-            if (data.profiles.size <= 1) {
-                _toasts.tryEmit(context.getString(R.string.spoof_error_last))
+            val target = data.profiles.firstOrNull { it.id == profileId }
+            if (target == null) {
+                _toasts.tryEmit(context.getString(R.string.spoof_error_gone))
                 return@launch
             }
-            if (data.profiles.firstOrNull()?.id == profileId) {
+            // Matched by fixed name, never by position: the Default Profile cannot be
+            // deleted even if store order ever changes, and no valid state has zero profiles.
+            if (SpoofRepository.isDefault(target)) {
                 _toasts.tryEmit(context.getString(R.string.spoof_error_default))
+                return@launch
+            }
+            if (data.profiles.size <= 1) {
+                _toasts.tryEmit(context.getString(R.string.spoof_error_last))
                 return@launch
             }
             val saved = mutateStore { current ->
@@ -381,6 +569,11 @@ class SpoofDeviceViewModel @Inject constructor(
     /**
      * Adds one rung to a package's frame-rate ladder: the profile to show the game when the
      * panel's peak earns [rateHz].
+     *
+     * No current UI entry point — the App Assignment dialog assigns single profiles only.
+     * Kept because ladders stored by older versions keep resolving through
+     * `resolveProfileForPackage`, and removing the writers would strand that data with
+     * no management path at all.
      *
      * The reference's `rate` can be an array (`[90,120]`) on one model; here that is spelled out
      * as the same profile added at each rate it covers, which the pick rule treats identically.

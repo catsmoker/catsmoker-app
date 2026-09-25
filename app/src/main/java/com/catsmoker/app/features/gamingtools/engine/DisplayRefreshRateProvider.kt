@@ -4,6 +4,7 @@ import android.content.Context
 import android.hardware.display.DisplayManager
 import android.os.Build
 import android.view.Display
+import androidx.annotation.RequiresApi
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -103,9 +104,17 @@ class DisplayRefreshRateProvider @Inject constructor(
         val seamless = runCatching {
             current?.alternativeRefreshRates?.toList()
         }.getOrNull()?.let { PanelRefreshSummary.summarizeRates(it) }
-        val adaptive = runCatching { display.hasArrSupport() }.getOrNull()
+        val adaptive = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.BAKLAVA) {
+            readArrSupport(display)
+        } else {
+            null
+        }
         return PanelInfo(ratesHz = rates, seamlessHz = seamless, adaptive = adaptive)
     }
+
+    @RequiresApi(Build.VERSION_CODES.BAKLAVA)
+    private fun readArrSupport(display: Display): Boolean? =
+        runCatching { display.hasArrSupport() }.getOrNull()
 
     private fun defaultDisplay(): Display? = runCatching {
         val displayManager = context.getSystemService(Context.DISPLAY_SERVICE) as? DisplayManager

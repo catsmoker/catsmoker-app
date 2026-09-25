@@ -405,7 +405,10 @@ class MetricsEngine(
             } else {
                 MetricReadStatus.PrivilegeDenied
             }
-            result.hasAnySensor -> MetricReadStatus.Ok
+            // A nonzero throttle state is itself a reading (the PowerManager rung emits
+            // status-only text on builds where no zone is readable). Zero stays
+            // ParseFailed: NONE is indistinguishable from "nothing reported".
+            result.hasAnySensor || result.thermalStatus != 0 -> MetricReadStatus.Ok
             else -> MetricReadStatus.ParseFailed
         }
         withContext(Dispatchers.Main) {
