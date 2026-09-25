@@ -5,7 +5,7 @@ package com.catsmoker.app.features.editgamefiles.wuwa
  * into named config variants plus the pack's own READMEs, and screen every ini against
  * [WuWaForbiddenCvars] before any of it can be deployed.
  *
- * The pack shape comes from `referance/gamingtools/Mobile-WuWa-Config-main/Community Configs/`
+ * The pack shape comes from `reference/gamingtools/Mobile-WuWa-Config-main/Community Configs/`
  * (both packs read in full before this file was written):
  *
  * - **Mythos Overdrive Config** — `README.md` + `Engine.ini` at the pack root. One variant.

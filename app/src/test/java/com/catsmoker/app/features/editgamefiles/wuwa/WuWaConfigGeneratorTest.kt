@@ -8,7 +8,7 @@ import org.junit.Test
 
 /**
  * Pins the WuWa config generator against
- * `referance/gamingtools/WuWa-Config-Android-main/config/ConfigGenerator.kt`, which was read
+ * `reference/gamingtools/WuWa-Config-Android-main/config/ConfigGenerator.kt`, which was read
  * in full before this generator was written: the preset table's exact tuning values, the
  * tier caps and GPU patterns, the targeted-vs-universal DeviceProfiles shapes, the
  * GameUserSettings format, and the forbidden-cvar strip. These are the values the game

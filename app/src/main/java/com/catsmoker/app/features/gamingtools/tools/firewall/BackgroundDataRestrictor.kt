@@ -2,11 +2,10 @@ package com.catsmoker.app.features.gamingtools.tools.firewall
 
 import android.annotation.SuppressLint
 import android.content.Context
-import android.content.pm.ApplicationInfo
-import android.content.pm.PackageManager
 import android.net.ConnectivityManager
 import androidx.core.content.edit
 import com.catsmoker.app.R
+import com.catsmoker.app.shared.util.InstalledAppQuery
 import com.catsmoker.app.system.shell.ShellRunner
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
@@ -275,24 +274,12 @@ class BackgroundDataRestrictor @Inject constructor(
      * skipped because denying data to them would be a no-op that still shows up in the count.
      */
     // Partial visibility is fine: invisible apps are skipped, never restricted.
+    // Shared InstalledAppQuery (consolidation C4): same user-app + INTERNET rule as the VPN.
     @SuppressLint("QueryPermissionsNeeded")
-    private fun restrictableUids(gamePackages: List<String>): Set<Int> {
-        val games = gamePackages.toSet()
-        val pm = context.packageManager
-        val installed = runCatching { pm.getInstalledApplications(0) }.getOrNull().orEmpty()
-        return installed.asSequence()
-            .filter { (it.flags and ApplicationInfo.FLAG_SYSTEM) == 0 }
-            .filter { it.packageName != context.packageName && it.packageName !in games }
-            .filter {
-                runCatching {
-                    pm.checkPermission(android.Manifest.permission.INTERNET, it.packageName) ==
-                        PackageManager.PERMISSION_GRANTED
-                }.getOrDefault(false)
-            }
-            .map { it.uid }
-            .filter { it >= MIN_APP_UID }
-            .toSet()
-    }
+    private fun restrictableUids(gamePackages: List<String>): Set<Int> =
+        InstalledAppQuery.restrictableUids(
+            context.packageManager, context.packageName, gamePackages, MIN_APP_UID
+        )
 
     /**
      * Runs one `cmd netpolicy <action> <list> <uid>` per UID, batched into a few shell invocations.

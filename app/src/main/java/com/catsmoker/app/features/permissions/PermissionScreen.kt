@@ -9,6 +9,8 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CheckCircle
@@ -45,6 +47,7 @@ import com.catsmoker.app.shared.ui.components.SectionCard
 import com.catsmoker.app.shared.ui.components.ThemeModeOptions
 import com.catsmoker.app.shared.ui.theme.CatsmokerTheme
 import com.catsmoker.app.system.config.AppearanceStore
+import com.catsmoker.app.system.config.LocaleHelper
 
 @Composable
 fun PermissionRoute(onDone: () -> Unit) {
@@ -65,12 +68,12 @@ fun PermissionRoute(onDone: () -> Unit) {
         }
     }
 
-    // A newly picked language only re-resolves resources on recreate — the ViewModel
-    // asks, the activity obeys. The chosen flag survives it (ViewModel + commit).
+    // A newly picked language restarts the process — the ViewModel asks, the screen
+    // obeys. The chosen flag survives it (committed prefs + init resume).
     LaunchedEffect(Unit) {
         viewModel.events.collect { event ->
-            if (event == PermissionViewModel.UiEvent.RecreateActivity) {
-                (context as? android.app.Activity)?.recreate()
+            if (event == PermissionViewModel.UiEvent.RestartApp) {
+                LocaleHelper.restartApp(context)
             }
         }
     }
@@ -101,9 +104,9 @@ fun PermissionRoute(onDone: () -> Unit) {
 }
 
 /**
- * Step one: theme + language. One screen, no scrolling — the two pickers sit side by
- * side inside a single card, and the compact touch-target minimum keeps the radio rows
- * short. The theme previews live (the whole app recomposes around this screen); the
+ * Step one: theme + language. The step scrolls on short viewports and the two
+ * pickers sit side by side only on wide screens — stacked on a narrow phone.
+ * The theme previews live (the whole app recomposes around this screen); the
  * language stages until Continue, which recreates the activity when it changed.
  */
 @Composable
@@ -117,33 +120,37 @@ fun AppearanceStepScreen(
     // Radio rows stay tap-friendly (~36.dp) without the 48.dp touch-target expansion
     // that would push the second card off-screen. Onboarding only — Settings keeps the
     // comfortable spacing.
+    // The whole step scrolls and the two pickers stack on narrow phones: side by side
+    // they each got ~128.dp and long language names wrapped to 3 lines or clipped.
     CompositionLocalProvider(LocalMinimumInteractiveComponentSize provides 24.dp) {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .systemBarsPadding()
-                .padding(24.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            Spacer(modifier = Modifier.height(16.dp))
-            Text(
-                stringResource(R.string.sys_first_run_title),
-                style = MaterialTheme.typography.titleLarge,
-                color = MaterialTheme.colorScheme.onSurface,
-                textAlign = TextAlign.Center
-            )
-            Spacer(modifier = Modifier.height(4.dp))
-            Text(
-                stringResource(R.string.sys_first_run_subtitle),
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                textAlign = TextAlign.Center
-            )
-            Spacer(modifier = Modifier.height(20.dp))
+        BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
+            val narrow = maxWidth < 480.dp
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .systemBarsPadding()
+                    .verticalScroll(rememberScrollState())
+                    .padding(24.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Spacer(modifier = Modifier.height(16.dp))
+                Text(
+                    stringResource(R.string.sys_first_run_title),
+                    style = MaterialTheme.typography.titleLarge,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    textAlign = TextAlign.Center
+                )
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(
+                    stringResource(R.string.sys_first_run_subtitle),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    textAlign = TextAlign.Center
+                )
+                Spacer(modifier = Modifier.height(20.dp))
 
-            SectionCard {
-                Row(modifier = Modifier.fillMaxWidth()) {
-                    Column(modifier = Modifier.weight(1f)) {
+                SectionCard {
+                    if (narrow) {
                         Text(
                             stringResource(R.string.sys_theme_title),
                             style = MaterialTheme.typography.labelSmall,
@@ -151,9 +158,7 @@ fun AppearanceStepScreen(
                         )
                         Spacer(modifier = Modifier.height(8.dp))
                         ThemeModeOptions(selected = themeMode, onSelect = onThemeChange)
-                    }
-                    Spacer(modifier = Modifier.width(16.dp))
-                    Column(modifier = Modifier.weight(1f)) {
+                        Spacer(modifier = Modifier.height(16.dp))
                         Text(
                             stringResource(R.string.sys_language_title),
                             style = MaterialTheme.typography.labelSmall,
@@ -161,17 +166,39 @@ fun AppearanceStepScreen(
                         )
                         Spacer(modifier = Modifier.height(8.dp))
                         LanguageOptions(selectedTag = languageTag, onSelect = onLanguageChange)
+                    } else {
+                        Row(modifier = Modifier.fillMaxWidth()) {
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(
+                                    stringResource(R.string.sys_theme_title),
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = MaterialTheme.colorScheme.primary
+                                )
+                                Spacer(modifier = Modifier.height(8.dp))
+                                ThemeModeOptions(selected = themeMode, onSelect = onThemeChange)
+                            }
+                            Spacer(modifier = Modifier.width(16.dp))
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(
+                                    stringResource(R.string.sys_language_title),
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = MaterialTheme.colorScheme.primary
+                                )
+                                Spacer(modifier = Modifier.height(8.dp))
+                                LanguageOptions(selectedTag = languageTag, onSelect = onLanguageChange)
+                            }
+                        }
                     }
                 }
-            }
 
-            Spacer(modifier = Modifier.height(20.dp))
-            CatsmokerButton(
-                onClick = onContinue,
-                modifier = Modifier.fillMaxWidth().height(52.dp),
-                shape = RoundedCornerShape(16.dp)
-            ) {
-                Text(stringResource(R.string.sys_continue), fontWeight = FontWeight.Bold)
+                Spacer(modifier = Modifier.height(20.dp))
+                CatsmokerButton(
+                    onClick = onContinue,
+                    modifier = Modifier.fillMaxWidth().height(52.dp),
+                    shape = RoundedCornerShape(16.dp)
+                ) {
+                    Text(stringResource(R.string.sys_continue), fontWeight = FontWeight.Bold)
+                }
             }
         }
     }
@@ -287,8 +314,14 @@ fun PermissionsListScreen(
             }
         }
     ) {
-        Column(modifier = Modifier.fillMaxSize()) {
-            // Compact touch targets again: nine rows plus DONE must fit the screen.
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .verticalScroll(rememberScrollState())
+        ) {
+            // Nine rows plus DONE never fit a short phone viewport — the list scrolls
+            // so the grant buttons stay reachable instead of pushed off-screen.
+            // Compact touch targets again: rows stay short inside the scroll.
             CompositionLocalProvider(LocalMinimumInteractiveComponentSize provides 24.dp) {
                 SectionCard {
                     PermissionRow(stringResource(R.string.core_perm_root_title), stringResource(R.string.core_perm_root_sub), uiState.rootGranted) { onRequestRoot() }

@@ -4,7 +4,7 @@ package com.catsmoker.app.features.editgamefiles.wuwa
  * Recommends a WuWa preset from measurable device facts, plus — when the game's Client.log
  * has been decrypted and analyzed — the gameplay evidence it carries.
  *
- * Ported from `referance/gamingtools/WuWa-Config-Android-main/config/SmartBrain.kt` (+ its
+ * Ported from `reference/gamingtools/WuWa-Config-Android-main/config/SmartBrain.kt` (+ its
  * GPU tier table from `config/CvarOptimizer.kt`), both read in full before this file was
  * written. The scoring values and the preset ladder thresholds are the reference's own.
  *

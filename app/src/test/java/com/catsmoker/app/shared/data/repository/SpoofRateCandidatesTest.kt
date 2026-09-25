@@ -8,7 +8,7 @@ import org.junit.Test
 
 /**
  * Pins the frame-rate ladder against
- * `referance/spoofdevice/zygisk-Tweaker-main/module/config/tweaker.json` (read in full) and the
+ * `reference/spoofdevice/zygisk-Tweaker-main/module/config/tweaker.json` (read in full) and the
  * selection rule its README states: a panel above every candidate model's tier is lowered to the
  * closest supported value. The module's native picker ships only as compiled `.so` files, so what
  * is pinned here is the documented rule and the JSON's shape — plus the cases the README does not

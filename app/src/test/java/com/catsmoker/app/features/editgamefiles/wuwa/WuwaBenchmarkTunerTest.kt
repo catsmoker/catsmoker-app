@@ -9,7 +9,7 @@ import org.junit.rules.TemporaryFolder
 
 /**
  * Pins the auto-tune loop against
- * `referance/gamingtools/WuWa-Config-Android-main/app/src/main/java/com/wuwaconfig/app/config/BenchmarkTuner.kt`,
+ * `reference/gamingtools/WuWa-Config-Android-main/app/src/main/java/com/wuwaconfig/app/config/BenchmarkTuner.kt`,
  * read in full before the port was written: the ladder order and both step rules, the
  * avg/min/stability formulas, the tiered option escalation, and the state file that keeps a
  * loop alive across process death.

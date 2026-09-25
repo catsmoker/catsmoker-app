@@ -26,7 +26,7 @@ import java.util.zip.ZipOutputStream
  * why a narrow allowlist is the safe shape for this one channel, and [omittedKeys] for how the rest
  * of the profile is reported rather than silently dropped.
  *
- * ## Cross-checked against `referance/Magisk-Modules`
+ * ## Cross-checked against `reference/Magisk-Modules`
  *
  * Three shipped FPS/spoof modules sit in the workspace, and the members here answer a gap each one
  * of them had already closed:
@@ -45,7 +45,7 @@ import java.util.zip.ZipOutputStream
  * [updateBinary]'s KernelSU/APatch branch was cross-checked against a fourth,
  * `FPS-Limitations-Patcher-v3.1`, which carried `/data/adb/ksu/bin` and `/data/adb/ap/bin` on
  * `PATH` and shared `KSU`/`KSU_VER_CODE` with its installer. **That module is no longer in
- * `referance/`** — it was removed mid-2026-08 and the folder is not under version control, so the
+ * `reference/`** — it was removed mid-2026-08 and the folder is not under version control, so the
  * citation is unverifiable now. The branch stands on its own: it only tests two paths for existence
  * and sources neither, so nothing about it depends on a layout that tree would have confirmed.
  *
@@ -115,7 +115,7 @@ object MagiskModuleBuilder {
      * obligation to tolerate a value that never shipped.
      *
      * None of it was buying anything, either. A game's frame-rate table is keyed on the model, so the
-     * model *is* the payload — which is also all `referance/Magisk-Modules/Unlocker-p4` writes, and
+     * model *is* the payload — which is also all `reference/Magisk-Modules/Unlocker-p4` writes, and
      * the counter-example `HunterX-Reborn-II` is the one that flashed a pile of extra keys.
      *
      * So this channel's rule is the inverse of the app's usual completeness instinct: **fewer
@@ -936,14 +936,14 @@ code{background:#232329;padding:1px 5px;border-radius:4px;font-size:12px}
 <div class="row"><span class="k">Last boot check</span><span class="v" id="verify">&hellip;</span></div>
 </div>
 
-<div class="card">
-<b style="font-size:14px">Change the spoofed model</b>
-<p class="note">Letters, digits, spaces and <code>.()_-</code> only. Applies to the whole device
-at the next reboot, exactly like re-flashing the module from the app.</p>
-<input id="newmodel" maxlength="64" placeholder="e.g. SM-S948B">
-<button onclick="apply()">Apply model</button>
-<div id="msg"></div>
-</div>
+ <div class="card">
+ <b style="font-size:14px">Change the spoofed model</b>
+ <p class="note">Letters, digits, spaces and <code>.()_-</code> only. Applies to the whole device
+ at the next reboot, exactly like re-flashing the module from the app.</p>
+ <input id="newmodel" maxlength="64" placeholder="e.g. SM-S948B">
+ <button onclick="apply()">Apply model</button>
+ <div id="msg"></div>
+ </div>
 
 <p class="note">This page is served from the module over localhost with a session token, and the
 server closes itself five minutes after the action button started it. The full profile and the
@@ -978,19 +978,19 @@ function fill(s) {
   document.getElementById('newmodel').value = s.model || '';
 }
 
-function apply() {
-  var value = document.getElementById('newmodel').value.trim();
-  api('set_model', value, function (r) {
-    if (r.success) {
-      show('Model saved. Reboot to apply it.', true);
-      api('get_state', undefined, fill);
-    } else {
-      show(r.error || 'The module refused the change.', false);
-    }
-  });
-}
+ function apply() {
+   var value = document.getElementById('newmodel').value.trim();
+   api('set_model', value, function (r) {
+     if (r.success) {
+       show('Model saved. Reboot to apply it.', true);
+       api('get_state', undefined, fill);
+     } else {
+       show(r.error || 'The module refused the change.', false);
+     }
+   });
+ }
 
-api('get_state', undefined, fill);
+ api('get_state', undefined, fill);
 </script>
 </body>
 </html>

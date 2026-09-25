@@ -168,7 +168,7 @@ class EditGameFilesViewModel @Inject constructor(
     private fun initializeGameConfigs() {
         // PUBG-family variants share the same `ShadowTrackerExtra` save layout, so one config
         // builder serves them all. The package set is the variants the reference
-        // `referance/gamingtools/BattleGrounds_GFX-main` writes `Active.sav` to — a working
+        // `reference/gamingtools/BattleGrounds_GFX-main` writes `Active.sav` to — a working
         // tool that verifies the folder the user picks, so its list is verified evidence of
         // which packages actually carry that path. `com.pubg.newstate` is not among them
         // (New State lays its data out differently and no reference verifies a save path for
@@ -601,7 +601,7 @@ class EditGameFilesViewModel @Inject constructor(
      * Entry point for the reset channel: deletes the game's own `Active.sav` so
      * it regenerates one from defaults on the next launch — the clean revert for everything
      * this screen pushed, which the reference implements as `deleteActiveSavWithShizuku()` /
-     * `deleteActiveSavWithSAF()` in `referance/gamingtools/BattleGrounds_GFX-main`.
+     * `deleteActiveSavWithSAF()` in `reference/gamingtools/BattleGrounds_GFX-main`.
      */
     fun onResetSave() {
         val config = gameConfigs[_uiState.value.selectedGame] ?: return

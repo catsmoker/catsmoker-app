@@ -4,6 +4,7 @@ import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -206,47 +207,86 @@ private fun DonateRow(
     iconRes: Int? = null,
     iconTint: Color = MaterialTheme.colorScheme.primary
 ) {
-    Row(
-        modifier = Modifier.fillMaxWidth().padding(vertical = 6.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        // Leading brand mark in the same 40dp rounded box the About screen's
-        // social icons use. Decorative: the adjacent label carries the meaning,
-        // so there is no content description (matches the app's icon convention).
-        if (iconRes != null) {
-            Box(
-                modifier = Modifier
-                    .size(40.dp)
-                    .clip(RoundedCornerShape(10.dp))
-                    .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)),
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(
-                    painter = painterResource(iconRes),
-                    contentDescription = null,
-                    tint = iconTint,
-                    modifier = Modifier.size(22.dp)
-                )
+    // Narrow phones stack the buttons under the address: icon + 42-char address +
+    // two buttons never fit one 360.dp row without squeezing. Tablets keep one row.
+    BoxWithConstraints(modifier = Modifier.fillMaxWidth().padding(vertical = 6.dp)) {
+        if (maxWidth < 480.dp) {
+            Column {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    DonateRowIcon(iconRes, iconTint)
+                    Spacer(modifier = Modifier.width(12.dp))
+                    DonateRowTexts(label, value, Modifier.weight(1f))
+                }
+                Spacer(modifier = Modifier.height(4.dp))
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.End
+                ) {
+                    DonateRowButtons(actionLabel, onAction, copyLabel, onCopy)
+                }
             }
-            Spacer(modifier = Modifier.width(12.dp))
+        } else {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                DonateRowIcon(iconRes, iconTint)
+                Spacer(modifier = Modifier.width(12.dp))
+                DonateRowTexts(label, value, Modifier.weight(1f))
+                DonateRowButtons(actionLabel, onAction, copyLabel, onCopy)
+            }
         }
-        Column(modifier = Modifier.weight(1f)) {
-            Text(label, color = MaterialTheme.colorScheme.onSurface)
-            Text(
-                value,
-                fontSize = 12.sp,
-                lineHeight = 16.sp,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+    }
+}
+
+/** Leading brand mark shared by both DonateRow layouts (decorative, no description). */
+@Composable
+private fun DonateRowIcon(iconRes: Int?, iconTint: Color) {
+    if (iconRes != null) {
+        Box(
+            modifier = Modifier
+                .size(40.dp)
+                .clip(RoundedCornerShape(10.dp))
+                .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)),
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(
+                painter = painterResource(iconRes),
+                contentDescription = null,
+                tint = iconTint,
+                modifier = Modifier.size(22.dp)
             )
         }
-        if (actionLabel != null && onAction != null) {
-            TextButton(onClick = onAction) {
-                Text(actionLabel, color = MaterialTheme.colorScheme.primary)
-            }
+    }
+}
+
+@Composable
+private fun DonateRowTexts(label: String, value: String, modifier: Modifier = Modifier) {
+    Column(modifier = modifier) {
+        Text(label, color = MaterialTheme.colorScheme.onSurface)
+        Text(
+            value,
+            fontSize = 12.sp,
+            lineHeight = 16.sp,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+    }
+}
+
+@Composable
+private fun DonateRowButtons(
+    actionLabel: String?,
+    onAction: (() -> Unit)?,
+    copyLabel: String,
+    onCopy: () -> Unit
+) {
+    if (actionLabel != null && onAction != null) {
+        TextButton(onClick = onAction) {
+            Text(actionLabel, color = MaterialTheme.colorScheme.primary)
         }
-        TextButton(onClick = onCopy) {
-            Text(copyLabel, color = MaterialTheme.colorScheme.onSurface)
-        }
+    }
+    TextButton(onClick = onCopy) {
+        Text(copyLabel, color = MaterialTheme.colorScheme.onSurface)
     }
 }
 

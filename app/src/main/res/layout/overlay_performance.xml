@@ -2,7 +2,7 @@
 <!--
     The performance overlay.
 
-    Every row has an id: PerformanceOverlayService writes all five from the metrics engine, and a
+    Every row has an id: PerformanceOverlayService writes all six from the metrics engine, and a
     row it cannot address would sit there showing its placeholder forever, which is how Power,
     Memory and Temp used to read as empty.
 -->
@@ -67,6 +67,16 @@
         android:fontFamily="monospace"
         android:text="@string/overlay_temp_initial"
         android:textColor="#FFE0B2"
+        android:textSize="12sp" />
+
+    <!-- Thermal headroom (no-privilege forecast; percent of the throttle envelope) -->
+    <TextView
+        android:id="@+id/headroomNumber"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:fontFamily="monospace"
+        android:text="@string/overlay_headroom_initial"
+        android:textColor="#FFCC80"
         android:textSize="12sp" />
 
 </LinearLayout>

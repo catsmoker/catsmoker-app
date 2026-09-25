@@ -1,0 +1,127 @@
+name: Performance Issue
+description: Low FPS, stutter, heat, or battery drain while gaming.
+title: "[Performance]: "
+labels: ["performance"]
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Performance reports need device and game details — please fill in every
+        field. General questions belong in
+        [Discussions](https://github.com/catsmoker/catsmoker-app/discussions).
+
+  - type: input
+    id: device
+    attributes:
+      label: Device
+      description: Manufacturer and model, e.g. Redmi Note 14.
+      placeholder: "e.g. Redmi Note 14"
+    validations:
+      required: true
+
+  - type: input
+    id: android-version
+    attributes:
+      label: Android version
+      description: Android version and skin if any, e.g. Android 14 / HyperOS.
+      placeholder: "e.g. Android 14"
+    validations:
+      required: true
+
+  - type: input
+    id: game
+    attributes:
+      label: Game
+      description: Game name, version, and package name if you know it.
+      placeholder: "e.g. PUBG Mobile 3.5 (com.tencent.ig)"
+    validations:
+      required: true
+
+  - type: input
+    id: catsmoker-version
+    attributes:
+      label: CatSmoker version
+      description: App version, e.g. 2.0.2 (Settings → About).
+      placeholder: "e.g. 2.0.2"
+    validations:
+      required: true
+
+  - type: textarea
+    id: fps
+    attributes:
+      label: FPS / performance information
+      description: |
+        Expected vs. measured FPS (telemetry overlay readings help), stutter or
+        frame drops, when it happens (menu, match, after N minutes).
+      placeholder: "e.g. Expected 90, measured ~45 after 10 min in match; stutters when ..."
+    validations:
+      required: true
+
+  - type: input
+    id: soc
+    attributes:
+      label: CPU / GPU information (if known)
+      description: Chipset / GPU if you know it, e.g. Snapdragon 778G / Adreno 642L.
+      placeholder: "e.g. Snapdragon 778G (leave blank if unknown)"
+    validations:
+      required: false
+
+  - type: textarea
+    id: thermal
+    attributes:
+      label: Thermal behaviour
+      description: Does the device get hot? Any throttling warnings or clock drops?
+      placeholder: "e.g. Warm after 15 min, overlay showed 44 °C, FPS drops as temp rises."
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: active-features
+    attributes:
+      label: Active CatSmoker features
+      description: Which CatSmoker features were active during the session?
+      options:
+        - label: Device spoofing
+        - label: Resolution / DPI change
+        - label: Gaming Mode
+        - label: File Engineering edit applied to this game
+        - label: Telemetry overlay
+        - label: Crosshair overlay
+        - label: DNS optimizer
+        - label: Other (describe below)
+
+  - type: dropdown
+    id: privilege
+    attributes:
+      label: Root / Shizuku status
+      description: How is CatSmoker privileged on this device?
+      options:
+        - Root (Magisk + LSPosed)
+        - Shizuku (non-root)
+        - Neither
+    validations:
+      required: true
+
+  - type: textarea
+    id: repro
+    attributes:
+      label: Description and reproduction steps
+      description: What happens, and how can someone else reproduce it?
+      placeholder: |
+        1. Game settings used (graphics, FPS, resolution): ...
+        2. CatSmoker settings applied: ...
+        3. Play ... for N minutes, observe ...
+    validations:
+      required: true
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs / screenshots
+      description: |
+        Overlay readings, screenshots, or logs if available. Please remove
+        personal information before posting.
+      placeholder: "Paste readings or drag screenshots here."
+    validations:
+      required: false

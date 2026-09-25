@@ -4,7 +4,7 @@ package com.catsmoker.app.features.editgamefiles.wuwa
  * Single-pass parser for a decrypted WuWa `Client.log`, producing the device facts, live
  * performance readings and diagnostic counts the app can act on.
  *
- * Ported from `referance/gamingtools/WuWa-Config-Android-main/config/LogParser.kt`'s
+ * Ported from `reference/gamingtools/WuWa-Config-Android-main/config/LogParser.kt`'s
  * `parseLog`, read in full before this file was written: the regexes are verbatim, the
  * first-match-wins field extraction, the combined single-pass flag matcher, the
  * dynamic-atlas exclusion from texture errors (its "Error pixel format" warnings are

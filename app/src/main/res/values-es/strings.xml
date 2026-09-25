@@ -17,13 +17,18 @@
     <string name="overlay_power_initial">Energía: leyendo…</string>
     <string name="overlay_ram_initial">RAM: leyendo…</string>
     <string name="overlay_temp_initial">Temp: leyendo…</string>
+    <string name="overlay_headroom_initial">Head: leyendo…</string>
     <string name="Gaming_tools_title">Herramientas de juego</string>
     <string name="gt_subtitle">Haz que tus juegos rindan mejor</string>
     <string name="gt_section_your_library">TUS JUEGOS</string>
     <string name="gt_no_games_detected">Aún no hay juegos — toca + para añadir uno</string>
-    <string name="gt_section_performance_boost">VELOCIDAD</string>
-    <string name="gt_section_focus_network">INTERNET Y SILENCIO</string>
-    <string name="gt_section_system_advanced">ESPACIO Y APPS EN SEGUNDO PLANO</string>
+    <string name="gt_section_gaming_mode">MODO JUEGO</string>
+    <string name="gt_section_performance">RENDIMIENTO</string>
+    <string name="gt_section_graphics">GRÁFICOS Y PANTALLA</string>
+    <string name="gt_section_overlays">SUPERPOSICIONES</string>
+    <string name="gt_section_bg_apps">APPS EN SEGUNDO PLANO</string>
+    <string name="gt_section_memory">MEMORIA Y ALMACENAMIENTO</string>
+    <string name="gt_section_focus_network">RED Y SILENCIO</string>
     <string name="logs_title">Registros del sistema</string>
     <string name="logs_subtitle">Diagnósticos de la app y del sistema.</string>
     <string name="logs_refresh">Actualizar</string>
@@ -32,6 +37,8 @@
     <string name="logs_filter_placeholder">Filtrar registros…</string>
     <string name="logs_empty">Aún no hay registros.</string>
     <string name="notification_stop">Detener</string>
+    <!-- Group summary row bundling every Catsmoker notification in the shade. -->
+    <string name="notif_summary_sub">Toca para abrir Catsmoker</string>
     <string name="booster_running_title">Optimizador de juegos en marcha</string>
     <string name="booster_notification_preparing">Leyendo la lista de apps…</string>
     <string name="booster_notification_progress">%1$d de %2$d apps</string>

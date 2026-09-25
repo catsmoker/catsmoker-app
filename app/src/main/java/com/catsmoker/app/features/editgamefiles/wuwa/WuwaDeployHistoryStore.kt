@@ -12,7 +12,7 @@ import java.util.UUID
 /**
  * Records every WuWa config deploy, newest first, capped at [MAX_RECORDS].
  *
- * Ported from `referance/gamingtools/WuWa-Config-Android-main/config/DeployHistoryStore.kt`
+ * Ported from `reference/gamingtools/WuWa-Config-Android-main/config/DeployHistoryStore.kt`
  * (read in full before this file was written) and its `util/AtomicFile.kt`: Gson in `filesDir`,
  * `synchronized` around every mutation, insert-at-0 with a trim, load-that-falls-back-to-empty
  * on a corrupt file, and a save that lands in a temp sibling and is rename(2)'d over the store

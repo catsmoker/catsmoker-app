@@ -8,7 +8,7 @@ import org.junit.Test
 
 /**
  * Pins the GRID Autosport preferences editor against the reference file in
- * `referance/file-engineering/Change-Grid-Autosport-Mobile-Graphics-All-Devices--main`,
+ * `reference/file-engineering/Change-Grid-Autosport-Mobile-Graphics-All-Devices--main`,
  * read in full before this test was written. The fixture below carries that file's real
  * traps: the `AutoValueRemap\GPURemap\values` scope whose names *contain* the graphics keys
  * as path suffixes, binary blobs, the `IndirectX\Direct3D\Config` scope's own

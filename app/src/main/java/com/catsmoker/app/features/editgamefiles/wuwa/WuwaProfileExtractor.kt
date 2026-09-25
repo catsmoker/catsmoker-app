@@ -4,7 +4,7 @@ package com.catsmoker.app.features.editgamefiles.wuwa
  * The player/device identity half of an installed WuWa setup: what the game's own databases and
  * config files say, merged with the log-derived device facts.
  *
- * Ported from `referance/gamingtools/WuWa-Config-Android-main/config/ProfileExtractor.kt`'s
+ * Ported from `reference/gamingtools/WuWa-Config-Android-main/config/ProfileExtractor.kt`'s
  * `readProfile` (read in full before this file was written). The pieces kept verbatim:
  *
  * - the `LocalStorage` table query and every key it reads — `RecentlyLoginUID`, `SdkLevelData`,

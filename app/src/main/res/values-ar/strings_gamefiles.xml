@@ -9,6 +9,10 @@
     <string name="gf_working">جارٍ العمل…</string>
     <string name="gf_apply_to_game">تطبيق على اللعبة</string>
     <string name="gf_restore_last_backup">استعادة آخر نسخة احتياطية</string>
+    <!-- Editor undo/redo: buttons plus the dirty line. -->
+    <string name="gf_undo">تراجع</string>
+    <string name="gf_redo">إعادة</string>
+    <string name="gf_unsaved">تغييرات غير محفوظة</string>
     <string name="gf_last_apply">آخر تطبيق: %1$s</string>
     <string name="gf_frame_rate">معدل الإطارات</string>
     <string name="gf_quality">الجودة</string>
@@ -290,6 +294,15 @@
     <string name="gf_diag_forbidden">cvars محظورة نشطة: %1$d</string>
     <string name="gf_diag_profile">ملف الجهاز: %1$s</string>
     <string name="gf_diag_cvars">cvars التي ضبطتها اللعبة (%1$d):</string>
+    <!-- Battle record counted from the decrypted Client.log: counts, never judgments. -->
+    <string name="gf_battle_title">سجل المعارك</string>
+    <string name="gf_battle_fights">المعارك: %1$d · الوفيات: %2$d · السقوط: %3$d</string>
+    <string name="gf_battle_move">الانتقالات: %1$d · تبديل الأدوار: %2$d</string>
+    <string name="gf_battle_dodge">المراوغات أمام/خلف/مضادة: %1$d/%2$d/%3$d</string>
+    <string name="gf_battle_echoes">الأصداء: %1$d · المهارات: %2$d · التحولات: %3$d · القدرة المستهلكة: %4$d</string>
+    <string name="gf_battle_month">البطاقات الشهرية: %1$d · الأيام المتبقية: %2$d</string>
+    <!-- Unscored chipset note beside the SmartBrain recommendation. -->
+    <string name="gf_chipset">الشريحة: %1$s (%2$s)</string>
     <string name="gf_convene">متتبع الاستدعاء</string>
     <string name="gf_wuwa_cached">مخزّن · %1$d سحبة</string>
     <string name="gf_wuwa_gacha_body">يقرأ رابط سجل سجل الاستدعاء من سجل اللعبة نفسه ويستعلم كل حزمة به: إجمالي السحبات ومتوسط الشفقة وحالة كل لافتة شخصيات/أسلحة — 50/50 أو مضمون، والسحبات منذ آخر ★5 والسحبة المقدرة التالية. لا يظهر الرابط إلا بعد فتح سجل الاستدعاء في اللعبة مرة واحدة، ومعرّف السجل تنتهي صلاحيته سريعا، فالجلب أحدث من المخزن.</string>

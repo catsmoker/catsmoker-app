@@ -1,0 +1,8 @@
+# Sponsor button: verified funding method only.
+# The project's advertised donation method is PayPal
+# (README "Contributing & Support" section + in-app Donate screen,
+# string url_paypal = https://www.paypal.me/catsmoker).
+# PayPal has no dedicated FUNDING.yml key, so per GitHub docs it is
+# listed as a custom URL. No other funding identity was found in the
+# repository -- do not add more without verifying with the maintainer.
+custom: ["https://www.paypal.me/catsmoker"]

@@ -57,6 +57,7 @@
     <string name="spoof_field_height">高度</string>
     <string name="spoof_field_density">密度</string>
     <string name="spoof_field_refresh_rate">刷新率 (Hz)</string>
+    <string name="spoof_refresh_note">在目标应用内伪造上报的刷新率和模式列表。常驻 Hook — 留空即关闭。</string>
     <string name="spoof_group_network">网络与地区</string>
     <string name="spoof_action_roll_network">随机生成网络与地区</string>
     <string name="spoof_field_operator_name">运营商名称</string>

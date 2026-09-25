@@ -32,7 +32,9 @@ data class WuwaLogAnalysis(
     val info: WuwaLogParser.LogInfo,
     val channelUsed: String,
     val decrypted: Boolean,
-    val lineCount: Int
+    val lineCount: Int,
+    /** Battle totals counted from the same decrypted text — no second read. */
+    val battle: WuwaBattleStats.BattleStats
 )
 
 /**
@@ -64,6 +66,8 @@ data class WuwaConfigUiState(
     val canShell: Boolean = false,
     val hasSafUri: Boolean = false,
     val recommendation: WuwaSmartBrain.Recommendation? = null,
+    /** This device's chipset, read once — an unscored note beside the recommendation. */
+    val chipset: WuwaChipset.ChipsetInfo? = null,
     /** The last Client.log analysis, when one has been read and parsed. */
     val logAnalysis: WuwaLogAnalysis? = null,
     /** True while a log read/decrypt/parse is running. */
@@ -190,6 +194,8 @@ class WuwaConfigViewModel @Inject constructor(
                     hasSafUri = manager.hasSafTreeUri(),
                     backups = manager.backups(),
                     recommendation = outcome.recommendation,
+                    // Device-constant: read once per refresh, not per analysis.
+                    chipset = it.chipset ?: WuwaChipset.detectDevice(),
                     history = manager.history(),
                     communityPacks = manager.communityPacks()
                 )
@@ -473,7 +479,8 @@ class WuwaConfigViewModel @Inject constructor(
                             info = info,
                             channelUsed = read.channelUsed,
                             decrypted = decode == WuwaLogDecryptor.DecodeResult.DECRYPTED,
-                            lineCount = text.lineSequence().count()
+                            lineCount = text.lineSequence().count(),
+                            battle = WuwaBattleStats.parseBattleStats(text)
                         )
                         val rec = computeRecommendation(info)
                         withContext(Dispatchers.Main) {

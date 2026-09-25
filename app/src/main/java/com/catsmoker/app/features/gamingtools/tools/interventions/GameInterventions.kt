@@ -4,6 +4,7 @@ import com.catsmoker.app.shared.data.model.SettingValue
 import com.catsmoker.app.system.shell.ShellRunner
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import java.util.Locale
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -12,7 +13,7 @@ import javax.inject.Singleton
  *
  * `device_config put game_overlay <pkg> mode=2,…fps=N:mode=3,…fps=N` is the same mechanism Android's
  * game frame-rate interventions documentation describes, and the one the reference project ships —
- * `referance/file-engineering/GenshinConfig-main/script/genshin.sh` puts it for Genshin Impact, and
+ * `reference/file-engineering/GenshinConfig-main/script/genshin.sh` puts it for Genshin Impact, and
  * its reverter `genshun.sh` takes it back out with `device_config delete`. Both halves are
  * reproduced here, format verbatim.
  *
@@ -90,9 +91,14 @@ class GameInterventions @Inject constructor(
      * The caller is expected to have captured the prior value first (Gaming Mode does, in its
      * snapshot, *before* anything is written) — this method only reports what happened, it does not
      * remember what was there.
+     *
+     * @param downscale optional WindowManager backbuffer scale (0.3..0.9, official range).
+     *   Null (the default) keeps the reference format byte-identical — no silent resolution
+     *   change. Anything outside the range is sanitized to null by [sanitizeDownscale], so an
+     *   invalid choice degrades to the FPS-only intervention rather than failing the whole write.
      */
-    suspend fun apply(pkg: String, maxFps: Int): Outcome = withContext(Dispatchers.IO) {
-        val wanted = overlayValue(maxFps)
+    suspend fun apply(pkg: String, maxFps: Int, downscale: Float? = null): Outcome = withContext(Dispatchers.IO) {
+        val wanted = overlayValue(maxFps, downscale)
         val write = shellRunner.execSafeResult("device_config", "put", NAMESPACE, pkg, wanted)
         if (!write.isSuccess) {
             return@withContext Outcome(
@@ -146,9 +152,43 @@ class GameInterventions @Inject constructor(
          * render the game at a lower resolution to buy the frame rate. Both rows are needed: a
          * device that reports itself out of performance mode consults the STANDARD row, and only
          * one row would mean the cap holds exactly until then.
+         *
+         * @param downscale opt-in backbuffer scale from [sanitizeDownscale]. A non-null value
+         *   replaces `false` in both rows (the platform's own FPS-throttling docs use the same
+         *   `mode=2,…,downscaleFactor=0.9:mode=3,…` shape); null keeps the reference bytes.
          */
         fun overlayValue(maxFps: Int): String =
             "mode=2,opengles=0,downscaleFactor=false,fps=$maxFps" +
                 ":mode=3,opengles=0,downscaleFactor=false,fps=$maxFps"
+
+        fun overlayValue(maxFps: Int, downscale: Float?): String {
+            val factor = sanitizeDownscale(downscale) ?: return overlayValue(maxFps)
+            // Two decimals, trailing zeros stripped: 0.85 stays "0.85", 0.80 prints "0.8".
+            // Locale.US so no locale ever emits "0,85", which game_overlay would not parse.
+            val text = String.format(Locale.US, "%.2f", factor).trimEnd('0').trimEnd('.')
+            return "mode=2,opengles=0,downscaleFactor=$text,fps=$maxFps" +
+                ":mode=3,opengles=0,downscaleFactor=$text,fps=$maxFps"
+        }
+
+        /**
+         * Accepts only the official downscale range (AOSP `cmd game set --downscale`: 0.3..0.9).
+         *
+         * Anything else — null, NaN, infinite, out of range — returns null, meaning "no
+         * downscale". Substituting a nearby valid scale would render at a resolution the user
+         * did not choose, so the invalid choice degrades to the FPS-only entry instead.
+         */
+        fun sanitizeDownscale(downscale: Float?): Float? {
+            if (downscale == null || !downscale.isFinite()) return null
+            return if (downscale in MIN_DOWNSCALE..MAX_DOWNSCALE) downscale else null
+        }
+
+        /** Official downscale bounds shared by `device_config game_overlay` and `cmd game`. */
+        const val MIN_DOWNSCALE = 0.3f
+
+        /** Official downscale bounds shared by `device_config game_overlay` and `cmd game`. */
+        const val MAX_DOWNSCALE = 0.9f
+
+        /** The opt-in choices the UI offers (0.9 is near-lossless, 0.7 the documented floor). */
+        val DOWNSCALE_CHOICES = listOf(0.9f, 0.85f, 0.8f, 0.75f, 0.7f)
     }
 }

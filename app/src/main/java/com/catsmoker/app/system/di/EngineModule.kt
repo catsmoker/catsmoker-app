@@ -3,7 +3,9 @@ package com.catsmoker.app.system.di
 import android.content.Context
 import com.catsmoker.app.features.gamingtools.engine.DisplayRefreshRateProvider
 import com.catsmoker.app.features.gamingtools.engine.GamingEngine
+import com.catsmoker.app.features.gamingtools.engine.RefreshRateController
 import com.catsmoker.app.features.gamingtools.tools.firewall.BackgroundDataRestrictor
+import com.catsmoker.app.features.gamingtools.tools.forcestop.SuspendListStore
 import com.catsmoker.app.features.gamingtools.tools.interventions.GameInterventions
 import com.catsmoker.app.features.main.engine.MetricsEngine
 import com.catsmoker.app.system.shell.ShellRunner
@@ -32,8 +34,11 @@ object EngineModule {
         shellRunner: ShellRunner,
         refreshRates: DisplayRefreshRateProvider,
         backgroundDataRestrictor: BackgroundDataRestrictor,
-        gameInterventions: GameInterventions
+        gameInterventions: GameInterventions,
+        suspendListStore: SuspendListStore,
+        refreshController: RefreshRateController
     ): GamingEngine = GamingEngine(
-        context, shellRunner, refreshRates, backgroundDataRestrictor, gameInterventions
+        context, shellRunner, refreshRates, backgroundDataRestrictor, gameInterventions,
+        suspendListStore, refreshController
     )
 }

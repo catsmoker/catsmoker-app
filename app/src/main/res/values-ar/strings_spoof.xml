@@ -57,6 +57,7 @@
     <string name="spoof_field_height">الطول</string>
     <string name="spoof_field_density">الكثافة</string>
     <string name="spoof_field_refresh_rate">معدل التحديث (Hz)</string>
+    <string name="spoof_refresh_note">يزيّف المعدل المُبلغ عنه وقائمة الأوضاع داخل التطبيق المستهدف. خطاف مقيم — الفراغ يعني الإيقاف.</string>
     <string name="spoof_group_network">الشبكة والمنطقة</string>
     <string name="spoof_action_roll_network">توليد الشبكة والمنطقة عشوائياً</string>
     <string name="spoof_field_operator_name">اسم المشغّل</string>

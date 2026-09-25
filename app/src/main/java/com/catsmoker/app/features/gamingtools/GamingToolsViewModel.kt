@@ -17,12 +17,17 @@ import com.catsmoker.app.R
 import com.catsmoker.app.features.gamingtools.engine.AnimationScaleKind
 import com.catsmoker.app.features.gamingtools.engine.GamingEngine
 import com.catsmoker.app.features.gamingtools.engine.GamingModeService
+import com.catsmoker.app.features.gamingtools.engine.GameSessionManager
+import com.catsmoker.app.features.gamingtools.engine.GameSessionService
+import com.catsmoker.app.features.gamingtools.engine.StorageTrim
 import com.catsmoker.app.shared.data.model.GameInfo
 import com.catsmoker.app.features.gamingtools.tools.audio.AudioBoostController
 import com.catsmoker.app.features.gamingtools.tools.cleaner.CleanerPatternStore
 import com.catsmoker.app.features.gamingtools.tools.cleaner.CleaningFeature
 import com.catsmoker.app.features.gamingtools.tools.graphics.GameDeveloperOptions
+import com.catsmoker.app.features.gamingtools.tools.graphics.AngleDriverOptions
 import com.catsmoker.app.features.gamingtools.tools.forcestop.KeepAliveStore
+import com.catsmoker.app.features.gamingtools.tools.forcestop.SuspendListStore
 import com.catsmoker.app.features.gamingtools.tools.booster.AppBoosterService
 import com.catsmoker.app.features.gamingtools.tools.booster.DexoptScheduleStore
 import com.catsmoker.app.features.gamingtools.tools.booster.DexoptSweepScheduler
@@ -30,6 +35,7 @@ import com.catsmoker.app.features.gamingtools.tools.forcestop.AutoForceStopServi
 import com.catsmoker.app.features.gamingtools.tools.crosshair.CrosshairOverlayService
 import com.catsmoker.app.features.gamingtools.tools.crosshair.CrosshairPositionStore
 import com.catsmoker.app.features.gamingtools.tools.dns.DnsFeature
+import com.catsmoker.app.features.gamingtools.tools.dns.PingParser
 import com.catsmoker.app.features.gamingtools.tools.firewall.BackgroundDataRestrictor
 import com.catsmoker.app.features.gamingtools.tools.firewall.VpnFirewall
 import com.catsmoker.app.features.gamingtools.tools.overlay.PerformanceOverlayService
@@ -60,10 +66,13 @@ import javax.inject.Inject
 class GamingToolsViewModel @Inject constructor(
     @ApplicationContext private val context: Context,
     private val gamingEngine: GamingEngine,
+    private val gameSessionManager: GameSessionManager,
     private val shellRunner: ShellRunner,
     private val gameDeveloperOptions: GameDeveloperOptions,
+    private val angleDriverOptions: AngleDriverOptions,
     private val audioBoostController: AudioBoostController,
     private val keepAliveStore: KeepAliveStore,
+    private val suspendListStore: SuspendListStore,
     private val crosshairPositionStore: CrosshairPositionStore,
     private val cleanerPatternStore: CleanerPatternStore,
     private val backgroundDataRestrictor: BackgroundDataRestrictor,
@@ -126,10 +135,22 @@ class GamingToolsViewModel @Inject constructor(
         val dnsStatus: DnsFeature.Status? = null,
         /** True while a `private_dns_*` write is in flight. */
         val isChangingDns: Boolean = false,
+        /**
+         * Measured reply ms per provider address, or null per address when it never replied.
+         * Null map = never measured; a measured round that answered nothing is an empty map
+         * only if every address failed — each address keeps its own null.
+         */
+        val dnsPingMs: Map<String, Int?>? = null,
+        /** True while the provider ping round is running. */
+        val isMeasuringDnsPing: Boolean = false,
         val isDndEnabled: Boolean = false,
         val isBoostingRam: Boolean = false,
         /** Last RAM-boost outcome, exactly as measured. null before the first run. */
         val ramResult: String? = null,
+        /** True while `fstrim` is running, so the button cannot be double-driven. */
+        val isTrimmingStorage: Boolean = false,
+        /** Last trim outcome, exactly as measured. null before the first run. */
+        val storageTrimResult: String? = null,
         val isScanningJunk: Boolean = false,
         val isCleaningJunk: Boolean = false,
         val boostLevel: Int = 0,
@@ -137,6 +158,14 @@ class GamingToolsViewModel @Inject constructor(
         val games: List<GameInfo> = emptyList(),
         val allApps: List<GameInfo> = emptyList(),
         val isPickingGame: Boolean = false,
+        /** Package with a pre-launch compile in flight, or null when none is running. */
+        val optimizingGamePkg: String? = null,
+        /**
+         * The single-game scope selected in the unified App Compile Optimisation card
+         * (F8), or null for the all-games sweep. Set by the library PRE-COMPILE button
+         * (deep-link) and by the card's own picker — both run the same backend.
+         */
+        val optimizeScopePkg: String? = null,
         /**
          * Outcome of the last clean, or null when none has run since this screen opened.
          *
@@ -155,6 +184,10 @@ class GamingToolsViewModel @Inject constructor(
         /** The user's own clean patterns (regex text matched against the whole path). */
         val cleanerCleanPatterns: Set<String> = emptySet(),
         val isAutoForceStopActive: Boolean = false,
+        /** Whether the auto game session monitor is armed (service running). */
+        val isGameSessionActive: Boolean = false,
+        /** Package holding an auto-started session right now, or null when none. */
+        val gameSessionPkg: String? = null,
         /**
          * The apps the user chose to *keep* running — Auto Force Stop closes every other app you
          * switch away from and leaves these alone.
@@ -164,6 +197,13 @@ class GamingToolsViewModel @Inject constructor(
          * ("close everything") rather than a reason to shut the service down.
          */
         val autoForceStopKeepPackages: Set<String> = emptySet(),
+        /**
+         * Extra packages frozen at Gaming Mode activation on top of the automatic sweep.
+         * Read at construction so the editor shows the persisted truth rather than a blank.
+         */
+        val extraSuspendPackages: Set<String> = emptySet(),
+        /** True while the suspend-list app picker is open. */
+        val isPickingSuspendPackage: Boolean = false,
 
         // Resolution Changer State
         /**
@@ -196,7 +236,17 @@ class GamingToolsViewModel @Inject constructor(
          * When WorkManager itself expects the next run, or null when nothing is scheduled or it
          * could not be read. An estimate, not a promise — Doze defers background work.
          */
-        val dexoptNextRunAt: Long? = null
+        val dexoptNextRunAt: Long? = null,
+        /**
+         * Package picked for the graphics-driver choice, or null before selection. Defaults to
+         * the first game once the library loads, so the card never shows a picker with nothing
+         * picked.
+         */
+        val anglePkg: String? = null,
+        /** Driver the table currently holds for [anglePkg], or null when it holds none. */
+        val angleDriver: AngleDriverOptions.Driver? = null,
+        /** True while an ANGLE write is in flight, so the chips cannot be double-driven. */
+        val isChangingAngleDriver: Boolean = false
     ) {
         /**
          * Whether the width/height/DPI fields accept typing.
@@ -245,6 +295,8 @@ class GamingToolsViewModel @Inject constructor(
                     // The service can end from its notification's Stop button, which the switch's own
                     // tap knows nothing about — the state follows the service's report, not the request.
                     _uiState.update { it.copy(isAutoForceStopActive = false) }
+                GameSessionService.ACTION_SERVICE_STOPPED ->
+                    _uiState.update { it.copy(isGameSessionActive = false, gameSessionPkg = null) }
                 CrosshairOverlayService.ACTION_CROSSHAIR_MOVE_MODE_CHANGED -> {
                     // Driven by the service's own report rather than by the tap that requested it: the
                     // notification and the overlay's Done button can both end move mode without the UI.
@@ -270,6 +322,7 @@ class GamingToolsViewModel @Inject constructor(
                 isCrosshairOffCentre = crosshairPositionStore.isOffCentre,
                 boostLevel = appPrefs.getInt("boost_level", 0),
                 autoForceStopKeepPackages = keepAliveStore.getKeptPackages(),
+                extraSuspendPackages = suspendListStore.getSuspendPackages(),
                 dexoptScheduleEnabled = dexoptScheduleStore.isEnabled(),
                 dexoptIntervalHours = dexoptScheduleStore.getIntervalHours(),
                 cleanerKeepEntries = cleanerPatternStore.getKeepEntries(),
@@ -287,6 +340,7 @@ class GamingToolsViewModel @Inject constructor(
             addAction(CrosshairOverlayService.ACTION_CROSSHAIR_SERVICE_STOPPED)
             addAction(CrosshairOverlayService.ACTION_CROSSHAIR_MOVE_MODE_CHANGED)
             addAction(AutoForceStopService.ACTION_SERVICE_STOPPED)
+            addAction(GameSessionService.ACTION_SERVICE_STOPPED)
         }
         ContextCompat.registerReceiver(context, serviceStateReceiver, filter, ContextCompat.RECEIVER_NOT_EXPORTED)
 
@@ -294,6 +348,13 @@ class GamingToolsViewModel @Inject constructor(
             checkRootStatus()
         }
         syncState()
+        // An armed monitor survives process death as a preference but not as a service: if it
+        // was armed, the watch resumes now rather than sitting armed-but-blind. Mirrors the
+        // engine's own recovery of a persisted-active Gaming Mode.
+        if (gameSessionManager.isEnabled()) {
+            GameSessionService.start(context)
+            _uiState.update { it.copy(isGameSessionActive = true) }
+        }
 
         viewModelScope.launch {
             // The VPN's own report of what it established, so the switch follows the interface rather
@@ -371,7 +432,18 @@ class GamingToolsViewModel @Inject constructor(
             }
             val games = newGames.distinctBy { it.packageName }
             withContext(Dispatchers.Main) {
-                _uiState.update { it.copy(games = games) }
+                _uiState.update {
+                    it.copy(
+                        games = games,
+                        // First load picks the first game so the ANGLE card has something to
+                        // act on; a deliberate pick is never overridden afterwards.
+                        anglePkg = it.anglePkg ?: games.firstOrNull()?.packageName
+                    )
+                }
+                // The session monitor's game set follows the library: uninstalled games stop
+                // triggering sessions without any extra step.
+                gameSessionManager.setGames(games.map { game -> game.packageName }.toSet())
+                refreshAngleDriver()
             }
         }
     }
@@ -445,6 +517,10 @@ class GamingToolsViewModel @Inject constructor(
         // Same for the Developer Options switches: they are the platform's own settings, and both
         // Developer Options and gaming mode can have moved them since this screen was last open.
         viewModelScope.launch { gameDeveloperOptions.refresh() }
+        // Same for the ANGLE driver table: Developer Options edits the same two keys.
+        refreshAngleDriver()
+        // The monitor's live session holder, so the compact row reflects the service.
+        refreshGameSessionPkg()
     }
 
     fun toggleOverlay(enable: Boolean) {
@@ -641,6 +717,26 @@ class GamingToolsViewModel @Inject constructor(
     fun setDnsAutomatic() = changeDns { dnsFeature.setAutomatic() }
 
     fun disableDns() = changeDns { dnsFeature.disable() }
+
+    /**
+     * Pings each provider's first resolver once and records the reply times side by side, so
+     * the fastest resolver is a measurement rather than a reputation.
+     *
+     * Measure-only: a fast resolver shortens lookups, it does not lower in-game ping — the
+     * card's own ping explainer says exactly that, and this round does not touch any setting.
+     * Runs on IO because four sequential bounded waits are seconds of wall time; `-W 2`
+     * bounds each wait so a dead address cannot stall the round.
+     */
+    fun measureDnsPing() = viewModelScope.launch(Dispatchers.IO) {
+        _uiState.update { it.copy(isMeasuringDnsPing = true) }
+        val results = linkedMapOf<String, Int?>()
+        for (provider in DnsFeature.PROVIDERS) {
+            val host = provider.addresses.firstOrNull() ?: continue
+            val output = runCatching { shellRunner.exec("ping -c 1 -W 2 $host") }.getOrNull().orEmpty()
+            results[host] = PingParser.parseTimeMs(output)
+        }
+        _uiState.update { it.copy(dnsPingMs = results, isMeasuringDnsPing = false) }
+    }
 
     private fun changeDns(action: suspend () -> DnsFeature.Outcome) {
         viewModelScope.launch {
@@ -859,6 +955,37 @@ class GamingToolsViewModel @Inject constructor(
         _toasts.emit(message)
     }
 
+    /**
+     * Trims free filesystem blocks (`fstrim -v`) so writes stay fast during play.
+     *
+     * Needs root: the shell UID cannot issue FITRIM on most builds, and without privilege the
+     * button reports that instead of running a trim that cannot work. The result names the
+     * trimmed total from the mounts that answered, plus how many refused — or the refusal,
+     * when nothing answered at all.
+     */
+    fun trimStorage() = viewModelScope.launch {
+        _uiState.update { it.copy(isTrimmingStorage = true, storageTrimResult = null) }
+        val message = if (!shellRunner.hasPrivilege()) {
+            context.getString(R.string.gt_trim_need)
+        } else {
+            val output = shellRunner.exec("fstrim -v /data /cache")
+            val parsed = StorageTrim.parse(output)
+            if (parsed == null) {
+                context.getString(R.string.gt_trim_no, output.trim().takeIf { it.isNotBlank() }
+                    ?: context.getString(R.string.gt_trim_no_reason))
+            } else {
+                val total = StorageTrim.formatBytes(parsed.totalBytes)
+                if (parsed.failedMounts > 0) {
+                    context.getString(R.string.gt_trim_some, total, parsed.failedMounts)
+                } else {
+                    context.getString(R.string.gt_trim_done, total)
+                }
+            }
+        }
+        _uiState.update { it.copy(isTrimmingStorage = false, storageTrimResult = message) }
+        _toasts.tryEmit(message)
+    }
+
     fun runBooster(mode: String, force: Boolean) {
         // Compiling every user app takes minutes, so it belongs to a foreground service rather
         // than viewModelScope — closing the screen must not abandon a half-finished dexopt run.
@@ -923,6 +1050,44 @@ class GamingToolsViewModel @Inject constructor(
         val outcome = gamingEngine.toggleFixedPerformanceMode(enabled)
         if (!outcome.accepted || !enabled) _toasts.emit(outcome.message)
     }
+
+    /** The render scale the next Gaming Mode activation writes into the game intervention. */
+    val interventionDownscale = gamingEngine.interventionDownscale
+    /** The touch speed for the next activation, or null for stock (untouched). */
+    val pointerSpeedChoice = gamingEngine.pointerSpeedChoice
+    /**
+     * Chooses the render scale (or null for full resolution). A pure preference write, so the
+     * toast confirms the stored choice rather than a device round-trip — the device verdict
+     * arrives with the next activation's report row.
+     */
+    fun setInterventionDownscale(factor: Float?) {
+        val stored = gamingEngine.setInterventionDownscale(factor)
+        _toasts.tryEmit(
+            if (stored == null) context.getString(R.string.gt_downscale_off_set)
+            else context.getString(R.string.gt_downscale_set, formatDownscale(stored))
+        )
+    }
+
+    /** `0.85x` — trailing zeros dropped, matching the intervention entry's own spelling. */
+    private fun formatDownscale(factor: Float): String =
+        String.format(java.util.Locale.US, "%.2f", factor).trimEnd('0').trimEnd('.') + "x"
+
+    /**
+     * Chooses the touch speed (or null for stock). A pure preference write; the device verdict
+     * arrives with the next activation's report row.
+     */
+    fun setPointerSpeedChoice(speed: Int?) {
+        val stored = gamingEngine.setPointerSpeedChoice(speed)
+        _toasts.tryEmit(
+            if (stored == null) context.getString(R.string.gt_pointer_stock_set)
+            else context.getString(R.string.gt_pointer_set, formatPointerSpeed(stored))
+        )
+    }
+
+    /** `+2`, `-3` — sign always shown, so slower and faster never look alike. */
+    private fun formatPointerSpeed(speed: Int): String =
+        if (speed > 0) "+$speed" else "$speed"
+
     fun onBoostChange(level: Int) {
         appPrefs.edit { putInt("boost_level", level) }
         audioBoostController.applyBoost(level)
@@ -971,16 +1136,13 @@ class GamingToolsViewModel @Inject constructor(
     }
 
     /**
-     * The three Developer Options gaming switches, each reporting what the device actually allows.
+     * The two Developer Options gaming switches this app can actually drive (force-peak
+     * refresh and game frame-rate), each reporting what the device actually allows.
      *
-     * This replaces a "Refresh Rate Lock" card that wrote both refresh-rate keys fire-and-forget and
-     * flipped its own switch regardless of the result. [GameDeveloperOptions] verifies every write.
+     * The platform's third switch, "Show refresh rate", is deliberately not offered:
+     * its SurfaceFlinger backdoor refuses the `shell` caller on Android 14+, so no
+     * supported configuration could move it — see [GameDeveloperOptions].
      */
-    fun setShowRefreshRate(enabled: Boolean) = viewModelScope.launch {
-        val result = gameDeveloperOptions.setShowRefreshRate(enabled)
-        _toasts.tryEmit(devOptionToast(context.getString(R.string.gt_dev_show_rr), enabled, result))
-    }
-
     fun setForcePeakRefreshRate(enabled: Boolean) = viewModelScope.launch {
         val result = gameDeveloperOptions.setForcePeakRefreshRate(enabled)
         _toasts.tryEmit(devOptionToast(context.getString(R.string.gt_dev_peak), enabled, result))
@@ -990,6 +1152,55 @@ class GamingToolsViewModel @Inject constructor(
         val result = gameDeveloperOptions.setGameDefaultFrameRateDisabled(enabled)
         _toasts.tryEmit(devOptionToast(context.getString(R.string.gt_dev_game_speed), enabled, result))
     }
+
+    /**
+     * Picks the package the graphics-driver card acts on and reads what the table holds for it.
+     *
+     * The read is a provider call that needs no privilege, so the card shows the device's
+     * answer even before root/Shizuku is granted — unlike the chips, which stay disabled.
+     */
+    fun selectAnglePackage(pkg: String?) {
+        _uiState.update { it.copy(anglePkg = pkg) }
+        refreshAngleDriver()
+    }
+
+    /** Re-reads the driver for the picked package. */
+    fun refreshAngleDriver() = viewModelScope.launch {
+        val pkg = _uiState.value.anglePkg ?: return@launch
+        _uiState.update { it.copy(angleDriver = angleDriverOptions.driverFor(pkg)) }
+    }
+
+    /**
+     * Chooses the graphics driver for the picked package, confirmed by a read-back of both
+     * lists — the toast reports what the table holds now, including entries other tools wrote,
+     * rather than that a command was issued.
+     */
+    fun setAngleDriver(driver: AngleDriverOptions.Driver) = viewModelScope.launch {
+        val pkg = _uiState.value.anglePkg ?: return@launch
+        _uiState.update { it.copy(isChangingAngleDriver = true) }
+        val outcome = angleDriverOptions.setDriver(pkg, driver)
+        val current = angleDriverOptions.driverFor(pkg)
+        _uiState.update { it.copy(angleDriver = current, isChangingAngleDriver = false) }
+        _toasts.tryEmit(
+            if (outcome.applied) {
+                context.getString(R.string.gt_angle_set, pkg, driverLabel(driver))
+            } else {
+                context.getString(
+                    R.string.gt_angle_no,
+                    outcome.refusal ?: context.getString(R.string.gt_angle_no_reason)
+                )
+            }
+        )
+    }
+
+    /** Localized driver name. The stored tokens stay the platform's English words. */
+    private fun driverLabel(driver: AngleDriverOptions.Driver): String = context.getString(
+        when (driver) {
+            AngleDriverOptions.Driver.ANGLE -> R.string.gt_angle_angle
+            AngleDriverOptions.Driver.NATIVE -> R.string.gt_angle_native
+            AngleDriverOptions.Driver.DEFAULT -> R.string.gt_angle_default
+        }
+    )
 
     /** Names the setting and what the device did with it — never a success the read-back denies. */
     private fun devOptionToast(
@@ -1020,9 +1231,57 @@ class GamingToolsViewModel @Inject constructor(
         _uiState.update { it.copy(isAutoForceStopActive = enabled) }
     }
 
+    /**
+     * Arms or disarms the auto game session monitor.
+     *
+     * Arming refreshes the library first so the monitor's game set is the current one, then
+     * starts its service; the service itself reports usage-access and privilege gaps in its
+     * notification rather than pretending to watch. The switch follows the service's stop
+     * broadcast, like every other service switch on this screen.
+     */
+    fun toggleGameSession(enabled: Boolean) {
+        if (enabled) {
+            syncGames()
+            gameSessionManager.setEnabled(true)
+            GameSessionService.start(context)
+        } else {
+            gameSessionManager.setEnabled(false)
+            GameSessionService.stop(context)
+        }
+        _uiState.update { it.copy(isGameSessionActive = enabled, gameSessionPkg = null) }
+    }
+
+    /** Mirrors the monitor's live session holder so the card can name the game being boosted. */
+    fun refreshGameSessionPkg() {
+        _uiState.update { it.copy(gameSessionPkg = gameSessionManager.sessionActivePkg.value) }
+    }
+
     fun toggleAutoForceStopKeepPackage(pkg: String) {
         val newSet = keepAliveStore.toggleKeptPackage(pkg)
         _uiState.update { it.copy(autoForceStopKeepPackages = newSet) }
+    }
+
+    /**
+     * Picks an extra package to freeze at Gaming Mode activation (or removes it when already
+     * picked). The store returns the list afterwards, so the UI shows the persisted truth.
+     */
+    fun toggleExtraSuspendPackage(pkg: String) {
+        val newSet = suspendListStore.toggleSuspendPackage(pkg)
+        _uiState.update { it.copy(extraSuspendPackages = newSet, isPickingSuspendPackage = false) }
+    }
+
+    fun removeExtraSuspendPackage(pkg: String) {
+        val newSet = suspendListStore.removeSuspendPackage(pkg)
+        _uiState.update { it.copy(extraSuspendPackages = newSet) }
+    }
+
+    fun showSuspendPicker() {
+        _uiState.update { it.copy(isPickingSuspendPackage = true) }
+        loadAllApps()
+    }
+
+    fun dismissSuspendPicker() {
+        _uiState.update { it.copy(isPickingSuspendPackage = false) }
     }
 
     /**
@@ -1045,6 +1304,38 @@ class GamingToolsViewModel @Inject constructor(
         } catch (e: Exception) {
             _toasts.tryEmit(context.getString(R.string.gt_vm_open_fail, e.message ?: e.javaClass.simpleName))
         }
+    }
+
+    /**
+     * Selects the single-game scope in the unified optimisation card (F8).
+     * Null means the all-games sweep. Pure selection — runs nothing.
+     */
+    fun selectOptimizeScope(pkg: String?) {
+        _uiState.update { it.copy(optimizeScopePkg = pkg) }
+    }
+
+    /**
+     * Compiles one game (`speed-profile`) before it is played — the pre-launch pass.
+     *
+     * Also records the package as the card's single-game scope, so the library
+     * button deep-links into the unified App Compile Optimisation system with the
+     * game already chosen. Runs on the engine's own scope discipline (the sweep
+     * lock serializes it against a full sweep), so the card's busy marker is the
+     * only local state: the result toast reports what the platform said.
+     */
+    fun optimizeGame(pkg: String) = viewModelScope.launch {
+        _uiState.update { it.copy(optimizingGamePkg = pkg, optimizeScopePkg = pkg) }
+        val result = gamingEngine.runSinglePackageOptimization(pkg)
+        _uiState.update { it.copy(optimizingGamePkg = null) }
+        val message = when {
+            result.skipped -> context.getString(R.string.gt_game_opt_skip, pkg)
+            result.succeeded && result.detail.isBlank() ->
+                context.getString(R.string.gt_game_opt_done, pkg)
+            result.succeeded ->
+                context.getString(R.string.gt_game_opt_done_detail, pkg, result.detail)
+            else -> context.getString(R.string.gt_game_opt_fail, pkg, result.detail)
+        }
+        _toasts.emit(message)
     }
 
     // ---- Resolution Changer Logic ----

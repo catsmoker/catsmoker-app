@@ -231,6 +231,14 @@
             <property android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE" android:value="Gaming Mode" />
         </service>
 
+        <service
+            android:name=".features.gamingtools.engine.GameSessionService"
+            android:enabled="true"
+            android:exported="false"
+            android:foregroundServiceType="specialUse">
+            <property android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE" android:value="Auto game session" />
+        </service>
+
         <!--
             Second-layer notification suppression while Gaming Mode is on. BIND_NOTIFICATION_
             LISTENER_SERVICE is enforced by the system, so it is declared on the service rather

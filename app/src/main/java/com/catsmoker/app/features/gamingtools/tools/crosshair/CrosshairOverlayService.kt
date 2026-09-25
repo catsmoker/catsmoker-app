@@ -1,6 +1,5 @@
 package com.catsmoker.app.features.gamingtools.tools.crosshair
 
-import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
 import android.app.Service
@@ -17,6 +16,7 @@ import android.view.WindowManager
 import android.widget.ImageView
 import androidx.core.app.NotificationCompat
 import com.catsmoker.app.R
+import com.catsmoker.app.shared.util.CatsmokerNotifications
 import com.catsmoker.app.shared.util.DisplayMetricsProvider
 import dagger.hilt.android.AndroidEntryPoint
 import kotlin.math.abs
@@ -100,6 +100,7 @@ class CrosshairOverlayService : Service() {
         // onStartCommand calls on a service started with startForegroundService, and Android kills a
         // service that does not post its notification — so entering move mode must not skip it.
         startForeground(NOTIFICATION_ID, buildNotification())
+        CatsmokerNotifications.attachOwner(this, "Crosshair")
 
         // Move mode is delivered as an action on the running service rather than a fresh start, so a
         // toggle must not rebuild the overlay and lose the position mid-drag.
@@ -429,6 +430,7 @@ class CrosshairOverlayService : Service() {
             )
             .setSmallIcon(R.drawable.ic_stat_name)
             .setOngoing(true)
+            .setGroup(CatsmokerNotifications.GROUP_KEY)
 
         // getForegroundService, not getService: from API 26 a service started from a notification
         // action must call startForeground, and onStartCommand does that on every path.
@@ -460,6 +462,7 @@ class CrosshairOverlayService : Service() {
     }
 
     override fun onDestroy() {
+        CatsmokerNotifications.detachOwner(this, "Crosshair")
         hideBanner()
         overlayView?.let { runCatching { windowManager?.removeView(it) } }
         overlayView = null
@@ -474,8 +477,11 @@ class CrosshairOverlayService : Service() {
     override fun onBind(intent: Intent?): IBinder? = null
 
     private fun createNotificationChannel() {
-        val channel = NotificationChannel(CHANNEL_ID, getString(R.string.gt_svc_cross_channel), NotificationManager.IMPORTANCE_LOW)
-        getSystemService(NotificationManager::class.java)?.createNotificationChannel(channel)
+        val nm = getSystemService(NotificationManager::class.java) ?: return
+        CatsmokerNotifications.ensureGroup(nm)
+        nm.createNotificationChannel(
+            CatsmokerNotifications.channel(CHANNEL_ID, getString(R.string.gt_svc_cross_channel), NotificationManager.IMPORTANCE_LOW)
+        )
     }
 
     companion object {
@@ -505,7 +511,10 @@ class CrosshairOverlayService : Service() {
         private const val BANNER_TOP_MARGIN_DP = 48f
 
         private const val CHANNEL_ID = "crosshair_channel"
-        private const val NOTIFICATION_ID = 102
+        // Was 102, colliding with Gaming Mode's foreground ID: NotificationManager.notify()
+        // addresses by ID app-wide, so equal IDs let one service's re-post replace the other's
+        // notification. 107 is free (101/102/103/105/104/106 taken, 4201/4301 taken).
+        private const val NOTIFICATION_ID = 107
         private const val REQUEST_EXIT_MOVE_MODE = 1021
         private const val REQUEST_STOP_SERVICE = 1022
     }

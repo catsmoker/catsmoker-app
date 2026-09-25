@@ -61,6 +61,7 @@
     <string name="spoof_field_height">Height</string>
     <string name="spoof_field_density">Density</string>
     <string name="spoof_field_refresh_rate">Refresh Rate (Hz)</string>
+    <string name="spoof_refresh_note">Spoofs the reported rate and mode list inside the target app. Resident hook — blank means off.</string>
     <string name="spoof_group_network">Network &amp; Region</string>
     <string name="spoof_action_roll_network">Roll Network &amp; Region</string>
     <string name="spoof_field_operator_name">Operator Name</string>

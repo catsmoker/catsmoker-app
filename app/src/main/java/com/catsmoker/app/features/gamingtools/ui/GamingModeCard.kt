@@ -21,8 +21,12 @@ import com.catsmoker.app.R
 import com.catsmoker.app.features.gamingtools.engine.GamingModeNotice
 import com.catsmoker.app.features.gamingtools.engine.GamingModeReport
 import com.catsmoker.app.features.gamingtools.engine.GamingModeState
+import com.catsmoker.app.features.gamingtools.engine.PointerSpeed
+import com.catsmoker.app.features.gamingtools.tools.interventions.GameInterventions
+import com.catsmoker.app.shared.ui.components.ChipFlowRow
 import com.catsmoker.app.shared.ui.components.SectionCard
 import com.catsmoker.app.shared.ui.components.SquigglyProgressBar
+import java.util.Locale
 
 /**
  * The Gaming Mode card.
@@ -41,6 +45,14 @@ fun GamingModeCard(
     canActivate: Boolean,
     isActive: Boolean,
     isBusy: Boolean,
+    /** Render scale for the next activation, or null for full resolution. */
+    downscale: Float?,
+    /** Chooses the render scale; takes effect on the next activation, never mid-session. */
+    onDownscaleChange: (Float?) -> Unit,
+    /** Touch speed for the next activation, or null for stock (untouched). */
+    pointerSpeed: Int?,
+    /** Chooses the touch speed; takes effect on the next activation, never mid-session. */
+    onPointerSpeedChange: (Int?) -> Unit,
     onActivate: () -> Unit,
     onDeactivate: () -> Unit
 ) {
@@ -134,6 +146,24 @@ fun GamingModeCard(
 
             Spacer(modifier = Modifier.height(24.dp))
 
+            // Render scale for the next activation. Changing the table under a running game
+            // would need a restart to take hold anyway, so the chips lock while active — the
+            // choice waits for the next run instead of pretending to apply right now.
+            if (!isActive) {
+                DownscaleRow(
+                    current = downscale,
+                    enabled = !isBusy && canActivate,
+                    onSelect = onDownscaleChange
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+                PointerSpeedRow(
+                    current = pointerSpeed,
+                    enabled = !isBusy && canActivate,
+                    onSelect = onPointerSpeedChange
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+            }
+
             // Android 13 media-player squiggle: the played stretch waves while the
             // engine is working and relaxes to a line when idle, like a paused track.
             SquigglyProgressBar(
@@ -183,7 +213,8 @@ fun GamingModeCard(
                     )
                     GamingModeResultRow(
                         label = stringResource(R.string.gt_gm_label_touch),
-                        value = if (report.touchResponseBoost) stringResource(R.string.gt_gm_touch_boost) else stringResource(R.string.gt_gm_touch_na),
+                        value = (if (report.touchResponseBoost) stringResource(R.string.gt_gm_touch_boost) else stringResource(R.string.gt_gm_touch_na)) +
+                            (report.pointerSpeed?.let { " · ${formatPointerSpeed(it)}" } ?: ""),
                         applied = report.touchResponseBoost
                     )
                     GamingModeResultRow(
@@ -225,7 +256,12 @@ fun GamingModeCard(
                     report.gameInterventionApplied?.let { applied ->
                         GamingModeResultRow(
                             label = stringResource(R.string.gt_gm_label_cap),
-                            value = if (applied) stringResource(R.string.gt_gm_cap_raised) else stringResource(R.string.gt_gm_cap_no),
+                            value = if (applied) {
+                                stringResource(R.string.gt_gm_cap_raised) +
+                                    (report.gameInterventionDownscale?.let { " · ${formatDownscale(it)}" } ?: "")
+                            } else {
+                                stringResource(R.string.gt_gm_cap_no)
+                            },
                             applied = applied
                         )
                     }
@@ -282,6 +318,117 @@ fun GamingModeCard(
 }
 
 /**
+ * Render-scale picker for the next Gaming Mode activation: full resolution plus the official
+ * downscale steps (0.9 near-lossless down to the 0.7 floor the platform docs recommend).
+ *
+ * A stored scale that is not one of the chips is shown as it is rather than snapped — the
+ * chips would otherwise misreport what the next activation will write.
+ */
+@Composable
+private fun DownscaleRow(
+    current: Float?,
+    enabled: Boolean,
+    onSelect: (Float?) -> Unit
+) {
+    Column {
+        Text(
+            text = stringResource(R.string.gt_downscale_title),
+            style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            letterSpacing = 1.sp,
+            fontWeight = FontWeight.Bold
+        )
+        Spacer(modifier = Modifier.height(4.dp))
+        Text(
+            text = stringResource(R.string.gt_downscale_sub),
+            fontSize = 12.sp,
+            lineHeight = 18.sp,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+        Spacer(modifier = Modifier.height(8.dp))
+        if (current != null && GameInterventions.DOWNSCALE_CHOICES.none { kotlin.math.abs(it - current) < 0.005f }) {
+            Text(formatDownscale(current), fontSize = 10.sp, color = Color(0xFFFFB74D))
+        }
+        // Seven chips wrap onto two lines on a phone instead of overflowing the row.
+        ChipFlowRow {
+            FilterChip(
+                selected = current == null,
+                onClick = { onSelect(null) },
+                enabled = enabled,
+                label = { Text(stringResource(R.string.gt_downscale_off), fontSize = 11.sp) }
+            )
+            GameInterventions.DOWNSCALE_CHOICES.forEach { value ->
+                FilterChip(
+                    selected = current != null && kotlin.math.abs(current - value) < 0.005f,
+                    onClick = { onSelect(value) },
+                    enabled = enabled,
+                    label = { Text(formatDownscale(value), fontSize = 11.sp) }
+                )
+            }
+        }
+    }
+}
+
+/** `0.85x` — the same spelling the intervention entry carries. */
+private fun formatDownscale(value: Float): String =
+    String.format(Locale.US, "%.2f", value).trimEnd('0').trimEnd('.') + "x"
+
+/** `+2`, `-3` — the sign always shows, so slower and faster never look alike. */
+private fun formatPointerSpeed(speed: Int): String =
+    if (speed > 0) "+$speed" else "$speed"
+
+/**
+ * Touch-speed picker for the next Gaming Mode activation: stock (untouched) plus symmetric
+ * steps each way. Stock is the default because "don't touch it" already is stock.
+ */
+@Composable
+private fun PointerSpeedRow(
+    current: Int?,
+    enabled: Boolean,
+    onSelect: (Int?) -> Unit
+) {
+    Column {
+        Text(
+            text = stringResource(R.string.gt_pointer_title),
+            style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            letterSpacing = 1.sp,
+            fontWeight = FontWeight.Bold
+        )
+        Spacer(modifier = Modifier.height(4.dp))
+        Text(
+            text = stringResource(R.string.gt_pointer_sub),
+            fontSize = 12.sp,
+            lineHeight = 18.sp,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+        Spacer(modifier = Modifier.height(8.dp))
+        // A stored speed outside the offered steps is shown as it is rather than snapped —
+        // the chips would otherwise misreport what the next activation writes.
+        if (current != null && !PointerSpeed.CHOICES.contains(current)) {
+            Text(formatPointerSpeed(current), fontSize = 10.sp, color = Color(0xFFFFB74D))
+        }
+        // Seven chips wrap onto two lines on a phone instead of overflowing the row.
+        ChipFlowRow {
+            FilterChip(
+                selected = current == null,
+                onClick = { onSelect(null) },
+                enabled = enabled,
+                label = { Text(stringResource(R.string.gt_pointer_stock), fontSize = 11.sp) }
+            )
+            PointerSpeed.CHOICES.forEach { value ->
+                FilterChip(
+                    selected = current == value,
+                    onClick = { onSelect(value) },
+                    enabled = enabled,
+                    label = { Text(formatPointerSpeed(value), fontSize = 11.sp) }
+                )
+            }
+        }
+    }
+}
+
+/**
  * Resolves a refusal notice in the current language, at composition time — never earlier. An
  * argument that is itself a notice (the frame-cap refusal nests its detail) resolves
  * recursively; device-text arguments (counts, shell words) pass through verbatim.
@@ -295,7 +442,8 @@ private fun resolveNotice(notice: GamingModeNotice): String = when (notice) {
     )
 }
 
-/** Small tinted panel used for an activation error or the list of refused optimizations. */@Composable
+/** Small tinted panel used for an activation error or the list of refused optimizations. */
+@Composable
 private fun NoticeBlock(text: String, tint: Color) {
     Box(
         modifier = Modifier

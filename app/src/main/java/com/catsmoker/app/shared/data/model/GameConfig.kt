@@ -5,8 +5,8 @@ import androidx.annotation.StringRes
 /**
  * One editable thing about a game, as the Edit Game Files screen offers it.
  *
- * A profile pairs the label the user picks with the bundled asset that carries it. PUBG has two
- * (max-FPS and iPad-view saves); Genshin Impact has one (the tuned `hardware_model_config.json`).
+ * A profile pairs the label the user picks with the bundled asset that carries it. PUBG has
+ * two (max-FPS and iPad-view saves); Genshin Impact has one (the tuned `hardware_model_config.json`).
  *
  * The label travels as a string-resource ID, never a resolved string: these configs are built in
  * a ViewModel with the application context, whose locale is frozen at process start, and the
@@ -38,7 +38,7 @@ data class GameConfig(
      * the game has no resettable file.
      *
      * PUBG regenerates `Active.sav` from its own defaults on the next launch, so deleting it is
-     * the clean revert for both profiles — the mechanism `referance/gamingtools/
+     * the clean revert for both profiles — the mechanism `reference/gamingtools/
      * BattleGrounds_GFX-main` exposes as "Reset Active.sav". Genshin Impact's config always
      * exists on a working install and the game does not rebuild it from defaults, so there is
      * no reset channel for it and the field stays null.

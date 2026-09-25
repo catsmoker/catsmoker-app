@@ -22,6 +22,23 @@ import java.lang.reflect.Method
 import java.time.ZoneId
 import java.util.Locale
 import java.util.TimeZone
+import kotlin.math.abs
+
+/**
+ * Keeps the refresh rates at the spoofed tier from a list of panel rates.
+ *
+ * Panels report nominal rates with jitter (`119.999985` is a 120 Hz mode), so matching uses
+ * [RATE_TOLERANCE_HZ]. An empty result means "leave the list alone" — the hook returns the
+ * original modes instead of handing the game zero display modes. A non-positive spoof rate
+ * disables the filter the same way a blank profile key does.
+ */
+fun filterRefreshRates(rates: List<Float>, spoofHz: Float): List<Float> {
+    if (spoofHz <= 0f) return emptyList()
+    return rates.filter { abs(it - spoofHz) <= RATE_TOLERANCE_HZ }
+}
+
+/** Nominal-rate jitter panels report (`119.999985` is a 120 Hz mode). */
+private const val RATE_TOLERANCE_HZ = 0.5f
 
 /**
  * Applies the spoof profile the user assigned to *this* app, inside its own process.
@@ -397,16 +414,62 @@ class LSPosedModule : IXposedHookLoadPackage {
      * a public framework class present in every target process; a hookAllMethods miss (no such
      * method — not possible today, but not our promise either) is caught and treated as a miss,
      * not an error, like every other hook here.
+     *
+     * Mode-list readers are covered too: games that enumerate `getSupportedModes()` /
+     * `getSupportedRefreshRates()` never call `getRefreshRate()`, so those answers are filtered
+     * to the spoofed tier by [filterRefreshRates]. A filter that matches nothing keeps the real
+     * list — handing a game zero display modes would break it.
+     *
+     * Resident-hook note: unlike the Build-field overwrite (a value swap), these hooks stay
+     * loaded in the target process while it runs. That is the documented, factual difference —
+     * the profile editor carries the matching warning, and blank still means off.
      */
     private fun hookDisplayRefreshRate() {
-        val hook = object : XC_MethodHook() {
+        val rateHook = object : XC_MethodHook() {
             override fun afterHookedMethod(param: MethodHookParam) {
                 val rate = props[LSPosedConfig.KEY_SCREEN_REFRESH_RATE]?.toFloatOrNull() ?: return
                 if (rate > 0f) param.result = rate
             }
         }
         try {
-            XposedBridge.hookAllMethods(Display::class.java, "getRefreshRate", hook)
+            XposedBridge.hookAllMethods(Display::class.java, "getRefreshRate", rateHook)
+        } catch (_: Throwable) {
+        }
+        val modesHook = object : XC_MethodHook() {
+            override fun afterHookedMethod(param: MethodHookParam) {
+                try {
+                    val rate = props[LSPosedConfig.KEY_SCREEN_REFRESH_RATE]?.toFloatOrNull()
+                        ?: return
+                    if (rate <= 0f) return
+                    val modes = param.result as? Array<Display.Mode> ?: return
+                    val kept = modes.filter {
+                        abs(it.refreshRate - rate) <= RATE_TOLERANCE_HZ
+                    }
+                    if (kept.isNotEmpty()) param.result = kept.toTypedArray()
+                } catch (_: Throwable) {
+                }
+            }
+        }
+        try {
+            XposedBridge.hookAllMethods(Display::class.java, "getSupportedModes", modesHook)
+        } catch (_: Throwable) {
+        }
+        // The float-array variant; name-hooked so older platforms without it simply miss.
+        val ratesHook = object : XC_MethodHook() {
+            override fun afterHookedMethod(param: MethodHookParam) {
+                try {
+                    val rate = props[LSPosedConfig.KEY_SCREEN_REFRESH_RATE]?.toFloatOrNull()
+                        ?: return
+                    if (rate <= 0f) return
+                    val rates = (param.result as? FloatArray)?.toList() ?: return
+                    val kept = filterRefreshRates(rates, rate)
+                    if (kept.isNotEmpty()) param.result = kept.toFloatArray()
+                } catch (_: Throwable) {
+                }
+            }
+        }
+        try {
+            XposedBridge.hookAllMethods(Display::class.java, "getSupportedRefreshRates", ratesHook)
         } catch (_: Throwable) {
         }
     }

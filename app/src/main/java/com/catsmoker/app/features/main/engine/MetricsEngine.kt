@@ -6,12 +6,16 @@ import android.content.Intent
 import android.content.IntentFilter
 import android.net.TrafficStats
 import android.os.BatteryManager
+import android.os.Build
+import android.os.PowerManager
 import android.util.Log
 import com.catsmoker.app.shared.data.model.FpsSource
 import com.catsmoker.app.shared.data.model.MetricReadStatus
 import com.catsmoker.app.shared.data.model.MetricsState
+import com.catsmoker.app.features.gamingtools.tools.dns.PingParser
 import com.catsmoker.app.features.main.engine.parsers.CpuInfoTopParser
 import com.catsmoker.app.features.main.engine.parsers.CpuStatParser
+import com.catsmoker.app.features.main.engine.parsers.ThermalHeadroom
 import com.catsmoker.app.features.main.engine.parsers.ThermalServiceParser
 import com.catsmoker.app.system.shell.ShellRunner
 import kotlinx.coroutines.*
@@ -381,6 +385,9 @@ class MetricsEngine(
     private fun startBackgroundShellPoll() = pollLoop(interval = 10.seconds, stagger = 2.seconds) {
         // Guarded on its own: a thermal read that fails should not also cost the ping reading.
         guarded { pollThermalMetrics() }
+        // Needs no privilege and shares the same slow cadence, so a NaN from polling too fast
+        // cannot happen here.
+        guarded { pollThermalHeadroom() }
         val ping = performPing()
 
         withContext(Dispatchers.Main) {
@@ -415,7 +422,49 @@ class MetricsEngine(
         }
     }
 
+    /**
+     * Thermal headroom from `PowerManager.getThermalHeadroom` (API 30+): how much of the
+     * thermal envelope is in use, forecast [THERMAL_HEADROOM_FORECAST_SECONDS] ahead, where
+     * 1.0 is the SEVERE throttle threshold.
+     *
+     * This is the official no-privilege channel for the same fact the dumpsys thermal poll
+     * reports — it works without root or Shizuku. NaN (unsupported HAL, or polled too fast)
+     * becomes Unsupported, never 0.0, via [ThermalHeadroom.classify]. Below API 30 the API
+     * does not exist, so the status is Unsupported without ever calling it.
+     */
+    private suspend fun pollThermalHeadroom() {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.R) {
+            withContext(Dispatchers.Main) {
+                _state.update {
+                    it.copy(
+                        thermalHeadroom = null,
+                        thermalHeadroomStatus = MetricReadStatus.Unsupported
+                    )
+                }
+            }
+            return
+        }
+        val raw = runCatching {
+            val power = context.getSystemService(Context.POWER_SERVICE) as? PowerManager
+                ?: return@runCatching Float.NaN
+            power.getThermalHeadroom(THERMAL_HEADROOM_FORECAST_SECONDS)
+        }.getOrElse {
+            Log.w(TAG, "Thermal headroom read failed", it)
+            return
+        }
+        val reading = ThermalHeadroom.classify(raw)
+        withContext(Dispatchers.Main) {
+            _state.update {
+                it.copy(
+                    thermalHeadroom = reading.headroom,
+                    thermalHeadroomStatus = reading.status
+                )
+            }
+        }
+    }
+
     private suspend fun pollHeavyMetrics() {
+
         var cpuInfoOutput = shellRunner.exec("top -n 1 -b")
         if (cpuInfoOutput.isBlank()) {
             cpuInfoOutput = shellRunner.exec("dumpsys cpuinfo")
@@ -525,18 +574,16 @@ class MetricsEngine(
     private suspend fun performPing(): PingReading {
         return try {
             // -W bounds the wait so a dead link cannot stall this poll for the shell's timeout.
+            // Shared PingParser (consolidation C2): one `time=` rule for dashboard + DNS diagnostics.
             val output = shellRunner.exec("ping -c 1 -W $PING_TIMEOUT_SECONDS $PING_HOST")
-            if (!output.contains("time=")) {
+            val millis = PingParser.parseTimeMs(output)
+            if (millis != null) {
+                PingReading(millis, MetricReadStatus.Ok)
+            } else if (output.contains("time=")) {
+                PingReading(null, MetricReadStatus.ParseFailed)
+            } else {
                 // ping ran but nothing came back: unreachable or blocked, not a broken reading.
                 PingReading(null, MetricReadStatus.EmptyOutput)
-            } else {
-                output.substringAfter("time=")
-                    .trimStart()
-                    .takeWhile { it.isDigit() || it == '.' }
-                    .toFloatOrNull()
-                    ?.roundToInt()
-                    ?.let { PingReading(it, MetricReadStatus.Ok) }
-                    ?: PingReading(null, MetricReadStatus.ParseFailed)
             }
         } catch (e: Exception) {
             Log.w(TAG, "Ping failed", e)
@@ -687,13 +734,19 @@ class MetricsEngine(
         // draw either way.
         val watts = abs(currentUa.toDouble()) * voltageMv.toDouble() / MICRO_AMP_MILLI_VOLT_PER_WATT
         if (watts !in MIN_PLAUSIBLE_WATTS..MAX_PLAUSIBLE_WATTS) {
-            Log.w(
-                TAG,
-                "Discarding implausible power reading: current_now=$currentUa uA, " +
-                    "voltage=$voltageMv mV -> $watts W. This build most likely reports current_now " +
-                    "in a unit other than the documented microamps; there is no way to tell which " +
-                    "from here, so no value is shown rather than a rescaled guess."
-            )
+            // Warned once per process: this poll runs every few seconds, and a build that
+            // reports milliamps where microamps are documented trips it on every single tick —
+            // spamming the very logcat this app is for. The diagnosis does not change between
+            // ticks, so repeating it adds heat and noise, never information.
+            if (!powerUnitWarned.getAndSet(true)) {
+                Log.w(
+                    TAG,
+                    "Discarding implausible power reading: current_now=$currentUa uA, " +
+                        "voltage=$voltageMv mV -> $watts W. This build most likely reports current_now " +
+                        "in a unit other than the documented microamps; there is no way to tell which " +
+                        "from here, so no value is shown rather than a rescaled guess."
+                )
+            }
             return PowerReading(null, MetricReadStatus.ParseFailed)
         }
         return PowerReading(watts.toFloat(), MetricReadStatus.Ok)
@@ -720,10 +773,24 @@ class MetricsEngine(
     private companion object {
         const val TAG = "MetricsEngine"
 
+        /**
+         * Whether the milliamps-instead-of-microamps diagnosis has been logged already.
+         * Per process, not per poll: affected builds trip the plausibility band on every
+         * tick, and the message never changes.
+         */
+        val powerUnitWarned = java.util.concurrent.atomic.AtomicBoolean(false)
+
         /** Sparkline window, in samples. */
         const val HISTORY_CAP = 60
         const val PING_HOST = "8.8.8.8"
         const val PING_TIMEOUT_SECONDS = 2
+
+        /**
+         * How far ahead the thermal-headroom forecast looks, in seconds. Forecasts further out
+         * are less accurate as conditions change; 10 s matches a gaming glance cadence while the
+         * 10 s poll interval keeps the API's own once-per-second limit far away.
+         */
+        const val THERMAL_HEADROOM_FORECAST_SECONDS = 10
 
         const val PROC_MEMINFO = "/proc/meminfo"
         val WHITESPACE = Regex("\\s+")

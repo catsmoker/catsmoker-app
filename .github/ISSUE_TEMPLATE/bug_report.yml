@@ -1,0 +1,99 @@
+name: Bug Report
+description: Report something broken in CatSmoker.
+title: "[Bug]: "
+labels: ["bug"]
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting. Please fill in everything you can — reports without
+        device and version info are hard to act on.
+        Questions and ideas belong in [Discussions](https://github.com/catsmoker/catsmoker-app/discussions),
+        not here. Performance problems (low FPS, throttling, heat) have their own
+        **Performance Issue** template — please use that instead.
+
+  - type: input
+    id: catsmoker-version
+    attributes:
+      label: CatSmoker version
+      description: App version, e.g. 2.0.2 (Settings → About).
+      placeholder: "e.g. 2.0.2"
+    validations:
+      required: true
+
+  - type: input
+    id: android-version
+    attributes:
+      label: Android version
+      description: Android version and skin if any, e.g. Android 14 / HyperOS.
+      placeholder: "e.g. Android 14"
+    validations:
+      required: true
+
+  - type: input
+    id: device
+    attributes:
+      label: Device
+      description: Manufacturer and model, e.g. Poco X3 NFC.
+      placeholder: "e.g. Poco X3 NFC"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: privilege
+    attributes:
+      label: Root / Shizuku / neither
+      description: How is CatSmoker privileged on this device?
+      options:
+        - Root (Magisk + LSPosed)
+        - Shizuku (non-root)
+        - Neither
+    validations:
+      required: true
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Description
+      description: What happened? What were you doing in the app when it broke?
+      placeholder: "Clear, short description of the bug."
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      description: Numbered steps so someone else can trigger the same bug.
+      placeholder: |
+        1. Go to ...
+        2. Tap ...
+        3. See ...
+      value: |
+        1.
+        2.
+        3.
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behaviour
+      description: What should have happened instead?
+      placeholder: "What you expected to see."
+    validations:
+      required: true
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs / screenshots
+      description: |
+        Attach a logcat, the in-app Engineering Console output, or screenshots/video
+        if you have them. Please remove personal information (accounts, emails,
+        tokens) before posting.
+      placeholder: "Paste logs here or drag screenshots into this issue."
+    validations:
+      required: false

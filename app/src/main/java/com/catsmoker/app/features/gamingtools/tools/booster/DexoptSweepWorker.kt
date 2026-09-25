@@ -1,7 +1,6 @@
 package com.catsmoker.app.features.gamingtools.tools.booster
 
 import android.app.Notification
-import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
 import android.content.Context
@@ -17,6 +16,7 @@ import com.catsmoker.app.R
 import com.catsmoker.app.features.gamingtools.engine.BoosterOutcome
 import com.catsmoker.app.features.gamingtools.engine.BoosterState
 import com.catsmoker.app.features.gamingtools.engine.GamingEngine
+import com.catsmoker.app.shared.util.CatsmokerNotifications
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
 import kotlinx.coroutines.CoroutineScope
@@ -27,7 +27,7 @@ import kotlin.math.roundToInt
  * The recurring ART dexopt sweep: the same engine run the App Booster button starts
  * ([GamingEngine.runArtOptimization]), driven on a schedule instead of a tap.
  *
- * What comes from the reference project (`referance/gamingtools/art`, its
+ * What comes from the reference project (`reference/gamingtools/art`, its
  * `presentation/worker/OptimizationWorker.kt`, read in full): the worker shape itself — a
  * `@HiltWorker` that calls `setForeground` before doing anything, a progress job that re-calls
  * `setForeground` as the engine's state advances, and a stop path that cancels the optimization
@@ -67,6 +67,7 @@ class DexoptSweepWorker @AssistedInject constructor(
         ensureChannel()
         val foreground = try {
             setForeground(foregroundInfo(gamingEngine.boosterState.value))
+            CatsmokerNotifications.attachOwner(applicationContext, "DexoptSweep")
             true
         } catch (_: Exception) {
             // ForegroundServiceStartNotAllowedException on Android 12+ — see the class KDoc.
@@ -95,6 +96,7 @@ class DexoptSweepWorker @AssistedInject constructor(
             }
             // Completed / Cancelled / Failed are all recorded by the engine in its own history,
             // which the App Booster card shows; the worker has nothing to add on top.
+            CatsmokerNotifications.detachOwner(applicationContext, "DexoptSweep")
             return Result.success()
         } finally {
             progressJob.cancel()
@@ -135,6 +137,7 @@ class DexoptSweepWorker @AssistedInject constructor(
             .setSmallIcon(R.drawable.ic_stat_name)
             .setOnlyAlertOnce(true)
             .setOngoing(true)
+            .setGroup(CatsmokerNotifications.GROUP_KEY)
             .addAction(R.drawable.ic_action_name, applicationContext.getString(R.string.booster_notification_stop), stop)
 
         val progress = state.progress
@@ -173,6 +176,7 @@ class DexoptSweepWorker @AssistedInject constructor(
             .setStyle(NotificationCompat.BigTextStyle().bigText(text))
             .setSmallIcon(R.drawable.ic_stat_name)
             .setAutoCancel(true)
+            .setGroup(CatsmokerNotifications.GROUP_KEY)
             .build()
         manager.notify(SKIPPED_NOTIFICATION_ID, notification)
     }
@@ -181,8 +185,9 @@ class DexoptSweepWorker @AssistedInject constructor(
         // The service creates this channel too; createNotificationChannel is idempotent, so both
         // paths are safe whichever runs first.
         val manager = applicationContext.getSystemService(NotificationManager::class.java) ?: return
+        CatsmokerNotifications.ensureGroup(manager)
         manager.createNotificationChannel(
-            NotificationChannel(AppBoosterService.CHANNEL_ID, applicationContext.getString(R.string.gt_svc_booster_channel), NotificationManager.IMPORTANCE_LOW)
+            CatsmokerNotifications.channel(AppBoosterService.CHANNEL_ID, applicationContext.getString(R.string.gt_svc_booster_channel), NotificationManager.IMPORTANCE_LOW)
         )
     }
 

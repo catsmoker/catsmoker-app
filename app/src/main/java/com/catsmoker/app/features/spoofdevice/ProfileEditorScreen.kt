@@ -188,6 +188,14 @@ fun ProfileEditorScreen(
                     if (profile.screenRefreshRate > 0) profile.screenRefreshRate.toString() else "",
                     numeric = true
                 ) { profile = profile.copy(screenRefreshRate = it.toIntOrNull() ?: 0) }
+                // Resident-hook gate, stated where the value is entered: unlike the Build-field
+                // overwrite, the rate and mode-list hooks stay loaded in the target process.
+                // Blank still means off.
+                Text(
+                    text = stringResource(R.string.spoof_refresh_note),
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
             }
 
             EditorGroup(title = stringResource(R.string.spoof_group_network)) {

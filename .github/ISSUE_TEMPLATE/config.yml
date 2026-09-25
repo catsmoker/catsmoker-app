@@ -1,0 +1,11 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Questions & Help (Discussions)
+    url: https://github.com/catsmoker/catsmoker-app/discussions
+    about: Questions, ideas, feedback, and general topics. Please ask here instead of opening an issue.
+  - name: Discord community
+    url: https://discord.com/invite/HQC5BwcXtS
+    about: Chat with the community on Discord.
+  - name: Telegram
+    url: https://t.me/CATSM0KER
+    about: Chat with the community on Telegram.

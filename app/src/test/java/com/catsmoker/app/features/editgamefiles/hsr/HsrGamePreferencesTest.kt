@@ -7,7 +7,7 @@ import java.net.URLDecoder
 
 /**
  * Pins the HSR QoL-preferences codec against
- * `referance/gamingtools/hsrgraphicdroid-main/data/GamePreferences.kt`: the language code
+ * `reference/gamingtools/hsrgraphicdroid-main/data/GamePreferences.kt`: the language code
  * tables and their XML string codes, the defaults, and the URL-encoded JSON-array blacklist
  * format. These are the keys the game itself reads — a renamed one would silently do nothing.
  */

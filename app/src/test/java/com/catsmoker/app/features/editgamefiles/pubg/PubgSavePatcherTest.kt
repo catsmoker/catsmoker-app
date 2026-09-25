@@ -10,7 +10,7 @@ import java.io.File
 /**
  * The PUBG `Active.sav` byte patcher, against a fixture built to the GVAS layout the patcher's
  * KDoc documents — the layout verified by hex dump across every save bundled by the two
- * closed-source reference tools (`referance/pubg tools closed source referance/`) and by this
+ * closed-source reference tools (`reference/pubg-closed-source-tools/`) and by this
  * app's own `assets/PUBG/` blobs.
  *
  * The fixture exercises more than the happy path on purpose: a Bool property (whose value sits
@@ -31,7 +31,7 @@ class PubgSavePatcherTest {
     }
 
     /** The bundled MaxFPS save — tq.tech.Fps's own 120fps unlock save (7777 bytes), byte-identical
-     *  to `referance/New folder/active-sav/{1,2,5}/Active.sav`. */
+     *  to `reference/pubg-save-tools/reference-saves/{1,2,5}/Active.sav`. */
     private fun bundledMaxFps(): ByteArray {
         val file = File("src/main/assets/PUBG/MaxFPS/Active.sav")
         assumeTrue("bundled PUBG save not found at ${file.absolutePath}", file.isFile)

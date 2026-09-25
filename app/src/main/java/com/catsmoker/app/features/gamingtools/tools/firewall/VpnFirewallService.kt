@@ -1,6 +1,5 @@
 package com.catsmoker.app.features.gamingtools.tools.firewall
 
-import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
 import android.content.Intent
@@ -8,6 +7,7 @@ import android.net.VpnService
 import android.os.ParcelFileDescriptor
 import androidx.core.app.NotificationCompat
 import com.catsmoker.app.R
+import com.catsmoker.app.shared.util.CatsmokerNotifications
 import com.catsmoker.app.system.MainActivity
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
@@ -67,6 +67,7 @@ class VpnFirewallService : VpnService() {
         }
 
         startForeground(NOTIF_ID, buildNotification(getString(R.string.gt_svc_starting)))
+        CatsmokerNotifications.attachOwner(this, "VpnFirewall")
 
         val builder = Builder()
             .setSession(getString(R.string.gt_svc_vpn_session))
@@ -141,6 +142,7 @@ class VpnFirewallService : VpnService() {
     }
 
     override fun onDestroy() {
+        CatsmokerNotifications.detachOwner(this, "VpnFirewall")
         teardown()
         super.onDestroy()
     }
@@ -151,8 +153,9 @@ class VpnFirewallService : VpnService() {
 
     private fun createNotificationChannel() {
         val nm = getSystemService(NotificationManager::class.java) ?: return
+        CatsmokerNotifications.ensureGroup(nm)
         nm.createNotificationChannel(
-            NotificationChannel(CHANNEL_ID, getString(R.string.gt_svc_vpn_channel), NotificationManager.IMPORTANCE_LOW)
+            CatsmokerNotifications.channel(CHANNEL_ID, getString(R.string.gt_svc_vpn_channel), NotificationManager.IMPORTANCE_LOW)
         )
     }
 
@@ -168,6 +171,7 @@ class VpnFirewallService : VpnService() {
             .setStyle(NotificationCompat.BigTextStyle().bigText(text))
             .setSmallIcon(R.drawable.ic_stat_name)
             .setOngoing(true)
+            .setGroup(CatsmokerNotifications.GROUP_KEY)
             .setContentIntent(mainActivityIntent())
             // The same stop path the in-app switch uses ([VpnFirewall.stop] sends this action), so
             // either exit tears the tun down through teardown() and reports onStopped().

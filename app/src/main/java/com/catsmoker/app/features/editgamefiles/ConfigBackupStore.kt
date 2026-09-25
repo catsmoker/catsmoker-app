@@ -11,9 +11,9 @@ import java.util.Locale
  * storage so restoring never needs a second privileged write to make the backup in the first
  * place.
  *
- * From the references' safety-backup systems — `referance/gamingtools/hsrgraphicdroid-main`
+ * From the references' safety-backup systems — `reference/gamingtools/hsrgraphicdroid-main`
  * ("Safety Backup System", snapshot before every write) and
- * `referance/gamingtools/WuWa-Config-Android-main/config/BackupStore.kt` (timestamped files,
+ * `reference/gamingtools/WuWa-Config-Android-main/config/BackupStore.kt` (timestamped files,
  * newest-first listing, a retention cap). Both agree on the part that matters here: the backup
  * is taken *before* the overwrite, from the bytes the device actually had — not from the asset
  * this app was about to push, which would make "restore" a second copy of the thing being

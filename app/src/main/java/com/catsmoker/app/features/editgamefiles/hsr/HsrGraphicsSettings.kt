@@ -21,7 +21,7 @@ import java.net.URLEncoder
  * reset a value the user set in-game. Their editor surfaces are a separate backlog item; the
  * codec must not wait for the UI.
  *
- * Cross-checked against `referance/gamingtools/hsrgraphicdroid-main/data/GraphicsSettings.kt`
+ * Cross-checked against `reference/gamingtools/hsrgraphicdroid-main/data/GraphicsSettings.kt`
  * (`com.ireddragonicy.hsrgraphicdroid.data.GraphicsSettings`): same JSON keys, same
  * URL-encoding wrapper, same defaults, same value ranges — including the quirks that matter,
  * like [sfxQuality] using a shifted scale (0 is invalid; 1–5 are the real steps) and sibling

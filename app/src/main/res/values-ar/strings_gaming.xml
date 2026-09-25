@@ -13,6 +13,8 @@
     <string name="gt_dialog_res_title">تحقق من هذه الدقة</string>
     <string name="gt_dialog_apply">تطبيق</string>
     <string name="gt_picker_add_app">إضافة تطبيق</string>
+    <string name="gt_picker_add_game">إضافة لعبة</string>
+    <string name="gt_picker_add_freeze">إضافة هدف للتجميد</string>
     <string name="gt_picker_search">ابحث في التطبيقات</string>
     <string name="gt_picker_loading">جارٍ تحميل التطبيقات…</string>
     <string name="gt_picker_none">لم يتم العثور على تطبيقات</string>
@@ -21,31 +23,38 @@
     <!-- Game library -->
     <string name="gt_library_launch">تشغيل</string>
     <string name="gt_library_remove">إزالة</string>
+    <string name="gt_library_optimize">ترجمة مسبقة</string>
+    <string name="gt_library_edit_files">تعديل ملفات اللعبة</string>
+    <!-- Pre-launch single-game compile outcomes (%1$s = package, %2$s = device detail). -->
+    <string name="gt_game_opt_done">تم تجميع %1$s</string>
+    <string name="gt_game_opt_done_detail">تم تجميع %1$s: %2$s</string>
+    <string name="gt_game_opt_skip">%1$s لا يحتاج تجميعًا</string>
+    <string name="gt_game_opt_fail">تعذّر تجميع %1$s: %2$s</string>
 
     <!-- Tool cards -->
-    <string name="gt_tool_sound_title">صوت أعلى</string>
+    <string name="gt_tool_sound_title">تعزيز الصوت</string>
     <string name="gt_tool_sound_sub">ارفع الصوت فوق الحد.</string>
-    <string name="gt_tool_booster_title">مسرّع التطبيقات</string>
-    <string name="gt_tool_booster_sub">جهّز التطبيقات لتقطيع أقل في الألعاب.</string>
+    <string name="gt_tool_booster_title">تحسين ترجمة التطبيقات</string>
+    <string name="gt_tool_booster_sub">ترجمة مسبقة للتطبيقات — لعبة واحدة أو الكل — لتقطيع أقل.</string>
     <string name="gt_tool_booster_need">يتطلب روت أو Shizuku. لا يسمح أندرويد لتطبيق عادي بفعل هذا. Shizuku تطبيق مساعد مجاني يمنح هذا التطبيق تلك القدرة بدون روت.</string>
     <string name="gt_tool_devopts_title">خيارات المطور</string>
     <string name="gt_tool_devopts_sub">تسريع القوائم وتطبيقات الخلفية.</string>
-    <string name="gt_tool_screen_title">حجم الشاشة</string>
-    <string name="gt_tool_screen_sub">اجعل الشاشة أسهل في الرسم.</string>
-    <string name="gt_tool_fps_title">مراقب FPS</string>
+    <string name="gt_tool_screen_title">الدقة</string>
+    <string name="gt_tool_screen_sub">اخفض دقة الرسم لمزيد من الإطارات.</string>
+    <string name="gt_tool_fps_title">تراكب FPS</string>
     <string name="gt_tool_fps_sub">اعرض سلاسة تشغيل لعبتك.</string>
     <string name="gt_tool_crosshair_title">علامة التصويب</string>
     <string name="gt_tool_crosshair_sub">ضع علامة تصويب في المنتصف.</string>
     <string name="gt_tool_dnd_title">عدم الإزعاج</string>
     <string name="gt_tool_dnd_sub">اكتم الإشعارات أثناء اللعب.</string>
-    <string name="gt_tool_net_title">منع التطبيقات الأخرى من استخدام البيانات</string>
-    <string name="gt_tool_net_sub">أبقِ التطبيقات الأخرى بعيدة عن الإنترنت.</string>
-    <string name="gt_tool_dns_title">بحث أسرع عن العناوين</string>
-    <string name="gt_tool_dns_sub">اختر دفتر هاتف أسرع وأكثر خصوصية.</string>
+    <string name="gt_tool_net_title">بيانات الخلفية</string>
+    <string name="gt_tool_net_sub">حظر VPN (واي فاي + بيانات) أو توفير البيانات (بيانات فقط).</string>
+    <string name="gt_tool_dns_title">DNS خاص</string>
+    <string name="gt_tool_dns_sub">اختر موفر DNS الخاص.</string>
     <string name="gt_tool_afs_title">إيقاف تلقائي قسري</string>
-    <string name="gt_tool_afs_sub">أغلق التطبيقات التي تغادرها، باستثناء ما اخترته.</string>
+    <string name="gt_tool_afs_sub">يوقف التطبيقات التي تغادرها قسرًا (إنهاء كامل)، باستثناء قائمتك.</string>
     <string name="gt_tool_afs_need">يتطلب روت أو Shizuku. لا يسمح أندرويد لتطبيق عادي بإغلاق التطبيقات الأخرى. Shizuku تطبيق مساعد مجاني يمنح هذا التطبيق تلك القدرة بدون روت.</string>
-    <string name="gt_tool_cleaner_title">المنظف</string>
+    <string name="gt_tool_cleaner_title">منظف التخزين</string>
     <string name="gt_tool_cleaner_sub">وفّر مساحة بحذف البقايا.</string>
 
     <!-- Shared explainer titles -->
@@ -260,9 +269,6 @@
     <string name="gt_dev_close_2">الثمن: التطبيقات التي تعود إليها تبدأ من البداية، وتفقد ما كان على الشاشة. جيد قبل لعبة كبيرة، ويستحق الإيقاف بعدها.</string>
     <string name="gt_dev_on">مشغّل</string>
     <string name="gt_dev_off">متوقف</string>
-    <string name="gt_dev_show_rr">إظهار معدل التحديث</string>
-    <string name="gt_dev_show_rr_1">يضع رقماً صغيراً في زاوية شاشتك يعرض عدد مرات إعادة رسم الشاشة في الثانية. مفيد للتحقق من أن هاتفك يعمل فعلاً بأقصى سرعة.</string>
-    <string name="gt_dev_show_rr_2">يحرس أندرويد هذا بشدة، والإصدارات الأحدث تحرسه أكثر: من أندرويد 14 لا يمر إلا الروت، لأن Shizuku ينفذ الأوامر بصفة \"shell\" ولم يعد مسموحاً له بالاقتراب منه. كلما تعذر على هذا التطبيق فعله، يفتح الزر أدناه شاشة أندرويد نفسها، حيث يعمل دائماً — ابحث عن \"إظهار معدل التحديث\".</string>
     <string name="gt_dev_peak">استخدام أسرع سرعة شاشة دائماً</string>
     <string name="gt_dev_peak_1">تبطئ الهواتف الشاشة لتوفير البطارية عندما لا يتحرك الكثير. هذا يمنع ذلك، فتعمل الشاشة دائماً بأقصى سرعة وتبدو أكثر سلاسة.</string>
     <string name="gt_dev_peak_2">الثمن: يستهلك بطارية أكثر أثناء تشغيله. إيقافه يعيد ما كان عليه هاتفك من قبل.</string>
@@ -276,18 +282,6 @@
     <string name="gt_dev_open_developer">افتح إعدادات المطور في أندرويد</string>
 
     <!-- Developer options engine facts -->
-    <string name="gt_gdo_live_at">الشاشة تعمل الآن بسرعة %1$s</string>
-    <string name="gt_gdo_live_unknown">لم يبلغ هذا الجهاز عن معدل التحديث الحالي</string>
-    <string name="gt_gdo_no_priv">لا يستطيع هذا التطبيق تشغيله بنفسه. انقر الزر لتشغيله في إعدادات أندرويد نفسها.</string>
-    <string name="gt_gdo_confirmed">%1$s · أكّد أندرويد أن هذه هي الحالة الحقيقية</string>
-    <string name="gt_gdo_detail_join">%1$s · %2$s</string>
-    <string name="gt_gdo_refused_detail">%1$s %2$s</string>
-    <string name="gt_gdo_src_refused">رفض هاتفك المحاولة الأخيرة</string>
-    <string name="gt_gdo_src_recorded">معروض كما ضبطته آخر مرة — لا يمكن سؤال أندرويد %1$s عنه</string>
-    <string name="gt_gdo_src_boot">معروض من طريقة بدء تشغيل هاتفك — لا يمكن سؤال أندرويد %1$s عنه</string>
-    <string name="gt_gdo_src_fresh">معروض كمتوقف حتى تستخدم المفتاح — يبدأ دائماً متوقفاً بعد إعادة التشغيل، ولا يمكن سؤال أندرويد %1$s عنه</string>
-    <string name="gt_gdo_advice_root">ما زالت شاشة إعدادات هاتفك نفسها تستطيع فعله.</string>
-    <string name="gt_gdo_advice_shell">ينفذ Shizuku الأوامر بصفة \"shell\"، وهو ما لن تسمح له إصدارات أندرويد الأحدث بالاقتراب من هذا الجزء. الروت أو شاشة إعدادات أندرويد نفسها ما زالا يستطيعان.</string>
     <string name="gt_gdo_single_speed">شاشتك لها سرعة واحدة فقط، فلا يوجد ما هو أسرع للتبديل إليه.</string>
     <string name="gt_gdo_runs_at">شاشتك تعمل بسرعة %1$s</string>
     <string name="gt_gdo_need_sys">يتطلب روت أو Shizuku، أو إذن تغيير إعدادات النظام.</string>
@@ -320,6 +314,8 @@
     <string name="gt_dns_ping_1">لا، ولا شيء يغيّر هذا يستطيع. البينغ هو مدة رسائل لعبتك بعد اتصالها فعلاً، ودفتر الهاتف لا يُستخدم بعد ذلك.</string>
     <string name="gt_dns_ping_2">ما يجعله أسرع هو الانتظار *قبل* اتصال شيء ما — بدء لعبة أو العثور على مباراة أو تحميل صفحة.</string>
     <string name="gt_dns_ping_3">نسخة أقدم من هذا التطبيق وعدت ببينغ أقل هنا ولم تغير شيئاً فعلاً. هذه تقول ما تفعله حقاً.</string>
+    <string name="gt_dns_ping_measure">قياس سرعة المحللات</string>
+    <string name="gt_dns_ping_none">لا رد</string>
     <string name="gt_dns_note_cloudflare">عادة الأسرع. لا يحظر شيئاً.</string>
     <string name="gt_dns_note_google">يعمل جيداً في كل مكان تقريباً. لا يحظر شيئاً.</string>
     <string name="gt_dns_note_quad9">يحظر المواقع المعروفة بخطورتها.</string>
@@ -365,6 +361,17 @@
     <string name="gt_booster_why_2">واحد يعيد فقط عملاً يقوم به هاتفك بنفسه كل ليلة أثناء نومك.</string>
     <string name="gt_booster_why_3">الآخر يترجم أيضاً أجزاء من التطبيق لا تعمل أبداً، وهو ما استغرق وقتاً أطول ومساحة أكبر بكثير بلا فائدة. لذا بقي المفيد وحده.</string>
     <string name="gt_booster_history">السجل</string>
+    <string name="gt_booster_scope_title">النطاق</string>
+    <string name="gt_booster_scope_single">هذه اللعبة</string>
+    <string name="gt_booster_scope_all">الكل</string>
+    <string name="gt_booster_scope_hint_single">ترجمة مسبقة للعبة واحدة (speed-profile).</string>
+    <string name="gt_booster_scope_hint_all">ترجمة مسبقة لجميع التطبيقات (speed). تستغرق دقائق.</string>
+    <string name="gt_booster_precompile">ترجمة مسبقة</string>
+    <string name="gt_booster_pick_game">اختر لعبة</string>
+    <string name="gt_booster_no_games_scope">أضف لعبة إلى مكتبتك أولًا لترجمة لعبة واحدة فقط.</string>
+    <string name="gt_managed_by_gaming_mode">يتحكم به وضع الألعاب أثناء تفعيله.</string>
+    <string name="gt_graphics_layers">ثلاث طبقات متراكمة: دقة النظام (هذه البطاقة) تغيّر شاشة أندرويد؛ مقياس الرسم (بطاقة وضع الألعاب) يغيّر عرض كل لعبة؛ مشغّل الرسوميات (خيارات المطور) يغيّر مسار العرض. كل واحدة مستقلة — خفض أي منها خيارك أنت، وليس حدًا تلقائيًا أبدًا.</string>
+    <string name="gt_graphics_layers_title">كيف تتراكب إعدادات الرسوميات</string>
     <string name="gt_booster_schedule">شغّل هذا حسب جدول</string>
     <string name="gt_booster_next">مشغّل — التشغيل التالي حوالي %1$s</string>
     <string name="gt_booster_next_unknown">مشغّل — لم يقل أندرويد متى التشغيل التالي</string>
@@ -405,7 +412,7 @@
     <string name="gt_gm_label_dnd">عدم الإزعاج</string>
     <string name="gt_gm_label_notif">كنس الإشعارات</string>
     <string name="gt_gm_label_net">بيانات خلفية الألعاب</string>
-    <string name="gt_gm_label_cap">حد إطارات اللعبة</string>
+    <string name="gt_gm_label_cap">الحد الأقصى لإطارات اللعبة</string>
     <string name="gt_gm_label_discard">تجاهل الأنشطة</string>
     <string name="gt_gm_label_limit">حد العمليات</string>
     <string name="gt_gm_label_other_data">بيانات خلفية التطبيقات الأخرى</string>
@@ -429,6 +436,16 @@
     <string name="gt_gm_net_no">غير مدرجة في القائمة البيضاء</string>
     <string name="gt_gm_cap_raised">رُفع إلى ذروة اللوحة</string>
     <string name="gt_gm_cap_no">لم يُرفع</string>
+    <string name="gt_downscale_title">مقياس الرسم</string>
+    <string name="gt_downscale_sub">يعرض اللعبة بدقة أقل من الكاملة لمزيد من الإطارات. يتطلب إعادة تشغيل اللعبة.</string>
+    <string name="gt_downscale_off">إيقاف</string>
+    <string name="gt_downscale_off_set">مقياس الرسم متوقف — الدقة الكاملة</string>
+    <string name="gt_downscale_set">مقياس الرسم %1$s للعبة القادمة</string>
+    <string name="gt_pointer_title">سرعة اللمس</string>
+    <string name="gt_pointer_sub">سرعة المؤشر للعبة القادمة. السالب أبطأ والموجب أسرع. الافتراضي يعني دون تغيير.</string>
+    <string name="gt_pointer_stock">افتراضي</string>
+    <string name="gt_pointer_stock_set">سرعة اللمس افتراضية — الإعداد دون تغيير</string>
+    <string name="gt_pointer_set">سرعة اللمس %1$s للعبة القادمة</string>
     <string name="gt_gm_discard_on">مشغّل</string>
     <string name="gt_gm_limit">عملية مخزنة واحدة</string>
     <string name="gt_gm_left_as_set">تُرك كما ضبطته</string>
@@ -436,8 +453,8 @@
     <string name="gt_gm_not_blocked">غير محظور</string>
 
     <!-- RAM card -->
-    <string name="gt_ram_title">تعديلات النظام</string>
-    <string name="gt_ram_free">تحرير الذاكرة</string>
+    <string name="gt_ram_title">الذاكرة</string>
+    <string name="gt_ram_free">استعادة الذاكرة</string>
     <string name="gt_ram_what_1">يطلب من هاتفك إغلاق التطبيقات الجالسة في الخلفية دون فعل شيء، ما يحرر ذاكرة للعبتك.</string>
     <string name="gt_ram_what_2">يخبرك كم حرر فعلاً، مقاساً قبل وبعد — وليس تخميناً.</string>
     <string name="gt_ram_what_3">لا يُغلق شيء مفتوح لديك، ولا يُحذف شيء.</string>
@@ -470,8 +487,8 @@
     <string name="gt_vm_keep_will">سيُترك اعتباراً من الفحص التالي</string>
     <string name="gt_vm_pattern_bad">هذا ليس نمطاً صالحاً — انظر الأمثلة</string>
     <string name="gt_vm_pattern_will">سيُنظف اعتباراً من الفحص التالي</string>
-    <string name="gt_vm_ram_unknown">تعزيز الذاكرة: توقف %1$d من التطبيقات — أرقام الذاكرة غير متوفرة على هذا الجهاز</string>
-    <string name="gt_vm_ram_done">تعزيز الذاكرة: تم توفير %1$d MB (%2$d من التطبيقات متوقفة)</string>
+    <string name="gt_vm_ram_unknown">استعادة الذاكرة: تم إيقاف %1$d من التطبيقات — أرقام الذاكرة غير متوفرة على هذا الجهاز</string>
+    <string name="gt_vm_ram_done">استعادة الذاكرة: تم تحرير %1$d MB (%2$d من التطبيقات الموقوفة)</string>
     <string name="gt_vm_sched_on">الفحص المجدول مشغّل — كل %1$d ساعة تقريباً، عندما لا تكون البطارية منخفضة.</string>
     <string name="gt_vm_sched_on_unknown">الفحص المجدول مشغّل، لكن WorkManager لم يقل متى يعمل.</string>
     <string name="gt_vm_sched_off">الفحص المجدول متوقف.</string>
@@ -532,6 +549,7 @@
     <string name="gt_eng_un_dnd_perm">كتم الإشعارات — لم يُسمح لهذا التطبيق بفعل ذلك بعد</string>
     <string name="gt_eng_un_refresh">إبقاء الشاشة بأقصى سرعة — هاتفك يتجاهل هذا الإعداد</string>
     <string name="gt_eng_un_touch">لمس أسرع — هاتفك لا يملك هذا الإعداد</string>
+    <string name="gt_eng_un_pointer">سرعة اللمس %1$s — هاتفك رفضها</string>
     <string name="gt_eng_un_fixed">وضع السرعة الثابتة — رفضه هاتفك</string>
     <string name="gt_eng_un_gpu">وضع أداء GPU من Qualcomm — رفض هاتفك التبديل</string>
     <string name="gt_eng_un_qti">تلميح FPS للألعاب من Qualcomm — رفض هاتفك التبديل</string>
@@ -604,4 +622,60 @@
     <string name="gt_svc_afs_channel">إيقاف تلقائي قسري</string>
     <string name="gt_svc_booster_channel">مسرّع التطبيقات</string>
     <string name="gt_dns_unsupported_generic">هاتفك لا يحتوي على هذا الإعداد</string>
+    <!-- Per-game graphics driver (ANGLE): same table Developer Options edits. -->
+    <string name="gt_angle_title">مشغّل الرسوميات</string>
+    <string name="gt_angle_1">يختار مشغّل الرسوميات الذي تستخدمه اللعبة: ANGLE (طبقة GLES من غوغل مبنية على Vulkan) أو مشغّل الهاتف نفسه. بعض الألعاب تعمل بسلاسة أكبر مع أحدهما.</string>
+    <string name="gt_angle_2">يُطبق فورًا ويبقى بعد إعادة التشغيل. الافتراضي يزيل اللعبة من القائمة.</string>
+    <string name="gt_angle_need">يتطلب روت أو Shizuku للتغيير. يبقى الخيار الحالي ظاهرًا.</string>
+    <string name="gt_angle_pick">اختر لعبة</string>
+    <string name="gt_angle_angle">ANGLE</string>
+    <string name="gt_angle_native">الأصلي</string>
+    <string name="gt_angle_default">الافتراضي</string>
+    <string name="gt_angle_now">الحالي: %1$s</string>
+    <string name="gt_angle_none">لا خيار محفوظ</string>
+    <string name="gt_angle_set">مشغّل الرسوميات لـ %1$s: %2$s</string>
+    <string name="gt_angle_no">تعذّر ضبط المشغّل: %1$s</string>
+    <string name="gt_angle_no_reason">الجهاز رفض</string>
+    <!-- Panel refresh readout: what the display reports about itself. -->
+    <string name="gt_panel_title">تحديث الشاشة</string>
+    <string name="gt_panel_rates">المعدلات: %1$s هرتز</string>
+    <string name="gt_panel_seamless">تبديل سلس من الحالي: %1$s هرتز</string>
+    <string name="gt_panel_seamless_none">لا تبديلات سلسة</string>
+    <string name="gt_panel_seamless_unknown">التبديلات السلسة غير معروفة في نسخة أندرويد هذه</string>
+    <string name="gt_panel_arr">التحديث التكيفي: %1$s</string>
+    <string name="gt_panel_yes">نعم</string>
+    <string name="gt_panel_no">لا</string>
+    <string name="gt_panel_unknown">غير معروف</string>
+    <string name="gt_panel_unreadable">أوضاع الشاشة غير مقروءة</string>
+    <!-- Filesystem trim: free blocks reported back to flash so writes stay fast. -->
+    <string name="gt_trim_title">تقليم التخزين</string>
+    <string name="gt_trim_need">يتطلب روت — لا يمكن تقليم التخزين دون صلاحيات</string>
+    <string name="gt_trim_done">تم تقليم %1$s</string>
+    <string name="gt_trim_some">تم تقليم %1$s — رفض %2$d موضعًا</string>
+    <string name="gt_trim_no">لم يبلغ التقليم عن شيء: %1$s</string>
+    <string name="gt_trim_no_reason">الجهاز لم يقل شيئًا</string>
+    <!-- Extra suspend list: user-picked packages frozen at Gaming Mode activation. -->
+    <string name="gt_suspend_title">تطبيقات مجمدة إضافية</string>
+    <string name="gt_suspend_sub">اختياراتك، تُجمد مع المسح التلقائي</string>
+    <string name="gt_suspend_what_1">التطبيقات التي تختارها هنا تُجمّد عند بدء وضع الألعاب، إضافة إلى المسح التلقائي — لتطبيقات الخلفية التي يحميها المسح أو لا يراها.</string>
+    <string name="gt_suspend_what_2">كل ما جُمّد يُوقظ عند إيقاف وضع الألعاب، عبر المسار المؤكد نفسه. اللعبة النشطة وهذا التطبيق نفسه لا يُجمّدان أبدًا مهما اخترت.</string>
+    <string name="gt_suspend_none">لا تطبيقات إضافية — المسح التلقائي فقط</string>
+    <string name="gt_suspend_some">المختار: %1$d</string>
+    <string name="gt_suspend_add">أضف تطبيقًا</string>
+    <string name="gt_suspend_remove">إزالة</string>
+    <!-- Auto game session: watch the foreground app, start Gaming Mode for library games. -->
+    <string name="gt_session_title">وضع الألعاب التلقائي</string>
+    <string name="gt_session_sub">يبدأ وضع الألعاب عند فتح لعبة</string>
+    <string name="gt_session_what_1">يراقب التطبيق الأمامي ويبدأ وضع الألعاب لحظة فتح لعبة من مكتبتك، ويوقفه عند مغادرة اللعبة.</string>
+    <string name="gt_session_what_2">يتطلب إذن الوصول إلى الاستخدام (لرؤية التطبيق الأمامي) وروت أو Shizuku. وضع الألعاب الذي تبدأه بيدك يفوز دائمًا: المراقبة لا تسجله ولا تعكسه أبدًا.</string>
+    <string name="gt_session_watching">يراقب — لا لعبة في المقدمة</string>
+    <string name="gt_session_active">يعمل — تلقائي: %1$s</string>
+    <string name="gt_svc_session_title">جلسة لعب تلقائية</string>
+    <string name="gt_svc_session_channel">جلسة لعب تلقائية</string>
+    <string name="gt_svc_session_off">المراقبة متوقفة — لا شيء يُراقب</string>
+    <string name="gt_svc_session_watching">يراقب ألعاب المكتبة</string>
+    <string name="gt_svc_session_active">بدأ وضع الألعاب تلقائيًا لـ %1$s</string>
+    <string name="gt_svc_session_manual">وضع الألعاب اليدوي نشط — المراقبة متوقفة</string>
+    <string name="gt_svc_session_no_usage">يتطلب إذن الوصول إلى الاستخدام — انقر للمنح، لا شيء يُراقب</string>
+    <string name="gt_svc_session_no_priv">يتطلب روت أو Shizuku — أندرويد يرفض تغييرات الألعاب، لا شيء يُراقب</string>
 </resources>

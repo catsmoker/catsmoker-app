@@ -10,7 +10,7 @@ import java.net.URL
  * caller. The pure half lives in [WuwaGacha] (URL parsing, response decoding, pool
  * aggregation, pity math) so it stays JVM-testable; this object only moves bytes.
  *
- * Ported from `referance/gamingtools/WuWa-Config-Android-main/config/GachaApi.kt`'s
+ * Ported from `reference/gamingtools/WuWa-Config-Android-main/config/GachaApi.kt`'s
  * `postRequest`/`getEndpoint` (read in full before this file was written): the 15 s
  * connect/read timeouts, `Content-Type: application/json`, the per-pool body keys
  * (`playerId`/`recordId`/`cardPoolId`/`cardPoolType`/`serverId`/`languageCode` — note

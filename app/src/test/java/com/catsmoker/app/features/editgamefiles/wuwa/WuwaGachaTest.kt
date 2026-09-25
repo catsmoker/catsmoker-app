@@ -7,7 +7,7 @@ import org.junit.Test
 
 /**
  * Pins the Convene (gacha) pipeline's pure half against
- * `referance/gamingtools/WuWa-Config-Android-main/config/GachaApi.kt` and
+ * `reference/gamingtools/WuWa-Config-Android-main/config/GachaApi.kt` and
  * `model/GachaRecord.kt` (both read in full before the port): the `#/record?` fragment rule
  * with the reference's own ten parseUrl cases, the verbatim pool table, response decoding
  * (Gson's Double numbers included), the all-pools-rejected-must-not-masquerade-empty rule,

@@ -25,7 +25,11 @@ import com.catsmoker.app.shared.ui.components.CatsmokerButton
 fun RamBoostCard(
     isBoostingRam: Boolean,
     ramResult: String?,
-    onBoostRam: () -> Unit
+    onBoostRam: () -> Unit,
+    isTrimmingStorage: Boolean,
+    trimResult: String?,
+    canTrim: Boolean,
+    onTrimStorage: () -> Unit
 ) {
     SectionCard {
         Column(modifier = Modifier.fillMaxWidth()) {
@@ -57,6 +61,40 @@ fun RamBoostCard(
                 Spacer(modifier = Modifier.height(12.dp))
                 Text(
                     text = ramResult,
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f),
+                    fontSize = 12.sp
+                )
+            }
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            // Filesystem trim: tells flash which blocks are free again so writes stay fast.
+            // Needs root (the shell UID cannot FITRIM on most builds); without it the button
+            // is disabled with the reason rather than running a trim that cannot work.
+            CatsmokerButton(
+                onClick = onTrimStorage,
+                modifier = Modifier.fillMaxWidth(),
+                enabled = !isTrimmingStorage && canTrim,
+                shape = RoundedCornerShape(12.dp)
+            ) {
+                if (isTrimmingStorage) {
+                    CircularProgressIndicator(modifier = Modifier.size(16.dp), strokeWidth = 2.dp)
+                } else {
+                    Text(stringResource(R.string.gt_trim_title))
+                }
+            }
+            if (!canTrim) {
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(
+                    text = stringResource(R.string.gt_trim_need),
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
+                    fontSize = 11.sp
+                )
+            }
+            if (trimResult != null) {
+                Spacer(modifier = Modifier.height(12.dp))
+                Text(
+                    text = trimResult,
                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f),
                     fontSize = 12.sp
                 )

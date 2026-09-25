@@ -10,6 +10,10 @@
     <string name="gf_working">WORKING…</string>
     <string name="gf_apply_to_game">APPLY TO GAME</string>
     <string name="gf_restore_last_backup">RESTORE LAST BACKUP</string>
+    <!-- Editor undo/redo: buttons plus the dirty line. -->
+    <string name="gf_undo">Undo</string>
+    <string name="gf_redo">Redo</string>
+    <string name="gf_unsaved">Unsaved changes</string>
     <string name="gf_last_apply">Last apply: %1$s</string>
     <string name="gf_frame_rate">FRAME RATE</string>
     <string name="gf_quality">QUALITY</string>
@@ -291,6 +295,15 @@
     <string name="gf_diag_forbidden">Forbidden cvars active: %1$d</string>
     <string name="gf_diag_profile">Device profile: %1$s</string>
     <string name="gf_diag_cvars">Cvars the game set (%1$d):</string>
+    <!-- Battle record counted from the decrypted Client.log: counts, never judgments. -->
+    <string name="gf_battle_title">Battle record</string>
+    <string name="gf_battle_fights">Battles: %1$d · Deaths: %2$d · Staggers: %3$d</string>
+    <string name="gf_battle_move">Teleports: %1$d · Role changes: %2$d</string>
+    <string name="gf_battle_dodge">Dodges fwd/back/counter: %1$d/%2$d/%3$d</string>
+    <string name="gf_battle_echoes">Echoes: %1$d · Skills: %2$d · Transforms: %3$d · Stamina spent: %4$d</string>
+    <string name="gf_battle_month">Month cards: %1$d · Days left: %2$d</string>
+    <!-- Unscored chipset note beside the SmartBrain recommendation. -->
+    <string name="gf_chipset">Chipset: %1$s (%2$s)</string>
     <string name="gf_convene">CONVENE TRACKER</string>
     <string name="gf_wuwa_cached">cached · %1$d pulls</string>
     <string name="gf_wuwa_gacha_body">Reads the Convene History record URL out of the game\'s own log and queries every banner pool with it: pull totals, average pity, and where each character/weapon banner stands — 50/50 or Guaranteed, pulls since the last ★5, and the estimated pull to the next one. The URL only appears after opening Convene History in-game once, and the record id behind it expires quickly, so a fetch is fresher than the cache.</string>

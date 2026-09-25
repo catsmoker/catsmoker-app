@@ -7,7 +7,7 @@ import org.junit.Test
 
 /**
  * Pins the pure half of the community pack importer against the two pack shapes in
- * `referance/gamingtools/Mobile-WuWa-Config-main/Community Configs/` (all READMEs and inis
+ * `reference/gamingtools/Mobile-WuWa-Config-main/Community Configs/` (all READMEs and inis
  * read in full before this file was written): the root-only pack (Mythos: README + Engine.ini
  * at the root), the variant-folder pack (@Kodoupulse: root README, `No Vulkan/` and
  * `With Vulkan/` folders, an `Extra/` notes folder), and the forbidden-cvars gate the pack

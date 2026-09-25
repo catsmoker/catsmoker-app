@@ -12,7 +12,7 @@ import kotlin.math.roundToInt
  * blobs (touch-saturation doubles, analytics ids) and per-device state that must survive any
  * edit untouched.
  *
- * Cross-checked against `referance/file-engineering/
+ * Cross-checked against `reference/file-engineering/
  * Change-Grid-Autosport-Mobile-Graphics-All-Devices--main`, both halves read in full before
  * this file was written: its README (the manual transfer-edit-transfer-back workflow, the
  * exact value entries to edit, the device-tier recommendations) and its shipped `preferences`

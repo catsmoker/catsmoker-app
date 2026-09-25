@@ -25,7 +25,7 @@ import javax.inject.Singleton
  * write channels, and keeps the game's own tamper monitor in sync.
  *
  * Choreography is the house pattern from [com.catsmoker.app.features.editgamefiles.hsr.HsrGameManager]
- * crossed with `referance/gamingtools/WuWa-Config-Android-main/config/ConfigManager.kt` +
+ * crossed with `reference/gamingtools/WuWa-Config-Android-main/config/ConfigManager.kt` +
  * `config/HashMonitor.kt`, all read in full before this file was written:
  *
  *  - the game is force-stopped first (a running game rewrites its configs from memory on

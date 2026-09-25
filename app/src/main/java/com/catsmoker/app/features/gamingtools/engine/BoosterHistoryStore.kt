@@ -31,7 +31,7 @@ data class BoosterRun(
  * process death — the in-memory booster log does not.
  *
  * From the reference project's `OptimizationLogger`
- * (`referance/gamingtools/art`, `com.tony.appbooster.data.util.OptimizationLogger`), which
+ * (`reference/gamingtools/art`, `com.tony.appbooster.data.util.OptimizationLogger`), which
  * caps its structured entries at 100 "to prevent memory bloat". The cap here is smaller and
  * on disk as well: a recurring sweep would otherwise grow this file forever, and with the
  * oldest aged out, the same way the reference chose to age its oldest entries out.

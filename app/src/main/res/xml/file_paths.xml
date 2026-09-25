@@ -1,4 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <paths>
     <external-path name="external_files" path="." />
+    <!-- Log files shared from the Logs screen; pruned to the newest few on every share. -->
+    <cache-path name="shared_logs" path="shared/" />
 </paths>

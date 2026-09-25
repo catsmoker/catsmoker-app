@@ -2,7 +2,7 @@ package com.catsmoker.app.features.editgamefiles.pubg
 
 /**
  * Byte-level read and patch of PUBG Mobile's `Active.sav` — an UE4 GVAS binary — built from the
- * closed-source reference tools in `referance/pubg tools closed source referance/`, whose APKs
+ * closed-source reference tools in `reference/pubg-closed-source-tools/`, whose APKs
  * were unpacked and their bundled saves read byte-by-byte to establish the layout below.
  *
  * **The mechanism.** tq.tech.Fps's `assets/savedit.sh` (read in full) is the whole idea: dump the
@@ -187,7 +187,7 @@ object PubgSavePatcher {
     }
 
     /**
-     * FPS tiers, pinned by the open reference `referance/gamingtools/BattleGrounds_GFX-main`'s
+     * FPS tiers, pinned by the open reference `reference/gamingtools/BattleGrounds_GFX-main`'s
      * own tier assets — `app/src/main/assets/Active_60.sav` etc., each named for its tier and
      * carrying exactly these values for BattleFPS/LobbyFPS/FPSLevel:
      * 60 → 6/6/6, 90 → 7/7/6, 120 → 8/8/7.
@@ -232,7 +232,7 @@ object PubgSavePatcher {
 
     /**
      * Camera-view presets, pinned by tq.tech.Fps's own shipped saves: every phone-context save
-     * (its 120fps/bgm root profiles, `referance/New folder/active-sav/{1,2,5}`) carries
+     * (its 120fps/bgm root profiles, `reference/pubg-save-tools/reference-saves/{1,2,5}`) carries
      * `TpViewValue` 90 with `FpViewValue` 103, while its tablet-view save
      * (`active-sav/3`, byte-identical to this app's `assets/PUBG/TabletView` blob) carries
      * 110 with 103. The *unit* — FOV degrees, camera-distance scale, multiplier — is not

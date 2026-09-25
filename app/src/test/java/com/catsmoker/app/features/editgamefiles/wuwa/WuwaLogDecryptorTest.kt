@@ -8,8 +8,8 @@ import org.junit.Test
 
 /**
  * Pins the Client.log decryption against the two references it was ported from —
- * `referance/gamingtools/WuWa-Config-Android-main/config/LogParser.kt` and
- * `referance/gamingtools/Mobile-WuWa-Config-main/misc/Client Log Decryptor/For Developers/wuwa_ld.py`
+ * `reference/gamingtools/WuWa-Config-Android-main/config/LogParser.kt` and
+ * `reference/gamingtools/Mobile-WuWa-Config-main/misc/Client Log Decryptor/For Developers/wuwa_ld.py`
  * (both read in full before the port): the 3-byte magic, the parity-keyed XOR LUT and its
  * non-self-inverse mirror, the UTF-16 BOM handling, and the "plaintext is plaintext, never
  * reported as decrypted" distinction.

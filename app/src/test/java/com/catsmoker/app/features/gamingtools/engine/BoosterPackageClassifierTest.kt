@@ -6,7 +6,7 @@ import org.junit.Test
 
 /**
  * Pins the dexopt sweep's package classification against
- * `referance/gamingtools/art/.../data/util/PackageClassifier.kt` (read in full): the overlay/RRO
+ * `reference/gamingtools/art/.../data/util/PackageClassifier.kt` (read in full): the overlay/RRO
  * signals — name markers, install paths, the definitive `overlaytarget=` — and the shape of the
  * classification when no dump is available.
  */

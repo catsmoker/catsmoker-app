@@ -12,6 +12,7 @@ import androidx.core.content.edit
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.catsmoker.app.system.config.AppearanceStore
+import com.catsmoker.app.system.config.LocaleHelper
 import com.catsmoker.app.system.shell.ShellRunner
 import com.topjohnwu.superuser.Shell
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -55,9 +56,9 @@ class PermissionViewModel @Inject constructor(
         val bluetoothGranted: Boolean = false,
     )
 
-    /** One-shot UI actions the screen itself must perform (activity recreate for locale). */
+    /** One-shot UI actions the screen itself must perform (process restart for locale). */
     sealed interface UiEvent {
-        data object RecreateActivity : UiEvent
+        data object RestartApp : UiEvent
     }
 
     private val _uiState = MutableStateFlow(UiState())
@@ -69,11 +70,15 @@ class PermissionViewModel @Inject constructor(
     init {
         // Reopened from Settings after onboarding (`is_first_run` — what MainActivity gates
         // the start destination on — already false): skip both gates and land on the plain
-        // permission list. The flags are committed before navigation and the ViewModel
-        // survives the language recreate, so this holds.
-        if (!context.getSharedPreferences("app_prefs", Context.MODE_PRIVATE)
-                .getBoolean("is_first_run", true)) {
+        // permission list. The flags are committed before navigation.
+        // Resumed after a locale restart mid-onboarding (`appearance_chosen` committed):
+        // skip only the answered appearance step and continue at the agreement step —
+        // the language is already applied by the fresh process.
+        val prefs = context.getSharedPreferences("app_prefs", Context.MODE_PRIVATE)
+        if (!prefs.getBoolean("is_first_run", true)) {
             _uiState.update { it.copy(isAppearanceStep = false, isAgreementStep = false) }
+        } else if (AppearanceStore.isChosen(context)) {
+            _uiState.update { it.copy(isAppearanceStep = false) }
         }
         _uiState.update {
             it.copy(
@@ -105,8 +110,11 @@ class PermissionViewModel @Inject constructor(
 
     /**
      * Step one's Continue: commits theme + language, marks the gate answered and advances.
-     * The language flag is committed (and the recreate requested) before advancing, so a
-     * mid-restart process death cannot re-show this step or lose the picked language.
+     * When the language changed the process restarts instead of merely recreating the
+     * activity — otherwise every cached app-context string stays on the previous language.
+     * The gate flags are committed before the restart, so a mid-restart process death
+     * cannot re-show the answered appearance step or lose the picked language; init
+     * resumes at the agreement step on the fresh process.
      */
     fun onAppearanceContinue() {
         val state = _uiState.value
@@ -115,8 +123,8 @@ class PermissionViewModel @Inject constructor(
         AppearanceStore.setLanguage(context, state.languageTag)
         AppearanceStore.setChosen(context)
         _uiState.update { it.copy(isAppearanceStep = false) }
-        if (state.languageTag != previous) {
-            _events.tryEmit(UiEvent.RecreateActivity)
+        if (LocaleHelper.normalizeTag(state.languageTag) != LocaleHelper.normalizeTag(previous)) {
+            _events.tryEmit(UiEvent.RestartApp)
         }
     }
 

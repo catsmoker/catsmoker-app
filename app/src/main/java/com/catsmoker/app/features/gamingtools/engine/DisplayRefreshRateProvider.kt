@@ -2,6 +2,7 @@ package com.catsmoker.app.features.gamingtools.engine
 
 import android.content.Context
 import android.hardware.display.DisplayManager
+import android.os.Build
 import android.view.Display
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
@@ -64,6 +65,46 @@ class DisplayRefreshRateProvider @Inject constructor(
         val display = defaultDisplay() ?: return null
         runCatching { display.mode?.refreshRate }.getOrNull()?.takeIf { it > 0f }?.let { return it }
         return runCatching { display.refreshRate }.getOrNull()?.takeIf { it > 0f }
+    }
+
+    /**
+     * What the panel can do, in one read.
+     *
+     * @param ratesHz whole-Hz rates at the current resolution, highest first; empty when unreadable.
+     * @param seamlessHz whole-Hz rates reachable from the current mode without visual interruption;
+     *   null below API 31 (where the platform has no such list) or when unreadable — "unknown",
+     *   distinct from an empty list, which means "none reported".
+     * @param adaptive whether the display supports adaptive refresh rate; null under the same
+     *   unknown conditions as [seamlessHz].
+     */
+    data class PanelInfo(
+        val ratesHz: List<Int> = emptyList(),
+        val seamlessHz: List<Int>? = null,
+        val adaptive: Boolean? = null
+    )
+
+    /**
+     * Reads [PanelInfo] from the display service. Needs no privilege — plain display queries —
+     * and never throws: every call is guarded, because a diagnostics read is never worth the app.
+     */
+    fun panelInfo(): PanelInfo {
+        val display = defaultDisplay() ?: return PanelInfo()
+        val modes = runCatching { display.supportedModes?.toList() }.getOrNull().orEmpty()
+        val current = runCatching { display.mode }.getOrNull()
+        val sameResolution = modes.filter {
+            current == null ||
+                (it.physicalWidth == current.physicalWidth && it.physicalHeight == current.physicalHeight)
+        }
+        val pool = sameResolution.ifEmpty { modes }
+        val rates = PanelRefreshSummary.summarizeRates(pool.map { it.refreshRate })
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S) {
+            return PanelInfo(ratesHz = rates)
+        }
+        val seamless = runCatching {
+            current?.alternativeRefreshRates?.toList()
+        }.getOrNull()?.let { PanelRefreshSummary.summarizeRates(it) }
+        val adaptive = runCatching { display.hasArrSupport() }.getOrNull()
+        return PanelInfo(ratesHz = rates, seamlessHz = seamless, adaptive = adaptive)
     }
 
     private fun defaultDisplay(): Display? = runCatching {

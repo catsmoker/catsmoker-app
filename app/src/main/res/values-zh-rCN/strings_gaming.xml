@@ -13,6 +13,8 @@
     <string name="gt_dialog_res_title">检查此分辨率</string>
     <string name="gt_dialog_apply">应用</string>
     <string name="gt_picker_add_app">添加应用</string>
+    <string name="gt_picker_add_game">添加游戏</string>
+    <string name="gt_picker_add_freeze">添加冻结目标</string>
     <string name="gt_picker_search">搜索应用</string>
     <string name="gt_picker_loading">正在加载应用…</string>
     <string name="gt_picker_none">未找到应用</string>
@@ -21,31 +23,38 @@
     <!-- Game library -->
     <string name="gt_library_launch">启动</string>
     <string name="gt_library_remove">移除</string>
+    <string name="gt_library_optimize">优化</string>
+    <string name="gt_library_edit_files">编辑游戏文件</string>
+    <!-- Pre-launch single-game compile outcomes (%1$s = package, %2$s = device detail). -->
+    <string name="gt_game_opt_done">%1$s 已编译</string>
+    <string name="gt_game_opt_done_detail">%1$s 已编译：%2$s</string>
+    <string name="gt_game_opt_skip">%1$s 无需编译</string>
+    <string name="gt_game_opt_fail">%1$s 编译失败：%2$s</string>
 
     <!-- Tool cards -->
-    <string name="gt_tool_sound_title">更大音量</string>
+    <string name="gt_tool_sound_title">音量增强</string>
     <string name="gt_tool_sound_sub">把音量调到超过上限。</string>
     <string name="gt_tool_booster_title">应用加速器</string>
     <string name="gt_tool_booster_sub">提前准备好应用，让游戏更少卡顿。</string>
     <string name="gt_tool_booster_need">需要 Root 或 Shizuku。Android 不允许普通应用执行此操作。Shizuku 是一款免费辅助应用，无需 Root 即可为此应用提供该能力。</string>
     <string name="gt_tool_devopts_title">开发者选项</string>
     <string name="gt_tool_devopts_sub">加速菜单和后台应用。</string>
-    <string name="gt_tool_screen_title">屏幕尺寸</string>
-    <string name="gt_tool_screen_sub">让屏幕更易绘制。</string>
-    <string name="gt_tool_fps_title">FPS 监视器</string>
+    <string name="gt_tool_screen_title">分辨率</string>
+    <string name="gt_tool_screen_sub">降低绘制分辨率以获得更高 FPS。</string>
+    <string name="gt_tool_fps_title">FPS 悬浮窗</string>
     <string name="gt_tool_fps_sub">显示游戏运行有多流畅。</string>
     <string name="gt_tool_crosshair_title">准星</string>
     <string name="gt_tool_crosshair_sub">在中间放置瞄准标记。</string>
     <string name="gt_tool_dnd_title">勿扰模式</string>
     <string name="gt_tool_dnd_sub">玩游戏时静音通知。</string>
-    <string name="gt_tool_net_title">阻止其他应用使用数据</string>
-    <string name="gt_tool_net_sub">让其他应用远离互联网。</string>
-    <string name="gt_tool_dns_title">更快的地址查询</string>
-    <string name="gt_tool_dns_sub">选择更快、更私密的电话簿。</string>
+    <string name="gt_tool_net_title">后台数据</string>
+    <string name="gt_tool_net_sub">VPN 拦截（Wi-Fi + 移动数据）或流量节省程序（仅移动数据）。</string>
+    <string name="gt_tool_dns_title">私有 DNS</string>
+    <string name="gt_tool_dns_sub">选择私有 DNS 提供商。</string>
     <string name="gt_tool_afs_title">自动强制停止</string>
-    <string name="gt_tool_afs_sub">关闭你离开的应用，已选应用除外。</string>
+    <string name="gt_tool_afs_sub">强制停止你离开的应用（完全终止），保留列表中的应用除外。</string>
     <string name="gt_tool_afs_need">需要 Root 或 Shizuku。Android 不允许普通应用关闭其他应用。Shizuku 是一款免费辅助应用，无需 Root 即可为此应用提供该能力。</string>
-    <string name="gt_tool_cleaner_title">清理器</string>
+    <string name="gt_tool_cleaner_title">存储清理</string>
     <string name="gt_tool_cleaner_sub">删除残留以释放空间。</string>
 
     <!-- Shared explainer titles -->
@@ -260,9 +269,6 @@
     <string name="gt_dev_close_2">代价：返回的应用从头开始，屏幕上的内容会丢失。适合大游戏前开启，之后值得关闭。</string>
     <string name="gt_dev_on">已开启</string>
     <string name="gt_dev_off">已关闭</string>
-    <string name="gt_dev_show_rr">显示刷新率</string>
-    <string name="gt_dev_show_rr_1">在屏幕角落显示每秒重绘次数的小数字，便于确认手机是否真以最高速度运行。</string>
-    <string name="gt_dev_show_rr_2">Android 对此看管很严，新版本更严：Android 14 起只有 Root 能通过，因为 Shizuku 以“shell”身份执行命令，已不被允许靠近。只有本应用做不到时，下方按钮会打开 Android 自带界面，那里始终可用——查找“显示刷新率”。</string>
     <string name="gt_dev_peak">始终使用最高屏幕速度</string>
     <string name="gt_dev_peak_1">手机在空闲时会降低屏幕速度以省电。此项可阻止降速，让屏幕始终全速运行，感觉更流畅。</string>
     <string name="gt_dev_peak_2">代价：开启时更耗电。关闭后恢复手机原来的设置。</string>
@@ -276,18 +282,6 @@
     <string name="gt_dev_open_developer">打开 Android 开发者设置</string>
 
     <!-- Developer options engine facts -->
-    <string name="gt_gdo_live_at">显示屏当前运行于 %1$s</string>
-    <string name="gt_gdo_live_unknown">此设备未报告当前刷新率</string>
-    <string name="gt_gdo_no_priv">此应用无法自行开启。请点击按钮，在 Android 自带设置中开启。</string>
-    <string name="gt_gdo_confirmed">%1$s · Android 已确认为真实状态</string>
-    <string name="gt_gdo_detail_join">%1$s · %2$s</string>
-    <string name="gt_gdo_refused_detail">%1$s %2$s</string>
-    <string name="gt_gdo_src_refused">手机拒绝了上次尝试</string>
-    <string name="gt_gdo_src_recorded">按你上次设置显示 — Android %1$s 无法查询</string>
-    <string name="gt_gdo_src_boot">按手机启动方式显示 — Android %1$s 无法查询</string>
-    <string name="gt_gdo_src_fresh">在你使用开关前显示为关闭 — 重启后总是关闭，且 Android %1$s 无法查询</string>
-    <string name="gt_gdo_advice_root">手机自带的设置界面仍可操作。</string>
-    <string name="gt_gdo_advice_shell">Shizuku 以“shell”身份执行命令，新版 Android 不允许其靠近系统此部分。Root 或 Android 自带设置界面仍可操作。</string>
     <string name="gt_gdo_single_speed">屏幕只有一种速度，没有更快的可切换。</string>
     <string name="gt_gdo_runs_at">你的屏幕运行于 %1$s</string>
     <string name="gt_gdo_need_sys">需要 Root 或 Shizuku，或更改系统设置的权限。</string>
@@ -320,6 +314,8 @@
     <string name="gt_dns_ping_1">不会，任何改动此处的东西都不能。延迟是连接建立后游戏消息的耗时，那时已不再查电话簿。</string>
     <string name="gt_dns_ping_2">它加快的是连接*之前*的等待——启动游戏、匹配对局、加载页面。</string>
     <string name="gt_dns_ping_3">本应用旧版本曾在此承诺降低延迟，实际什么都没改。这个版本如实说明作用。</string>
+    <string name="gt_dns_ping_measure">测量解析器</string>
+    <string name="gt_dns_ping_none">无响应</string>
     <string name="gt_dns_note_cloudflare">通常最快，不拦截任何内容。</string>
     <string name="gt_dns_note_google">几乎各地都好用，不拦截任何内容。</string>
     <string name="gt_dns_note_quad9">拦截已知危险网站。</string>
@@ -365,6 +361,17 @@
     <string name="gt_booster_why_2">一个只是重复手机每晚睡着后自行完成的工作。</string>
     <string name="gt_booster_why_3">另一个还会翻译应用中永不运行的部分，耗时更久、占用更多空间却无收益，所以只留下有用的。</string>
     <string name="gt_booster_history">历史</string>
+    <string name="gt_booster_scope_title">范围</string>
+    <string name="gt_booster_scope_single">单个游戏</string>
+    <string name="gt_booster_scope_all">全部</string>
+    <string name="gt_booster_scope_hint_single">预编译单个游戏（speed-profile）。</string>
+    <string name="gt_booster_scope_hint_all">预编译全部应用（speed），需要几分钟。</string>
+    <string name="gt_booster_precompile">预编译</string>
+    <string name="gt_booster_pick_game">选择游戏</string>
+    <string name="gt_booster_no_games_scope">先将游戏添加到库中，才能只预编译一个。</string>
+    <string name="gt_managed_by_gaming_mode">游戏模式启用期间由其控制。</string>
+    <string name="gt_graphics_layers">三个叠加的层级：系统分辨率（本卡）改变 Android 显示；游戏渲染比例（游戏模式卡）改变每个游戏的渲染；图形驱动（开发者选项）改变渲染路径。每一层都独立——降低某一层是你自己的选择，绝不是自动上限。</string>
+    <string name="gt_graphics_layers_title">图形设置如何叠加</string>
     <string name="gt_booster_schedule">按计划运行</string>
     <string name="gt_booster_next">已开启 — 下次约 %1$s 运行</string>
     <string name="gt_booster_next_unknown">已开启 — Android 未说明下次运行时间</string>
@@ -429,6 +436,16 @@
     <string name="gt_gm_net_no">未加白</string>
     <string name="gt_gm_cap_raised">已提至面板峰值</string>
     <string name="gt_gm_cap_no">未提升</string>
+    <string name="gt_downscale_title">渲染缩放</string>
+    <string name="gt_downscale_sub">以低于全分辨率渲染游戏以提高 FPS。需重启游戏生效。</string>
+    <string name="gt_downscale_off">关闭</string>
+    <string name="gt_downscale_off_set">渲染缩放已关闭 — 全分辨率</string>
+    <string name="gt_downscale_set">下个游戏使用缩放 %1$s</string>
+    <string name="gt_pointer_title">触控速度</string>
+    <string name="gt_pointer_sub">下个游戏的指针速度。负数更慢，正数更快。原始即不改动。</string>
+    <string name="gt_pointer_stock">原始</string>
+    <string name="gt_pointer_stock_set">触控速度为原始 — 设置未动</string>
+    <string name="gt_pointer_set">下个游戏触控速度 %1$s</string>
     <string name="gt_gm_discard_on">已开启</string>
     <string name="gt_gm_limit">1 个缓存进程</string>
     <string name="gt_gm_left_as_set">保持你的设置</string>
@@ -436,8 +453,8 @@
     <string name="gt_gm_not_blocked">未阻止</string>
 
     <!-- RAM card -->
-    <string name="gt_ram_title">系统微调</string>
-    <string name="gt_ram_free">释放内存</string>
+    <string name="gt_ram_title">内存</string>
+    <string name="gt_ram_free">回收 RAM</string>
     <string name="gt_ram_what_1">要求手机关闭后台闲置应用，为游戏腾出内存。</string>
     <string name="gt_ram_what_2">会告知实际释放了多少，前后实测——不是猜测。</string>
     <string name="gt_ram_what_3">不会关闭你正用的东西，也不会删除任何内容。</string>
@@ -470,8 +487,8 @@
     <string name="gt_vm_keep_will">自下次扫描起将被保留</string>
     <string name="gt_vm_pattern_bad">这不是有效模式 — 请看示例</string>
     <string name="gt_vm_pattern_will">自下次扫描起将被清理</string>
-    <string name="gt_vm_ram_unknown">内存加速：已停止 %1$d 个应用 — 此设备无法读取内存数据</string>
-    <string name="gt_vm_ram_done">内存加速：释放 %1$d MB（已停止 %2$d 个应用）</string>
+    <string name="gt_vm_ram_unknown">RAM 回收：已停止 %1$d 个应用 — 此设备上无内存数据</string>
+    <string name="gt_vm_ram_done">RAM 回收：已释放 %1$d MB（已停止 %2$d 个应用）</string>
     <string name="gt_vm_sched_on">计划扫描已开启 — 大约每 %1$d 小时，在电量不低时运行。</string>
     <string name="gt_vm_sched_on_unknown">计划扫描已开启，但 WorkManager 未说明何时运行。</string>
     <string name="gt_vm_sched_off">计划扫描已关闭。</string>
@@ -532,6 +549,7 @@
     <string name="gt_eng_un_dnd_perm">静音通知 — 此应用尚未获准</string>
     <string name="gt_eng_un_refresh">保持屏幕最高速 — 手机忽略该设置</string>
     <string name="gt_eng_un_touch">更快触控 — 手机没有该设置</string>
+    <string name="gt_eng_un_pointer">触控速度 %1$s — 被手机拒绝</string>
     <string name="gt_eng_un_fixed">稳定速度模式 — 被手机拒绝</string>
     <string name="gt_eng_un_gpu">高通 GPU 性能模式 — 手机拒绝切换</string>
     <string name="gt_eng_un_qti">高通游戏 FPS 提示 — 手机拒绝切换</string>
@@ -604,4 +622,60 @@
     <string name="gt_svc_afs_channel">自动强制停止</string>
     <string name="gt_svc_booster_channel">应用加速器</string>
     <string name="gt_dns_unsupported_generic">你的手机没有此设置</string>
+    <!-- Per-game graphics driver (ANGLE): same table Developer Options edits. -->
+    <string name="gt_angle_title">图形驱动</string>
+    <string name="gt_angle_1">选择游戏使用的图形驱动：ANGLE（Google 基于 Vulkan 的 GLES 层）或手机原生驱动。有些游戏在其中之一上更流畅。</string>
+    <string name="gt_angle_2">立即生效且重启后保留。「默认」会将游戏移出列表。</string>
+    <string name="gt_angle_need">更改需要 Root 或 Shizuku，当前选项仍会显示。</string>
+    <string name="gt_angle_pick">选择游戏</string>
+    <string name="gt_angle_angle">ANGLE</string>
+    <string name="gt_angle_native">原生</string>
+    <string name="gt_angle_default">默认</string>
+    <string name="gt_angle_now">当前：%1$s</string>
+    <string name="gt_angle_none">未保存选项</string>
+    <string name="gt_angle_set">%1$s 的图形驱动：%2$s</string>
+    <string name="gt_angle_no">无法设置驱动：%1$s</string>
+    <string name="gt_angle_no_reason">设备拒绝</string>
+    <!-- Panel refresh readout: what the display reports about itself. -->
+    <string name="gt_panel_title">面板刷新率</string>
+    <string name="gt_panel_rates">档位：%1$s Hz</string>
+    <string name="gt_panel_seamless">当前可无缝切换：%1$s Hz</string>
+    <string name="gt_panel_seamless_none">未报告无缝切换</string>
+    <string name="gt_panel_seamless_unknown">此 Android 版本未知无缝切换</string>
+    <string name="gt_panel_arr">自适应刷新：%1$s</string>
+    <string name="gt_panel_yes">是</string>
+    <string name="gt_panel_no">否</string>
+    <string name="gt_panel_unknown">未知</string>
+    <string name="gt_panel_unreadable">面板模式不可读</string>
+    <!-- Filesystem trim: free blocks reported back to flash so writes stay fast. -->
+    <string name="gt_trim_title">整理存储</string>
+    <string name="gt_trim_need">需要 Root — shell 无法整理存储</string>
+    <string name="gt_trim_done">已整理 %1$s</string>
+    <string name="gt_trim_some">已整理 %1$s — %2$d 个挂载点被拒绝</string>
+    <string name="gt_trim_no">整理无报告：%1$s</string>
+    <string name="gt_trim_no_reason">设备什么都没说</string>
+    <!-- Extra suspend list: user-picked packages frozen at Gaming Mode activation. -->
+    <string name="gt_suspend_title">额外挂起应用</string>
+    <string name="gt_suspend_sub">你的选择，随自动扫描一起冻结</string>
+    <string name="gt_suspend_what_1">此处选择的应用将在游戏模式启动时被挂起，作为自动扫描的补充 — 适用于扫描保护或看不到的后台应用。</string>
+    <string name="gt_suspend_what_2">所有冻结项都会在关闭游戏模式时经同一验证路径唤醒。无论如何选择，当前游戏和 Catsmoker 本身永不冻结。</string>
+    <string name="gt_suspend_none">无额外应用 — 仅自动扫描</string>
+    <string name="gt_suspend_some">已选 %1$d 个应用</string>
+    <string name="gt_suspend_add">添加应用</string>
+    <string name="gt_suspend_remove">移除</string>
+    <!-- Auto game session: watch the foreground app, start Gaming Mode for library games. -->
+    <string name="gt_session_title">自动游戏模式</string>
+    <string name="gt_session_sub">打开游戏时启动游戏模式</string>
+    <string name="gt_session_what_1">监视前台应用，打开游戏库中的游戏时立即启动游戏模式，离开游戏时关闭。</string>
+    <string name="gt_session_what_2">需要使用情况访问权限（查看前台应用）以及 Root 或 Shizuku。手动启动的游戏模式永远优先：监视不会覆盖它，也不会撤销它。</string>
+    <string name="gt_session_watching">监视中 — 前台无游戏</string>
+    <string name="gt_session_active">开 — 自动：%1$s</string>
+    <string name="gt_svc_session_title">自动游戏会话</string>
+    <string name="gt_svc_session_channel">自动游戏会话</string>
+    <string name="gt_svc_session_off">监视已解除 — 未监视任何内容</string>
+    <string name="gt_svc_session_watching">正在监视游戏库游戏</string>
+    <string name="gt_svc_session_active">已为 %1$s 自动启动游戏模式</string>
+    <string name="gt_svc_session_manual">手动游戏模式运行中 — 已释放监视</string>
+    <string name="gt_svc_session_no_usage">需要使用情况访问权限 — 点击授权，否则不监视</string>
+    <string name="gt_svc_session_no_priv">需要 Root 或 Shizuku — Android 拒绝游戏更改，不监视</string>
 </resources>

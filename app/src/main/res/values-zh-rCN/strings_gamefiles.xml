@@ -9,6 +9,10 @@
     <string name="gf_working">处理中…</string>
     <string name="gf_apply_to_game">应用到游戏</string>
     <string name="gf_restore_last_backup">恢复最近备份</string>
+    <!-- Editor undo/redo: buttons plus the dirty line. -->
+    <string name="gf_undo">撤销</string>
+    <string name="gf_redo">重做</string>
+    <string name="gf_unsaved">有未保存的更改</string>
     <string name="gf_last_apply">上次应用：%1$s</string>
     <string name="gf_frame_rate">帧率</string>
     <string name="gf_quality">画质</string>
@@ -290,6 +294,15 @@
     <string name="gf_diag_forbidden">激活的禁用 cvar：%1$d</string>
     <string name="gf_diag_profile">设备配置：%1$s</string>
     <string name="gf_diag_cvars">游戏设置的 Cvar（%1$d）：</string>
+    <!-- Battle record counted from the decrypted Client.log: counts, never judgments. -->
+    <string name="gf_battle_title">战斗记录</string>
+    <string name="gf_battle_fights">战斗：%1$d · 死亡：%2$d · 倒地：%3$d</string>
+    <string name="gf_battle_move">传送：%1$d · 换人：%2$d</string>
+    <string name="gf_battle_dodge">闪避 前/后/反击：%1$d/%2$d/%3$d</string>
+    <string name="gf_battle_echoes">声骸：%1$d · 技能：%2$d · 变身：%3$d · 已耗体力：%4$d</string>
+    <string name="gf_battle_month">月卡：%1$d · 剩余天数：%2$d</string>
+    <!-- Unscored chipset note beside the SmartBrain recommendation. -->
+    <string name="gf_chipset">芯片：%1$s（%2$s）</string>
     <string name="gf_convene">唤取跟踪</string>
     <string name="gf_wuwa_cached">已缓存 · %1$d 抽</string>
     <string name="gf_wuwa_gacha_body">从游戏自己的日志中读取唤取历史记录 URL，并用它查询每个卡池：总抽数、平均保底、各角色/武器卡池状态——50/50 或必出、距离上个 ★5 的抽数及预估下个 ★5。在游戏中打开一次唤取历史后 URL 才会出现，且记录 ID 过期很快，因此实时获取比缓存更新鲜。</string>

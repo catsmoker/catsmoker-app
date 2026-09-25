@@ -56,7 +56,7 @@ This reaches `PowerManagerService` → the vendor power HAL's
 - The point is **consistency**, not peak speed; the fixed point is often held
   slightly below the boost ceiling for thermal headroom.
 
-## ART Optimizer (the "booster")
+## ART Optimizer (UI: "App Compile Optimisation", scope: one game or all)
 
 `runArtOptimization` recompiles installed apps with real `cmd package
 compile` dexopt:
@@ -71,7 +71,7 @@ compile` dexopt:
 - Uses `ProcessBuilder("su", ...)` directly for root so the in-flight
   process can be `destroy()`ed on cancel (Shizuku binder calls block).
 
-## RAM Boost
+## RAM Reclaim (UI toast prefix "RAM Reclaim:")
 
 `manualBoostRam` measures `MemAvailable` (from `/proc/meminfo`, falling back
 to `ActivityManager`) **before** trimming, then trims caches, force-stops

@@ -1,7 +1,6 @@
 package com.catsmoker.app.features.gamingtools.engine
 
 import android.app.Notification
-import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
 import android.app.Service
@@ -12,6 +11,7 @@ import android.os.IBinder
 import androidx.core.app.NotificationCompat
 import com.catsmoker.app.system.MainActivity
 import com.catsmoker.app.R
+import com.catsmoker.app.shared.util.CatsmokerNotifications
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -39,6 +39,7 @@ class GamingModeService : Service() {
         } else {
             startForeground(NOTIFICATION_ID, notification)
         }
+        CatsmokerNotifications.attachOwner(this, "GamingMode")
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
@@ -57,6 +58,7 @@ class GamingModeService : Service() {
     }
 
     override fun onDestroy() {
+        CatsmokerNotifications.detachOwner(this, "GamingMode")
         serviceScope.cancel()
         super.onDestroy()
     }
@@ -73,9 +75,11 @@ class GamingModeService : Service() {
     }
 
     private fun createNotificationChannel() {
-        val channel = NotificationChannel(CHANNEL_ID, getString(R.string.gt_svc_gm_channel), NotificationManager.IMPORTANCE_LOW)
+        val nm = getSystemService(NotificationManager::class.java) ?: return
+        CatsmokerNotifications.ensureGroup(nm)
+        val channel = CatsmokerNotifications.channel(CHANNEL_ID, getString(R.string.gt_svc_gm_channel), NotificationManager.IMPORTANCE_LOW)
         channel.description = getString(R.string.gt_svc_gm_channel_desc)
-        getSystemService(NotificationManager::class.java)?.createNotificationChannel(channel)
+        nm.createNotificationChannel(channel)
     }
 
     private fun buildNotification(): Notification {
@@ -101,6 +105,7 @@ class GamingModeService : Service() {
             .setPriority(NotificationCompat.PRIORITY_LOW)
             .setOngoing(true)
             .setSilent(true)
+            .setGroup(CatsmokerNotifications.GROUP_KEY)
             .setContentIntent(pi)
             .addAction(R.drawable.ic_action_name, getString(R.string.notification_stop), stop)
             .build()

@@ -10,7 +10,7 @@ import androidx.core.content.ContextCompat
  * had it on.
  *
  * Cross-checked against the reference project's `BootReceiver`
- * (`referance/gamingtools/booster`, `com.framex.app.overlay.BootReceiver`), which solves the
+ * (`reference/gamingtools/booster`, `com.framex.app.overlay.BootReceiver`), which solves the
  * same problem the same way: the service's `isRunning` flag is in-process state and resets on
  * a fresh boot, so the decision has to come from a persisted preference the service writes
  * when it starts and clears when it is torn down. Not exported — only the system addresses

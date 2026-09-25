@@ -1,21 +1,18 @@
 package com.catsmoker.app.features.gamingtools.tools.forcestop
 
-import android.app.AppOpsManager
-import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.Service
-import android.app.usage.UsageEvents
 import android.app.usage.UsageStatsManager
 import android.content.Context
 import android.content.Intent
 import android.content.pm.ApplicationInfo
-import android.os.Build
 import android.os.IBinder
-import android.os.Process
 import android.provider.Settings
 import androidx.core.app.NotificationCompat
 import androidx.core.content.ContextCompat
 import com.catsmoker.app.R
+import com.catsmoker.app.shared.util.CatsmokerNotifications
+import com.catsmoker.app.shared.util.ForegroundWatcher
 import com.catsmoker.app.system.MainActivity
 import com.catsmoker.app.system.shell.ShellRunner
 import dagger.hilt.android.AndroidEntryPoint
@@ -96,6 +93,7 @@ class AutoForceStopService : Service() {
         super.onCreate()
         createNotificationChannel()
         startForeground(NOTIF_ID, buildNotification(getString(R.string.gt_svc_starting)))
+        CatsmokerNotifications.attachOwner(this, "AutoForceStop")
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
@@ -215,41 +213,10 @@ class AutoForceStopService : Service() {
      * `PACKAGE_USAGE_STATS` is an appop, not a runtime permission: `checkSelfPermission` always
      * reports it denied, so the op has to be read from [AppOpsManager] instead.
      */
-    private fun hasUsageAccess(): Boolean {
-        val appOps = getSystemService(APP_OPS_SERVICE) as? AppOpsManager ?: return false
-        val mode = try {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                appOps.unsafeCheckOpNoThrow(
-                    AppOpsManager.OPSTR_GET_USAGE_STATS, Process.myUid(), packageName
-                )
-            } else {
-                @Suppress("DEPRECATION")
-                appOps.checkOpNoThrow(
-                    AppOpsManager.OPSTR_GET_USAGE_STATS, Process.myUid(), packageName
-                )
-            }
-        } catch (_: Exception) {
-            return false
-        }
-        return mode == AppOpsManager.MODE_ALLOWED
-    }
+    private fun hasUsageAccess(): Boolean = ForegroundWatcher.hasUsageAccess(this)
 
-    private fun queryLatestForegroundPackage(usm: UsageStatsManager, begin: Long, end: Long): String? {
-        val events = try {
-            usm.queryEvents(begin, end)
-        } catch (_: Exception) {
-            return null
-        }
-        var latest: String? = null
-        val event = UsageEvents.Event()
-        while (events.hasNextEvent()) {
-            events.getNextEvent(event)
-            if (event.eventType == UsageEvents.Event.MOVE_TO_FOREGROUND) {
-                latest = event.packageName
-            }
-        }
-        return latest
-    }
+    private fun queryLatestForegroundPackage(usm: UsageStatsManager, begin: Long, end: Long): String? =
+        ForegroundWatcher.queryLatestForegroundPackage(usm, begin, end)
 
     private fun postStatus(text: String) {
         if (text == lastStatus) return
@@ -259,9 +226,11 @@ class AutoForceStopService : Service() {
     }
 
     private fun createNotificationChannel() {
-        val nm = getSystemService(NotificationManager::class.java)
-        val channel = NotificationChannel(CHANNEL_ID, getString(R.string.gt_svc_afs_channel), NotificationManager.IMPORTANCE_LOW)
-        nm.createNotificationChannel(channel)
+        val nm = getSystemService(NotificationManager::class.java) ?: return
+        CatsmokerNotifications.ensureGroup(nm)
+        nm.createNotificationChannel(
+            CatsmokerNotifications.channel(CHANNEL_ID, getString(R.string.gt_svc_afs_channel), NotificationManager.IMPORTANCE_LOW)
+        )
     }
 
     private fun buildNotification(text: String): android.app.Notification {
@@ -284,12 +253,14 @@ class AutoForceStopService : Service() {
             .setStyle(NotificationCompat.BigTextStyle().bigText(text))
             .setSmallIcon(R.drawable.ic_stat_name)
             .setOngoing(true)
+            .setGroup(CatsmokerNotifications.GROUP_KEY)
             .setContentIntent(pendingIntent)
             .addAction(R.drawable.ic_action_name, getString(R.string.notification_stop), stop)
             .build()
     }
 
     override fun onDestroy() {
+        CatsmokerNotifications.detachOwner(this, "AutoForceStop")
         pollingJob?.cancel()
         job.cancel()
         // The in-app switch sets its state from its own tap, so stopping from the notification must

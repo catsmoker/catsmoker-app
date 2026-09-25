@@ -4,7 +4,7 @@ package com.catsmoker.app.features.editgamefiles.wuwa
  * The "forbidden" cvars: keys the game's anti-cheat / integrity checks are known to watch,
  * stripped from generated configs when the user turns restricted cvars off. Key list and
  * matching rules (case-insensitive, `+`/`-` variants, `r.` re-prefixed for bare names) are
- * `referance/gamingtools/WuWa-Config-Android-main/config/ForbiddenCvars.kt` verbatim — that
+ * `reference/gamingtools/WuWa-Config-Android-main/config/ForbiddenCvars.kt` verbatim — that
  * file was read before this one was written, and the exact spelling of every key is the
  * whole payload here: a renamed key strips nothing.
  *

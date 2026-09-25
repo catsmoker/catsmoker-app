@@ -4,6 +4,9 @@ import android.widget.Toast
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Redo
+import androidx.compose.material.icons.filled.Undo
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -67,6 +70,10 @@ fun HsrGraphicsRoute(onBack: (() -> Unit)? = null) {
         onApplyPrefs = viewModel::onApplyPrefs,
         onRestoreBackup = viewModel::onRestoreBackup,
         onRefresh = viewModel::refresh,
+        onUndoSettings = viewModel::undoSettings,
+        onRedoSettings = viewModel::redoSettings,
+        onUndoPrefs = viewModel::undoPrefs,
+        onRedoPrefs = viewModel::redoPrefs,
         onBack = onBack
     )
 }
@@ -80,6 +87,10 @@ fun HsrGraphicsScreen(
     onApplyPrefs: () -> Unit,
     onRestoreBackup: () -> Unit,
     onRefresh: () -> Unit,
+    onUndoSettings: () -> Unit,
+    onRedoSettings: () -> Unit,
+    onUndoPrefs: () -> Unit,
+    onRedoPrefs: () -> Unit,
     onBack: (() -> Unit)? = null
 ) {
     // One body, two hosts: standalone (own ScreenScaffold header + scroll) or embedded in File
@@ -333,6 +344,18 @@ fun HsrGraphicsScreen(
                             Text(stringResource(R.string.gf_apply_to_game))
                         }
                     }
+                    // Undo/redo for the graphics working copy above. No-ops when empty, so the
+                    // buttons disable instead of running an edit that edits nothing; the dirty
+                    // line says whether Apply would write anything new at all.
+                    Spacer(modifier = Modifier.height(8.dp))
+                    UndoRedoRow(
+                        canUndo = uiState.canUndoSettings,
+                        canRedo = uiState.canRedoSettings,
+                        dirty = uiState.settingsDirty,
+                        applying = uiState.applying,
+                        onUndo = onUndoSettings,
+                        onRedo = onRedoSettings
+                    )
                     if (uiState.hasBackup) {
                         Spacer(modifier = Modifier.height(8.dp))
                         CatsmokerOutlinedButton(onClick = onRestoreBackup, modifier = Modifier.fillMaxWidth(), enabled = !uiState.applying) {
@@ -424,6 +447,15 @@ fun HsrGraphicsScreen(
                         }
 
                         Spacer(modifier = Modifier.height(8.dp))
+                        UndoRedoRow(
+                            canUndo = uiState.canUndoPrefs,
+                            canRedo = uiState.canRedoPrefs,
+                            dirty = uiState.prefsDirty,
+                            applying = uiState.applyingPrefs,
+                            onUndo = onUndoPrefs,
+                            onRedo = onRedoPrefs
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
                         CatsmokerButton(
                             onClick = onApplyPrefs,
                             modifier = Modifier.fillMaxWidth(),
@@ -453,6 +485,56 @@ fun HsrGraphicsScreen(
         ) {
             content()
         }
+    }
+}
+
+/**
+ * Undo/redo buttons plus the dirty line for one working copy.
+ *
+ * The actions are no-ops when their stack is empty, so the buttons disable on the same
+ * condition rather than running an edit that edits nothing. The dirty line reports whether
+ * Apply would write anything the device does not already hold.
+ */
+@Composable
+private fun UndoRedoRow(
+    canUndo: Boolean,
+    canRedo: Boolean,
+    dirty: Boolean,
+    applying: Boolean,
+    onUndo: () -> Unit,
+    onRedo: () -> Unit
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        CatsmokerOutlinedButton(
+            onClick = onUndo,
+            modifier = Modifier.weight(1f),
+            enabled = canUndo && !applying
+        ) {
+            Icon(Icons.Default.Undo, contentDescription = null, modifier = Modifier.size(16.dp))
+            Spacer(modifier = Modifier.width(4.dp))
+            Text(stringResource(R.string.gf_undo), fontSize = 12.sp)
+        }
+        CatsmokerOutlinedButton(
+            onClick = onRedo,
+            modifier = Modifier.weight(1f),
+            enabled = canRedo && !applying
+        ) {
+            Icon(Icons.Default.Redo, contentDescription = null, modifier = Modifier.size(16.dp))
+            Spacer(modifier = Modifier.width(4.dp))
+            Text(stringResource(R.string.gf_redo), fontSize = 12.sp)
+        }
+    }
+    if (dirty) {
+        Spacer(modifier = Modifier.height(4.dp))
+        Text(
+            text = stringResource(R.string.gf_unsaved),
+            style = MaterialTheme.typography.labelSmall,
+            color = Color(0xFFFFB74D)
+        )
     }
 }
 
@@ -673,6 +755,10 @@ private fun HsrGraphicsScreenPreview() {
             onApplyPrefs = {},
             onRestoreBackup = {},
             onRefresh = {},
+            onUndoSettings = {},
+            onRedoSettings = {},
+            onUndoPrefs = {},
+            onRedoPrefs = {},
             onBack = {}
         )
     }

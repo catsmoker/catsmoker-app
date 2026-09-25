@@ -7,7 +7,7 @@ import org.junit.Test
 
 /**
  * Pins the OEM surface moved out of GamingEngine against
- * `referance/gamingtools/booster/.../gaming/OemPackageResolver.kt` and its
+ * `reference/gamingtools/booster/.../gaming/OemPackageResolver.kt` and its
  * `EsportsOptimizationEngine.kt` (both read in full): the verbatim vivo suspend list and its
  * disjointness from this app's own load-bearing vivo lists, the four-key whitelist table, and
  * the CSV append rule.

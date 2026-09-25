@@ -11,7 +11,7 @@ import java.io.StringWriter
  * entries) without losing the entries this editor does not understand.
  *
  * Cross-checked against `UnityXmlHandler` inside
- * `referance/gamingtools/hsrgraphicdroid-main/utils/HsrGameManager.kt`
+ * `reference/gamingtools/hsrgraphicdroid-main/utils/HsrGameManager.kt`
  * (`com.ireddragonicy.hsrgraphicdroid.utils.HsrGameManager`): same pull-parser treatment of
  * `int` and `string`, same serializer output shape, same `standalone` fix-up. One deliberate
  * divergence, recorded here rather than silently copied: the reference keeps only `int` and

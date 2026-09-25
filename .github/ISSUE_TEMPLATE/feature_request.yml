@@ -1,0 +1,57 @@
+name: Feature Request
+description: Suggest an idea for CatSmoker.
+title: "[Feature]: "
+labels: ["enhancement"]
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for suggesting something. Small, well-scoped proposals move fastest.
+        If you are not sure yet, float the idea in
+        [Discussions](https://github.com/catsmoker/catsmoker-app/discussions) first.
+
+  - type: input
+    id: feature-name
+    attributes:
+      label: Feature name
+      description: Short name for the proposed feature.
+      placeholder: "e.g. Per-game refresh-rate override"
+    validations:
+      required: true
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem being solved
+      description: What problem or limitation does this address? Who hits it?
+      placeholder: "Describe the problem, not the solution yet."
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposed
+    attributes:
+      label: Proposed behaviour
+      description: How should it work? Include the game package name if it is game-specific.
+      placeholder: "Describe how the feature should behave."
+    validations:
+      required: true
+
+  - type: textarea
+    id: usefulness
+    attributes:
+      label: Why it would be useful
+      description: Why is this worth building? Which games or devices benefit?
+      placeholder: "e.g. Useful for ... because ..."
+    validations:
+      required: true
+
+  - type: textarea
+    id: context
+    attributes:
+      label: Additional context
+      description: Mockups, references, or related issues/discussions.
+      placeholder: "Anything else that helps. Leave blank if nothing."
+    validations:
+      required: false

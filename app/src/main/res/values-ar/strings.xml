@@ -17,13 +17,18 @@
     <string name="overlay_power_initial">الطاقة: جارٍ القراءة…</string>
     <string name="overlay_ram_initial">RAM: جارٍ القراءة…</string>
     <string name="overlay_temp_initial">Temp: جارٍ القراءة…</string>
+    <string name="overlay_headroom_initial">Head: جارٍ القراءة…</string>
     <string name="Gaming_tools_title">أدوات الألعاب</string>
     <string name="gt_subtitle">اجعل ألعابك تعمل بشكل أفضل</string>
     <string name="gt_section_your_library">ألعابك</string>
     <string name="gt_no_games_detected">لا ألعاب مضافة بعد — اضغط + لإضافة لعبة</string>
-    <string name="gt_section_performance_boost">السرعة</string>
-    <string name="gt_section_focus_network">الإنترنت والهدوء</string>
-    <string name="gt_section_system_advanced">المساحة وتطبيقات الخلفية</string>
+    <string name="gt_section_gaming_mode">وضع الألعاب</string>
+    <string name="gt_section_performance">الأداء</string>
+    <string name="gt_section_graphics">الرسوميات والشاشة</string>
+    <string name="gt_section_overlays">التراكبات</string>
+    <string name="gt_section_bg_apps">تطبيقات الخلفية</string>
+    <string name="gt_section_memory">الذاكرة والتخزين</string>
+    <string name="gt_section_focus_network">الشبكة والهدوء</string>
     <string name="logs_title">سجلات النظام</string>
     <string name="logs_subtitle">تشخيصات التطبيق والنظام.</string>
     <string name="logs_refresh">تحديث</string>
@@ -32,6 +37,8 @@
     <string name="logs_filter_placeholder">تصفية السجلات…</string>
     <string name="logs_empty">لا سجلات ملتقطة بعد.</string>
     <string name="notification_stop">إيقاف</string>
+    <!-- Group summary row bundling every Catsmoker notification in the shade. -->
+    <string name="notif_summary_sub">انقر لفتح Catsmoker</string>
     <string name="booster_running_title">تعزيز الألعاب يعمل</string>
     <string name="booster_notification_preparing">جارٍ قراءة قائمة التطبيقات…</string>
     <string name="booster_notification_progress">%1$d من %2$d تطبيقات</string>

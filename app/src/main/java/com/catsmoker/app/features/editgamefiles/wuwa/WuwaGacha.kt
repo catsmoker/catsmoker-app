@@ -8,7 +8,7 @@ import com.google.gson.reflect.TypeToken
  * response decoding, and the pity math. No network, no Android — everything here is
  * JVM-testable, and [WuwaGachaTest] pins it.
  *
- * Ported from `referance/gamingtools/WuWa-Config-Android-main/config/GachaApi.kt` and
+ * Ported from `reference/gamingtools/WuWa-Config-Android-main/config/GachaApi.kt` and
  * `model/GachaRecord.kt`, both read in full before this file was written. The agreements:
  *
  *  - [parseUrl] reads the `#/record?` **fragment** — the record parameters never appear in

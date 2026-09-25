@@ -16,7 +16,7 @@ import kotlinx.coroutines.withContext
  * the file, read the graphics block and the QoL preferences out of it, and write edited ones
  * back with the game's own ownership restored.
  *
- * Cross-checked against `referance/gamingtools/hsrgraphicdroid-main/utils/HsrGameManager.kt`
+ * Cross-checked against `reference/gamingtools/hsrgraphicdroid-main/utils/HsrGameManager.kt`
  * (`com.ireddragonicy.hsrgraphicdroid.utils.HsrGameManager`): the same five known packages
  * plus the dynamic `pm list packages hkrpg` sweep, the same four prefs-path templates in the
  * same order (`/data_mirror` first — it crosses the mount-namespace boundary that hides

@@ -202,7 +202,7 @@ fun WuwaConfigScreen(
             }
 
             uiState.recommendation?.let { rec ->
-                RecommendCard(rec, uiState.preset, onApplyRecommendation)
+                RecommendCard(rec, uiState.preset, uiState.chipset, onApplyRecommendation)
                 Spacer(modifier = Modifier.height(12.dp))
             }
 
@@ -761,6 +761,14 @@ private fun GameLogCard(uiState: WuwaConfigUiState, onAnalyzeLog: () -> Unit) {
                 },
                 initiallyExpanded = false
             )
+            // Battle record from the same decrypted text: counts, never judgments — a log with
+            // no events reads as zeros, not as a failure.
+            Spacer(modifier = Modifier.height(8.dp))
+            CollapsibleExplainer(
+                title = stringResource(R.string.gf_battle_title),
+                lines = battleLines(analysis.battle),
+                initiallyExpanded = false
+            )
         }
     }
 }
@@ -1055,6 +1063,7 @@ private fun AutoTuneCard(
 private fun RecommendCard(
     rec: WuwaSmartBrain.Recommendation,
     currentPreset: String,
+    chipset: WuwaChipset.ChipsetInfo?,
     onApply: () -> Unit
 ) {
     SectionCard {
@@ -1084,6 +1093,16 @@ private fun RecommendCard(
             CatsmokerButton(onClick = onApply, enabled = currentPreset != rec.preset) {
                 Text(stringResource(R.string.gf_apply))
             }
+        }
+        // Unscored silicon note: what the chipset suggests, weighed at zero — the scored GPU
+        // tier comes from the log's measured renderer string, and a guess never outranks it.
+        chipset?.let {
+            Spacer(modifier = Modifier.height(4.dp))
+            Text(
+                stringResource(R.string.gf_chipset, it.socName.ifBlank { it.family }, it.family),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
         }
         Spacer(modifier = Modifier.height(8.dp))
         CollapsibleExplainer(
@@ -1115,6 +1134,25 @@ private fun RecommendCard(
         )
     }
 }
+
+/**
+ * Battle-record lines for one analyzed log. Counts only — a quiet log reads as zeros.
+ * The player ID stays out of the UI: it identifies the account and adds nothing to tuning.
+ */
+@Composable
+private fun battleLines(battle: WuwaBattleStats.BattleStats): List<String> = listOf(
+    stringResource(R.string.gf_battle_fights, battle.battles, battle.deaths, battle.staggers),
+    stringResource(R.string.gf_battle_move, battle.teleports, battle.roleChanges),
+    stringResource(
+        R.string.gf_battle_dodge,
+        battle.dodgeForward, battle.dodgeBack, battle.dodgeCounter
+    ),
+    stringResource(
+        R.string.gf_battle_echoes,
+        battle.echoesCollected, battle.echoSkillsUsed, battle.echoTransformUsed, battle.staminaUsed
+    ),
+    stringResource(R.string.gf_battle_month, battle.monthCards, battle.monthCardRemainDays)
+)
 
 @Composable
 private fun StatusLine(label: String, value: String) {

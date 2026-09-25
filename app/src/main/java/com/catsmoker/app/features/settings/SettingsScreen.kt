@@ -28,6 +28,7 @@ import com.catsmoker.app.shared.ui.components.LanguageOptions
 import com.catsmoker.app.shared.ui.components.ThemeModeOptions
 import com.catsmoker.app.shared.ui.components.languageDisplayName
 import com.catsmoker.app.system.config.AppearanceStore
+import com.catsmoker.app.system.config.LocaleHelper
 
 @Composable
 fun SettingsRoute(onBack: () -> Unit, onOpenPermissions: () -> Unit, onOpenLogs: () -> Unit) {
@@ -41,12 +42,14 @@ fun SettingsRoute(onBack: () -> Unit, onOpenPermissions: () -> Unit, onOpenLogs:
         }
     }
 
-    // A new language only re-resolves resources on recreate — the ViewModel asks, the
-    // activity obeys. Theme changes need none of this; they recompose live.
+    // A new language restarts the process — the ViewModel asks, the screen obeys.
+    // recreate() alone is not enough: app-context getString caches, engine state and
+    // running services would all stay on the previous language. Theme changes need
+    // none of this; they recompose live.
     LaunchedEffect(Unit) {
         viewModel.events.collect { event ->
-            if (event == SettingsViewModel.UiEvent.RecreateActivity) {
-                (context as? android.app.Activity)?.recreate()
+            if (event == SettingsViewModel.UiEvent.RestartApp) {
+                LocaleHelper.restartApp(context)
             }
         }
     }

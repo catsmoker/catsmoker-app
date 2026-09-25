@@ -57,6 +57,7 @@
     <string name="spoof_field_height">Alto</string>
     <string name="spoof_field_density">Densidad</string>
     <string name="spoof_field_refresh_rate">Frecuencia de actualización (Hz)</string>
+    <string name="spoof_refresh_note">Falsea la tasa y la lista de modos dentro de la app objetivo. Hook residente — vacío significa apagado.</string>
     <string name="spoof_group_network">Red y región</string>
     <string name="spoof_action_roll_network">Generar red y región</string>
     <string name="spoof_field_operator_name">Nombre del operador</string>

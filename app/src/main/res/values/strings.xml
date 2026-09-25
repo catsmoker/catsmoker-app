@@ -43,6 +43,7 @@
     <string name="overlay_power_initial">Power: reading…</string>
     <string name="overlay_ram_initial">RAM: reading…</string>
     <string name="overlay_temp_initial">Temp: reading…</string>
+    <string name="overlay_headroom_initial">Head: reading…</string>
 
     <!-- Game Launcher Strings -->
 
@@ -53,9 +54,13 @@
     <string name="gt_subtitle">Make your games run better</string>
     <string name="gt_section_your_library">YOUR GAMES</string>
     <string name="gt_no_games_detected">No games added yet — tap + to add one</string>
-    <string name="gt_section_performance_boost">SPEED</string>
-    <string name="gt_section_focus_network">INTERNET &amp; QUIET</string>
-    <string name="gt_section_system_advanced">SPACE &amp; BACKGROUND APPS</string>
+    <string name="gt_section_gaming_mode">GAMING MODE</string>
+    <string name="gt_section_performance">PERFORMANCE</string>
+    <string name="gt_section_graphics">GRAPHICS &amp; DISPLAY</string>
+    <string name="gt_section_overlays">OVERLAYS</string>
+    <string name="gt_section_bg_apps">BACKGROUND APPS</string>
+    <string name="gt_section_focus_network">NETWORK &amp; QUIET</string>
+    <string name="gt_section_memory">MEMORY &amp; STORAGE</string>
 
     <!-- ========================================== -->
     <!--                HERO GAMING CARD            -->
@@ -96,6 +101,8 @@
     <!-- Stop action on every ongoing service notification. Each service routes it through the same
          stop path its in-app switch uses, so one label serves all of them. -->
     <string name="notification_stop">Stop</string>
+    <!-- Group summary row bundling every Catsmoker notification in the shade. -->
+    <string name="notif_summary_sub">Tap to open Catsmoker</string>
     <string name="booster_running_title">Game Booster Running</string>
     <!-- Booster notification: the body is the real progress, so there is no fixed slogan here -->
     <string name="booster_notification_preparing">Reading the app list…</string>

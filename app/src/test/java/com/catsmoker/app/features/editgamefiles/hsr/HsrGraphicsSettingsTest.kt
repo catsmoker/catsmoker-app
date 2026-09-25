@@ -9,7 +9,7 @@ import java.net.URLDecoder
 
 /**
  * Pins the HSR graphics blob format against the reference implementation
- * (`referance/gamingtools/hsrgraphicdroid-main/data/GraphicsSettings.kt`), the same way
+ * (`reference/gamingtools/hsrgraphicdroid-main/data/GraphicsSettings.kt`), the same way
  * `GenshinConfigTemplateTest` pins the Genshin config: the JSON key names, the URL-encoding
  * wrapper, the hidden upscaler fields, and the sibling XML key strings are all part of the
  * verified agreement with the game, not incidental details a refactor is free to change.

@@ -7,7 +7,7 @@ import org.junit.Test
 
 /**
  * Pins the SmartBrain recommender against
- * `referance/gamingtools/WuWa-Config-Android-main/config/SmartBrain.kt` and its GPU tier
+ * `reference/gamingtools/WuWa-Config-Android-main/config/SmartBrain.kt` and its GPU tier
  * table in `config/CvarOptimizer.kt`, both read in full before the port was written: the
  * tier patterns and their first-match ordering, the scoring deltas, and the preset ladder
  * thresholds. A wrong tier or a shifted threshold silently recommends a preset the device

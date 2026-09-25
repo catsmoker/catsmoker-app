@@ -6,8 +6,8 @@ import java.nio.charset.Charset
  * Decrypts the game's encrypted `Client.log`.
  *
  * Ported from **two** references that were read in full and agree exactly on the scheme —
- * `referance/gamingtools/WuWa-Config-Android-main/config/LogParser.kt` (the Kotlin side this
- * app's shape follows) and `referance/gamingtools/Mobile-WuWa-Config-main/misc/Client Log
+ * `reference/gamingtools/WuWa-Config-Android-main/config/LogParser.kt` (the Kotlin side this
+ * app's shape follows) and `reference/gamingtools/Mobile-WuWa-Config-main/misc/Client Log
  * Decryptor/For Developers/wuwa_ld.py` (an independent reverse-engineering of the same
  * format, confirmed on v3.4 / 2026 sessions):
  *

@@ -1,7 +1,6 @@
 package com.catsmoker.app.features.gamingtools.tools.booster
 
 import android.app.Notification
-import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
 import android.app.Service
@@ -14,6 +13,7 @@ import androidx.core.app.NotificationCompat
 import com.catsmoker.app.R
 import com.catsmoker.app.features.gamingtools.engine.BoosterState
 import com.catsmoker.app.features.gamingtools.engine.GamingEngine
+import com.catsmoker.app.shared.util.CatsmokerNotifications
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -115,6 +115,7 @@ class AppBoosterService : Service() {
         } else {
             startForeground(NOTIFICATION_ID, notification)
         }
+        CatsmokerNotifications.attachOwner(this, "AppBooster")
     }
 
     /**
@@ -136,6 +137,7 @@ class AppBoosterService : Service() {
             .setSmallIcon(R.drawable.ic_stat_name)
             .setOnlyAlertOnce(true)
             .setOngoing(true)
+            .setGroup(CatsmokerNotifications.GROUP_KEY)
             .addAction(R.drawable.ic_action_name, getString(R.string.booster_notification_stop), stop)
 
         val progress = state.progress
@@ -167,6 +169,7 @@ class AppBoosterService : Service() {
     }
 
     override fun onDestroy() {
+        CatsmokerNotifications.detachOwner(this, "AppBooster")
         // Cancelling serviceScope cannot stop a blocking waitFor, so the compile is stopped here
         // and now: a teardown the system initiated must not leave a dexopt sweep running with
         // nothing left to report it or stop it. No-op when the sweep already finished.
@@ -181,8 +184,11 @@ class AppBoosterService : Service() {
         getSystemService(NotificationManager::class.java)
 
     private fun createNotificationChannel() {
-        val channel = NotificationChannel(CHANNEL_ID, getString(R.string.gt_svc_booster_channel), NotificationManager.IMPORTANCE_LOW)
-        notificationManager()?.createNotificationChannel(channel)
+        val nm = notificationManager() ?: return
+        CatsmokerNotifications.ensureGroup(nm)
+        nm.createNotificationChannel(
+            CatsmokerNotifications.channel(CHANNEL_ID, getString(R.string.gt_svc_booster_channel), NotificationManager.IMPORTANCE_LOW)
+        )
     }
 
     companion object {

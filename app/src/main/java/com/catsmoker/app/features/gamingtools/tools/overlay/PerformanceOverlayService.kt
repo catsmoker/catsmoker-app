@@ -1,6 +1,5 @@
 package com.catsmoker.app.features.gamingtools.tools.overlay
 
-import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.Service
 import android.content.Intent
@@ -17,6 +16,7 @@ import com.catsmoker.app.R
 import com.catsmoker.app.features.main.engine.MetricsEngine
 import com.catsmoker.app.shared.data.model.FpsSource
 import com.catsmoker.app.shared.data.model.MetricReadStatus
+import com.catsmoker.app.shared.util.CatsmokerNotifications
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -45,6 +45,7 @@ class PerformanceOverlayService : Service() {
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         startForeground(NOTIFICATION_ID, buildNotification())
+        CatsmokerNotifications.attachOwner(this, "PerfOverlay")
 
         // The notification's Stop action. Handled before the rest so it can never re-show the
         // overlay: this method re-inflates and re-adds the view on every delivery, which is right
@@ -112,6 +113,7 @@ class PerformanceOverlayService : Service() {
                 val powerView = overlayView?.findViewById<TextView>(R.id.powerNumber)
                 val ramView = overlayView?.findViewById<TextView>(R.id.ramNumber)
                 val tempView = overlayView?.findViewById<TextView>(R.id.tempNumber)
+                val headroomView = overlayView?.findViewById<TextView>(R.id.headroomNumber)
                 // Frames per second, labelled by where the number came from: the vsync fallback
                 // measures this app's frames, not the game's, and must not be passed off as FPS.
                 val fpsLabel = if (state.fpsSource == FpsSource.Choreographer) "UI FPS" else "FPS"
@@ -138,6 +140,11 @@ class PerformanceOverlayService : Service() {
                     if (state.displayTempIsSoc) "SoC" else "Batt",
                     state.displayTempC?.let { String.format(Locale.US, "%.1f°C", it) },
                     state.displayTempReadStatus
+                )
+                headroomView?.text = row(
+                    "Head",
+                    state.thermalHeadroom?.let { "${(it * 100).toInt()}%" },
+                    state.thermalHeadroomStatus
                 )
             }
         }
@@ -180,12 +187,14 @@ class PerformanceOverlayService : Service() {
             .setContentTitle(getString(R.string.gt_svc_perf_title))
             .setSmallIcon(R.drawable.ic_stat_name)
             .setOngoing(true)
+            .setGroup(CatsmokerNotifications.GROUP_KEY)
             .addAction(R.drawable.ic_action_name, if (overlayView != null) getString(R.string.gt_svc_perf_hide) else getString(R.string.gt_svc_perf_show), toggle)
             .addAction(R.drawable.ic_action_name, getString(R.string.notification_stop), stop)
             .build()
     }
 
     override fun onDestroy() {
+        CatsmokerNotifications.detachOwner(this, "PerfOverlay")
         if (overlayView != null) {
             windowManager?.removeView(overlayView)
         }
@@ -203,8 +212,11 @@ class PerformanceOverlayService : Service() {
     override fun onBind(intent: Intent?): IBinder? = null
 
     private fun createNotificationChannel() {
-        val channel = NotificationChannel(CHANNEL_ID, getString(R.string.gt_svc_perf_channel), NotificationManager.IMPORTANCE_LOW)
-        getSystemService(NotificationManager::class.java)?.createNotificationChannel(channel)
+        val nm = getSystemService(NotificationManager::class.java) ?: return
+        CatsmokerNotifications.ensureGroup(nm)
+        nm.createNotificationChannel(
+            CatsmokerNotifications.channel(CHANNEL_ID, getString(R.string.gt_svc_perf_channel), NotificationManager.IMPORTANCE_LOW)
+        )
     }
 
     companion object {

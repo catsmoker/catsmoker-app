@@ -5,11 +5,11 @@ import android.graphics.BitmapFactory
 import android.os.Build
 import android.provider.Settings
 import android.widget.Toast
+import androidx.annotation.StringRes
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
@@ -50,6 +50,8 @@ import com.catsmoker.app.features.gamingtools.tools.dns.DnsFeature
 import com.catsmoker.app.features.gamingtools.tools.firewall.BackgroundDataRestrictor
 import com.catsmoker.app.features.gamingtools.tools.firewall.VpnFirewall
 import com.catsmoker.app.features.gamingtools.tools.graphics.GameDeveloperOptions
+import com.catsmoker.app.features.gamingtools.tools.graphics.AngleDriverOptions
+import java.util.Locale
 import com.catsmoker.app.features.gamingtools.ui.*
 import com.catsmoker.app.shared.ui.theme.LogTerminalBackground
 import com.catsmoker.app.shared.ui.theme.logLineColor
@@ -76,6 +78,8 @@ fun GamingToolsRoute(onBack: () -> Unit) {
     val alwaysFinishActivities by viewModel.alwaysFinishActivities.collectAsState()
     val backgroundProcessLimit by viewModel.backgroundProcessLimit.collectAsState()
     val gameDevOptions by viewModel.gameDevOptions.collectAsState()
+    val interventionDownscale by viewModel.interventionDownscale.collectAsState()
+    val pointerSpeedChoice by viewModel.pointerSpeedChoice.collectAsState()
 
     val overlayLauncher = rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) {
         viewModel.syncState()
@@ -137,6 +141,8 @@ fun GamingToolsRoute(onBack: () -> Unit) {
         alwaysFinishActivities = alwaysFinishActivities,
         backgroundProcessLimit = backgroundProcessLimit,
         gameDevOptions = gameDevOptions,
+        interventionDownscale = interventionDownscale,
+        pointerSpeedChoice = pointerSpeedChoice,
         onToggleOverlay = { enable ->
             if (enable && !viewModel.canDrawOverlays()) {
                 overlayLauncher.launch(Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION, "package:${context.packageName}".toUri()))
@@ -191,18 +197,22 @@ fun GamingToolsRoute(onBack: () -> Unit) {
         onActivateGamingMode = viewModel::activateGamingMode,
         onDeactivateGamingMode = viewModel::deactivateGamingMode,
         onBoostRam = viewModel::boostRam,
+        onTrimStorage = viewModel::trimStorage,
         onRunBooster = viewModel::runBooster,
         onStopBooster = viewModel::stopBooster,
         onSetDexoptSchedule = viewModel::setDexoptSchedule,
         onSetDexoptInterval = viewModel::setDexoptInterval,
         onToggleFixedPerformance = viewModel::toggleFixedPerformance,
+        onSetInterventionDownscale = viewModel::setInterventionDownscale,
+        onSetPointerSpeedChoice = viewModel::setPointerSpeedChoice,
         onBoostChange = viewModel::onBoostChange,
         onSetAnimationScale = viewModel::setAnimationScale,
         onToggleAlwaysFinish = viewModel::toggleAlwaysFinish,
         onToggleBackgroundLimit = viewModel::toggleBackgroundLimit,
-        onSetShowRefreshRate = viewModel::setShowRefreshRate,
         onSetForcePeakRefreshRate = viewModel::setForcePeakRefreshRate,
         onSetGameDefaultFrameRateDisabled = viewModel::setGameDefaultFrameRateDisabled,
+        onSelectAnglePackage = viewModel::selectAnglePackage,
+        onSetAngleDriver = viewModel::setAngleDriver,
         onOpenDeveloperOptions = {
             // ACTION_APPLICATION_DEVELOPMENT_SETTINGS is the Developer options screen itself. On a
             // device where it has never been unlocked the Activity does not exist, so the fallback is
@@ -221,12 +231,18 @@ fun GamingToolsRoute(onBack: () -> Unit) {
         onApplyDnsProvider = viewModel::applyDnsProvider,
         onSetDnsAutomatic = viewModel::setDnsAutomatic,
         onDisableDns = viewModel::disableDns,
+        onMeasureDnsPing = viewModel::measureDnsPing,
         onLaunchGame = viewModel::launchGame,
+        onOptimizeGame = viewModel::optimizeGame,
+        onSelectOptimizeScope = viewModel::selectOptimizeScope,
         onRemoveGame = viewModel::removeGameFromLibrary,
         onAddGameClicked = viewModel::onAddGameClicked,
 
         onToggleAutoForceStop = viewModel::toggleAutoForceStop,
         onToggleAutoForceStopKeepPackage = viewModel::toggleAutoForceStopKeepPackage,
+        onShowSuspendPicker = viewModel::showSuspendPicker,
+        onRemoveExtraSuspendPackage = viewModel::removeExtraSuspendPackage,
+        onToggleGameSession = viewModel::toggleGameSession,
         
         onResWidthChange = viewModel::onResWidthChange,
         onResHeightChange = viewModel::onResHeightChange,
@@ -247,7 +263,17 @@ fun GamingToolsRoute(onBack: () -> Unit) {
         AppPickerDialog(
             apps = uiState.allApps,
             onDismiss = viewModel::dismissGamePicker,
-            onAppSelected = viewModel::addGameToLibrary
+            onAppSelected = viewModel::addGameToLibrary,
+            titleRes = R.string.gt_picker_add_game
+        )
+    }
+
+    if (uiState.isPickingSuspendPackage) {
+        AppPickerDialog(
+            apps = uiState.allApps,
+            onDismiss = viewModel::dismissSuspendPicker,
+            onAppSelected = viewModel::toggleExtraSuspendPackage,
+            titleRes = R.string.gt_picker_add_freeze
         )
     }
 
@@ -288,6 +314,10 @@ fun GamingToolsScreen(
     alwaysFinishActivities: Boolean,
     backgroundProcessLimit: Boolean,
     gameDevOptions: GameDeveloperOptions.State,
+    /** Render scale for the next Gaming Mode activation, or null for full resolution. */
+    interventionDownscale: Float?,
+    /** Touch speed for the next activation, or null for stock (untouched). */
+    pointerSpeedChoice: Int?,
     onToggleOverlay: (Boolean) -> Unit,
     onToggleCrosshair: (Boolean) -> Unit,
     onSelectCrosshair: (String) -> Unit,
@@ -306,6 +336,7 @@ fun GamingToolsScreen(
     onActivateGamingMode: () -> Unit,
     onDeactivateGamingMode: () -> Unit,
     onBoostRam: () -> Unit,
+    onTrimStorage: () -> Unit,
     onRunBooster: (String, Boolean) -> Unit,
     onStopBooster: () -> Unit,
     /** Enrolls or removes the recurring dexopt sweep in WorkManager. */
@@ -316,22 +347,34 @@ fun GamingToolsScreen(
     onSetAnimationScale: (AnimationScaleKind, Float) -> Unit,
     onToggleAlwaysFinish: (Boolean) -> Unit,
     onToggleBackgroundLimit: (Boolean) -> Unit,
-    onSetShowRefreshRate: (Boolean) -> Unit,
     onSetForcePeakRefreshRate: (Boolean) -> Unit,
     onSetGameDefaultFrameRateDisabled: (Boolean) -> Unit,
+    onSelectAnglePackage: (String?) -> Unit,
+    onSetAngleDriver: (AngleDriverOptions.Driver) -> Unit,
     /** Opens Android's Developer options screen for the switches this app cannot reach itself. */
     onOpenDeveloperOptions: () -> Unit,
     onRefreshDns: () -> Unit,
     onApplyDnsProvider: (DnsFeature.Provider) -> Unit,
     onSetDnsAutomatic: () -> Unit,
     onDisableDns: () -> Unit,
+    onMeasureDnsPing: () -> Unit,
     onToggleFixedPerformance: (Boolean) -> Unit,
+    /** Chooses the render scale (or null for full resolution) for the next activation. */
+    onSetInterventionDownscale: (Float?) -> Unit,
+    /** Chooses the touch speed (or null for stock) for the next activation. */
+    onSetPointerSpeedChoice: (Int?) -> Unit,
     onLaunchGame: (String) -> Unit,
     onRemoveGame: (String) -> Unit,
+    onOptimizeGame: (String) -> Unit,
+    /** Selects the single-game scope in the unified optimisation card; null = all games. */
+    onSelectOptimizeScope: (String?) -> Unit,
     onAddGameClicked: () -> Unit,
 
     onToggleAutoForceStop: (Boolean) -> Unit,
     onToggleAutoForceStopKeepPackage: (String) -> Unit,
+    onShowSuspendPicker: () -> Unit,
+    onRemoveExtraSuspendPackage: (String) -> Unit,
+    onToggleGameSession: (Boolean) -> Unit,
     
     onResWidthChange: (String) -> Unit,
     onResHeightChange: (String) -> Unit,
@@ -363,7 +406,19 @@ fun GamingToolsScreen(
         Column(
             modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(bottom = 32.dp)
         ) {
-            // Library
+            // Compact automatic-gaming-mode row directly above the library, so the
+            // relationship reads top-down: Automatic Gaming Mode -> Your Games.
+            AutoGameSessionRow(
+                active = uiState.isGameSessionActive,
+                enabled = uiState.games.isNotEmpty(),
+                onToggle = onToggleGameSession
+            )
+            Spacer(modifier = Modifier.height(16.dp))
+            // Library: vertical full-width cards. A LazyRow clipped the first/last card
+            // edges (no content padding, fixed 140dp widths, horizontal scroll bounds),
+            // so every card now fills the available width with its shape drawn by the
+            // Surface itself — fully visible on phones, tablets, portrait and landscape
+            // with no horizontal scrolling.
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
                 Text(stringResource(R.string.gt_section_your_library), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 IconButton(onClick = onAddGameClicked, modifier = Modifier.size(24.dp)) {
@@ -376,12 +431,24 @@ fun GamingToolsScreen(
                     Text(stringResource(R.string.gt_no_games_detected), color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 13.sp)
                 }
             } else {
-                LazyRow(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                    items(uiState.games) { game -> GameLibraryCard(game, onLaunchGame, onRemoveGame) }
+                Column(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    uiState.games.forEach { game ->
+                        GameLibraryCard(
+                            game,
+                            onLaunchGame,
+                            onRemoveGame,
+                            onOptimizeGame,
+                            isOptimizing = uiState.optimizingGamePkg == game.packageName
+                        )
+                    }
                 }
             }
 
             Spacer(modifier = Modifier.height(24.dp))
+            Text(stringResource(R.string.gt_section_gaming_mode), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(bottom = 12.dp))
             GamingModeCard(
                 gamingState = gamingState,
                 report = gamingReport,
@@ -394,17 +461,22 @@ fun GamingToolsScreen(
                 canActivate = hasPrivilege,
                 isActive = isActive,
                 isBusy = isBusy,
+                downscale = interventionDownscale,
+                onDownscaleChange = onSetInterventionDownscale,
+                pointerSpeed = pointerSpeedChoice,
+                onPointerSpeedChange = onSetPointerSpeedChoice,
                 onActivate = onActivateGamingMode,
                 onDeactivate = onDeactivateGamingMode
             )
-            Spacer(modifier = Modifier.height(24.dp))
-            RamBoostCard(uiState.isBoostingRam, uiState.ramResult, onBoostRam)
-            Spacer(modifier = Modifier.height(24.dp))
-            FixedPerformanceModeCard(isFixedPerformanceMode, onToggleFixedPerformance)
+            Spacer(modifier = Modifier.height(12.dp))
+            FixedPerformanceModeCard(
+                enabled = isFixedPerformanceMode,
+                onToggle = onToggleFixedPerformance,
+                isGamingModeActive = isActive
+            )
             Spacer(modifier = Modifier.height(24.dp))
 
-            // Tools
-            Text(stringResource(R.string.gt_section_performance_boost), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(bottom = 12.dp))
+            Text(stringResource(R.string.gt_section_performance), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(bottom = 12.dp))
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 ExpandableToolCard(title = stringResource(R.string.gt_tool_sound_title), subtitle = stringResource(R.string.gt_tool_sound_sub), icon = Icons.AutoMirrored.Filled.VolumeUp) {
                     BoostContent(uiState.boostLevel, uiState.audioOutput, onBoostChange)
@@ -420,6 +492,11 @@ fun GamingToolsScreen(
                         state = boosterState,
                         log = boosterLog,
                         history = boosterHistory,
+                        games = uiState.games,
+                        scopePkg = uiState.optimizeScopePkg,
+                        optimizingSinglePkg = uiState.optimizingGamePkg,
+                        onScopeChange = onSelectOptimizeScope,
+                        onOptimizeSingle = onOptimizeGame,
                         scheduleEnabled = uiState.dexoptScheduleEnabled,
                         scheduleIntervalHours = uiState.dexoptIntervalHours,
                         scheduleNextRunAt = uiState.dexoptNextRunAt,
@@ -447,13 +524,26 @@ fun GamingToolsScreen(
                         onSetAnimationScale = onSetAnimationScale,
                         onToggleAlwaysFinish = onToggleAlwaysFinish,
                         onToggleBackgroundLimit = onToggleBackgroundLimit,
-                        onSetShowRefreshRate = onSetShowRefreshRate,
                         onSetForcePeakRefreshRate = onSetForcePeakRefreshRate,
                         onSetGameDefaultFrameRateDisabled = onSetGameDefaultFrameRateDisabled,
+                        games = uiState.games,
+                        anglePkg = uiState.anglePkg,
+                        angleDriver = uiState.angleDriver,
+                        isChangingAngleDriver = uiState.isChangingAngleDriver,
+                        onSelectAnglePackage = onSelectAnglePackage,
+                        onSetAngleDriver = onSetAngleDriver,
                         onOpenDeveloperOptions = onOpenDeveloperOptions
                     )
                 }
 
+                // Kernel Insights lived here as a read-only dump with no controls and no
+                // other consumer — removed from Gaming Tools (§6). The parsers stay tested
+                // in KernelInfo/ThermalZoneReader for any future diagnostics use.
+            }
+
+            Spacer(modifier = Modifier.height(24.dp))
+            Text(stringResource(R.string.gt_section_graphics), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(bottom = 12.dp))
+            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 ExpandableToolCard(title = stringResource(R.string.gt_tool_screen_title), subtitle = stringResource(R.string.gt_tool_screen_sub), icon = Icons.Default.AspectRatio) {
                     ResolutionChangerContent(
                         native = uiState.nativeResolution,
@@ -473,7 +563,11 @@ fun GamingToolsScreen(
                         onApply = onApplyResolution, onReset = onResetResolution
                     )
                 }
+            }
 
+            Spacer(modifier = Modifier.height(24.dp))
+            Text(stringResource(R.string.gt_section_overlays), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(bottom = 12.dp))
+            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 FeatureToggleCard(title = stringResource(R.string.gt_tool_fps_title), subtitle = stringResource(R.string.gt_tool_fps_sub), icon = Icons.Default.BarChart, checked = uiState.isOverlayRunning, onCheckedChange = onToggleOverlay)
                 ExpandableToolCard(title = stringResource(R.string.gt_tool_crosshair_title), subtitle = stringResource(R.string.gt_tool_crosshair_sub), icon = Icons.Default.AddCircleOutline, isToggleable = true, isToggled = uiState.isCrosshairRunning, onToggleChange = onToggleCrosshair, forceExpand = uiState.isCrosshairRunning) {
                     CrosshairPicker(
@@ -523,13 +617,16 @@ fun GamingToolsScreen(
                         onRefresh = onRefreshDns,
                         onApplyProvider = onApplyDnsProvider,
                         onSetAutomatic = onSetDnsAutomatic,
-                        onDisable = onDisableDns
+                        onDisable = onDisableDns,
+                        pingMs = uiState.dnsPingMs,
+                        isMeasuringPing = uiState.isMeasuringDnsPing,
+                        onMeasurePing = onMeasureDnsPing
                     )
                 }
             }
 
             Spacer(modifier = Modifier.height(24.dp))
-            Text(stringResource(R.string.gt_section_system_advanced), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(bottom = 12.dp))
+            Text(stringResource(R.string.gt_section_bg_apps), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(bottom = 12.dp))
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 ExpandableToolCard(
                     title = stringResource(R.string.gt_tool_afs_title),
@@ -548,6 +645,35 @@ fun GamingToolsScreen(
                         onToggle = onToggleAutoForceStopKeepPackage
                     )
                 }
+                // Extra suspend list: user-picked packages frozen at Gaming Mode activation on
+                // top of the automatic sweep, woken with everything else on deactivation.
+                ExpandableToolCard(
+                    title = stringResource(R.string.gt_suspend_title),
+                    subtitle = stringResource(R.string.gt_suspend_sub),
+                    icon = Icons.Default.Pause
+                ) {
+                    SuspendListContent(
+                        picked = uiState.extraSuspendPackages,
+                        apps = uiState.allApps,
+                        hasPrivilege = hasPrivilege,
+                        onAdd = onShowSuspendPicker,
+                        onRemove = onRemoveExtraSuspendPackage
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(24.dp))
+            Text(stringResource(R.string.gt_section_memory), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(bottom = 12.dp))
+            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                RamBoostCard(
+                    uiState.isBoostingRam,
+                    uiState.ramResult,
+                    onBoostRam,
+                    uiState.isTrimmingStorage,
+                    uiState.storageTrimResult,
+                    hasPrivilege,
+                    onTrimStorage
+                )
                 ExpandableToolCard(title = stringResource(R.string.gt_tool_cleaner_title), subtitle = stringResource(R.string.gt_tool_cleaner_sub), icon = Icons.Default.DeleteSweep) {
                     CleaningContent(
                         isRooted = uiState.isRooted,
@@ -573,28 +699,86 @@ fun GamingToolsScreen(
 }
 
 @Composable
-fun GameLibraryCard(game: GameInfo, onLaunch: (String) -> Unit, onRemove: (String) -> Unit) {
+fun GameLibraryCard(
+    game: GameInfo,
+    onLaunch: (String) -> Unit,
+    onRemove: (String) -> Unit,
+    onOptimize: (String) -> Unit,
+    isOptimizing: Boolean
+) {
     Surface(
-        modifier = Modifier.width(140.dp).clip(RoundedCornerShape(18.dp)),
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(16.dp),
         color = MaterialTheme.colorScheme.surface,
         border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
     ) {
-        Box {
-            Column(modifier = Modifier.padding(12.dp)) {
-                // Cached per game: toBitmap() allocates on every recomposition otherwise.
-                val icon = remember(game.packageName, game.icon) { game.icon.toBitmap().asImageBitmap() }
-                Image(bitmap = icon, contentDescription = null, modifier = Modifier.size(40.dp).clip(RoundedCornerShape(8.dp)))
-                Spacer(modifier = Modifier.height(12.dp))
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(12.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            // Cached per game: toBitmap() allocates on every recomposition otherwise.
+            val icon = remember(game.packageName, game.icon) { game.icon.toBitmap().asImageBitmap() }
+            Image(bitmap = icon, contentDescription = null, modifier = Modifier.size(40.dp).clip(RoundedCornerShape(8.dp)))
+            Spacer(modifier = Modifier.width(12.dp))
+            Column(modifier = Modifier.weight(1f)) {
                 Text(text = game.appName, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                Spacer(modifier = Modifier.height(12.dp))
-                CatsmokerButton(onClick = { onLaunch(game.packageName) }, modifier = Modifier.fillMaxWidth().height(32.dp), contentPadding = PaddingValues(0.dp), shape = RoundedCornerShape(8.dp)) {
-                    Text(stringResource(R.string.gt_library_launch), fontSize = 10.sp, fontWeight = FontWeight.Bold)
+                Spacer(modifier = Modifier.height(8.dp))
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
+                    CatsmokerButton(onClick = { onLaunch(game.packageName) }, modifier = Modifier.weight(1f).height(32.dp), contentPadding = PaddingValues(0.dp), shape = RoundedCornerShape(8.dp)) {
+                        Text(stringResource(R.string.gt_library_launch), fontSize = 10.sp, fontWeight = FontWeight.Bold)
+                    }
+                    // Pre-launch speed-profile compile for exactly this game. Runs through the same
+                    // sweep lock as the full booster, so it can never race one — the button spins
+                    // while the platform works and the toast reports what it said.
+                    CatsmokerOutlinedButton(
+                        onClick = { onOptimize(game.packageName) },
+                        modifier = Modifier.weight(1f).height(32.dp),
+                        contentPadding = PaddingValues(0.dp),
+                        shape = RoundedCornerShape(8.dp),
+                        enabled = !isOptimizing
+                    ) {
+                        if (isOptimizing) {
+                            CircularProgressIndicator(modifier = Modifier.size(14.dp), strokeWidth = 2.dp)
+                        } else {
+                            Text(stringResource(R.string.gt_library_optimize), fontSize = 10.sp, fontWeight = FontWeight.Bold)
+                        }
+                    }
                 }
             }
-            IconButton(onClick = { onRemove(game.packageName) }, modifier = Modifier.align(Alignment.TopEnd).padding(4.dp).size(24.dp)) {
+            IconButton(onClick = { onRemove(game.packageName) }, modifier = Modifier.size(32.dp)) {
                 Icon(Icons.Default.Remove, stringResource(R.string.gt_library_remove), tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f), modifier = Modifier.size(16.dp))
             }
         }
+    }
+}
+
+/**
+ * Compact automatic-gaming-mode row shown directly above Your Games.
+ *
+ * No card background and no description: the name plus the existing toggle only.
+ * The text takes the available width ([weight]) so the switch is never pushed
+ * off-screen or clipped on narrow phones; no fixed widths are used.
+ */
+@Composable
+private fun AutoGameSessionRow(
+    active: Boolean,
+    enabled: Boolean,
+    onToggle: (Boolean) -> Unit
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(
+            text = stringResource(R.string.gt_session_title),
+            style = MaterialTheme.typography.bodyLarge,
+            fontWeight = FontWeight.Medium,
+            color = if (enabled) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.weight(1f).padding(end = 8.dp),
+            maxLines = 2,
+            overflow = TextOverflow.Ellipsis
+        )
+        Switch(checked = active, onCheckedChange = onToggle, enabled = enabled)
     }
 }
 
@@ -729,15 +913,22 @@ fun ResolutionChangerContent(
                 stringResource(R.string.gt_res_safe_3, native?.let { source } ?: stringResource(R.string.gt_res_safe_source_phone))
             )
         )
+        Spacer(modifier = Modifier.height(6.dp))
+        // Graphics is three independent layers (F11): this card, the Gaming Mode render
+        // scale, and the ANGLE driver table. Stating the stack here keeps a lower
+        // resolution from reading as a device-wide performance cap.
+        ExplainerBox(
+            title = stringResource(R.string.gt_graphics_layers_title),
+            lines = listOf(stringResource(R.string.gt_graphics_layers))
+        )
 
         if (options.isNotEmpty()) {
             Spacer(modifier = Modifier.height(16.dp))
             Text(stringResource(R.string.gt_res_choose_size), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
             Spacer(modifier = Modifier.height(8.dp))
-            Row(
-                modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
+            // Resolution presets wrap instead of scrolling sideways: every size stays
+            // visible on a narrow phone, one line on a tablet.
+            ChipFlowRow {
                 options.forEach { option ->
                     FilterChip(
                         selected = option.id == selectedOptionId,
@@ -867,7 +1058,9 @@ fun CrosshairPicker(
     Column {
         Text(stringResource(R.string.gt_crosshair_style), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
         Spacer(modifier = Modifier.height(12.dp))
-        Row(modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+        // Crosshair tiles wrap in a grid instead of scrolling sideways: all seven
+        // visible at once on a phone (roughly 4+3), one row on a tablet.
+        ChipFlowRow {
             scopes.forEach { scope ->
                 val isSelected = selected == scope
                 Surface(
@@ -1676,9 +1869,18 @@ fun DeveloperOptionsContent(
     onSetAnimationScale: (AnimationScaleKind, Float) -> Unit,
     onToggleAlwaysFinish: (Boolean) -> Unit,
     onToggleBackgroundLimit: (Boolean) -> Unit,
-    onSetShowRefreshRate: (Boolean) -> Unit,
     onSetForcePeakRefreshRate: (Boolean) -> Unit,
     onSetGameDefaultFrameRateDisabled: (Boolean) -> Unit,
+    /** Games the ANGLE picker lists; the card picks the first once loaded. */
+    games: List<GameInfo>,
+    /** Package the ANGLE card acts on, or null before selection. */
+    anglePkg: String?,
+    /** Driver the table currently holds for [anglePkg], or null when it holds none. */
+    angleDriver: AngleDriverOptions.Driver?,
+    /** True while an ANGLE write is in flight. */
+    isChangingAngleDriver: Boolean,
+    onSelectAnglePackage: (String?) -> Unit,
+    onSetAngleDriver: (AngleDriverOptions.Driver) -> Unit,
     /**
      * Opens Android's own Developer options screen.
      *
@@ -1736,19 +1938,6 @@ fun DeveloperOptionsContent(
         HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
 
         DevOptionSwitchRow(
-            label = stringResource(R.string.gt_dev_show_rr),
-            state = gameDevOptions.showRefreshRate,
-            onCheckedChange = onSetShowRefreshRate,
-            onOpenDeveloperOptions = onOpenDeveloperOptions,
-            explanation = listOf(
-                stringResource(R.string.gt_dev_show_rr_1),
-                stringResource(R.string.gt_dev_show_rr_2)
-            )
-        )
-
-        HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
-
-        DevOptionSwitchRow(
             label = stringResource(R.string.gt_dev_peak),
             state = gameDevOptions.forcePeakRefreshRate,
             onCheckedChange = onSetForcePeakRefreshRate,
@@ -1774,11 +1963,176 @@ fun DeveloperOptionsContent(
 
         HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
 
+        AngleDriverSection(
+            games = games,
+            anglePkg = anglePkg,
+            angleDriver = angleDriver,
+            isChanging = isChangingAngleDriver,
+            canChange = hasPrivilege,
+            onSelectPackage = onSelectAnglePackage,
+            onSetDriver = onSetAngleDriver
+        )
+
+        HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+
         // Always offered, not only when a switch has failed: several of these live on Android's own
         // Developer options screen, and a user who wants to check or change one directly should not
         // have to hunt for it.
         CatsmokerOutlinedButton(onClick = onOpenDeveloperOptions, modifier = Modifier.fillMaxWidth()) {
             Text(stringResource(R.string.gt_dev_open_developer))
+        }
+    }
+}
+
+/**
+ * Per-game graphics driver choice, on the same table Developer Options edits.
+ *
+ * The game picker reuses the library's app dialog; the driver chips write through
+ * [AngleDriverOptions] with a read-back, so a refused write leaves the chips where they were.
+ * The current choice reads through the provider and needs no privilege, which is why the
+ * picker stays live while only the chips lock without root/Shizuku.
+ */
+@Composable
+private fun AngleDriverSection(
+    games: List<GameInfo>,
+    anglePkg: String?,
+    angleDriver: AngleDriverOptions.Driver?,
+    isChanging: Boolean,
+    canChange: Boolean,
+    onSelectPackage: (String?) -> Unit,
+    onSetDriver: (AngleDriverOptions.Driver) -> Unit
+) {
+    var picking by remember { mutableStateOf(false) }
+    val pickedName = games.firstOrNull { it.packageName == anglePkg }?.appName
+
+    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+        Text(stringResource(R.string.gt_angle_title), fontSize = 13.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
+        ExplainerBox(
+            title = stringResource(R.string.gt_explainer_what),
+            lines = listOf(
+                stringResource(R.string.gt_graphics_layers),
+                stringResource(R.string.gt_angle_1),
+                stringResource(R.string.gt_angle_2)
+            )
+        )
+        if (games.isEmpty()) {
+            RequirementNotice(stringResource(R.string.gt_no_games_detected))
+        } else {
+            CatsmokerOutlinedButton(
+                onClick = { picking = true },
+                modifier = Modifier.fillMaxWidth(),
+                enabled = !isChanging
+            ) {
+                Text(pickedName ?: stringResource(R.string.gt_angle_pick))
+            }
+            // Three driver chips wrap instead of squeezing on a narrow phone.
+            ChipFlowRow {
+                AngleDriverOptions.Driver.entries.forEach { driver ->
+                    FilterChip(
+                        selected = angleDriver == driver,
+                        onClick = { onSetDriver(driver) },
+                        enabled = canChange && !isChanging && anglePkg != null,
+                        label = {
+                            Text(
+                                when (driver) {
+                                    AngleDriverOptions.Driver.ANGLE -> stringResource(R.string.gt_angle_angle)
+                                    AngleDriverOptions.Driver.NATIVE -> stringResource(R.string.gt_angle_native)
+                                    AngleDriverOptions.Driver.DEFAULT -> stringResource(R.string.gt_angle_default)
+                                },
+                                fontSize = 11.sp
+                            )
+                        }
+                    )
+                }
+            }
+            // The table's own answer for the picked package — a missing entry is "no choice
+            // stored", never a failure, and a 0 here would be a value the device never gave.
+            Text(
+                text = angleDriver?.let {
+                    stringResource(
+                        R.string.gt_angle_now,
+                        when (it) {
+                            AngleDriverOptions.Driver.ANGLE -> stringResource(R.string.gt_angle_angle)
+                            AngleDriverOptions.Driver.NATIVE -> stringResource(R.string.gt_angle_native)
+                            AngleDriverOptions.Driver.DEFAULT -> stringResource(R.string.gt_angle_default)
+                        }
+                    )
+                } ?: stringResource(R.string.gt_angle_none),
+                fontSize = 11.sp,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            if (!canChange) {
+                RequirementNotice(stringResource(R.string.gt_angle_need))
+            }
+        }
+    }
+
+    if (picking) {
+        AppPickerDialog(
+            apps = games,
+            onDismiss = { picking = false },
+            onAppSelected = {
+                onSelectPackage(it)
+                picking = false
+            }
+        )
+    }
+}
+
+/**
+ * The extra suspend list: picked packages shown with a remove button, plus an add button that
+ * opens the app picker. The active game and Catsmoker itself can never be honored however
+ * picked (the store filters them at activation), which the note states rather than hiding.
+ */
+@Composable
+private fun SuspendListContent(
+    picked: Set<String>,
+    apps: List<GameInfo>,
+    hasPrivilege: Boolean,
+    onAdd: () -> Unit,
+    onRemove: (String) -> Unit
+) {
+    val names = remember(picked, apps) {
+        val byPkg = apps.associateBy { it.packageName }
+        picked.sorted().map { pkg -> byPkg[pkg]?.appName ?: pkg }
+            .zip(picked.sorted())
+    }
+    Column(modifier = Modifier.fillMaxWidth()) {
+        ExplainerBox(
+            title = stringResource(R.string.gt_explainer_what),
+            lines = listOf(
+                stringResource(R.string.gt_suspend_what_1),
+                stringResource(R.string.gt_suspend_what_2)
+            )
+        )
+        Spacer(modifier = Modifier.height(8.dp))
+        Text(
+            text = if (picked.isEmpty()) stringResource(R.string.gt_suspend_none)
+            else stringResource(R.string.gt_suspend_some, picked.size),
+            style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.primary
+        )
+        Spacer(modifier = Modifier.height(8.dp))
+        names.forEach { (label, pkg) ->
+            Row(
+                modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(label, color = MaterialTheme.colorScheme.onSurface, modifier = Modifier.weight(1f), fontSize = 13.sp)
+                TextButton(onClick = { onRemove(pkg) }) { Text(stringResource(R.string.gt_suspend_remove)) }
+            }
+        }
+        Spacer(modifier = Modifier.height(8.dp))
+        CatsmokerOutlinedButton(
+            onClick = onAdd,
+            modifier = Modifier.fillMaxWidth(),
+            enabled = hasPrivilege
+        ) {
+            Text(stringResource(R.string.gt_suspend_add))
+        }
+        if (!hasPrivilege) {
+            Spacer(modifier = Modifier.height(8.dp))
+            RequirementNotice(stringResource(R.string.gt_needs_root_shizuku_close))
         }
     }
 }
@@ -1910,7 +2264,11 @@ fun DnsContent(
     onRefresh: () -> Unit,
     onApplyProvider: (DnsFeature.Provider) -> Unit,
     onSetAutomatic: () -> Unit,
-    onDisable: () -> Unit
+    onDisable: () -> Unit,
+    /** Measured reply ms per provider address (null per address = never replied); null = never measured. */
+    pingMs: Map<String, Int?>?,
+    isMeasuringPing: Boolean,
+    onMeasurePing: () -> Unit
 ) {
     // Private DNS is equally settable from Settings, so the reading is refreshed on open rather than
     // trusted from whenever this app last wrote it.
@@ -2014,6 +2372,31 @@ fun DnsContent(
                                 selected.addresses.joinToString()
                             )
                         )
+                    )
+                }
+
+                // Measured reply times, one line per provider — the numbers behind "usually
+                // the fastest". Never measured reads as no rows at all; a provider whose
+                // address never replied reads as "no reply", never 0 ms.
+                CatsmokerOutlinedButton(
+                    onClick = onMeasurePing,
+                    modifier = Modifier.fillMaxWidth(),
+                    enabled = !isMeasuringPing && !isChanging
+                ) {
+                    if (isMeasuringPing) {
+                        CircularProgressIndicator(modifier = Modifier.size(14.dp), strokeWidth = 2.dp)
+                    } else {
+                        Text(stringResource(R.string.gt_dns_ping_measure), fontSize = 12.sp)
+                    }
+                }
+                pingMs?.forEach { (host, ms) ->
+                    val label = DnsFeature.PROVIDERS.firstOrNull { host in it.addresses }?.label
+                    Text(
+                        text = "${label ?: host} · $host · " +
+                            (ms?.let { "$it ms" } ?: stringResource(R.string.gt_dns_ping_none)),
+                        fontSize = 11.sp,
+                        color = if (ms != null) MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f)
+                        else MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
             }
@@ -2135,7 +2518,8 @@ private fun AnimationScaleRow(
                 Text(formatAnimationScale(current), fontSize = 10.sp, color = Color(0xFFFFB74D))
             }
         }
-        Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+        // Three compact chips wrap instead of squeezing next to the fixed label.
+        ChipFlowRow {
             ANIMATION_SCALE_VALUES.forEach { value ->
                 FilterChip(
                     selected = kotlin.math.abs(current - value) < 0.005f,
@@ -2192,6 +2576,13 @@ fun AppBoosterContent(
     state: BoosterState,
     log: List<String>,
     history: List<BoosterRun>,
+    games: List<GameInfo>,
+    /** Single-game scope, or null for the all-games sweep. Shared with the library button. */
+    scopePkg: String?,
+    /** Package with a single-game pre-compile in flight, or null. */
+    optimizingSinglePkg: String?,
+    onScopeChange: (String?) -> Unit,
+    onOptimizeSingle: (String) -> Unit,
     scheduleEnabled: Boolean,
     scheduleIntervalHours: Int,
     scheduleNextRunAt: Long?,
@@ -2229,6 +2620,83 @@ fun AppBoosterContent(
                 stringResource(R.string.gt_booster_why_3)
             )
         )
+        Spacer(modifier = Modifier.height(8.dp))
+
+        // One backend, two scopes (F8): the all-games sweep (`speed`, minutes) and the
+        // single-game pre-compile (`speed-profile`, seconds). The library PRE-COMPILE
+        // button deep-links here through the same scope state, so both entries run one
+        // system instead of looking like two features.
+        Text(
+            text = stringResource(R.string.gt_booster_scope_title),
+            fontSize = 13.sp,
+            fontWeight = FontWeight.Bold,
+            color = MaterialTheme.colorScheme.onSurface
+        )
+        Spacer(modifier = Modifier.height(4.dp))
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            FilterChip(
+                selected = scopePkg == null,
+                onClick = { onScopeChange(null) },
+                label = { Text(stringResource(R.string.gt_booster_scope_all)) }
+            )
+            FilterChip(
+                selected = scopePkg != null,
+                onClick = {
+                    if (games.isNotEmpty()) {
+                        onScopeChange(
+                            games.firstOrNull { it.packageName == scopePkg }?.packageName
+                                ?: games.first().packageName
+                        )
+                    }
+                },
+                enabled = games.isNotEmpty(),
+                label = { Text(stringResource(R.string.gt_booster_scope_single)) }
+            )
+        }
+        Text(
+            text = if (scopePkg == null) stringResource(R.string.gt_booster_scope_hint_all)
+            else stringResource(R.string.gt_booster_scope_hint_single),
+            fontSize = 12.sp,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+        if (scopePkg != null) {
+            Spacer(modifier = Modifier.height(4.dp))
+            if (games.isEmpty()) {
+                Text(
+                    text = stringResource(R.string.gt_booster_no_games_scope),
+                    fontSize = 12.sp,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            } else {
+                androidx.compose.foundation.layout.FlowRow(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    games.forEach { game ->
+                        FilterChip(
+                            selected = game.packageName == scopePkg,
+                            onClick = { onScopeChange(game.packageName) },
+                            label = {
+                                Text(
+                                    game.appName,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis
+                                )
+                            }
+                        )
+                    }
+                }
+                Spacer(modifier = Modifier.height(8.dp))
+                CatsmokerButton(
+                    onClick = { scopePkg?.let { onOptimizeSingle(it) } },
+                    modifier = Modifier.fillMaxWidth(),
+                    enabled = !state.isRunning && optimizingSinglePkg == null
+                ) {
+                    Text(stringResource(R.string.gt_booster_precompile))
+                }
+            }
+            Spacer(modifier = Modifier.height(8.dp))
+            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+        }
         Spacer(modifier = Modifier.height(8.dp))
 
         // Without -f the platform skips any app already in the requested filter, so a re-run would
@@ -2357,10 +2825,8 @@ private fun DexoptScheduleSection(
         if (enabled) {
             // Changing the interval retunes the schedule in place (UPDATE, not REPLACE), so the
             // countdown is not restarted from zero on every tap.
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                modifier = Modifier.horizontalScroll(rememberScrollState())
-            ) {
+            // Four chips wrap instead of scrolling: always fully visible.
+            ChipFlowRow {
                 DexoptScheduleStore.INTERVAL_CHOICES.forEach { hours ->
                     FilterChip(
                         selected = intervalHours == hours,
@@ -2437,10 +2903,16 @@ private fun boosterStatusText(state: BoosterState): String = when (val outcome =
 }
 
 @Composable
-fun AppPickerDialog(apps: List<GameInfo>, onDismiss: () -> Unit, onAppSelected: (String) -> Unit) {
+fun AppPickerDialog(
+    apps: List<GameInfo>,
+    onDismiss: () -> Unit,
+    onAppSelected: (String) -> Unit,
+    /** Dialog title: the game library and the freeze list share this picker (§23). */
+    @StringRes titleRes: Int = R.string.gt_picker_add_app
+) {
     var searchQuery by rememberSaveable { mutableStateOf("") }
 
-    AlertDialog(onDismissRequest = onDismiss, title = { Text(stringResource(R.string.gt_picker_add_app)) }, text = {
+    AlertDialog(onDismissRequest = onDismiss, title = { Text(stringResource(titleRes)) }, text = {
         Column {
             OutlinedTextField(
                 value = searchQuery,
@@ -2533,6 +3005,8 @@ fun GamingToolsPreview() {
             alwaysFinishActivities = false,
             backgroundProcessLimit = false,
             gameDevOptions = GameDeveloperOptions.State(),
+            interventionDownscale = null,
+            pointerSpeedChoice = null,
             onToggleOverlay = {},
             onToggleCrosshair = {},
             onSelectCrosshair = {},
@@ -2550,29 +3024,39 @@ fun GamingToolsPreview() {
             onActivateGamingMode = {},
             onDeactivateGamingMode = {},
             onBoostRam = {},
+            onTrimStorage = {},
             onRunBooster = { _, _ -> },
             onStopBooster = {},
             onSetDexoptSchedule = {},
             onSetDexoptInterval = {},
             onToggleFixedPerformance = {},
+            onSetInterventionDownscale = {},
+            onSetPointerSpeedChoice = {},
             onBoostChange = {},
             onSetAnimationScale = { _, _ -> },
             onToggleAlwaysFinish = {},
             onToggleBackgroundLimit = {},
-            onSetShowRefreshRate = {},
             onSetForcePeakRefreshRate = {},
             onSetGameDefaultFrameRateDisabled = {},
+            onSelectAnglePackage = {},
+            onSetAngleDriver = {},
             onOpenDeveloperOptions = {},
             onSetVpnFirewall = {},
             onRefreshDns = {},
             onApplyDnsProvider = {},
             onSetDnsAutomatic = {},
             onDisableDns = {},
+            onMeasureDnsPing = {},
             onLaunchGame = {},
+            onOptimizeGame = {},
+            onSelectOptimizeScope = {},
             onRemoveGame = {},
             onAddGameClicked = {},
             onToggleAutoForceStop = {},
             onToggleAutoForceStopKeepPackage = {},
+            onShowSuspendPicker = {},
+            onRemoveExtraSuspendPackage = {},
+            onToggleGameSession = {},
             onResWidthChange = {},
             onResHeightChange = {},
             onResDpiChange = {},

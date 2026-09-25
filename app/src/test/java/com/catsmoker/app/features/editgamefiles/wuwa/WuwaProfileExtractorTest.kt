@@ -7,7 +7,7 @@ import org.junit.Test
 
 /**
  * Pins the pure half of the installed-profile reader against
- * `referance/gamingtools/WuWa-Config-Android-main/config/ProfileExtractor.kt` (read in full):
+ * `reference/gamingtools/WuWa-Config-Android-main/config/ProfileExtractor.kt` (read in full):
  * the key vocabulary and DB locations the app and the reference share, the Region/Level pairing,
  * the timestamp's seconds-or-milliseconds rule, and the ini settings predicate. The channel work
  * and the SQLite open live in [WuwaConfigManager] and need a device — what is testable here is

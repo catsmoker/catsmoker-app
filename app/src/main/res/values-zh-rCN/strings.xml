@@ -17,13 +17,18 @@
     <string name="overlay_power_initial">功耗：正在读取…</string>
     <string name="overlay_ram_initial">RAM：正在读取…</string>
     <string name="overlay_temp_initial">温度：正在读取…</string>
+    <string name="overlay_headroom_initial">热量：正在读取…</string>
     <string name="Gaming_tools_title">游戏工具</string>
     <string name="gt_subtitle">让你的游戏运行更流畅</string>
     <string name="gt_section_your_library">你的游戏</string>
     <string name="gt_no_games_detected">还没有添加游戏 — 点击 + 添加一个</string>
-    <string name="gt_section_performance_boost">加速</string>
+    <string name="gt_section_gaming_mode">游戏模式</string>
+    <string name="gt_section_performance">性能</string>
+    <string name="gt_section_graphics">图形与显示</string>
+    <string name="gt_section_overlays">悬浮窗</string>
+    <string name="gt_section_bg_apps">后台应用</string>
+    <string name="gt_section_memory">内存与存储</string>
     <string name="gt_section_focus_network">网络与静音</string>
-    <string name="gt_section_system_advanced">空间与后台应用</string>
     <string name="logs_title">系统日志</string>
     <string name="logs_subtitle">应用和系统诊断信息。</string>
     <string name="logs_refresh">刷新</string>
@@ -32,6 +37,8 @@
     <string name="logs_filter_placeholder">筛选日志…</string>
     <string name="logs_empty">暂无日志。</string>
     <string name="notification_stop">停止</string>
+    <!-- Group summary row bundling every Catsmoker notification in the shade. -->
+    <string name="notif_summary_sub">点击打开 Catsmoker</string>
     <string name="booster_running_title">游戏加速器运行中</string>
     <string name="booster_notification_preparing">正在读取应用列表…</string>
     <string name="booster_notification_progress">%1$d / %2$d 个应用</string>

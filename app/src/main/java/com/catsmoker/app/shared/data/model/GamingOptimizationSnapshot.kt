@@ -16,6 +16,12 @@ data class GamingOptimizationSnapshot(
     val minRefreshRate: SettingValue?,
     val peakRefreshRate: SettingValue?,
     val touchResponseSpeed: SettingValue?,
+    /**
+     * `system pointer_speed` (-7..+7, stock 0) as it was before Gaming Mode set the user's
+     * touch-speed choice. null means unreadable (or predates the choice feature in an old
+     * snapshot) — the revert then leaves the key alone rather than restoring an assumption.
+     */
+    val pointerSpeed: SettingValue? = null,
     val userPreferredDisplayModeId: SettingValue?,
     val affectedPackages: Set<String>,
     val uidWhitelistedBefore: Boolean = false,

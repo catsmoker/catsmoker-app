@@ -71,8 +71,14 @@ object AppearanceStore {
     }
 
     fun setLanguage(context: Context, tag: String) {
-        prefs(context).edit { putString(KEY_LANGUAGE, tag) }
+        // Normalized on write so a region variant (e.g. `ar-SA` from a previous build)
+        // can never persist and resolve to the wrong table later.
+        prefs(context).edit { putString(KEY_LANGUAGE, LocaleHelper.normalizeTag(tag)) }
     }
+
+    /** Whether the onboarding appearance gate was answered (survives a locale restart). */
+    fun isChosen(context: Context): Boolean =
+        prefs(context).getBoolean(KEY_CHOSEN, false)
 
     // NOTE: uses the passed context directly, never context.applicationContext — during
     // Application.attachBaseContext the application object is not attached yet and

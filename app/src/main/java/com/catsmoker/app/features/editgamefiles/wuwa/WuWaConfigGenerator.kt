@@ -5,7 +5,7 @@ package com.catsmoker.app.features.editgamefiles.wuwa
  * `DeviceProfiles.ini`, `GameUserSettings.ini`, plus the optional `Scalability.ini` and
  * `Hardware.ini`.
  *
- * Ported from `referance/gamingtools/WuWa-Config-Android-main/config/ConfigGenerator.kt`,
+ * Ported from `reference/gamingtools/WuWa-Config-Android-main/config/ConfigGenerator.kt`,
  * which was read in full before this file was written: the 8-preset table, every section
  * builder and its exact cvar lines, the device-tier ladders, the forbidden-cvar strip, the
  * dedup pass, and the `Core.System` path extraction are line-for-line where the surrounding

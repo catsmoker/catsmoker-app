@@ -16,7 +16,7 @@ import org.junit.rules.TemporaryFolder
 
 /**
  * Pins the deploy-history store against
- * `referance/gamingtools/WuWa-Config-Android-main/config/DeployHistoryStore.kt` + its
+ * `reference/gamingtools/WuWa-Config-Android-main/config/DeployHistoryStore.kt` + its
  * `util/AtomicFile.kt`, both read in full before the port was written: the newest-20 cap, the
  * insert-at-0 ordering, load-falls-back-to-empty on a corrupt file, the swallowed failed save,
  * and the temp-sibling-then-rename save that never leaves a truncated store.

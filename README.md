@@ -60,6 +60,7 @@
 - [Features](#-key-features)
 - [How It Works](#-how-it-works)
 - [Installation Guide](#-installation-guide)
+- [Google Play Version](#google-play-version)
 - [Supported Games](#-supported-games)
 - [Device Compatibility](#-device-compatibility)
 - [Build From Source](#build-from-source)
@@ -107,6 +108,34 @@ Utilizes the LSPosed framework to hook into game processes at runtime. This allo
 4. **Select Game**: Choose your game and use the "Apply with Shizuku" method.
 
 > **File access note:** SAF may not work on Android 10 or later. ZArchiver may also require Shizuku to access `Android/data`.
+
+---
+
+## Google Play Version
+
+Catsmoker also has a dedicated `playstore` branch containing the version prepared for Google Play distribution.
+
+The Google Play version is modified for **non-root users** and is designed to work without requiring root access. Some advanced features may still have requirements or limitations compared to the full version.
+
+### Closed Testing
+
+The Google Play version is currently available through **Closed Testing**, so it will not appear on Google Play for users who have not joined the testing group.
+
+To access the app:
+
+1. Join the Catsmoker Google Group:
+   **catsmoker-apps@googlegroups.com**
+
+2. After joining the group, wait **up to 5 minutes** for Google to update your testing access.
+
+3. Then open the Catsmoker Google Play testing page:
+   https://play.google.com/apps/testing/com.catsmoker.app
+
+4. Enrol in the closed test and download Catsmoker from Google Play.
+
+If the testing page or app does not appear immediately after joining the group, wait a few minutes and try again.
+
+The `main` branch remains the primary/full development version, while the `playstore` branch contains the version prepared for Google Play distribution.
 
 ---
 

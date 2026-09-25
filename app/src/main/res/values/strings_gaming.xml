@@ -14,6 +14,8 @@
     <string name="gt_dialog_res_title">Check this resolution</string>
     <string name="gt_dialog_apply">APPLY</string>
     <string name="gt_picker_add_app">Add App</string>
+    <string name="gt_picker_add_game">Add Game</string>
+    <string name="gt_picker_add_freeze">Add Freeze Target</string>
     <string name="gt_picker_search">Search Apps</string>
     <string name="gt_picker_loading">Loading apps…</string>
     <string name="gt_picker_none">No apps found</string>
@@ -22,31 +24,38 @@
     <!-- Game library -->
     <string name="gt_library_launch">LAUNCH</string>
     <string name="gt_library_remove">Remove</string>
+    <string name="gt_library_optimize">PRE-COMPILE</string>
+    <string name="gt_library_edit_files">Edit game files</string>
+    <!-- Pre-launch single-game compile outcomes (%1$s = package, %2$s = device detail). -->
+    <string name="gt_game_opt_done">%1$s compiled</string>
+    <string name="gt_game_opt_done_detail">%1$s compiled: %2$s</string>
+    <string name="gt_game_opt_skip">%1$s needs no compile</string>
+    <string name="gt_game_opt_fail">%1$s did not compile: %2$s</string>
 
     <!-- Tool cards -->
-    <string name="gt_tool_sound_title">Louder Sound</string>
+    <string name="gt_tool_sound_title">Volume Boost</string>
     <string name="gt_tool_sound_sub">Turn the volume up past the limit.</string>
-    <string name="gt_tool_booster_title">App Booster</string>
-    <string name="gt_tool_booster_sub">Get apps ready so games stutter less.</string>
+    <string name="gt_tool_booster_title">App Compile Optimisation</string>
+    <string name="gt_tool_booster_sub">Pre-compile apps — one game or all — so games stutter less.</string>
     <string name="gt_tool_booster_need">Needs root or Shizuku. Android does not let a normal app do this. Shizuku is a free helper app that lends this app that power without root.</string>
     <string name="gt_tool_devopts_title">Developer Options</string>
     <string name="gt_tool_devopts_sub">Speed up menus and background apps.</string>
-    <string name="gt_tool_screen_title">Screen Size</string>
-    <string name="gt_tool_screen_sub">Make the screen easier to draw.</string>
-    <string name="gt_tool_fps_title">FPS Monitor</string>
+    <string name="gt_tool_screen_title">Resolution</string>
+    <string name="gt_tool_screen_sub">Lower the drawing resolution for more FPS.</string>
+    <string name="gt_tool_fps_title">FPS Overlay</string>
     <string name="gt_tool_fps_sub">Show how smooth your game is running.</string>
     <string name="gt_tool_crosshair_title">Crosshair</string>
     <string name="gt_tool_crosshair_sub">Put an aiming mark in the middle.</string>
     <string name="gt_tool_dnd_title">Do Not Disturb</string>
     <string name="gt_tool_dnd_sub">Silence notifications while you play.</string>
-    <string name="gt_tool_net_title">Stop Other Apps Using Data</string>
-    <string name="gt_tool_net_sub">Keep other apps off the internet.</string>
-    <string name="gt_tool_dns_title">Faster Address Lookups</string>
-    <string name="gt_tool_dns_sub">Choose a quicker, more private phone book.</string>
+    <string name="gt_tool_net_title">Background Data</string>
+    <string name="gt_tool_net_sub">VPN block (Wi-Fi + mobile) or Data Saver (mobile only).</string>
+    <string name="gt_tool_dns_title">Private DNS</string>
+    <string name="gt_tool_dns_sub">Choose the Private DNS provider.</string>
     <string name="gt_tool_afs_title">Auto Force Stop</string>
-    <string name="gt_tool_afs_sub">Close apps you leave, except your chosen ones.</string>
+    <string name="gt_tool_afs_sub">Force-stops apps you leave (fully terminated), except your keep list.</string>
     <string name="gt_tool_afs_need">Needs root or Shizuku. Android does not let a normal app close other apps. Shizuku is a free helper app that lends this app that power without root.</string>
-    <string name="gt_tool_cleaner_title">Cleaner</string>
+    <string name="gt_tool_cleaner_title">Storage Cleaner</string>
     <string name="gt_tool_cleaner_sub">Free up space by deleting leftovers.</string>
 
     <!-- Shared explainer titles -->
@@ -261,9 +270,6 @@
     <string name="gt_dev_close_2">The cost: apps you go back to start over from the beginning, and you lose whatever you had on screen. Good before a big game, worth turning off after.</string>
     <string name="gt_dev_on">On</string>
     <string name="gt_dev_off">Off</string>
-    <string name="gt_dev_show_rr">Show refresh rate</string>
-    <string name="gt_dev_show_rr_1">Puts a small number in the corner of your screen showing how many times per second the screen is redrawing. Handy for checking your phone really is running at its fastest.</string>
-    <string name="gt_dev_show_rr_2">Android guards this one closely, and newer versions guard it harder: from Android 14 only root gets through, because Shizuku runs commands as \"shell\" and that is no longer allowed near it. Whenever this app cannot do it, the button below opens Android\'s own screen, where it always works — look for \"Show refresh rate\".</string>
     <string name="gt_dev_peak">Always use the fastest screen speed</string>
     <string name="gt_dev_peak_1">Phones slow the screen down to save battery when nothing much is moving. This stops that, so the screen always runs at its fastest and feels smoother.</string>
     <string name="gt_dev_peak_2">The cost: it uses more battery while it is on. Turning it off puts back whatever your phone had before.</string>
@@ -277,18 +283,6 @@
     <string name="gt_dev_open_developer">Open Android\'s developer settings</string>
 
     <!-- Developer options engine facts -->
-    <string name="gt_gdo_live_at">Display is running at %1$s right now</string>
-    <string name="gt_gdo_live_unknown">This device did not report its current refresh rate</string>
-    <string name="gt_gdo_no_priv">This app can\'t switch it on by itself. Tap the button to turn it on in Android\'s own settings.</string>
-    <string name="gt_gdo_confirmed">%1$s · Android confirmed this is the real state</string>
-    <string name="gt_gdo_detail_join">%1$s · %2$s</string>
-    <string name="gt_gdo_refused_detail">%1$s %2$s</string>
-    <string name="gt_gdo_src_refused">your phone turned the last attempt down</string>
-    <string name="gt_gdo_src_recorded">shown as you last set it — Android %1$s cannot be asked for it</string>
-    <string name="gt_gdo_src_boot">shown from the way your phone starts up — Android %1$s cannot be asked for it</string>
-    <string name="gt_gdo_src_fresh">shown off until you use the switch — it always starts off after a restart, and Android %1$s cannot be asked for it</string>
-    <string name="gt_gdo_advice_root">Your phone\'s own settings screen can still do it.</string>
-    <string name="gt_gdo_advice_shell">Shizuku runs commands as \"shell\", which newer Android versions will not let near this part of the system. Root, or Android\'s own settings screen, can still do it.</string>
     <string name="gt_gdo_single_speed">Your screen only has one speed, so there is nothing faster to switch to.</string>
     <string name="gt_gdo_runs_at">Your screen runs at %1$s</string>
     <string name="gt_gdo_need_sys">Needs root or Shizuku, or permission to change system settings.</string>
@@ -321,6 +315,8 @@
     <string name="gt_dns_ping_1">No, and nothing that changes this can. Ping is how long your game\'s messages take once it is already connected, and the phone book is not used any more by then.</string>
     <string name="gt_dns_ping_2">What it does make faster is the waiting *before* something connects — a game starting, a match being found, a page loading.</string>
     <string name="gt_dns_ping_3">An older version of this app promised lower ping here and actually changed nothing at all. This one says what it really does.</string>
+    <string name="gt_dns_ping_measure">Measure resolvers</string>
+    <string name="gt_dns_ping_none">no reply</string>
     <string name="gt_dns_note_cloudflare">Usually the fastest. Blocks nothing.</string>
     <string name="gt_dns_note_google">Works well almost everywhere. Blocks nothing.</string>
     <string name="gt_dns_note_quad9">Blocks websites known to be dangerous.</string>
@@ -366,6 +362,17 @@
     <string name="gt_booster_why_2">One only redid work your phone already does by itself every night while you sleep.</string>
     <string name="gt_booster_why_3">The other also translated parts of an app that never run, which took much longer and used much more space for no gain. So the useful one is the only one left.</string>
     <string name="gt_booster_history">History</string>
+    <string name="gt_booster_scope_title">Scope</string>
+    <string name="gt_booster_scope_single">This game</string>
+    <string name="gt_booster_scope_all">All games</string>
+    <string name="gt_booster_scope_hint_single">Pre-compiles one game (speed-profile).</string>
+    <string name="gt_booster_scope_hint_all">Pre-compiles all apps (speed). Takes minutes.</string>
+    <string name="gt_booster_precompile">Pre-compile</string>
+    <string name="gt_booster_pick_game">Pick a game</string>
+    <string name="gt_booster_no_games_scope">Add a game to your library first to pre-compile just one.</string>
+    <string name="gt_managed_by_gaming_mode">Controlled by Gaming Mode while active.</string>
+    <string name="gt_graphics_layers">Three layers that stack: System Resolution (this card) changes Android\'s display; Game Render Scale (Gaming Mode card) changes per-game rendering; Graphics Driver (Developer Options) changes the rendering path. Each is independent — lowering one is your choice, never an automatic cap.</string>
+    <string name="gt_graphics_layers_title">How graphics settings stack</string>
     <string name="gt_booster_schedule">Run this on a schedule</string>
     <string name="gt_booster_next">On — next run about %1$s</string>
     <string name="gt_booster_next_unknown">On — Android would not say when the next run is</string>
@@ -406,7 +413,7 @@
     <string name="gt_gm_label_dnd">Do Not Disturb</string>
     <string name="gt_gm_label_notif">Notification sweep</string>
     <string name="gt_gm_label_net">Game background data</string>
-    <string name="gt_gm_label_cap">Game frame cap</string>
+    <string name="gt_gm_label_cap">Game FPS ceiling</string>
     <string name="gt_gm_label_discard">Discard activities</string>
     <string name="gt_gm_label_limit">Process limit</string>
     <string name="gt_gm_label_other_data">Other apps\' background data</string>
@@ -430,6 +437,16 @@
     <string name="gt_gm_net_no">Not whitelisted</string>
     <string name="gt_gm_cap_raised">Raised to panel peak</string>
     <string name="gt_gm_cap_no">Not raised</string>
+    <string name="gt_downscale_title">Render scale</string>
+    <string name="gt_downscale_sub">Renders the game below full resolution for more FPS. Needs a game restart to take effect.</string>
+    <string name="gt_downscale_off">Off</string>
+    <string name="gt_downscale_off_set">Render scale off — full resolution</string>
+    <string name="gt_downscale_set">Render scale %1$s for the next game</string>
+    <string name="gt_pointer_title">Touch speed</string>
+    <string name="gt_pointer_sub">Pointer speed for the next game. Negative is slower, positive is faster. Stock means untouched.</string>
+    <string name="gt_pointer_stock">Stock</string>
+    <string name="gt_pointer_stock_set">Touch speed stock — setting untouched</string>
+    <string name="gt_pointer_set">Touch speed %1$s for the next game</string>
     <string name="gt_gm_discard_on">On</string>
     <string name="gt_gm_limit">1 cached process</string>
     <string name="gt_gm_left_as_set">Left as you set it</string>
@@ -437,8 +454,8 @@
     <string name="gt_gm_not_blocked">Not blocked</string>
 
     <!-- RAM card -->
-    <string name="gt_ram_title">SYSTEM TWEAKS</string>
-    <string name="gt_ram_free">Free up memory</string>
+    <string name="gt_ram_title">Memory</string>
+    <string name="gt_ram_free">Reclaim RAM</string>
     <string name="gt_ram_what_1">It asks your phone to close apps that are sitting in the background doing nothing, which frees up memory for your game.</string>
     <string name="gt_ram_what_2">It tells you how much it actually freed, measured before and after — not a guess.</string>
     <string name="gt_ram_what_3">Nothing you have open is closed, and nothing is deleted.</string>
@@ -471,8 +488,8 @@
     <string name="gt_vm_keep_will">Will be left alone from the next scan</string>
     <string name="gt_vm_pattern_bad">That is not a valid pattern — see the examples</string>
     <string name="gt_vm_pattern_will">Will be cleaned from the next scan</string>
-    <string name="gt_vm_ram_unknown">RAM Boost: %1$d app(s) stopped — memory figures unavailable on this device</string>
-    <string name="gt_vm_ram_done">RAM Boost: %1$d MB freed (%2$d app(s) stopped)</string>
+    <string name="gt_vm_ram_unknown">RAM Reclaim: %1$d app(s) stopped — memory figures unavailable on this device</string>
+    <string name="gt_vm_ram_done">RAM Reclaim: %1$d MB freed (%2$d app(s) stopped)</string>
     <string name="gt_vm_sched_on">Scheduled sweep on — roughly every %1$d h, when the battery is not low.</string>
     <string name="gt_vm_sched_on_unknown">Scheduled sweep on, but WorkManager would not say when it runs.</string>
     <string name="gt_vm_sched_off">Scheduled sweep off.</string>
@@ -533,6 +550,7 @@
     <string name="gt_eng_un_dnd_perm">Silencing notifications — this app has not been allowed to do that yet</string>
     <string name="gt_eng_un_refresh">Holding the screen at its fastest speed — your phone ignores that setting</string>
     <string name="gt_eng_un_touch">Faster touch — your phone does not have that setting</string>
+    <string name="gt_eng_un_pointer">Touch speed %1$s — your phone refused it</string>
     <string name="gt_eng_un_fixed">Steady speed mode — your phone refused it</string>
     <string name="gt_eng_un_gpu">Qualcomm GPU performance mode — your phone refused the switch</string>
     <string name="gt_eng_un_qti">Qualcomm game FPS hint — your phone refused the switch</string>
@@ -605,4 +623,60 @@
     <string name="gt_svc_afs_channel">Auto Force Stop</string>
     <string name="gt_svc_booster_channel">App Booster</string>
     <string name="gt_dns_unsupported_generic">Your phone does not have this setting</string>
+    <!-- Per-game graphics driver (ANGLE): same table Developer Options edits. -->
+    <string name="gt_angle_title">Graphics driver</string>
+    <string name="gt_angle_1">Chooses which graphics driver a game uses: ANGLE (Google\'s Vulkan-based GLES layer) or the phone\'s own driver. Some games run smoother on one of them.</string>
+    <string name="gt_angle_2">Applied immediately and kept after reboot. Default removes the game from the list.</string>
+    <string name="gt_angle_need">Needs root or Shizuku to change. The current choice still shows.</string>
+    <string name="gt_angle_pick">Pick a game</string>
+    <string name="gt_angle_angle">ANGLE</string>
+    <string name="gt_angle_native">Native</string>
+    <string name="gt_angle_default">Default</string>
+    <string name="gt_angle_now">Current: %1$s</string>
+    <string name="gt_angle_none">No choice stored</string>
+    <string name="gt_angle_set">Graphics driver for %1$s: %2$s</string>
+    <string name="gt_angle_no">Could not set driver: %1$s</string>
+    <string name="gt_angle_no_reason">the device refused</string>
+    <!-- Panel refresh readout: what the display reports about itself. -->
+    <string name="gt_panel_title">Panel refresh</string>
+    <string name="gt_panel_rates">Rates: %1$s Hz</string>
+    <string name="gt_panel_seamless">Seamless from current: %1$s Hz</string>
+    <string name="gt_panel_seamless_none">No seamless switches reported</string>
+    <string name="gt_panel_seamless_unknown">Seamless switches unknown on this Android version</string>
+    <string name="gt_panel_arr">Adaptive refresh: %1$s</string>
+    <string name="gt_panel_yes">yes</string>
+    <string name="gt_panel_no">no</string>
+    <string name="gt_panel_unknown">unknown</string>
+    <string name="gt_panel_unreadable">Panel modes unreadable</string>
+    <!-- Filesystem trim: free blocks reported back to flash so writes stay fast. -->
+    <string name="gt_trim_title">Trim storage</string>
+    <string name="gt_trim_need">Needs root — the shell cannot trim storage</string>
+    <string name="gt_trim_done">Trimmed %1$s</string>
+    <string name="gt_trim_some">Trimmed %1$s — %2$d mount(s) refused</string>
+    <string name="gt_trim_no">Trim reported nothing: %1$s</string>
+    <string name="gt_trim_no_reason">the device said nothing at all</string>
+    <!-- Extra suspend list: user-picked packages frozen at Gaming Mode activation. -->
+    <string name="gt_suspend_title">Extra suspended apps</string>
+    <string name="gt_suspend_sub">Your picks, frozen with the automatic sweep</string>
+    <string name="gt_suspend_what_1">Apps you pick here are suspended when Gaming Mode starts, on top of the automatic sweep — for background apps the sweep protects or cannot see.</string>
+    <string name="gt_suspend_what_2">Everything frozen is woken when Gaming Mode turns off, through the same verified path. The active game and Catsmoker itself are never frozen, however picked.</string>
+    <string name="gt_suspend_none">No extra apps — only the automatic sweep</string>
+    <string name="gt_suspend_some">%1$d app(s) picked</string>
+    <string name="gt_suspend_add">Add an app</string>
+    <string name="gt_suspend_remove">Remove</string>
+    <!-- Auto game session: watch the foreground app, start Gaming Mode for library games. -->
+    <string name="gt_session_title">Automatic Gaming Mode</string>
+    <string name="gt_session_sub">Starts Gaming Mode when a game opens</string>
+    <string name="gt_session_what_1">Watches which app is in front and starts Gaming Mode the moment one of your library games opens, stopping it when you leave the game.</string>
+    <string name="gt_session_what_2">Needs usage access (to see the front app) and root or Shizuku. A Gaming Mode you start by hand always wins: the watch never records over it and never reverts it.</string>
+    <string name="gt_session_watching">Watching — no game in front</string>
+    <string name="gt_session_active">ON — automatic: %1$s</string>
+    <string name="gt_svc_session_title">Auto game session</string>
+    <string name="gt_svc_session_channel">Auto game session</string>
+    <string name="gt_svc_session_off">Monitor disarmed — nothing is watched</string>
+    <string name="gt_svc_session_watching">Watching for library games</string>
+    <string name="gt_svc_session_active">Gaming Mode auto-started for %1$s</string>
+    <string name="gt_svc_session_manual">Manual Gaming Mode active — watch released</string>
+    <string name="gt_svc_session_no_usage">Needs usage access — tap to grant, nothing is watched</string>
+    <string name="gt_svc_session_no_priv">Needs root or Shizuku — Android refuses gaming changes, nothing is watched</string>
 </resources>

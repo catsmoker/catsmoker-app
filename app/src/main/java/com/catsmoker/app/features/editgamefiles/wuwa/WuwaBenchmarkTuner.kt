@@ -9,7 +9,7 @@ import java.io.File
  * met or the round budget is spent.
  *
  * Ported from
- * `referance/gamingtools/WuWa-Config-Android-main/app/src/main/java/com/wuwaconfig/app/config/BenchmarkTuner.kt`,
+ * `reference/gamingtools/WuWa-Config-Android-main/app/src/main/java/com/wuwaconfig/app/config/BenchmarkTuner.kt`,
  * read in full before this file was written: the five-stage machine, the round/result state
  * persisted to JSON, the ladder order and both step rules (down one tier under 85% of target,
  * up one tier when the average clears the target by more than 15%), the avg/min/stability

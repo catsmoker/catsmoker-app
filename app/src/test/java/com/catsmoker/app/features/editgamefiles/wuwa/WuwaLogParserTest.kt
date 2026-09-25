@@ -6,7 +6,7 @@ import org.junit.Test
 
 /**
  * Pins the Client.log parser against
- * `referance/gamingtools/WuWa-Config-Android-main/config/LogParser.kt` (read in full before
+ * `reference/gamingtools/WuWa-Config-Android-main/config/LogParser.kt` (read in full before
  * the port): the verbatim regexes, first-match-wins field extraction, the dynamic-atlas
  * exclusion from texture errors, the Chinese auto-adjust strings, cvar extraction with last
  * write winning, and the post-loop graphics-API resolution order.

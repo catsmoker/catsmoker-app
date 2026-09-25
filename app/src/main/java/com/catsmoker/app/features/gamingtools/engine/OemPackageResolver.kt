@@ -6,7 +6,7 @@ package com.catsmoker.app.features.gamingtools.engine
  * `settings global` keys name the games the skin should fast-path, and the CSV append rule for
  * those keys.
  *
- * Ported from `referance/gamingtools/booster/.../gaming/OemPackageResolver.kt` and its
+ * Ported from `reference/gamingtools/booster/.../gaming/OemPackageResolver.kt` and its
  * `EsportsOptimizationEngine.kt` (both read in full before this file was written); the suspend
  * list and the four whitelist keys below are theirs verbatim.
  *

@@ -119,7 +119,7 @@ class MagiskModuleBuilderTest {
      * KernelSU and APatch install this module format from their own manager, and the spoof screen
      * offers to open either one — but only Magisk ships `util_functions.sh`, so a user who reached
      * this script under one of them was told to "install Magisk v20.4+", which is both false and
-     * unactionable. `referance/Magisk-Modules/FPS-Limitations-Patcher-v3.1` is the module that
+     * unactionable. `reference/Magisk-Modules/FPS-Limitations-Patcher-v3.1` is the module that
      * treats all three as hosts.
      */
     @Test
@@ -311,7 +311,7 @@ class MagiskModuleBuilderTest {
     // ------------------------------------------------------------------ WebUI
 
     /**
-     * The launcher, pinned against `referance/spoofdevice/GameUnlocker-main/common/action.sh`
+     * The launcher, pinned against `reference/spoofdevice/GameUnlocker-main/common/action.sh`
      * (read in full): busybox is probed and executed before it is trusted, the port is random in
      * 6000–9999, the token is per-session and removed with the server, and the whole thing dies
      * after five minutes. Each piece is one bad experience away from being "simplified" away.

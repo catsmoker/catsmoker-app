@@ -51,9 +51,9 @@ class SettingsViewModel @Inject constructor(
 
     data class UpdateDialog(val tagName: String, val downloadUrl: String?)
 
-    /** One-shot UI actions the screen itself must perform (e.g. recreating for a new locale). */
+    /** One-shot UI actions the screen itself must perform (process restart for locale). */
     sealed interface UiEvent {
-        data object RecreateActivity : UiEvent
+        data object RestartApp : UiEvent
     }
 
     private val _uiState = MutableStateFlow(UiState())
@@ -89,10 +89,11 @@ class SettingsViewModel @Inject constructor(
         if (tag == _uiState.value.languageTag) return
         AppearanceStore.setLanguage(context, tag)
         _uiState.update { it.copy(languageTag = tag) }
-        // Resources are bound to the activity's configuration — only a recreate re-resolves
-        // every stringResource/getString in the composition, so the new language is instant
-        // everywhere instead of only on screens opened afterwards.
-        _events.tryEmit(UiEvent.RecreateActivity)
+        // The application context — and every cached getString in the surviving ViewModels,
+        // engine state and running services — resolves the language once, at process start.
+        // A bare recreate() would leave all of those on the previous language (English-selected
+        // UI showing Arabic), so the process restarts and everything re-resolves fresh.
+        _events.tryEmit(UiEvent.RestartApp)
     }
 
     fun onAdsToggled(enabled: Boolean) {

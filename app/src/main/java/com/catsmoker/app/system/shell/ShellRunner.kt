@@ -325,7 +325,7 @@ class ShellRunner @Inject constructor(
         }
 
         // No bound user service. The reference's own channel needs none: BattleGrounds_GFX
-        // (referance/gamingtools/BattleGrounds_GFX-main MainActivity2/3 executeShellCommand)
+        // (reference/gamingtools/BattleGrounds_GFX-main MainActivity2/3 executeShellCommand)
         // forks every command through Shizuku's one-shot remote process — shell UID, no
         // helper to bind, so a helper that refuses to start cannot take the command down.
         execShizukuRemote(command)?.let { return@withContext it }

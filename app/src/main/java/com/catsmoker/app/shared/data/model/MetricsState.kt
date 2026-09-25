@@ -75,6 +75,14 @@ data class MetricsState(
     val thermalStatus: Int = 0,
     val thermalReadStatus: MetricReadStatus = MetricReadStatus.Loading,
 
+    /**
+     * `PowerManager.getThermalHeadroom` (API 30+): 0.0 is full headroom, 1.0 the SEVERE
+     * threshold, above 1.0 heavier throttling. Needs no privilege. Null with [thermalHeadroomStatus]
+     * when the HAL exposes nothing (NaN) or the version predates the API.
+     */
+    val thermalHeadroom: Float? = null,
+    val thermalHeadroomStatus: MetricReadStatus = MetricReadStatus.Loading,
+
     val topProcesses: List<ProcessCpuInfo> = emptyList(),
     val topProcessName: String? = null,
     val topProcessCpuPercent: Float = 0f,

@@ -216,7 +216,7 @@ class SpoofRepository @Inject constructor(
      *
      * So treat these entries the way the app treats a value read back off the device: as a fact
      * someone measured. **Do not add, substitute, reorder or remove a model here** — not from
-     * `referance/Magisk-Modules`, not from a community "working models" list, not from a device
+     * `reference/Magisk-Modules`, not from a community "working models" list, not from a device
      * database, and not because a model looks older or newer than its neighbours. Add a model only
      * when the author names that model.
      *

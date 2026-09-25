@@ -39,8 +39,9 @@ fun AboutScreen(onBack: () -> Unit, onOpenLogs: () -> Unit, onDonate: () -> Unit
 
     ScreenScaffold(title = stringResource(R.string.about_header_title), subtitle = stringResource(R.string.core_about_subtitle), onBack = onBack) {
         Column(modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(bottom = 32.dp)) {
-            // Header
-            Column(modifier = Modifier.fillMaxWidth().padding(vertical = 24.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+            // Header — compact paddings: the page still scrolls on short phones
+            // (content is ~850.dp), but no empty travel on tall ones.
+            Column(modifier = Modifier.fillMaxWidth().padding(vertical = 16.dp), horizontalAlignment = Alignment.CenterHorizontally) {
                 Surface(modifier = Modifier.size(80.dp).clip(RoundedCornerShape(20.dp)), color = MaterialTheme.colorScheme.surfaceVariant) {
                     Icon(Icons.Default.Info, null, modifier = Modifier.padding(12.dp))
                 }
@@ -94,7 +95,7 @@ fun AboutScreen(onBack: () -> Unit, onOpenLogs: () -> Unit, onDonate: () -> Unit
                 }
             }
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(12.dp))
             Text(stringResource(R.string.about_header_title), style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onSurface)
             Spacer(modifier = Modifier.height(8.dp))
             Text(

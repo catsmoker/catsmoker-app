@@ -9,6 +9,10 @@
     <string name="gf_working">TRABAJANDO…</string>
     <string name="gf_apply_to_game">APLICAR AL JUEGO</string>
     <string name="gf_restore_last_backup">RESTAURAR ÚLTIMA COPIA</string>
+    <!-- Editor undo/redo: buttons plus the dirty line. -->
+    <string name="gf_undo">Deshacer</string>
+    <string name="gf_redo">Rehacer</string>
+    <string name="gf_unsaved">Cambios sin guardar</string>
     <string name="gf_last_apply">Última aplicación: %1$s</string>
     <string name="gf_frame_rate">VELOCIDAD DE FOTOGRAMAS</string>
     <string name="gf_quality">CALIDAD</string>
@@ -290,6 +294,15 @@
     <string name="gf_diag_forbidden">Cvars prohibidos activos: %1$d</string>
     <string name="gf_diag_profile">Perfil de dispositivo: %1$s</string>
     <string name="gf_diag_cvars">Cvars fijados por el juego (%1$d):</string>
+    <!-- Battle record counted from the decrypted Client.log: counts, never judgments. -->
+    <string name="gf_battle_title">Registro de batallas</string>
+    <string name="gf_battle_fights">Batallas: %1$d · Muertes: %2$d · Derribos: %3$d</string>
+    <string name="gf_battle_move">Teletransportes: %1$d · Cambios de rol: %2$d</string>
+    <string name="gf_battle_dodge">Esquivas del./tras./contra: %1$d/%2$d/%3$d</string>
+    <string name="gf_battle_echoes">Ecos: %1$d · Habilidades: %2$d · Transformaciones: %3$d · Energía gastada: %4$d</string>
+    <string name="gf_battle_month">Tarjetas mensuales: %1$d · Días restantes: %2$d</string>
+    <!-- Unscored chipset note beside the SmartBrain recommendation. -->
+    <string name="gf_chipset">Chipset: %1$s (%2$s)</string>
     <string name="gf_convene">SEGUIMIENTO DE CONVENCIÓN</string>
     <string name="gf_wuwa_cached">en caché · %1$d tiradas</string>
     <string name="gf_wuwa_gacha_body">Lee la URL de registro del Historial de Convención desde el propio registro del juego y consulta cada reserva con ella: totales de tiradas, piedad media y el estado de cada estandarte de personaje/arma — 50/50 o Garantizado, tiradas desde el último ★5 y la tirada estimada al siguiente. La URL solo aparece tras abrir el Historial de Convención en el juego una vez, y el id de registro caduca rápido, así que consultar es más fresco que la caché.</string>

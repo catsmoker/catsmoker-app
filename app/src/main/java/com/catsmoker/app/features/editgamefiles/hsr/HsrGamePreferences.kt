@@ -9,7 +9,7 @@ import java.net.URLEncoder
  * cutscene/voice blacklists (URL-encoded JSON-array `<string>` entries), and the per-user
  * QoL ints (speed-up, auto-battle).
  *
- * Cross-checked against `referance/gamingtools/hsrgraphicdroid-main/data/GamePreferences.kt`
+ * Cross-checked against `reference/gamingtools/hsrgraphicdroid-main/data/GamePreferences.kt`
  * (`com.ireddragonicy.hsrgraphicdroid.data.GamePreferences`): the language code tables and
  * their XML string codes, the defaults (English text, Japanese audio), and the blacklist
  * codec — a URL-encoded `["file.usm","..."]` JSON array, parsed with the same manual split

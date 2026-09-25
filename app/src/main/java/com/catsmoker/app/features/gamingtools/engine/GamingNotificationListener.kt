@@ -15,7 +15,7 @@ import javax.inject.Inject
  * Second-layer notification suppression while Gaming Mode is on.
  *
  * Cross-checked against the reference project's `GamingNotificationListener`
- * (`referance/gamingtools/booster`, `com.framex.app.gaming.GamingNotificationListener`): the
+ * (`reference/gamingtools/booster`, `com.framex.app.gaming.GamingNotificationListener`): the
  * same shape and the same reason to exist. DND is the first layer, but some OEM skins post
  * their own "system warning" and battery alerts around the interruption filter — cancelling
  * the notification directly does not depend on the filter being honoured.

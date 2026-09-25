@@ -3,13 +3,12 @@ package com.catsmoker.app.features.gamingtools.tools.firewall
 import android.annotation.SuppressLint
 import android.content.Context
 import android.content.Intent
-import android.content.pm.ApplicationInfo
-import android.content.pm.PackageManager
 import android.net.ConnectivityManager
 import android.net.NetworkCapabilities
 import android.net.VpnService
 import dagger.hilt.android.qualifiers.ApplicationContext
 import com.catsmoker.app.R
+import com.catsmoker.app.shared.util.InstalledAppQuery
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -102,24 +101,10 @@ class VpnFirewall @Inject constructor(
      * @param gamePackages the user's library, which is exempted so games keep working.
      */
     // Partial visibility is fine: invisible apps are skipped, never blocked.
+    // Shared InstalledAppQuery (consolidation C4): one user-app + INTERNET rule.
     @SuppressLint("QueryPermissionsNeeded")
-    fun blockTargets(gamePackages: List<String>): List<String> {
-        val games = gamePackages.toSet()
-        val pm = context.packageManager
-        val installed = runCatching { pm.getInstalledApplications(0) }.getOrNull().orEmpty()
-        return installed.asSequence()
-            .filter { (it.flags and ApplicationInfo.FLAG_SYSTEM) == 0 }
-            .filter { it.packageName != context.packageName && it.packageName !in games }
-            .filter {
-                runCatching {
-                    pm.checkPermission(android.Manifest.permission.INTERNET, it.packageName) ==
-                        PackageManager.PERMISSION_GRANTED
-                }.getOrDefault(false)
-            }
-            .map { it.packageName }
-            .distinct()
-            .toList()
-    }
+    fun blockTargets(gamePackages: List<String>): List<String> =
+        InstalledAppQuery.blockTargets(context.packageManager, context.packageName, gamePackages)
 
     /**
      * Starts the local VPN for every app in [gamePackages]'s complement.

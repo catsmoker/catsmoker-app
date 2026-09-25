@@ -6,7 +6,7 @@ import android.os.Build
  * Substitutes the device's real model into Genshin Impact's `hardware_model_config.json` template.
  *
  * The game looks the file's entries up by the device's model — the reference project
- * `referance/file-engineering/GenshinConfig-main`'s README is explicit that "Your Device Model"
+ * `reference/file-engineering/GenshinConfig-main`'s README is explicit that "Your Device Model"
  * must be changed to "the model of the device you are using" before the file is dropped into
  * `/Android/data/com.miHoYo.GenshinImpact/files/`. This is that manual edit, automated, and it is
  * the only transformation the file gets.

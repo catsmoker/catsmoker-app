@@ -34,7 +34,13 @@ import com.catsmoker.app.shared.ui.components.SectionCard
 @Composable
 fun FixedPerformanceModeCard(
     enabled: Boolean,
-    onToggle: (Boolean) -> Unit
+    onToggle: (Boolean) -> Unit,
+    /**
+     * True while Gaming Mode holds this same switch itself (F1/F5). The switch stays
+     * usable — this is the standalone control — but the row says who else drives it
+     * so two "performance mode" switches stop looking like rivals.
+     */
+    isGamingModeActive: Boolean = false
 ) {
     val supported = Build.VERSION.SDK_INT >= Build.VERSION_CODES.R
 
@@ -84,6 +90,24 @@ fun FixedPerformanceModeCard(
                         checkedTrackColor = Color.Red.copy(alpha = 0.3f)
                     )
                 )
+            }
+
+            if (isGamingModeActive && supported) {
+                Spacer(modifier = Modifier.height(12.dp))
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(10.dp))
+                        .background(Color(0xFFFFB300).copy(alpha = 0.12f))
+                        .padding(12.dp)
+                ) {
+                    Text(
+                        text = stringResource(R.string.gt_managed_by_gaming_mode),
+                        color = Color(0xFF8D6E00),
+                        fontSize = 11.sp,
+                        lineHeight = 15.sp
+                    )
+                }
             }
 
             if (!supported) {

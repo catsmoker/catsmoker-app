@@ -4,7 +4,7 @@ package com.catsmoker.app.features.gamingtools.engine
  * Classifies packages for the ART dexopt sweep's scope decision — which apps are worth a compile
  * command and which are only going to burn a slot.
  *
- * Ported from `referance/gamingtools/art/.../data/util/PackageClassifier.kt` (read in full before
+ * Ported from `reference/gamingtools/art/.../data/util/PackageClassifier.kt` (read in full before
  * this file was written). What the sweep used to get wrong without it: the eligibility gate kept
  * every non-system package, and both classes below slipped through —
  *

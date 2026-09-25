@@ -9,7 +9,7 @@ import java.util.UUID
  * 12-hour cache of the last Convene fetch, so the pity screen survives process death and a
  * flight-mode relaunch still shows the last real read.
  *
- * Ported from `referance/gamingtools/WuWa-Config-Android-main/config/GachaHistoryStore.kt`
+ * Ported from `reference/gamingtools/WuWa-Config-Android-main/config/GachaHistoryStore.kt`
  * (read in full before this file was written) and its `util/AtomicFile.kt`: one JSON file in
  * `filesDir`, a TTL checked at load (an expired or corrupt file is deleted and reported as
  * absent, never surfaced as data), an entry that keeps a small summary alongside the full
