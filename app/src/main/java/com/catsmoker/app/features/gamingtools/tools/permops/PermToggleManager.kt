@@ -5,6 +5,7 @@ import android.content.pm.PackageInfo
 import android.content.pm.PackageManager
 import android.os.Build
 import androidx.core.content.edit
+import androidx.core.content.pm.PermissionInfoCompat
 import com.catsmoker.app.system.shell.ShellRunner
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
@@ -58,10 +59,12 @@ class PermToggleManager @Inject constructor(
             i < flags.size && (flags[i] and PackageInfo.REQUESTED_PERMISSION_GRANTED) != 0
         }.toSet()
         val protections = requested.associateWith { perm ->
-            // getPermissionInfo was never migrated to the PackageInfoFlags type (unlike
-            // getPackageInfo above), so the int form stands on every version.
+            // PermissionInfoCompat reads the base protection on every version: .protection
+            // exists only from API 28, older releases pack it into protectionLevel.
             @Suppress("DEPRECATION")
-            runCatching { pm.getPermissionInfo(perm, 0).protection }.getOrNull()
+            runCatching {
+                PermissionInfoCompat.getProtection(pm.getPermissionInfo(perm, 0))
+            }.getOrNull()
         }.mapNotNull { (perm, protection) ->
             if (protection == null) null else perm to protection
         }.toMap()

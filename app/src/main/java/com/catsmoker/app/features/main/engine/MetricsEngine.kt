@@ -170,6 +170,12 @@ class MetricsEngine(
     }
 
     private fun stopThermalStatusListener() {
+        // removeThermalStatusListener exists only from API 29; below that there is
+        // never a listener to remove (start returns early there too).
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) {
+            thermalStatusListener = null
+            return
+        }
         val listener = thermalStatusListener ?: return
         thermalStatusListener = null
         runCatching {
@@ -549,6 +555,20 @@ class MetricsEngine(
      * does not exist, so the status is Unsupported without ever calling it.
      */
     private suspend fun pollThermalHeadroom() {
+        // getThermalHeadroom exists only from API 30. The DeviceCapabilities check below
+        // says the same thing, but lint cannot see through it — this direct SDK branch
+        // is what proves the call site safe on minSdk 27.
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.R) {
+            withContext(Dispatchers.Main) {
+                _state.update {
+                    it.copy(
+                        thermalHeadroom = null,
+                        thermalHeadroomStatus = MetricReadStatus.Unsupported
+                    )
+                }
+            }
+            return
+        }
         val caps = DeviceCapabilities.detect(
             DeviceCapabilities.DeviceInfo(sdkInt = Build.VERSION.SDK_INT)
         )

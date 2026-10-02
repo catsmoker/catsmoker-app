@@ -50,6 +50,9 @@ fun ProfilesListScreen(
     onBack: () -> Unit
 ) {
     val context = LocalContext.current
+    // Configuration-aware: stringResource recomposes on locale change, while
+    // context.getString inside the picker callback would keep a stale value.
+    val importInvalidTitle = stringResource(R.string.spoof_import_invalid_title)
     var showCreateDialog by remember { mutableStateOf(false) }
     var pendingDelete by remember { mutableStateOf<SpoofRepository.ProfileEntry?>(null) }
     var preview by remember { mutableStateOf<SpoofProfileSharing.ImportPreview?>(null) }
@@ -79,7 +82,7 @@ fun ProfilesListScreen(
             context.contentResolver.openInputStream(uri)?.use { it.readBytes() }?.toString(Charsets.UTF_8)
         }.getOrNull()
         if (text.isNullOrBlank()) {
-            importError = context.getString(R.string.spoof_import_invalid_title)
+            importError = importInvalidTitle
         } else {
             handleImportText(text)
         }

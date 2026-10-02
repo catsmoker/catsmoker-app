@@ -84,7 +84,7 @@
         android:appComponentFactory="androidx.core.app.CoreComponentFactory"
         tools:replace="android:appComponentFactory"
         tools:targetApi="p"
-        tools:ignore="UnusedAttribute"
+        tools:ignore="UnusedAttribute,RemoveWorkManagerInitializer"
         android:theme="@style/Theme.Catsmoker">
 
         <meta-data android:name="xposedmodule" android:value="true" />
