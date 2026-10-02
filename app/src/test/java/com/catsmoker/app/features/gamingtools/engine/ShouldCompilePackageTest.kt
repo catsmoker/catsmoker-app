@@ -8,9 +8,11 @@ import org.junit.Test
  * Behaviour lock for the single-package compile skip decision.
  *
  * Mirrors the sweep's own rules: forcing compiles everything; an app already at the requested
- * filter is done; a never-opened app at `verify` has no runtime profile for `speed-profile`
- * to work with, so there is nothing to do yet. Anything else — including an unreadable
- * status — compiles, because asking the platform is the only way to find out.
+ * filter — or at a strictly better one (`speed`/`everything` cover a `speed-profile` target,
+ * so recompiling them would burn a slot to come back the same or worse) — is done; a
+ * never-opened app at `verify` has no runtime profile for `speed-profile` to work with, so
+ * there is nothing to do yet. Anything else — including an unreadable status — compiles,
+ * because asking the platform is the only way to find out.
  */
 class ShouldCompilePackageTest {
 
@@ -33,9 +35,18 @@ class ShouldCompilePackageTest {
 
     @Test
     fun otherStatusesCompile() {
-        assertTrue(shouldCompilePackage("speed", "speed-profile", false))
+        assertTrue(shouldCompilePackage("quicken", "speed-profile", false))
         assertTrue(shouldCompilePackage(null, "speed-profile", false))
         assertTrue(shouldCompilePackage("", "speed-profile", false))
+    }
+
+    @Test
+    fun betterFilterThanTargetIsDone() {
+        // `speed` is strictly more compiled than `speed-profile`; `everything` more than
+        // either. Recompiling them would burn a slot for the same-or-worse result.
+        assertFalse(shouldCompilePackage("speed", "speed-profile", false))
+        assertFalse(shouldCompilePackage("everything", "speed-profile", false))
+        assertFalse(shouldCompilePackage("everything", "speed", false))
     }
 
     @Test

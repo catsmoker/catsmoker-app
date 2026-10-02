@@ -3,4 +3,6 @@
     <external-path name="external_files" path="." />
     <!-- Log files shared from the Logs screen; pruned to the newest few on every share. -->
     <cache-path name="shared_logs" path="shared/" />
+    <!-- Session CSV exports (Logs screen recording); pruned to the newest few on export. -->
+    <files-path name="session_logs" path="session_logs/" />
 </paths>

@@ -42,14 +42,22 @@ object LSPosedConfig {
     const val KEY_MODULE_HEARTBEAT_ELAPSED = "module_heartbeat_elapsed"
 
     /**
-     * Whether a stored heartbeat proves the module loaded during *this* boot.
+     * Whether a stored heartbeat proves the module loaded recently.
      *
-     * Absent/non-positive never counts, and greater-than-now means a reboot happened
-     * since the write — until then an enabled module cannot unload (LSPosed only
-     * loads/unloads at boot), so "fresh" and "loaded" coincide.
+     * Absent/non-positive never counts, greater-than-now means a reboot happened since the
+     * write, and older than [MAX_HEARTBEAT_AGE_MS] means no own-process load for over a day —
+     * which on-device evidence showed can happen while the card still claims Active (stale
+     * module path after an app reinstall: nothing loads, the old heartbeat lingers). The
+     * bound is safe because reading the status card runs inside our own freshly-started
+     * process: a working module refreshes the heartbeat on that very start, so only a
+     * genuinely unloaded module keeps reading stale. Reopen the app; still stale means the
+     * module is not loading (disabled, out of scope, or a stale install).
      */
     fun isHeartbeatFresh(storedElapsed: Long, nowElapsed: Long): Boolean =
-        storedElapsed in 1..nowElapsed
+        storedElapsed in maxOf(1L, nowElapsed - MAX_HEARTBEAT_AGE_MS)..nowElapsed
+
+    /** Heartbeats older than this prove nothing (see [isHeartbeatFresh]). */
+    const val MAX_HEARTBEAT_AGE_MS = 24L * 60L * 60L * 1000L
 
     /** Key inside a rendered profile listing packages the user opted out of spoofing. */
     const val KEY_SAFE_MODE_PACKAGES = "safe_mode.packages"
@@ -66,12 +74,26 @@ object LSPosedConfig {
      * spoofed identity is a fraud-detection hazard out of proportion to anything spoofing it
      * could gain, so this list overrides an explicit assignment — and the module logs that it
      * did, rather than spoofing nothing silently.
+     *
+     * The second half is privilege and identity infrastructure, added 2026-09-27 after the
+     * lab proved why: spoofing the Magisk app crashed it (an SDK-37-targeting module host
+     * running on Android 10), and a spoofed root manager, framework manager, or privilege
+     * broker risks breaking the very infrastructure Catsmoker stands on — including the
+     * safety checks that read the true device through it. Our own package is here too: own
+     * diagnostics must read real hardware (see the telemetry-honesty rule), so the module
+     * must never rewrite what our own process sees, even if a user scopes us by hand.
      */
     val NEVER_SPOOF_PACKAGES = setOf(
         "com.bbl.mobilebanking",
         "com.sbi.YONO",
         "com.hdfcbank.payzapp",
-        "com.csam.icici.bank.imobile"
+        "com.csam.icici.bank.imobile",
+        "com.topjohnwu.magisk",
+        "me.weishu.kernelsu",
+        "me.bmax.apatch",
+        "org.lsposed.manager",
+        "moe.shizuku.privileged.api",
+        "com.catsmoker.app"
     )
 
     /**
@@ -202,5 +224,40 @@ object LSPosedConfig {
             if (inSection) sb.append(line).append('\n')
         }
         return sb.toString().ifBlank { null }
+    }
+
+    /**
+     * Extracts one package's section, falling back to `*` wildcard section headers when no
+     * exact section exists. Exact wins first; longest (most specific) pattern wins ties; the
+     * system guard refuses pattern matches for protected packages. The Settings.Global copy
+     * the module reads without touching us carries pattern headers verbatim (see the sync in
+     * `SpoofDeviceViewModel`), so both channels agree on families without a store migration.
+     */
+    fun parseSectionWildcard(raw: String?, packageName: String): String? {
+        parseSection(raw, packageName)?.let { return it }
+        if (raw.isNullOrBlank() || packageName.isBlank()) return null
+        if (packageName in PROTECTED_PACKAGES) return null
+        val names = LinkedHashSet<String>()
+        raw.lineSequence().forEach { line ->
+            val trimmed = line.trim()
+            if (trimmed.startsWith("[") && trimmed.endsWith("]")) {
+                names.add(trimmed.substring(1, trimmed.length - 1))
+            }
+        }
+        val winner = names.filter { it.contains('*') && matchesPatternKey(it, packageName) }
+            .maxWithOrNull(compareBy({ it.length }, { it }))
+        return winner?.let { parseSection(raw, it) }
+    }
+
+    /** Packages a wildcard may never claim, however broad the pattern. */
+    internal val PROTECTED_PACKAGES = setOf(
+        "android",
+        "com.android.systemui"
+    )
+
+    /** Whether a `*` pattern key claims [packageName] (full match, `*` = any run). */
+    internal fun matchesPatternKey(pattern: String, packageName: String): Boolean {
+        val regex = Regex(pattern.split("*").joinToString(".*") { Regex.escape(it) })
+        return regex.matches(packageName)
     }
 }

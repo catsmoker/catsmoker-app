@@ -38,4 +38,15 @@ class ModuleHeartbeatTest {
         assertTrue(LSPosedConfig.isHeartbeatFresh(123000L, 123456L))
         assertTrue(LSPosedConfig.isHeartbeatFresh(123456L, 123456L))
     }
+
+    @Test
+    fun weekOldHeartbeatIsStale() {
+        // Device evidence: a 7-day-old heartbeat read Active while the module could not
+        // load at all (stale install path). Age-bounded now: reopening the app refreshes
+        // a working module's heartbeat on the spot, so only dead modules stay stale.
+        val now = 7L * 24L * 60L * 60L * 1000L
+        assertFalse(LSPosedConfig.isHeartbeatFresh(11_564_730L, now))
+        assertFalse(LSPosedConfig.isHeartbeatFresh(now - LSPosedConfig.MAX_HEARTBEAT_AGE_MS - 1L, now))
+        assertTrue(LSPosedConfig.isHeartbeatFresh(now - LSPosedConfig.MAX_HEARTBEAT_AGE_MS + 1L, now))
+    }
 }

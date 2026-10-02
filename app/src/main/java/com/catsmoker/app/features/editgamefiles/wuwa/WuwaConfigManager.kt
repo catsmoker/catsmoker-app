@@ -174,6 +174,9 @@ class WuwaConfigManager @Inject constructor(
 
     fun backups(): List<ConfigBackupStore.Entry> = backupStore.list(PACKAGE)
 
+    /** Backup bytes for a history/diff pairing; null when unreadable — never guessed. */
+    fun readBackupBytes(entry: ConfigBackupStore.Entry): ByteArray? = backupStore.readBytes(entry)
+
     /**
      * The `Engine.ini` currently on the device, when it can be read — its `[Core.System]`
      * paths are reused verbatim by the generator, because that list tracks the game's

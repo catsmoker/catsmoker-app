@@ -85,6 +85,16 @@ class GridPreferencesManager @Inject constructor(
     /** Whether any backup exists for this game — the restore button's gate. */
     fun hasBackup(): Boolean = backupStore.list(GridPreferences.PACKAGE).isNotEmpty()
 
+    /**
+     * Unprivileged install probe: is the game's package installed right now. The read path
+     * below uses it to tell "not installed" from "installed but never ran", and the editor
+     * uses it to offer "Show anyway" whenever the game is absent — including the
+     * no-channel case, where the read cannot even reach the stage that would say so.
+     */
+    fun isInstalled(): Boolean = runCatching {
+        context.packageManager.getPackageInfo(GridPreferences.PACKAGE, 0)
+    }.isSuccess
+
     // ------------------------------------------------------------------ read
 
     sealed class ReadResult {
@@ -138,10 +148,7 @@ class GridPreferencesManager @Inject constructor(
         // Every channel had a look and none found the file. Whether the game itself is there
         // decides which fact to report: an uninstalled game says so plainly; an installed one
         // that never ran keeps the run-it-once message.
-        val installed = runCatching {
-            context.packageManager.getPackageInfo(GridPreferences.PACKAGE, 0)
-        }.isSuccess
-        if (!installed) {
+        if (!isInstalled()) {
             return@withContext ReadResult.Failure(
                 ReadResult.Stage.GAME_NOT_INSTALLED,
                 "${GridPreferences.PACKAGE} is not installed on this device."

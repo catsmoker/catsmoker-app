@@ -19,6 +19,7 @@
     <string name="spoof_magisk_desc">首个配置文件的可刷机 ZIP。仅携带机型身份并保持最小化，以免刷机导致设备无法开机。作用于整机，因此安全模式排除项不适用。重启后，模块会报告实际生效的属性，其操作按钮可打开 WebUI。本应用的 APK 会一并打包，以便在应用丢失后由模块恢复。</string>
     <string name="spoof_root_manager_title">打开 Root 管理器</string>
     <string name="spoof_root_manager_desc">访问 Magisk/KernelSU/APatch。</string>
+    <string name="spoof_root_manager_need">需要 Root 权限。</string>
     <string name="spoof_profiles_title">虚拟身份配置</string>
     <string name="spoof_profiles_subtitle">管理你的虚拟设备身份。</string>
     <string name="spoof_list_empty">未找到配置文件。创建一个吧！</string>
@@ -58,6 +59,8 @@
     <string name="spoof_field_density">密度</string>
     <string name="spoof_field_refresh_rate">刷新率 (Hz)</string>
     <string name="spoof_refresh_note">在目标应用内伪造上报的刷新率和模式列表。常驻 Hook — 留空即关闭。</string>
+    <string name="spoof_apply_metrics">对目标应用生效屏幕尺寸</string>
+    <string name="spoof_metrics_note">在目标应用内重写显示指标与尺寸类别。常驻 Hook — 关闭则以上字段仅用于编辑器。</string>
     <string name="spoof_group_network">网络与地区</string>
     <string name="spoof_action_roll_network">随机生成网络与地区</string>
     <string name="spoof_field_operator_name">运营商名称</string>
@@ -101,6 +104,8 @@
     <string name="spoof_diag_tags">标签</string>
     <string name="spoof_diag_type">类型</string>
     <string name="spoof_diag_unknown">未知</string>
+    <string name="spoof_diag_native_title">原生桥</string>
+    <string name="spoof_diag_native_bridge">应用内桥</string>
     <string name="spoof_error_save">无法保存配置文件：%1$s</string>
     <string name="spoof_error_write_failed">写入失败</string>
     <string name="spoof_root_available">Root 权限可用</string>

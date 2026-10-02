@@ -50,6 +50,16 @@ fun DiagnosticsScreen(onBack: () -> Unit) {
                 DiagField(stringResource(R.string.spoof_diag_tags), Build.TAGS)
                 DiagField(stringResource(R.string.spoof_diag_type), Build.TYPE)
             }
+
+            DiagGroup(title = stringResource(R.string.spoof_diag_native_title)) {
+                // Load fact, not a capability claim: the version string the packaged `.so`
+                // reports about itself, or unknown when this ABI has no library to load.
+                DiagField(
+                    stringResource(R.string.spoof_diag_native_bridge),
+                    com.catsmoker.app.system.shell.NativeBridge.version()
+                        ?: stringResource(R.string.spoof_diag_unknown)
+                )
+            }
         }
     }
 }

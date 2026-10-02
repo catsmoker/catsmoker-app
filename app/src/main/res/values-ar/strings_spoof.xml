@@ -19,6 +19,7 @@
     <string name="spoof_magisk_desc">ملف ZIP قابل للتفليش لملفك التعريفي الأول. يحمل هوية الطراز فقط — الحد الأدنى حتى لا يتسبب التفليش في تعطل إقلاع الجهاز. يُطبق على مستوى الجهاز، لذا لا تسري استثناءات الوضع الآمن. بعد إعادة التشغيل يبلّغ المقطع عن الخصائص التي طُبقت فعلاً، ويفتح زر الإجراءات WebUI. يأتي APK هذا التطبيق مرفقاً، ليتمكن المقطع من استعادة التطبيق إذا اختفى.</string>
     <string name="spoof_root_manager_title">فتح مدير الروت</string>
     <string name="spoof_root_manager_desc">الوصول إلى Magisk/KernelSU/APatch.</string>
+    <string name="spoof_root_manager_need">يتطلب الوصول إلى الجذر.</string>
     <string name="spoof_profiles_title">ملفات التعريف المزيّفة</string>
     <string name="spoof_profiles_subtitle">إدارة هويات جهازك الافتراضية.</string>
     <string name="spoof_list_empty">لا توجد ملفات تعريف. أنشئ واحداً!</string>
@@ -58,6 +59,8 @@
     <string name="spoof_field_density">الكثافة</string>
     <string name="spoof_field_refresh_rate">معدل التحديث (Hz)</string>
     <string name="spoof_refresh_note">يزيّف المعدل المُبلغ عنه وقائمة الأوضاع داخل التطبيق المستهدف. خطاف مقيم — الفراغ يعني الإيقاف.</string>
+    <string name="spoof_apply_metrics">تطبيق حجم الشاشة على الهدف</string>
+    <string name="spoof_metrics_note">يعيد كتابة مقاييس العرض وفئة الحجم داخل التطبيق المستهدف. خطافات مقيمة — الإيقاف يعني بقاء الحقول أعلاه للمحرر فقط.</string>
     <string name="spoof_group_network">الشبكة والمنطقة</string>
     <string name="spoof_action_roll_network">توليد الشبكة والمنطقة عشوائياً</string>
     <string name="spoof_field_operator_name">اسم المشغّل</string>
@@ -101,6 +104,8 @@
     <string name="spoof_diag_tags">الوسوم</string>
     <string name="spoof_diag_type">النوع</string>
     <string name="spoof_diag_unknown">غير معروف</string>
+    <string name="spoof_diag_native_title">الجسر الأصلي</string>
+    <string name="spoof_diag_native_bridge">الجسر داخل التطبيق</string>
     <string name="spoof_error_save">تعذّر حفظ الملفات التعريفية: %1$s</string>
     <string name="spoof_error_write_failed">فشلت الكتابة</string>
     <string name="spoof_root_available">صلاحيات الروت متاحة</string>

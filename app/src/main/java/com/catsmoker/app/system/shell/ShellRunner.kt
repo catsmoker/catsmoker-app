@@ -464,7 +464,57 @@ class ShellRunner @Inject constructor(
 
     // ------------------------------------------------------------------ thermal
 
+    /**
+     * The thermal service's own temperature objects, read through the binder in-process and
+     * re-emitted as the `Temperature{mValue=, mType=, mName=}` lines the dumpsys parser
+     * already understands (see [ThermalReflectMapper]).
+     *
+     * After the reference's `readViaReflection`: `ServiceManager.getService`, the
+     * `IThermalService$Stub.asInterface` bridge, then any `*Temperature*` getter with a
+     * best-guess arity (0-arg first — the platform's own `getCurrentTemperatures()` takes
+     * none — then 1- and 2-arg attempts). Every step is guarded: a missing class, method or
+     * service reads as "" so the strategy loop moves on, and foreign objects in the result
+     * are skipped by the mapper rather than fabricated into readings.
+     */
+    private fun readThermalViaReflection(): String {
+        return runCatching {
+            val serviceManager = Class.forName("android.os.ServiceManager")
+            val getService = serviceManager.getMethod("getService", String::class.java)
+            val binder = getService.invoke(null, "thermalservice") as? android.os.IBinder
+                ?: return ""
+            val stubClass = Class.forName("android.os.IThermalService\$Stub")
+            val asInterface = stubClass.getMethod("asInterface", android.os.IBinder::class.java)
+            val service = asInterface.invoke(null, binder) ?: return ""
+            val getters = service.javaClass.methods
+                .filter { it.name.contains("emperature", ignoreCase = true) }
+                .sortedBy { it.parameterCount }
+            for (getter in getters) {
+                val result = runCatching {
+                    when (getter.parameterCount) {
+                        0 -> getter.invoke(service)
+                        1 -> getter.invoke(service, 0)
+                        2 -> getter.invoke(service, 0, 0)
+                        else -> null
+                    }
+                }.getOrNull() ?: continue
+                val items: List<Any?> = when (result) {
+                    is Array<*> -> result.toList()
+                    is Collection<*> -> result.toList()
+                    else -> continue
+                }
+                val lines = ThermalReflectMapper.mapAll(items)
+                if (lines.isNotEmpty()) return lines.joinToString("\n")
+            }
+            ""
+        }.getOrDefault("")
+    }
+
     private enum class ThermalStrategy {
+        /**
+         * First: the thermal binder read in-process. No shell fork, no sysfs permissions, no
+         * privilege — when the service answers, it answers with the HAL's own objects.
+         */
+        REFLECTION,
         SYSFS_DIRECT, DUMPSYS, SERVICE_SYSFS, SHELL_SYSFS,
         /**
          * Last resort, and deliberately so: the platform's own throttle state with no
@@ -484,7 +534,8 @@ class ShellRunner @Inject constructor(
 
     /**
      * Reads thermal sensors, preferring whichever channel worked last time.
-     * Direct sysfs comes first because it needs no privileges and no process fork.
+     * Binder reflection comes first because it needs no privileges and no process fork; direct
+     * sysfs second for the same reasons minus the service dependency.
      *
      * @return raw text for [com.catsmoker.app.features.main.engine.parsers.ThermalServiceParser],
      *   or an empty string when no channel produced anything.
@@ -501,6 +552,11 @@ class ShellRunner @Inject constructor(
             val output = runThermalStrategy(strategy)
             if (output.isNotBlank()) {
                 resolvedThermalStrategy = strategy
+                // The only witness to which channel serves this device: dashboard
+                // temperatures cannot say whether they came from the binder, sysfs,
+                // or dumpsys, and the distinction matters (privilege-free REFLECTION
+                // vs shell-dependent fallbacks) when debugging thermal surprises.
+                Log.d(TAG, "thermal strategy resolved: $strategy")
                 return@withContext output
             }
         }
@@ -508,6 +564,7 @@ class ShellRunner @Inject constructor(
     }
 
     private suspend fun runThermalStrategy(strategy: ThermalStrategy): String = when (strategy) {
+        ThermalStrategy.REFLECTION -> readThermalViaReflection()
         ThermalStrategy.SYSFS_DIRECT -> readSysfsDirect()
         ThermalStrategy.DUMPSYS -> if (hasPrivilege()) exec("dumpsys thermalservice") else ""
         ThermalStrategy.SERVICE_SYSFS -> if (isRootAvailable()) {

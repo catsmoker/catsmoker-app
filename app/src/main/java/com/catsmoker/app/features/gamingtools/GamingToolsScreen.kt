@@ -39,6 +39,7 @@ import androidx.core.net.toUri
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.catsmoker.app.R
 import com.catsmoker.app.features.gamingtools.engine.AnimationScaleKind
+import com.catsmoker.app.features.gamingtools.engine.DisplayRefreshRateProvider
 import com.catsmoker.app.features.gamingtools.engine.BoosterOutcome
 import com.catsmoker.app.features.gamingtools.engine.BoosterRun
 import com.catsmoker.app.features.gamingtools.engine.BoosterState
@@ -46,6 +47,8 @@ import com.catsmoker.app.features.gamingtools.engine.GamingModeReport
 import com.catsmoker.app.features.gamingtools.engine.GamingModeState
 import com.catsmoker.app.features.gamingtools.tools.cleaner.CleaningFeature
 import com.catsmoker.app.features.gamingtools.tools.booster.DexoptScheduleStore
+import com.catsmoker.app.features.gamingtools.tools.cleaner.CleanerScheduleStore
+import com.catsmoker.app.features.gamingtools.tools.permops.ToggleablePerm
 import com.catsmoker.app.features.gamingtools.tools.dns.DnsFeature
 import com.catsmoker.app.features.gamingtools.tools.firewall.BackgroundDataRestrictor
 import com.catsmoker.app.features.gamingtools.tools.firewall.VpnFirewall
@@ -141,6 +144,8 @@ fun GamingToolsRoute(onBack: () -> Unit) {
         alwaysFinishActivities = alwaysFinishActivities,
         backgroundProcessLimit = backgroundProcessLimit,
         gameDevOptions = gameDevOptions,
+        animPresets = uiState.animPresets,
+        animPresetName = uiState.animPresetName,
         interventionDownscale = interventionDownscale,
         pointerSpeedChoice = pointerSpeedChoice,
         onToggleOverlay = { enable ->
@@ -169,6 +174,16 @@ fun GamingToolsRoute(onBack: () -> Unit) {
         },
         onPerformMaintenance = viewModel::onPerformMaintenance,
         onScanJunk = viewModel::scanForJunk,
+        onSetCleanSchedule = viewModel::setCleanSchedule,
+        onSetCleanInterval = viewModel::setCleanInterval,
+        onShowPermPicker = viewModel::showPermPicker,
+        onDismissPermPicker = viewModel::dismissPermPicker,
+        onSelectPermTarget = viewModel::selectPermTarget,
+        onRequestPermRevoke = viewModel::requestPermRevoke,
+        onConfirmPermRevoke = viewModel::confirmPermRevoke,
+        onCancelPermRevoke = viewModel::cancelPermRevoke,
+        onRegrantPerm = viewModel::regrantPerm,
+        onRestorePerms = viewModel::restorePerms,
         onAddCleanerKeepEntry = viewModel::addCleanerKeepEntry,
         onRemoveCleanerKeepEntry = viewModel::removeCleanerKeepEntry,
         onAddCleanerCleanPattern = viewModel::addCleanerCleanPattern,
@@ -207,6 +222,10 @@ fun GamingToolsRoute(onBack: () -> Unit) {
         onSetPointerSpeedChoice = viewModel::setPointerSpeedChoice,
         onBoostChange = viewModel::onBoostChange,
         onSetAnimationScale = viewModel::setAnimationScale,
+        onAnimPresetNameChange = viewModel::onAnimPresetNameChange,
+        onSaveAnimPreset = viewModel::saveAnimPreset,
+        onApplyAnimPreset = viewModel::applyAnimPreset,
+        onDeleteAnimPreset = viewModel::deleteAnimPreset,
         onToggleAlwaysFinish = viewModel::toggleAlwaysFinish,
         onToggleBackgroundLimit = viewModel::toggleBackgroundLimit,
         onSetForcePeakRefreshRate = viewModel::setForcePeakRefreshRate,
@@ -250,6 +269,11 @@ fun GamingToolsRoute(onBack: () -> Unit) {
         onResOptionSelected = viewModel::onResOptionSelected,
         onApplyResolution = viewModel::applyResolutionChanges,
         onResetResolution = viewModel::resetResolutionChanges,
+        onWidthPresetNameChange = viewModel::onWidthPresetNameChange,
+        onWidthPresetDpChange = viewModel::onWidthPresetDpChange,
+        onSaveWidthPreset = viewModel::saveWidthPreset,
+        onApplyWidthPreset = viewModel::applyWidthPreset,
+        onDeleteWidthPreset = viewModel::deleteWidthPreset,
         
         onBack = onBack,
         onSync = {
@@ -274,6 +298,27 @@ fun GamingToolsRoute(onBack: () -> Unit) {
             onDismiss = viewModel::dismissSuspendPicker,
             onAppSelected = viewModel::toggleExtraSuspendPackage,
             titleRes = R.string.gt_picker_add_freeze
+        )
+    }
+
+    if (uiState.isPickingPermTarget) {
+        AppPickerDialog(
+            apps = uiState.allApps,
+            onDismiss = viewModel::dismissPermPicker,
+            onAppSelected = viewModel::selectPermTarget,
+            titleRes = R.string.gt_perm_pick_title
+        )
+    }
+
+    // Revoke names the app, the permission and the consequence up front; nothing is taken on
+    // dismiss — only the explicit confirm button runs it.
+    uiState.permConfirm?.let { confirm ->
+        AlertDialog(
+            onDismissRequest = viewModel::cancelPermRevoke,
+            title = { Text(stringResource(R.string.gt_perm_confirm_title)) },
+            text = { Text(stringResource(R.string.gt_perm_confirm_body, confirm.label, confirm.permission)) },
+            confirmButton = { TextButton(onClick = viewModel::confirmPermRevoke) { Text(stringResource(R.string.gt_perm_confirm_revoke)) } },
+            dismissButton = { TextButton(onClick = viewModel::cancelPermRevoke) { Text(stringResource(R.string.gt_dialog_cancel)) } }
         )
     }
 
@@ -328,6 +373,17 @@ fun GamingToolsScreen(
     onToggleDnd: (Boolean) -> Unit,
     onPerformMaintenance: (List<CleaningFeature.Category>) -> Unit,
     onScanJunk: () -> Unit,
+    onSetCleanSchedule: (Boolean) -> Unit,
+    /** Retunes the interval of the recurring sweep (hours, one of CleanerScheduleStore.INTERVAL_CHOICES). */
+    onSetCleanInterval: (Int) -> Unit,
+    onShowPermPicker: () -> Unit,
+    onDismissPermPicker: () -> Unit,
+    onSelectPermTarget: (String) -> Unit,
+    onRequestPermRevoke: (String, String) -> Unit,
+    onConfirmPermRevoke: () -> Unit,
+    onCancelPermRevoke: () -> Unit,
+    onRegrantPerm: (String, String) -> Unit,
+    onRestorePerms: (String) -> Unit,
     onAddCleanerKeepEntry: (String) -> Unit,
     onRemoveCleanerKeepEntry: (String) -> Unit,
     onAddCleanerCleanPattern: (String) -> Unit,
@@ -349,6 +405,14 @@ fun GamingToolsScreen(
     onToggleBackgroundLimit: (Boolean) -> Unit,
     onSetForcePeakRefreshRate: (Boolean) -> Unit,
     onSetGameDefaultFrameRateDisabled: (Boolean) -> Unit,
+    /** Named animation-scale presets, in save order. */
+    animPresets: List<AnimationPresetStore.AnimationPreset>,
+    /** Name typed for the next animation preset. */
+    animPresetName: String,
+    onAnimPresetNameChange: (String) -> Unit,
+    onSaveAnimPreset: () -> Unit,
+    onApplyAnimPreset: (AnimationPresetStore.AnimationPreset) -> Unit,
+    onDeleteAnimPreset: (String) -> Unit,
     onSelectAnglePackage: (String?) -> Unit,
     onSetAngleDriver: (AngleDriverOptions.Driver) -> Unit,
     /** Opens Android's Developer options screen for the switches this app cannot reach itself. */
@@ -382,6 +446,11 @@ fun GamingToolsScreen(
     onResOptionSelected: (String) -> Unit,
     onApplyResolution: () -> Unit,
     onResetResolution: () -> Unit,
+    onWidthPresetNameChange: (String) -> Unit,
+    onWidthPresetDpChange: (String) -> Unit,
+    onSaveWidthPreset: () -> Unit,
+    onApplyWidthPreset: (WidthPresetStore.WidthPreset) -> Unit,
+    onDeleteWidthPreset: (String) -> Unit,
     
     onBack: () -> Unit,
     onSync: () -> Unit,
@@ -422,7 +491,12 @@ fun GamingToolsScreen(
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
                 Text(stringResource(R.string.gt_section_your_library), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 IconButton(onClick = onAddGameClicked, modifier = Modifier.size(24.dp)) {
-                    Icon(Icons.Default.Add, null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(18.dp))
+                    Icon(
+                        Icons.Default.Add,
+                        contentDescription = stringResource(R.string.core_desc_add),
+                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.size(18.dp)
+                    )
                 }
             }
             Spacer(modifier = Modifier.height(12.dp))
@@ -522,6 +596,12 @@ fun GamingToolsScreen(
                         hasPrivilege = hasPrivilege,
                         gameDevOptions = gameDevOptions,
                         onSetAnimationScale = onSetAnimationScale,
+                        animPresets = uiState.animPresets,
+                        animPresetName = uiState.animPresetName,
+                        onAnimPresetNameChange = onAnimPresetNameChange,
+                        onSaveAnimPreset = onSaveAnimPreset,
+                        onApplyAnimPreset = onApplyAnimPreset,
+                        onDeleteAnimPreset = onDeleteAnimPreset,
                         onToggleAlwaysFinish = onToggleAlwaysFinish,
                         onToggleBackgroundLimit = onToggleBackgroundLimit,
                         onSetForcePeakRefreshRate = onSetForcePeakRefreshRate,
@@ -560,7 +640,16 @@ fun GamingToolsScreen(
                         log = uiState.resLog,
                         onOptionSelected = onResOptionSelected,
                         onWidthChange = onResWidthChange, onHeightChange = onResHeightChange, onDpiChange = onResDpiChange,
-                        onApply = onApplyResolution, onReset = onResetResolution
+                        onApply = onApplyResolution, onReset = onResetResolution,
+                        widthPresets = uiState.widthPresets,
+                        widthPresetName = uiState.widthPresetName,
+                        widthPresetDp = uiState.widthPresetDp,
+                        onWidthPresetNameChange = onWidthPresetNameChange,
+                        onWidthPresetDpChange = onWidthPresetDpChange,
+                        onSaveWidthPreset = onSaveWidthPreset,
+                        onApplyWidthPreset = onApplyWidthPreset,
+                        onDeleteWidthPreset = onDeleteWidthPreset,
+                        panelInfo = uiState.panelInfo
                     )
                 }
             }
@@ -690,7 +779,28 @@ fun GamingToolsScreen(
                         onRemoveCleanPattern = onRemoveCleanerCleanPattern,
                         onScan = onScanJunk,
                         onPerform = onPerformMaintenance,
-                        onGrantStorageAccess = onGrantStorageAccess
+                        onGrantStorageAccess = onGrantStorageAccess,
+                        scheduleEnabled = uiState.cleanScheduleEnabled,
+                        scheduleIntervalHours = uiState.cleanIntervalHours,
+                        scheduleNextRunAt = uiState.cleanNextRunAt,
+                        onScheduleEnabledChange = onSetCleanSchedule,
+                        onScheduleIntervalChange = onSetCleanInterval
+                    )
+                }
+                // Manual dangerous-permission toggle: per-app, per-permission, explicitly
+                // confirmed. Revokes the platform may refuse are reported, not recorded, and
+                // everything taken can be regranted from the restore set.
+                ExpandableToolCard(title = stringResource(R.string.gt_perm_title), subtitle = stringResource(R.string.gt_perm_sub), icon = Icons.Default.AdminPanelSettings) {
+                    PermToggleContent(
+                        targetLabel = uiState.permTargetLabel,
+                        targetPkg = uiState.permTargetPkg,
+                        entries = uiState.permEntries,
+                        isBusy = uiState.isPermBusy,
+                        hasPrivilege = hasPrivilege,
+                        onPickTarget = onShowPermPicker,
+                        onRevoke = onRequestPermRevoke,
+                        onRegrant = onRegrantPerm,
+                        onRestoreAll = onRestorePerms
                     )
                 }
             }
@@ -868,7 +978,20 @@ fun ResolutionChangerContent(
     log: List<String>,
     onOptionSelected: (String) -> Unit,
     onWidthChange: (String) -> Unit, onHeightChange: (String) -> Unit, onDpiChange: (String) -> Unit,
-    onApply: () -> Unit, onReset: () -> Unit
+    onApply: () -> Unit, onReset: () -> Unit,
+    /** Named smallest-width presets, in save order. */
+    widthPresets: List<WidthPresetStore.WidthPreset>,
+    /** Name typed for the next width preset. */
+    widthPresetName: String,
+    /** Width in dp typed for the next width preset. */
+    widthPresetDp: String,
+    onWidthPresetNameChange: (String) -> Unit,
+    onWidthPresetDpChange: (String) -> Unit,
+    onSaveWidthPreset: () -> Unit,
+    onApplyWidthPreset: (WidthPresetStore.WidthPreset) -> Unit,
+    onDeleteWidthPreset: (String) -> Unit,
+    /** What the panel can do (null before first sync); empty rates = unreadable. */
+    panelInfo: DisplayRefreshRateProvider.PanelInfo?,
 ) {
     // execResult prefers root and only falls back to Shizuku, so this names the channel that will
     // actually run `wm` rather than offering a choice the app does not honour.
@@ -1016,6 +1139,18 @@ fun ResolutionChangerContent(
                 modifier = Modifier.weight(0.6f)
             ) { Text(stringResource(R.string.gt_res_reset)) }
         }
+        WidthPresetLibrary(
+            presets = widthPresets,
+            name = widthPresetName,
+            widthDp = widthPresetDp,
+            canWrite = channel != null && !isApplying,
+            onNameChange = onWidthPresetNameChange,
+            onWidthDpChange = onWidthPresetDpChange,
+            onSave = onSaveWidthPreset,
+            onApply = onApplyWidthPreset,
+            onDelete = onDeleteWidthPreset
+        )
+        PanelRefreshCard(panelInfo = panelInfo)
         if (log.isNotEmpty()) {
             Spacer(modifier = Modifier.height(16.dp))
             Box(modifier = Modifier.fillMaxWidth().height(100.dp).clip(RoundedCornerShape(8.dp)).background(LogTerminalBackground).padding(8.dp)) {
@@ -1296,7 +1431,12 @@ fun CleaningContent(
     onRemoveCleanPattern: (String) -> Unit,
     onScan: () -> Unit,
     onPerform: (List<CleaningFeature.Category>) -> Unit,
-    onGrantStorageAccess: () -> Unit
+    onGrantStorageAccess: () -> Unit,
+    scheduleEnabled: Boolean,
+    scheduleIntervalHours: Int,
+    scheduleNextRunAt: Long?,
+    onScheduleEnabledChange: (Boolean) -> Unit,
+    onScheduleIntervalChange: (Int) -> Unit
 ) {
     var selectedCategories by remember { mutableStateOf(CleaningFeature.Category.entries.filter { !it.isAggressive }.toSet()) }
     val resultsByCategory = remember(report) { report?.results?.associateBy { it.category }.orEmpty() }
@@ -1361,6 +1501,20 @@ fun CleaningContent(
             CatsmokerButton(onClick = onScan, modifier = Modifier.weight(1f), enabled = !isScanning && !isCleaning) { Text(if (isScanning) stringResource(R.string.gt_cleaner_scanning) else stringResource(R.string.gt_cleaner_scan)) }
             CatsmokerButton(onClick = { onPerform(selectedCategories.toList()) }, modifier = Modifier.weight(1f), enabled = !isScanning && !isCleaning && selectedCategories.isNotEmpty()) { Text(if (isCleaning) stringResource(R.string.gt_cleaner_cleaning) else stringResource(R.string.gt_cleaner_clean)) }
         }
+
+        // The recurring version of the same sweep: safe buckets only, on a schedule, while the
+        // app is closed. Aggressive buckets stay manual-only in every run (see
+        // CleanerSweepWorker) — the section below states that before the switch.
+        Spacer(modifier = Modifier.height(12.dp))
+        HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+        Spacer(modifier = Modifier.height(12.dp))
+        CleanerScheduleSection(
+            enabled = scheduleEnabled,
+            intervalHours = scheduleIntervalHours,
+            nextRunAt = scheduleNextRunAt,
+            onEnabledChange = onScheduleEnabledChange,
+            onIntervalChange = onScheduleIntervalChange
+        )
 
         // Rule editing sits between the buttons and the result: it is the one part of the card
         // that takes input rather than reporting it, and it only matters once a scan exists to
@@ -1871,6 +2025,14 @@ fun DeveloperOptionsContent(
     onToggleBackgroundLimit: (Boolean) -> Unit,
     onSetForcePeakRefreshRate: (Boolean) -> Unit,
     onSetGameDefaultFrameRateDisabled: (Boolean) -> Unit,
+    /** Named animation-scale presets, in save order. */
+    animPresets: List<AnimationPresetStore.AnimationPreset>,
+    /** Name typed for the next animation preset. */
+    animPresetName: String,
+    onAnimPresetNameChange: (String) -> Unit,
+    onSaveAnimPreset: () -> Unit,
+    onApplyAnimPreset: (AnimationPresetStore.AnimationPreset) -> Unit,
+    onDeleteAnimPreset: (String) -> Unit,
     /** Games the ANGLE picker lists; the card picks the first once loaded. */
     games: List<GameInfo>,
     /** Package the ANGLE card acts on, or null before selection. */
@@ -1907,6 +2069,16 @@ fun DeveloperOptionsContent(
         AnimationScaleRow(stringResource(R.string.gt_dev_anim_windows), AnimationScaleKind.WINDOW, animationScales.first, canWriteGlobalSettings, onSetAnimationScale)
         AnimationScaleRow(stringResource(R.string.gt_dev_anim_transition), AnimationScaleKind.TRANSITION, animationScales.second, canWriteGlobalSettings, onSetAnimationScale)
         AnimationScaleRow(stringResource(R.string.gt_dev_anim_animator), AnimationScaleKind.ANIMATOR, animationScales.third, canWriteGlobalSettings, onSetAnimationScale)
+
+        AnimPresetLibrary(
+            presets = animPresets,
+            name = animPresetName,
+            canWrite = canWriteGlobalSettings,
+            onNameChange = onAnimPresetNameChange,
+            onSave = onSaveAnimPreset,
+            onApply = onApplyAnimPreset,
+            onDelete = onDeleteAnimPreset
+        )
 
         HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
 
@@ -2250,6 +2422,52 @@ private fun DevOptionSwitchRow(
 }
 
 /**
+ * The Private DNS provider chips, shared by the supported and unsupported branches.
+ *
+ * Rendered disabled (never hidden) where Private DNS does not exist, so the options
+ * stay visible with the reason above them. A disabled chip cannot be tapped, so the
+ * write callbacks can never fire from the unsupported branch.
+ */
+@Composable
+private fun DnsProviderChips(
+    selectedHostname: String?,
+    selectedMode: DnsFeature.Mode?,
+    chipsEnabled: Boolean,
+    onApplyProvider: (DnsFeature.Provider) -> Unit,
+    onSetAutomatic: () -> Unit,
+    onDisable: () -> Unit
+) {
+    // Chips rather than buttons: one of these is the current state, and a chip can show
+    // which without a separate label.
+    androidx.compose.foundation.layout.FlowRow(
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        DnsFeature.PROVIDERS.forEach { provider ->
+            FilterChip(
+                selected = selectedHostname == provider.hostname &&
+                    selectedMode == DnsFeature.Mode.PROVIDER,
+                onClick = { onApplyProvider(provider) },
+                enabled = chipsEnabled,
+                label = { Text(provider.label, fontSize = 12.sp) }
+            )
+        }
+        FilterChip(
+            selected = selectedMode == DnsFeature.Mode.AUTOMATIC,
+            onClick = onSetAutomatic,
+            enabled = chipsEnabled,
+            label = { Text(stringResource(R.string.gt_dns_auto), fontSize = 12.sp) }
+        )
+        FilterChip(
+            selected = selectedMode == DnsFeature.Mode.OFF,
+            onClick = onDisable,
+            enabled = chipsEnabled,
+            label = { Text(stringResource(R.string.gt_dns_off), fontSize = 12.sp) }
+        )
+    }
+}
+
+/**
  * The Private DNS card.
  *
  * It reports the resolvers the active network is *using*, not the ones this app asked for, because the
@@ -2285,10 +2503,24 @@ fun DnsContent(
 
         when {
             status == null -> Text(stringResource(R.string.gt_dns_checking), fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
-            !status.supported -> Text(
-                status.unsupportedReason ?: stringResource(R.string.gt_dns_unsupported_generic),
-                fontSize = 12.sp, color = Color(0xFFEF9A9A)
-            )
+            !status.supported -> {
+                Text(
+                    status.unsupportedReason ?: stringResource(R.string.gt_dns_unsupported_generic),
+                    fontSize = 12.sp, color = Color(0xFFEF9A9A)
+                )
+                // Global rule: the provider options stay visible but disabled, so
+                // the user sees what exists on newer phones instead of nothing.
+                // Disabled chips cannot be tapped, so nothing is written.
+                Spacer(modifier = Modifier.height(8.dp))
+                DnsProviderChips(
+                    selectedHostname = null,
+                    selectedMode = null,
+                    chipsEnabled = false,
+                    onApplyProvider = onApplyProvider,
+                    onSetAutomatic = onSetAutomatic,
+                    onDisable = onDisable
+                )
+            }
             else -> {
                 Text(
                     stringResource(
@@ -2334,32 +2566,14 @@ fun DnsContent(
                 Spacer(modifier = Modifier.height(2.dp))
                 // Chips rather than buttons: one of these is the current state, and a chip can show
                 // which without a separate label.
-                androidx.compose.foundation.layout.FlowRow(
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    DnsFeature.PROVIDERS.forEach { provider ->
-                        FilterChip(
-                            selected = status.hostname == provider.hostname &&
-                                status.mode == DnsFeature.Mode.PROVIDER,
-                            onClick = { onApplyProvider(provider) },
-                            enabled = writable,
-                            label = { Text(provider.label, fontSize = 12.sp) }
-                        )
-                    }
-                    FilterChip(
-                        selected = status.mode == DnsFeature.Mode.AUTOMATIC,
-                        onClick = onSetAutomatic,
-                        enabled = writable,
-                        label = { Text(stringResource(R.string.gt_dns_auto), fontSize = 12.sp) }
-                    )
-                    FilterChip(
-                        selected = status.mode == DnsFeature.Mode.OFF,
-                        onClick = onDisable,
-                        enabled = writable,
-                        label = { Text(stringResource(R.string.gt_dns_off), fontSize = 12.sp) }
-                    )
-                }
+                DnsProviderChips(
+                    selectedHostname = status.hostname,
+                    selectedMode = status.mode,
+                    chipsEnabled = writable,
+                    onApplyProvider = onApplyProvider,
+                    onSetAutomatic = onSetAutomatic,
+                    onDisable = onDisable
+                )
 
                 val selected = DnsFeature.PROVIDERS.firstOrNull { it.hostname == status.hostname }
                 if (selected != null && status.mode == DnsFeature.Mode.PROVIDER) {
@@ -2539,6 +2753,211 @@ private fun AnimationScaleRow(
  * offering those from a card whose purpose is to speed the UI up would be offering a pessimisation.
  */
 private val ANIMATION_SCALE_VALUES = listOf(0f, 0.5f, 1f)
+
+/**
+ * Named animation-scale preset library (M67).
+ *
+ * "Save current" snapshots the live triple the rows above show — never a typed number — so a
+ * preset is always a configuration the device actually held. Applying runs each scale through
+ * the verified single-scale path; the toast (not this list) reports the honest count.
+ */
+@Composable
+private fun AnimPresetLibrary(
+    presets: List<AnimationPresetStore.AnimationPreset>,
+    name: String,
+    canWrite: Boolean,
+    onNameChange: (String) -> Unit,
+    onSave: () -> Unit,
+    onApply: (AnimationPresetStore.AnimationPreset) -> Unit,
+    onDelete: (String) -> Unit
+) {
+    Column(modifier = Modifier.fillMaxWidth()) {
+        Spacer(modifier = Modifier.height(4.dp))
+        Text(
+            stringResource(R.string.gt_preset_anim_title),
+            fontSize = 13.sp,
+            fontWeight = FontWeight.Bold,
+            color = MaterialTheme.colorScheme.onSurface
+        )
+        Spacer(modifier = Modifier.height(8.dp))
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            OutlinedTextField(
+                value = name,
+                onValueChange = onNameChange,
+                label = { Text(stringResource(R.string.gt_preset_name)) },
+                singleLine = true,
+                modifier = Modifier.weight(1f)
+            )
+            CatsmokerOutlinedButton(onClick = onSave) { Text(stringResource(R.string.gt_preset_anim_save)) }
+        }
+        if (presets.isEmpty()) {
+            Text(
+                stringResource(R.string.gt_preset_empty),
+                fontSize = 11.sp,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(vertical = 4.dp)
+            )
+        }
+        presets.forEach { preset ->
+            Row(
+                modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(preset.name, color = MaterialTheme.colorScheme.onSurface, fontSize = 13.sp)
+                    Text(
+                        "${formatAnimationScale(preset.window)} · ${formatAnimationScale(preset.transition)} · ${formatAnimationScale(preset.animator)}",
+                        fontSize = 10.sp,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+                TextButton(onClick = { onApply(preset) }, enabled = canWrite) {
+                    Text(stringResource(R.string.gt_preset_apply))
+                }
+                TextButton(onClick = { onDelete(preset.id) }) {
+                    Text(stringResource(R.string.gt_preset_delete))
+                }
+            }
+        }
+    }
+}
+
+/**
+ * Panel refresh readout: what the display service reports, read fresh on sync.
+ *
+ * Read-only diagnostics — no privilege, no writes, nothing to apply. An empty rate
+ * list means the modes were unreadable (reported as such, never a stand-in 60);
+ * seamless switches are unknown below API 31 and adaptive refresh below Baklava,
+ * each named rather than guessed. The strings existed before the card did.
+ */
+@Composable
+private fun PanelRefreshCard(
+    panelInfo: DisplayRefreshRateProvider.PanelInfo?
+) {
+    Column(modifier = Modifier.fillMaxWidth()) {
+        Spacer(modifier = Modifier.height(16.dp))
+        Text(
+            stringResource(R.string.gt_panel_title),
+            fontSize = 13.sp,
+            fontWeight = FontWeight.Bold,
+            color = MaterialTheme.colorScheme.onSurface
+        )
+        Spacer(modifier = Modifier.height(8.dp))
+        if (panelInfo == null || panelInfo.ratesHz.isEmpty()) {
+            Text(
+                stringResource(R.string.gt_panel_unreadable),
+                fontSize = 11.sp,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            return@Column
+        }
+        Text(
+            stringResource(R.string.gt_panel_rates, panelInfo.ratesHz.joinToString()),
+            fontSize = 11.sp,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+        val seamlessText = when {
+            panelInfo.seamlessHz == null -> stringResource(R.string.gt_panel_seamless_unknown)
+            panelInfo.seamlessHz.isEmpty() -> stringResource(R.string.gt_panel_seamless_none)
+            else -> stringResource(
+                R.string.gt_panel_seamless,
+                panelInfo.seamlessHz.joinToString()
+            )
+        }
+        Text(seamlessText, fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        val arrText = when (panelInfo.adaptive) {
+            null -> stringResource(R.string.gt_panel_unknown)
+            true -> stringResource(R.string.gt_panel_yes)
+            false -> stringResource(R.string.gt_panel_no)
+        }
+        Text(
+            stringResource(R.string.gt_panel_arr, arrText),
+            fontSize = 11.sp,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+    }
+}
+
+/**
+ * Named smallest-width preset library (M67).
+ *
+ * A preset stores only the width in dp; applying keeps the panel's native pixel size and moves
+ * just the density, so the aspect ratio cannot drift. The confirmed-apply path (with its
+ * supersample and unknown-panel warnings) reports what actually happened.
+ */
+@Composable
+private fun WidthPresetLibrary(
+    presets: List<WidthPresetStore.WidthPreset>,
+    name: String,
+    widthDp: String,
+    canWrite: Boolean,
+    onNameChange: (String) -> Unit,
+    onWidthDpChange: (String) -> Unit,
+    onSave: () -> Unit,
+    onApply: (WidthPresetStore.WidthPreset) -> Unit,
+    onDelete: (String) -> Unit
+) {
+    Column(modifier = Modifier.fillMaxWidth()) {
+        Spacer(modifier = Modifier.height(16.dp))
+        Text(
+            stringResource(R.string.gt_preset_width_title),
+            fontSize = 13.sp,
+            fontWeight = FontWeight.Bold,
+            color = MaterialTheme.colorScheme.onSurface
+        )
+        Spacer(modifier = Modifier.height(8.dp))
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            OutlinedTextField(
+                value = name,
+                onValueChange = onNameChange,
+                label = { Text(stringResource(R.string.gt_preset_name)) },
+                singleLine = true,
+                modifier = Modifier.weight(1f)
+            )
+            OutlinedTextField(
+                value = widthDp,
+                onValueChange = onWidthDpChange,
+                label = { Text(stringResource(R.string.gt_preset_width_dp)) },
+                singleLine = true,
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                modifier = Modifier.weight(0.6f)
+            )
+        }
+        Spacer(modifier = Modifier.height(8.dp))
+        CatsmokerOutlinedButton(onClick = onSave, modifier = Modifier.fillMaxWidth()) {
+            Text(stringResource(R.string.gt_preset_width_save))
+        }
+        if (presets.isEmpty()) {
+            Text(
+                stringResource(R.string.gt_preset_empty),
+                fontSize = 11.sp,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(vertical = 4.dp)
+            )
+        }
+        presets.forEach { preset ->
+            Row(
+                modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(preset.name, color = MaterialTheme.colorScheme.onSurface, fontSize = 13.sp)
+                    Text(
+                        "${preset.widthDp} dp",
+                        fontSize = 10.sp,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+                TextButton(onClick = { onApply(preset) }, enabled = canWrite) {
+                    Text(stringResource(R.string.gt_preset_apply))
+                }
+                TextButton(onClick = { onDelete(preset.id) }) {
+                    Text(stringResource(R.string.gt_preset_delete))
+                }
+            }
+        }
+    }
+}
 
 private fun formatAnimationScale(value: Float): String =
     if (value % 1f == 0f) "${value.toInt()}x" else "${value}x"
@@ -2787,6 +3206,153 @@ fun AppBoosterContent(
 }
 
 /**
+ * Manual dangerous-permission toggle for one target app. Every destructive step is explicit:
+ * picking names the app, each row names the permission and its live state, revoke asks first
+ * (the dialog, not the row button, runs it), and restore-all regrants exactly what this tool
+ * took. A refused revoke records nothing; a refused regrant stays recorded and reported.
+ */
+@Composable
+private fun PermToggleContent(
+    targetLabel: String?,
+    targetPkg: String?,
+    entries: List<ToggleablePerm>,
+    isBusy: Boolean,
+    hasPrivilege: Boolean,
+    onPickTarget: () -> Unit,
+    onRevoke: (String, String) -> Unit,
+    onRegrant: (String, String) -> Unit,
+    onRestoreAll: (String) -> Unit
+) {
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        ExplainerBox(
+            title = stringResource(R.string.gt_perm_what_title),
+            lines = listOf(
+                stringResource(R.string.gt_perm_what_1),
+                stringResource(R.string.gt_perm_what_2)
+            )
+        )
+        CatsmokerOutlinedButton(onClick = onPickTarget, modifier = Modifier.fillMaxWidth()) {
+            Text(targetLabel ?: stringResource(R.string.gt_perm_pick))
+        }
+        if (targetPkg != null) {
+            if (entries.isEmpty()) {
+                Text(
+                    stringResource(R.string.gt_perm_none_toggleable, targetLabel ?: targetPkg),
+                    fontSize = 12.sp,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+            entries.forEach { entry ->
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            entry.permission.substringAfterLast('.'),
+                            fontSize = 13.sp,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                        Text(
+                            if (entry.granted) stringResource(R.string.gt_perm_granted_state)
+                            else stringResource(R.string.gt_perm_revoked_state),
+                            fontSize = 11.sp,
+                            color = if (entry.granted) MaterialTheme.colorScheme.primary
+                            else MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                    if (entry.granted) {
+                        CatsmokerOutlinedButton(
+                            onClick = { onRevoke(targetPkg, entry.permission) },
+                            enabled = !isBusy && hasPrivilege
+                        ) { Text(stringResource(R.string.gt_perm_revoke), fontSize = 12.sp) }
+                    } else {
+                        CatsmokerButton(
+                            onClick = { onRegrant(targetPkg, entry.permission) },
+                            enabled = !isBusy && hasPrivilege
+                        ) { Text(stringResource(R.string.gt_perm_grant), fontSize = 12.sp) }
+                    }
+                }
+            }
+            if (entries.any { it.wasRevokedByUs }) {
+                CatsmokerOutlinedButton(
+                    onClick = { onRestoreAll(targetPkg) },
+                    modifier = Modifier.fillMaxWidth(),
+                    enabled = !isBusy && hasPrivilege
+                ) { Text(stringResource(R.string.gt_perm_restore_all)) }
+            }
+            if (!hasPrivilege) {
+                Text(
+                    stringResource(R.string.gt_perm_needs_priv),
+                    fontSize = 11.sp,
+                    color = Color(0xFFFFB300)
+                )
+            }
+        }
+    }
+}
+
+/**
+ * The recurring junk sweep's controls. Same contract as the dexopt schedule: the switch state
+ * is the persisted setting *and* the enrollment, the next-run line is WorkManager's own
+ * estimate, and the interval chips retune in place. The explainer states the unattended
+ * boundary up front — safe buckets only, aggressive ones stay manual in every run.
+ */
+@Composable
+private fun CleanerScheduleSection(
+    enabled: Boolean,
+    intervalHours: Int,
+    nextRunAt: Long?,
+    onEnabledChange: (Boolean) -> Unit,
+    onIntervalChange: (Int) -> Unit
+) {
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    stringResource(R.string.gt_booster_schedule),
+                    fontSize = 13.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+                Text(
+                    when {
+                        enabled && nextRunAt != null -> stringResource(R.string.gt_booster_next, formatScheduleTime(nextRunAt))
+                        enabled -> stringResource(R.string.gt_booster_next_unknown)
+                        else -> stringResource(R.string.gt_booster_sched_off)
+                    },
+                    fontSize = 11.sp,
+                    color = if (enabled) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+            Switch(checked = enabled, onCheckedChange = onEnabledChange)
+        }
+
+        if (enabled) {
+            ChipFlowRow {
+                CleanerScheduleStore.INTERVAL_CHOICES.forEach { hours ->
+                    FilterChip(
+                        selected = intervalHours == hours,
+                        onClick = { onIntervalChange(hours) },
+                        label = { Text(intervalLabel(hours)) }
+                    )
+                }
+            }
+        }
+
+        ExplainerBox(
+            title = stringResource(R.string.gt_booster_sched_what_title),
+            lines = listOf(
+                stringResource(R.string.gt_cleaner_sched_1),
+                stringResource(R.string.gt_cleaner_sched_2),
+                stringResource(R.string.gt_cleaner_sched_3)
+            )
+        )
+    }
+}
+
+/**
  * The recurring dexopt sweep's controls. Every claim on the row is something the device or
  * WorkManager reported: the switch state is the persisted setting *and* the enrollment, and the
  * next-run line is WorkManager's own current estimate — "unknown" when it will not say, never a
@@ -2850,8 +3416,7 @@ private fun DexoptScheduleSection(
 }
 
 @Composable
-private fun intervalLabel(hours: Int): String = when (hours) {
-    24 -> stringResource(R.string.gt_booster_every_day)
+private fun intervalLabel(hours: Int): String = when (hours) {    24 -> stringResource(R.string.gt_booster_every_day)
     72 -> stringResource(R.string.gt_booster_every_3)
     168 -> stringResource(R.string.gt_booster_every_week)
     else -> stringResource(R.string.gt_booster_every_h, hours)
@@ -3005,6 +3570,8 @@ fun GamingToolsPreview() {
             alwaysFinishActivities = false,
             backgroundProcessLimit = false,
             gameDevOptions = GameDeveloperOptions.State(),
+            animPresets = emptyList(),
+            animPresetName = "",
             interventionDownscale = null,
             pointerSpeedChoice = null,
             onToggleOverlay = {},
@@ -3016,6 +3583,16 @@ fun GamingToolsPreview() {
             onToggleDnd = {},
             onPerformMaintenance = {},
             onScanJunk = {},
+            onSetCleanSchedule = {},
+            onSetCleanInterval = {},
+            onShowPermPicker = {},
+            onDismissPermPicker = {},
+            onSelectPermTarget = {},
+            onRequestPermRevoke = { _, _ -> },
+            onConfirmPermRevoke = {},
+            onCancelPermRevoke = {},
+            onRegrantPerm = { _, _ -> },
+            onRestorePerms = {},
             onAddCleanerKeepEntry = {},
             onRemoveCleanerKeepEntry = {},
             onAddCleanerCleanPattern = {},
@@ -3034,6 +3611,10 @@ fun GamingToolsPreview() {
             onSetPointerSpeedChoice = {},
             onBoostChange = {},
             onSetAnimationScale = { _, _ -> },
+            onAnimPresetNameChange = {},
+            onSaveAnimPreset = {},
+            onApplyAnimPreset = {},
+            onDeleteAnimPreset = {},
             onToggleAlwaysFinish = {},
             onToggleBackgroundLimit = {},
             onSetForcePeakRefreshRate = {},
@@ -3063,6 +3644,11 @@ fun GamingToolsPreview() {
             onResOptionSelected = {},
             onApplyResolution = {},
             onResetResolution = {},
+            onWidthPresetNameChange = {},
+            onWidthPresetDpChange = {},
+            onSaveWidthPreset = {},
+            onApplyWidthPreset = {},
+            onDeleteWidthPreset = {},
             onBack = {},
             onSync = {}
         )

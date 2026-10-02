@@ -84,11 +84,10 @@ fun WuwaConfigRoute(onBack: (() -> Unit)? = null) {
         uiState = uiState,
         onSelectPreset = viewModel::selectPreset,
         onUpdateOptions = viewModel::updateOptions,
+        onCvarOverrideTextChange = viewModel::onCvarOverrideTextChange,
         onDeploy = viewModel::onDeploy,
         onRestoreBackup = viewModel::onRestoreBackup,
         onApplyRecommendation = viewModel::applyRecommendation,
-        onAnalyzeLog = viewModel::analyzeGameLog,
-        onReadProfile = viewModel::readInstalledProfile,
         onImportPack = { runCatching { packFolderPicker.launch(null) } },
         onDeployPackVariant = viewModel::deployCommunityVariant,
         onDeployPackVariantStripped = viewModel::deployCommunityVariantStripped,
@@ -101,10 +100,8 @@ fun WuwaConfigRoute(onBack: (() -> Unit)? = null) {
         onApplyTunerResult = viewModel::applyTunerResult,
         onStopTuner = viewModel::stopTuner,
         onResetTuner = viewModel::resetTuner,
-        onFetchGacha = viewModel::fetchGachaFromLog,
-        onRestoreGacha = viewModel::restoreGachaFromCache,
-        onClearGacha = viewModel::clearGachaCache,
         onRefresh = viewModel::refresh,
+        onShowAnyway = viewModel::onShowEditorAnyway,
         onBack = onBack
     )
 }
@@ -135,11 +132,10 @@ fun WuwaConfigScreen(
     uiState: WuwaConfigUiState,
     onSelectPreset: (String) -> Unit,
     onUpdateOptions: ((WuWaConfigGenerator.Options) -> WuWaConfigGenerator.Options) -> Unit,
+    onCvarOverrideTextChange: (String) -> Unit,
     onDeploy: (WuwaDeployChannel) -> Unit,
     onRestoreBackup: (ConfigBackupStore.Entry) -> Unit,
     onApplyRecommendation: () -> Unit,
-    onAnalyzeLog: () -> Unit,
-    onReadProfile: () -> Unit,
     onImportPack: () -> Unit,
     onDeployPackVariant: (String, String) -> Unit,
     onDeployPackVariantStripped: (String, String) -> Unit,
@@ -152,10 +148,8 @@ fun WuwaConfigScreen(
     onApplyTunerResult: () -> Unit,
     onStopTuner: () -> Unit,
     onResetTuner: () -> Unit,
-    onFetchGacha: () -> Unit,
-    onRestoreGacha: () -> Unit,
-    onClearGacha: () -> Unit,
     onRefresh: () -> Unit,
+    onShowAnyway: () -> Unit = {},
     onBack: (() -> Unit)? = null
 ) {
     // One body, two hosts: standalone (own ScreenScaffold header + scroll) or embedded in File
@@ -178,27 +172,18 @@ fun WuwaConfigScreen(
 
             // The same gate the File Engineering screen applies to the profile games: when
             // the package probe says the game is absent, an install-first card replaces the
-            // whole editor. Generating configs for a game that is not there invites pushing
-            // them nowhere; unknown (probe could not answer) still shows the editor.
-            if (uiState.gameInstalled == false) {
-                SectionCard {
-                    Column {
-                        Text(stringResource(R.string.gf_game_not_found), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.error, letterSpacing = 1.sp)
-                        Spacer(modifier = Modifier.height(8.dp))
-                        Text(
-                            stringResource(R.string.gf_wuwa_not_installed_body, WuwaConfigManager.PACKAGE),
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f)
-                        )
-                        Spacer(modifier = Modifier.height(12.dp))
-                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                            CatsmokerOutlinedButton(onClick = onRefresh, modifier = Modifier.weight(1f)) {
-                                Text(stringResource(R.string.gf_recheck))
-                            }
-                        }
-                    }
-                }
+            // whole editor — unless the small secondary "Show anyway" button on it was
+            // tapped, which reveals the existing generator below the card (its previews run
+            // on device facts and need no install). Unknown (probe could not answer) still
+            // shows the editor; the card stays visible while revealed, so the screen never
+            // pretends the game is installed.
+            if (uiState.gameInstalled == false && !uiState.showEditorAnyway) {
+                WuwaNotInstalledCard(onRefresh = onRefresh, onShowAnyway = onShowAnyway)
                 return@Column
+            }
+            if (uiState.gameInstalled == false) {
+                WuwaNotInstalledCard(onRefresh = onRefresh, onShowAnyway = null)
+                Spacer(modifier = Modifier.height(12.dp))
             }
 
             uiState.recommendation?.let { rec ->
@@ -206,8 +191,8 @@ fun WuwaConfigScreen(
                 Spacer(modifier = Modifier.height(12.dp))
             }
 
-            // The recommendation's apply target sits directly below it — the chips used to
-            // live five cards down, past the log, gacha, profile and auto-tune cards.
+            // The recommendation's apply target sits directly below it — the preset chips
+            // used to live several cards down, past the auto-tune card.
             SectionCard {
                 Text(stringResource(R.string.gf_preset_section), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary, letterSpacing = 1.sp)
                 Spacer(modifier = Modifier.height(8.dp))
@@ -228,18 +213,6 @@ fun WuwaConfigScreen(
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
-
-            Spacer(modifier = Modifier.height(12.dp))
-
-            GameLogCard(uiState, onAnalyzeLog)
-
-            Spacer(modifier = Modifier.height(12.dp))
-
-            GachaCard(uiState, onFetchGacha, onRestoreGacha, onClearGacha)
-
-            Spacer(modifier = Modifier.height(12.dp))
-
-            InstalledProfileCard(uiState, onReadProfile)
 
             Spacer(modifier = Modifier.height(12.dp))
 
@@ -336,6 +309,11 @@ fun WuwaConfigScreen(
                     stringResource(R.string.gf_fx_noauto_c),
                     uiState.options.disableAutoAdjust
                 ) { v -> onUpdateOptions { it.copy(disableAutoAdjust = v) } }
+                WuwaSwitchRow(
+                    stringResource(R.string.gf_fx_fog_t),
+                    stringResource(R.string.gf_fx_fog_c),
+                    !uiState.options.fog
+                ) { v -> onUpdateOptions { it.copy(fog = !v) } }
             }
 
             Spacer(modifier = Modifier.height(12.dp))
@@ -381,46 +359,31 @@ fun WuwaConfigScreen(
                     stringResource(R.string.gf_adv_gsr_c),
                     uiState.options.enableGSR
                 ) { v -> onUpdateOptions { it.copy(enableGSR = v) } }
-            }
-
-            Spacer(modifier = Modifier.height(12.dp))
-
-            SectionCard {
-                Text(stringResource(R.string.gf_preview), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary, letterSpacing = 1.sp)
                 Spacer(modifier = Modifier.height(8.dp))
-                if (uiState.previews.isEmpty()) {
-                    Text(stringResource(R.string.gf_preview_empty), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                } else {
-                    uiState.previews.forEach { (name, content) ->
-                        var expanded by remember(name) { mutableStateOf(false) }
-                        TextButton(onClick = { expanded = !expanded }) {
-                            Text(
-                                if (expanded) stringResource(R.string.gf_preview_open, name) else stringResource(R.string.gf_preview_closed, name, content.length),
-                                style = MaterialTheme.typography.bodyMedium,
-                                fontFamily = FontFamily.Monospace,
-                                color = MaterialTheme.colorScheme.primary
-                            )
-                        }
-                        if (expanded) {
-                            Surface(
-                                color = Color.Black.copy(alpha = 0.35f),
-                                shape = RoundedCornerShape(8.dp),
-                                modifier = Modifier.fillMaxWidth()
-                            ) {
-                                Text(
-                                    content,
-                                    fontFamily = FontFamily.Monospace,
-                                    fontSize = 10.sp,
-                                    color = Color.White.copy(alpha = 0.8f),
-                                    modifier = Modifier
-                                        .padding(10.dp)
-                                        .heightIn(max = 320.dp)
-                                        .verticalScroll(rememberScrollState())
-                                )
-                            }
-                        }
-                    }
-                }
+                Text(
+                    stringResource(R.string.gf_fx_override_t),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+                Text(
+                    stringResource(R.string.gf_fx_override_c),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+                OutlinedTextField(
+                    value = uiState.cvarOverrideText,
+                    onValueChange = onCvarOverrideTextChange,
+                    label = { Text(stringResource(R.string.gf_fx_override_hint)) },
+                    singleLine = false,
+                    minLines = 3,
+                    modifier = Modifier.fillMaxWidth()
+                )
+                Text(
+                    stringResource(R.string.gf_fx_override_applied, uiState.options.cvarOverrides.size),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
             }
 
             Spacer(modifier = Modifier.height(12.dp))
@@ -560,6 +523,45 @@ fun WuwaConfigScreen(
     }
 }
 
+/**
+ * The install-first card, shown in place of the generator when the package probe says the
+ * game is absent. The small secondary "Show anyway" button (offered only when [onShowAnyway]
+ * is non-null, i.e. the generator is still hidden) reveals the existing generator below
+ * this card without pretending the game is installed — the card stays visible either way.
+ */
+@Composable
+private fun WuwaNotInstalledCard(
+    onRefresh: () -> Unit,
+    onShowAnyway: (() -> Unit)? = null
+) {
+    SectionCard {
+        Column {
+            Text(stringResource(R.string.gf_game_not_found), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.error, letterSpacing = 1.sp)
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(
+                stringResource(R.string.gf_wuwa_not_installed_body, WuwaConfigManager.PACKAGE),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f)
+            )
+            Spacer(modifier = Modifier.height(12.dp))
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                CatsmokerOutlinedButton(onClick = onRefresh, modifier = Modifier.weight(1f)) {
+                    Text(stringResource(R.string.gf_recheck))
+                }
+            }
+            if (onShowAnyway != null) {
+                Spacer(modifier = Modifier.height(4.dp))
+                TextButton(
+                    onClick = onShowAnyway,
+                    modifier = Modifier.align(Alignment.CenterHorizontally)
+                ) {
+                    Text(stringResource(R.string.gf_show_anyway))
+                }
+            }
+        }
+    }
+}
+
 @Composable
 private fun CommunityPacksCard(
     uiState: WuwaConfigUiState,
@@ -695,231 +697,6 @@ private fun CommunityPacksCard(
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
-        }
-    }
-}
-
-@Composable
-private fun GameLogCard(uiState: WuwaConfigUiState, onAnalyzeLog: () -> Unit) {
-    SectionCard {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Text(stringResource(R.string.gf_game_log), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary, letterSpacing = 1.sp)
-            Spacer(modifier = Modifier.weight(1f))
-            uiState.logAnalysis?.let {
-                Text(
-                    stringResource(if (it.decrypted) R.string.gf_decrypted else R.string.gf_plaintext),
-                    style = MaterialTheme.typography.labelSmall,
-                    color = Color(0xFF81C784)
-                )
-            }
-        }
-        Spacer(modifier = Modifier.height(8.dp))
-        Text(
-            stringResource(R.string.gf_wuwa_log_body),
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
-        Spacer(modifier = Modifier.height(12.dp))
-        CatsmokerButton(onClick = onAnalyzeLog, enabled = !uiState.analyzingLog, modifier = Modifier.fillMaxWidth()) {
-            Text(if (uiState.analyzingLog) stringResource(R.string.gf_analyzing) else stringResource(R.string.gf_analyze_log))
-        }
-        uiState.logFailure?.let { failure ->
-            Spacer(modifier = Modifier.height(8.dp))
-            Text(failure, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error)
-        }
-        uiState.logAnalysis?.let { analysis ->
-            Spacer(modifier = Modifier.height(8.dp))
-            Text(
-                stringResource(R.string.gf_wuwa_log_read, analysis.channelUsed, analysis.lineCount),
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-            Spacer(modifier = Modifier.height(4.dp))
-            val info = analysis.info
-            StatusLine(stringResource(R.string.gf_sl_gpu), info.gpu ?: stringResource(R.string.gf_not_in_log))
-            StatusLine(stringResource(R.string.gf_sl_model), info.deviceModel ?: "—")
-            StatusLine(stringResource(R.string.gf_sl_api), info.api ?: stringResource(R.string.gf_could_not_tell))
-            StatusLine(stringResource(R.string.gf_sl_fps_actual), info.fpsActual?.let { "%.0f".format(it) } ?: "—")
-            StatusLine(stringResource(R.string.gf_sl_fps_cap), info.fpsCap?.toString() ?: "—")
-            StatusLine(stringResource(R.string.gf_sl_render_scale), info.screenPct?.let { "${"%.0f".format(it)}%" } ?: "—")
-            CollapsibleExplainer(
-                title = stringResource(R.string.gf_diag_counts),
-                lines = buildList {
-                    add(stringResource(R.string.gf_diag_thermal, info.thermalEvents))
-                    add(stringResource(R.string.gf_diag_oom, info.gpuOom))
-                    add(stringResource(R.string.gf_diag_drops, info.dropFrames))
-                    add(stringResource(R.string.gf_diag_tex, info.textureErrors))
-                    add(stringResource(R.string.gf_diag_autoadj, info.autoAdjustTriggers, info.autoAdjustRecoveries))
-                    add(stringResource(R.string.gf_diag_net, info.networkErrors))
-                    add(stringResource(R.string.gf_diag_forbidden, info.forbiddenCvars))
-                    add(stringResource(R.string.gf_diag_profile, info.deviceProfile ?: "—"))
-                    if (info.activeCvars.isNotEmpty()) {
-                        add("")
-                        add(stringResource(R.string.gf_diag_cvars, info.activeCvars.size))
-                        info.activeCvars.entries.sortedBy { it.key }.take(30).forEach { (k, v) -> add("$k = $v") }
-                    }
-                },
-                initiallyExpanded = false
-            )
-            // Battle record from the same decrypted text: counts, never judgments — a log with
-            // no events reads as zeros, not as a failure.
-            Spacer(modifier = Modifier.height(8.dp))
-            CollapsibleExplainer(
-                title = stringResource(R.string.gf_battle_title),
-                lines = battleLines(analysis.battle),
-                initiallyExpanded = false
-            )
-        }
-    }
-}
-
-/**
- * The Convene (gacha) record tracker. One tap reads the game's own Client.log for the record
- * URL the Convene History page writes there, queries every banner pool with it, and shows the
- * pull totals and per-pool pity state. Not a performance feature — it rides the same log
- * channel and 12-hour cache the config work uses, so it costs the user nothing extra.
- *
- * The prediction lines carry what the math actually holds: the pool label, the 50/50 /
- * Guaranteed / 75/25 status, pulls since the last ★5 against the soft-pity threshold, and the
- * estimate. "cached" marks a restore from the store rather than a live fetch — a cached read
- * is up to 12 h old, and the record id behind it expires faster than that.
- */
-@Composable
-private fun GachaCard(
-    uiState: WuwaConfigUiState,
-    onFetch: () -> Unit,
-    onRestore: () -> Unit,
-    onClear: () -> Unit
-) {
-    SectionCard {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Text(stringResource(R.string.gf_convene), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary, letterSpacing = 1.sp)
-            Spacer(modifier = Modifier.weight(1f))
-            uiState.gachaCacheSummary?.let {
-                Text(
-                    stringResource(R.string.gf_wuwa_cached, it.totalPulls),
-                    style = MaterialTheme.typography.labelSmall,
-                    color = Color(0xFF81C784)
-                )
-            }
-        }
-        Spacer(modifier = Modifier.height(8.dp))
-        Text(
-            stringResource(R.string.gf_wuwa_gacha_body),
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
-        Spacer(modifier = Modifier.height(12.dp))
-        CatsmokerButton(onClick = onFetch, enabled = !uiState.gachaLoading, modifier = Modifier.fillMaxWidth()) {
-            Text(if (uiState.gachaLoading) stringResource(R.string.gf_querying) else stringResource(R.string.gf_fetch_convene))
-        }
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
-            CatsmokerOutlinedButton(onClick = onRestore, enabled = uiState.gachaCacheSummary != null, modifier = Modifier.weight(1f)) {
-                Text(stringResource(R.string.gf_show_cached))
-            }
-            CatsmokerOutlinedButton(onClick = onClear, enabled = uiState.gachaCacheSummary != null || uiState.gachaData != null, modifier = Modifier.weight(1f)) {
-                Text(stringResource(R.string.gf_clear))
-            }
-        }
-        uiState.gachaFailure?.let { failure ->
-            Spacer(modifier = Modifier.height(8.dp))
-            Text(failure, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error)
-        }
-        uiState.gachaData?.let { data ->
-            Spacer(modifier = Modifier.height(8.dp))
-            StatusLine(stringResource(R.string.gf_sl_total_pulls), data.totalPulls.toString())
-            StatusLine(stringResource(R.string.gf_sl_5star), data.fiveStars.toString())
-            StatusLine(stringResource(R.string.gf_sl_4star), data.fourStars.toString())
-            if (data.avgPity5 > 0) StatusLine(stringResource(R.string.gf_sl_avg5), "%.1f".format(data.avgPity5))
-            if (data.avgPity4 > 0) StatusLine(stringResource(R.string.gf_sl_avg4), "%.1f".format(data.avgPity4))
-            data.predictions.forEach { pred ->
-                Spacer(modifier = Modifier.height(8.dp))
-                Text(
-                    stringResource(R.string.gf_gacha_pool_line, pred.poolLabel, pred.status) +
-                        if (pred.currentCharacterName.isNotBlank()) stringResource(R.string.gf_gacha_pool_char, pred.currentCharacterName) else "",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f)
-                )
-                StatusLine(stringResource(R.string.gf_sl_since5), stringResource(R.string.gf_gacha_since5_value, pred.pullsSinceLastFive, pred.softPityThreshold))
-                StatusLine(stringResource(R.string.gf_sl_est5), stringResource(R.string.gf_gacha_est5_value, pred.estimatedNextFive, pred.pullsUntilHardPity))
-                StatusLine(stringResource(R.string.gf_sl_since4), pred.pullsSinceLastFourStar.toString())
-            }
-        }
-    }
-}
-
-/**
- * The installed game's own record of itself: the LocalStorage/DeviceStorage database fields (UID,
- * server, level, last login, versions, language) plus a settings count over each deployed ini —
- * the numbers a user compares against "what the generator promised to write". Its device facts
- * half comes from the log, so it is null until the game has been played once.
- */
-@Composable
-private fun InstalledProfileCard(uiState: WuwaConfigUiState, onReadProfile: () -> Unit) {
-    SectionCard {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Text(
-                stringResource(R.string.gf_installed_profile),
-                style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.primary,
-                letterSpacing = 1.sp
-            )
-            Spacer(modifier = Modifier.weight(1f))
-            uiState.installedProfile?.dbChannel?.let {
-                Text(it, style = MaterialTheme.typography.labelSmall, color = Color(0xFF81C784))
-            }
-        }
-        Spacer(modifier = Modifier.height(8.dp))
-        Text(
-            stringResource(R.string.gf_wuwa_profile_body),
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
-        Spacer(modifier = Modifier.height(12.dp))
-        CatsmokerButton(onClick = onReadProfile, enabled = !uiState.readingProfile, modifier = Modifier.fillMaxWidth()) {
-            Text(if (uiState.readingProfile) stringResource(R.string.gf_reading_profile) else stringResource(R.string.gf_read_profile))
-        }
-        uiState.profileFailure?.let { failure ->
-            Spacer(modifier = Modifier.height(8.dp))
-            Text(failure, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error)
-        }
-        uiState.installedProfile?.let { profile ->
-            Spacer(modifier = Modifier.height(8.dp))
-            StatusLine(stringResource(R.string.gf_sl_uid), profile.uid ?: stringResource(R.string.gf_not_recorded))
-            StatusLine(stringResource(R.string.gf_sl_server), profile.server ?: "—")
-            StatusLine(stringResource(R.string.gf_sl_level), profile.playerLevel?.toString() ?: "—")
-            StatusLine(stringResource(R.string.gf_sl_last_login), profile.lastLoginTime ?: "—")
-            StatusLine(stringResource(R.string.gf_sl_client), profile.gameVersion ?: "—")
-            StatusLine(stringResource(R.string.gf_sl_patch), profile.patchVersion ?: "—")
-            StatusLine(stringResource(R.string.gf_sl_language), profile.language ?: "—")
-            CollapsibleExplainer(
-                title = stringResource(R.string.gf_progress_inis),
-                lines = buildList {
-                    profile.serverLevels.drop(1).forEach { (region, level) -> add(stringResource(R.string.gf_prof_region_level, region, level)) }
-                    profile.towerFloor?.let { add(stringResource(R.string.gf_prof_tower, it)) }
-                    profile.weeklyRogueScore?.let { add(stringResource(R.string.gf_prof_rogue, it)) }
-                    profile.loopTowerSeason?.let { add(stringResource(R.string.gf_prof_loop, it)) }
-                    profile.battlePassPurchased?.let {
-                        add(stringResource(if (it) R.string.gf_prof_bp_yes else R.string.gf_prof_bp_no))
-                    }
-                    add("")
-                    add(stringResource(R.string.gf_prof_ini_header))
-                    profile.iniSettingCounts.entries.forEach { (name, count) -> add(stringResource(R.string.gf_prof_ini_count, name, count)) }
-                    profile.log?.let { log ->
-                        add("")
-                        add(
-                            stringResource(
-                                R.string.gf_prof_log_line,
-                                log.gpu ?: "—",
-                                log.ramMb?.let { stringResource(R.string.gf_prof_ram, it) } ?: stringResource(R.string.gf_prof_ram_unknown),
-                                log.androidVersion ?: "—",
-                                log.resolution ?: stringResource(R.string.gf_prof_res_unknown)
-                            )
-                        )
-                    }
-                },
-                initiallyExpanded = false
-            )
         }
     }
 }
@@ -1134,25 +911,6 @@ private fun RecommendCard(
         )
     }
 }
-
-/**
- * Battle-record lines for one analyzed log. Counts only — a quiet log reads as zeros.
- * The player ID stays out of the UI: it identifies the account and adds nothing to tuning.
- */
-@Composable
-private fun battleLines(battle: WuwaBattleStats.BattleStats): List<String> = listOf(
-    stringResource(R.string.gf_battle_fights, battle.battles, battle.deaths, battle.staggers),
-    stringResource(R.string.gf_battle_move, battle.teleports, battle.roleChanges),
-    stringResource(
-        R.string.gf_battle_dodge,
-        battle.dodgeForward, battle.dodgeBack, battle.dodgeCounter
-    ),
-    stringResource(
-        R.string.gf_battle_echoes,
-        battle.echoesCollected, battle.echoSkillsUsed, battle.echoTransformUsed, battle.staminaUsed
-    ),
-    stringResource(R.string.gf_battle_month, battle.monthCards, battle.monthCardRemainDays)
-)
 
 @Composable
 private fun StatusLine(label: String, value: String) {

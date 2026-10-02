@@ -211,6 +211,11 @@ fun AgreementStepScreen(
     onAgreedChange: (Boolean) -> Unit,
     onContinue: () -> Unit
 ) {
+    // The linked license text names the open-source license (not the app terms): the full
+    // Privacy Policy and Terms of Service open as dialogs below, from the same string
+    // resources the About/Settings legal screens render.
+    var showPrivacy by remember { mutableStateOf(false) }
+    var showTerms by remember { mutableStateOf(false) }
     val annotatedLinkString = buildAnnotatedString {
         append(stringResource(R.string.core_terms_prefix))
         withLink(
@@ -241,7 +246,17 @@ fun AgreementStepScreen(
             textAlign = TextAlign.Center
         )
 
-        Spacer(modifier = Modifier.height(32.dp))
+        Spacer(modifier = Modifier.height(8.dp))
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            TextButton(onClick = { showPrivacy = true }) {
+                Text(stringResource(R.string.core_terms_read_privacy))
+            }
+            TextButton(onClick = { showTerms = true }) {
+                Text(stringResource(R.string.core_terms_read_terms))
+            }
+        }
+
+        Spacer(modifier = Modifier.height(24.dp))
         Row(
             verticalAlignment = Alignment.CenterVertically,
             modifier = Modifier
@@ -269,6 +284,42 @@ fun AgreementStepScreen(
         ) {
             Text(stringResource(R.string.core_continue), fontWeight = FontWeight.Bold)
         }
+    }
+
+    if (showPrivacy) {
+        com.catsmoker.app.features.about.LegalDialog(
+            title = stringResource(R.string.legal_privacy_title),
+            intro = stringResource(R.string.legal_p_intro),
+            sections = listOf(
+                stringResource(R.string.legal_p_local_title) to stringResource(R.string.legal_p_local_body),
+                stringResource(R.string.legal_p_ads_title) to stringResource(R.string.legal_p_ads_body),
+                stringResource(R.string.legal_p_updates_title) to stringResource(R.string.legal_p_updates_body),
+                stringResource(R.string.legal_p_sharing_title) to stringResource(R.string.legal_p_sharing_body),
+                stringResource(R.string.legal_p_external_title) to stringResource(R.string.legal_p_external_body),
+                stringResource(R.string.legal_p_permissions_title) to stringResource(R.string.legal_p_permissions_body),
+                stringResource(R.string.legal_p_vpn_title) to stringResource(R.string.legal_p_vpn_body),
+                stringResource(R.string.legal_p_contact_title) to stringResource(R.string.legal_p_contact_body)
+            ),
+            dismissLabel = stringResource(R.string.sys_later),
+            onDismiss = { showPrivacy = false }
+        )
+    }
+
+    if (showTerms) {
+        com.catsmoker.app.features.about.LegalDialog(
+            title = stringResource(R.string.legal_terms_title),
+            intro = stringResource(R.string.legal_t_intro),
+            sections = listOf(
+                stringResource(R.string.legal_t_license_title) to stringResource(R.string.legal_t_license_body),
+                stringResource(R.string.legal_t_games_title) to stringResource(R.string.legal_t_games_body),
+                stringResource(R.string.legal_t_risk_title) to stringResource(R.string.legal_t_risk_body),
+                stringResource(R.string.legal_t_donations_title) to stringResource(R.string.legal_t_donations_body),
+                stringResource(R.string.legal_t_use_title) to stringResource(R.string.legal_t_use_body),
+                stringResource(R.string.legal_t_changes_title) to stringResource(R.string.legal_t_changes_body)
+            ),
+            dismissLabel = stringResource(R.string.sys_later),
+            onDismiss = { showTerms = false }
+        )
     }
 }
 
@@ -350,7 +401,16 @@ fun PermissionsListScreen(
                             context.startActivity(Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS))
                         }
                     }
-                    PermissionRow(stringResource(R.string.core_perm_notif_title), stringResource(R.string.core_perm_notif_sub), uiState.notifGranted) {
+                    PermissionRow(
+                        stringResource(R.string.core_perm_notif_title),
+                        stringResource(R.string.core_perm_notif_sub),
+                        uiState.notifGranted,
+                        // POST_NOTIFICATIONS only exists on Android 13+. Older phones keep the
+                        // row visible but disabled with the reason, instead of a dead button.
+                        enabled = Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU,
+                        note = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) null
+                        else stringResource(R.string.core_perm_need_13)
+                    ) {
                         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
                             notificationLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
                         }
@@ -364,7 +424,16 @@ fun PermissionsListScreen(
                     PermissionRow(stringResource(R.string.core_perm_mic_title), stringResource(R.string.core_perm_mic_sub), uiState.micGranted) {
                         micLauncher.launch(Manifest.permission.RECORD_AUDIO)
                     }
-                    PermissionRow(stringResource(R.string.core_perm_bt_title), stringResource(R.string.core_perm_bt_sub), uiState.bluetoothGranted) {
+                    PermissionRow(
+                        stringResource(R.string.core_perm_bt_title),
+                        stringResource(R.string.core_perm_bt_sub),
+                        uiState.bluetoothGranted,
+                        // BLUETOOTH_CONNECT only exists on Android 12+. Older phones keep the
+                        // row visible but disabled with the reason, instead of a dead button.
+                        enabled = Build.VERSION.SDK_INT >= Build.VERSION_CODES.S,
+                        note = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) null
+                        else stringResource(R.string.core_perm_need_12)
+                    ) {
                         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
                             bluetoothLauncher.launch(Manifest.permission.BLUETOOTH_CONNECT)
                         }
@@ -384,18 +453,35 @@ fun PermissionsListScreen(
 
 /** One permission line inside the grouped card: title + tiny subtitle + status/grant. */
 @Composable
-private fun PermissionRow(title: String, subtitle: String, granted: Boolean, onClick: () -> Unit) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 7.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Column(modifier = Modifier.weight(1f)) {
-            Text(title, fontWeight = FontWeight.Bold, fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurface)
-            Text(subtitle, fontSize = 10.sp, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1)
-        }
-        if (granted) {
+private fun PermissionRow(
+    title: String,
+    subtitle: String,
+    granted: Boolean,
+    enabled: Boolean = true,
+    /** Why this row cannot be granted here (Android version). Shown instead of hiding the row. */
+    note: String? = null,
+    onClick: () -> Unit
+) {
+    Column(modifier = Modifier.fillMaxWidth()) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = 7.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    title,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 13.sp,
+                    color = if (enabled) MaterialTheme.colorScheme.onSurface
+                    else MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Text(subtitle, fontSize = 10.sp, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1)
+            }
+            // A permission that does not exist on this Android version never shows
+            // a check: the row stays visible but disabled with the reason instead.
+            if (granted && enabled) {
             Icon(
                 Icons.Default.CheckCircle,
                 contentDescription = title,
@@ -403,13 +489,24 @@ private fun PermissionRow(title: String, subtitle: String, granted: Boolean, onC
                 modifier = Modifier.size(20.dp)
             )
         } else {
-            CatsmokerButton(
-                onClick = onClick,
-                modifier = Modifier.height(30.dp),
-                contentPadding = PaddingValues(horizontal = 14.dp, vertical = 0.dp)
-            ) {
-                Text(stringResource(R.string.core_grant), fontSize = 11.sp)
+                CatsmokerButton(
+                    onClick = onClick,
+                    enabled = enabled,
+                    modifier = Modifier.height(30.dp),
+                    contentPadding = PaddingValues(horizontal = 14.dp, vertical = 0.dp)
+                ) {
+                    Text(stringResource(R.string.core_grant), fontSize = 11.sp)
+                }
             }
+        }
+        if (!enabled && note != null) {
+            Text(
+                text = note,
+                fontSize = 10.sp,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                lineHeight = 14.sp,
+                modifier = Modifier.padding(bottom = 4.dp)
+            )
         }
     }
 }

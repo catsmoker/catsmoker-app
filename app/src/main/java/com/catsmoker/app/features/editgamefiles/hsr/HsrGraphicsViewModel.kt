@@ -34,6 +34,26 @@ data class HsrGraphicsUiState(
     val packageLabel: String? = null,
     val prefsPath: String? = null,
     val loadFailure: HsrReadResult.Failure? = null,
+    /**
+     * "Show anyway" override for a confirmed-missing install. False until the user taps the
+     * small secondary button on the GAME NOT FOUND failure card — then the editor renders
+     * below the card even though no install was found. Same contract as the File
+     * Engineering screen's own override (EditGameFilesViewModel.UiState.showEditorAnyway):
+     * the card stays visible, re-probes never clear the choice, and the flag is meaningless
+     * once a real read succeeds. Seeding the working copy with defaults (below) is what
+     * lets the existing editor render with nothing on the device to read.
+     */
+    val showEditorAnyway: Boolean = false,
+    /**
+     * The install probe's own answer, refreshed with every load: true when no install was
+     * found, however the read failed. GAME_NOT_INSTALLED says so directly (the manager's
+     * verdict already covers the root-only dynamic sweep); NO_ROOT never reaches any stage
+     * that would, so the known-variant probe answers there instead — without it a
+     * root-less device would never be offered "Show anyway" for a game that is not there.
+     * Every other stage proves an install (or a file that answered), so those report
+     * present and keep the existing behavior.
+     */
+    val gameMissing: Boolean = false,
     val applying: Boolean = false,
     val applyingPrefs: Boolean = false,
     /** What the last apply actually did — success carries the read-back verdict, failure the stage. */
@@ -45,11 +65,19 @@ data class HsrGraphicsUiState(
     val canRedoSettings: Boolean = false,
     /** True when the graphics working copy differs from what was loaded/applied. */
     val settingsDirty: Boolean = false,
+    /** How many graphics fields differ from the baseline (the pending-change count). */
+    val pendingSettingsCount: Int = 0,
+    /** True when the device's settings moved since the last baseline (game wrote behind us). */
+    val settingsExternalChanged: Boolean = false,
     /** Undo/redo availability for the QoL-preferences working copy. */
     val canUndoPrefs: Boolean = false,
     val canRedoPrefs: Boolean = false,
     /** True when the QoL working copy differs from what was loaded/applied. */
-    val prefsDirty: Boolean = false
+    val prefsDirty: Boolean = false,
+    /** How many QoL fields differ from the baseline. */
+    val pendingPrefsCount: Int = 0,
+    /** True when the device's QoL values moved since the last baseline. */
+    val prefsExternalChanged: Boolean = false
 )
 
 @HiltViewModel
@@ -80,6 +108,34 @@ class HsrGraphicsViewModel @Inject constructor(
         refresh()
     }
 
+    /**
+     * The GAME NOT FOUND failure card's small secondary "Show anyway" action: reveals the
+     * existing editor below the card even though no install was found. With nothing on the
+     * device to read, the working copy is seeded with the settings' own defaults (the same
+     * values the screen preview renders) and baselined onto them, so the editor reads clean
+     * rather than dirty and every slider stays adjustable. Applies attempted from there go
+     * through the manager like any other apply and report the missing install honestly —
+     * the failure card stays visible above, so the screen never pretends a game is there.
+     * One-way: stays set until the ViewModel is cleared; a later successful read simply
+     * replaces the seeded copy with what the device holds.
+     */
+    fun onShowEditorAnyway() {
+        val state = _uiState.value
+        if (state.gameMissing && state.settings == null) {
+            settingsHistory.setBaseline(HsrGraphicsSettings())
+            prefsHistory.setBaseline(HsrGamePreferences())
+            _uiState.update {
+                it.copy(
+                    settings = HsrGraphicsSettings(),
+                    gamePrefs = HsrGamePreferences(),
+                    showEditorAnyway = true
+                )
+            }
+        } else {
+            _uiState.update { it.copy(showEditorAnyway = true) }
+        }
+    }
+
     /** Full reload — clears the manager's package/path caches so a fresh install is found. */
     fun refresh() {
         viewModelScope.launch {
@@ -87,6 +143,11 @@ class HsrGraphicsViewModel @Inject constructor(
             gameManager.resetCaches()
             when (val result = gameManager.readCurrentSettings()) {
                 is HsrReadResult.Success -> {
+                    // External-change probe BEFORE re-baselining: compare what the device holds
+                    // now against what the editor was last shown. First load has no baseline,
+                    // so it never reports a change — there is nothing to differ from yet.
+                    val settingsMoved = settingsHistory.differsFromBaseline(result.settings)
+                    val prefsMoved = prefsHistory.differsFromBaseline(result.gamePrefs)
                     settingsHistory.setBaseline(result.settings)
                     prefsHistory.setBaseline(result.gamePrefs)
                     _uiState.update {
@@ -101,17 +162,67 @@ class HsrGraphicsViewModel @Inject constructor(
                             canUndoSettings = false,
                             canRedoSettings = false,
                             settingsDirty = false,
+                            pendingSettingsCount = 0,
+                            settingsExternalChanged = settingsMoved,
                             canUndoPrefs = false,
                             canRedoPrefs = false,
-                            prefsDirty = false
+                            prefsDirty = false,
+                            pendingPrefsCount = 0,
+                            prefsExternalChanged = prefsMoved,
+                            // A successful read is the device proving the game is there — a
+                            // stale missing flag must not hide the status card afterwards.
+                            gameMissing = false
                         )
                     }
                 }
-                is HsrReadResult.Failure -> _uiState.update {
-                    it.copy(loading = false, loadFailure = result, hasBackup = gameManager.hasBackup())
+                is HsrReadResult.Failure -> _uiState.update { state ->
+                    // A "Show anyway" tap that landed while a reload was in flight leaves the
+                    // flag set with no working copy yet — seed here too, so the retry that
+                    // confirms "still missing" still reveals the editor instead of nothing.
+                    val missing = result.stage == HsrReadResult.Stage.GAME_NOT_INSTALLED ||
+                        (result.stage == HsrReadResult.Stage.NO_ROOT &&
+                            !gameManager.isAnyKnownVariantInstalled())
+                    val seed = state.settings == null && missing && state.showEditorAnyway
+                    if (seed) {
+                        settingsHistory.setBaseline(HsrGraphicsSettings())
+                        prefsHistory.setBaseline(HsrGamePreferences())
+                    }
+                    state.copy(
+                        loading = false,
+                        loadFailure = result,
+                        settings = if (seed) HsrGraphicsSettings() else state.settings,
+                        gamePrefs = if (seed) HsrGamePreferences() else state.gamePrefs,
+                        gameMissing = missing,
+                        hasBackup = gameManager.hasBackup()
+                    )
                 }
             }
         }
+    }
+
+    /**
+     * Recomputes the pending-change counts after any working-copy transition. Counts are
+     * derived, never stored, so they cannot disagree with what the screen shows.
+     */
+    private fun HsrGraphicsUiState.withSessionFlags(): HsrGraphicsUiState {
+        val s = settings
+        val p = gamePrefs
+        return copy(
+            pendingSettingsCount = if (s != null) {
+                settingsHistory.baselineOrNull()?.let { pendingGraphicsFields(it, s).size } ?: 0
+            } else 0,
+            pendingPrefsCount = if (p != null) {
+                prefsHistory.baselineOrNull()?.let { pendingPrefsFields(it, p).size } ?: 0
+            } else 0
+        )
+    }
+
+    /**
+     * Applies one of the reference's five one-tap tiers as a starting point — one undo step,
+     * every slider stays adjustable after. See [HsrGraphicsSettings.withGraphicsPreset].
+     */
+    fun applyGraphicsPreset(level: Int) {
+        updateSettings { it.withGraphicsPreset(level) }
     }
 
     fun updateSettings(transform: (HsrGraphicsSettings) -> HsrGraphicsSettings) {
@@ -126,7 +237,7 @@ class HsrGraphicsViewModel @Inject constructor(
                     canUndoSettings = settingsHistory.canUndo,
                     canRedoSettings = settingsHistory.canRedo,
                     settingsDirty = settingsHistory.isDirty(next)
-                )
+                ).withSessionFlags()
             } ?: state
         }
     }
@@ -141,7 +252,7 @@ class HsrGraphicsViewModel @Inject constructor(
                     canUndoPrefs = prefsHistory.canUndo,
                     canRedoPrefs = prefsHistory.canRedo,
                     prefsDirty = prefsHistory.isDirty(next)
-                )
+                ).withSessionFlags()
             } ?: state
         }
     }
@@ -156,7 +267,7 @@ class HsrGraphicsViewModel @Inject constructor(
                 canUndoSettings = settingsHistory.canUndo,
                 canRedoSettings = settingsHistory.canRedo,
                 settingsDirty = settingsHistory.isDirty(restored)
-            )
+            ).withSessionFlags()
         }
     }
 
@@ -170,7 +281,7 @@ class HsrGraphicsViewModel @Inject constructor(
                 canUndoSettings = settingsHistory.canUndo,
                 canRedoSettings = settingsHistory.canRedo,
                 settingsDirty = settingsHistory.isDirty(restored)
-            )
+            ).withSessionFlags()
         }
     }
 
@@ -184,7 +295,7 @@ class HsrGraphicsViewModel @Inject constructor(
                 canUndoPrefs = prefsHistory.canUndo,
                 canRedoPrefs = prefsHistory.canRedo,
                 prefsDirty = prefsHistory.isDirty(restored)
-            )
+            ).withSessionFlags()
         }
     }
 
@@ -198,7 +309,7 @@ class HsrGraphicsViewModel @Inject constructor(
                 canUndoPrefs = prefsHistory.canUndo,
                 canRedoPrefs = prefsHistory.canRedo,
                 prefsDirty = prefsHistory.isDirty(restored)
-            )
+            ).withSessionFlags()
         }
     }
 
@@ -232,7 +343,9 @@ class HsrGraphicsViewModel @Inject constructor(
                                 hasBackup = gameManager.hasBackup(),
                                 canUndoPrefs = false,
                                 canRedoPrefs = false,
-                                prefsDirty = false
+                                prefsDirty = false,
+                                pendingPrefsCount = 0,
+                                prefsExternalChanged = false
                             )
                         }
                     }
@@ -283,9 +396,13 @@ class HsrGraphicsViewModel @Inject constructor(
                                 canUndoSettings = false,
                                 canRedoSettings = false,
                                 settingsDirty = false,
+                                pendingSettingsCount = 0,
+                                settingsExternalChanged = false,
                                 canUndoPrefs = false,
                                 canRedoPrefs = false,
-                                prefsDirty = false
+                                prefsDirty = false,
+                                pendingPrefsCount = 0,
+                                prefsExternalChanged = false
                             )
                         }
                     }
@@ -318,9 +435,13 @@ class HsrGraphicsViewModel @Inject constructor(
                                 canUndoSettings = false,
                                 canRedoSettings = false,
                                 settingsDirty = false,
+                                pendingSettingsCount = 0,
+                                settingsExternalChanged = false,
                                 canUndoPrefs = false,
                                 canRedoPrefs = false,
-                                prefsDirty = false
+                                prefsDirty = false,
+                                pendingPrefsCount = 0,
+                                prefsExternalChanged = false
                             )
                         }
                     }

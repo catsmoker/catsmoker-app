@@ -36,10 +36,25 @@ data class MetricsState(
     val fpsReadStatus: MetricReadStatus = MetricReadStatus.Loading,
 
     /**
+     * The panel's live rate (the vsync denominator) and measured maximum, or null without the
+     * display provider. Both measured, never caps: the ceiling only bounds the fallback count
+     * below, it never lowers anything the device reports.
+     */
+    val fpsTargetHz: Float? = null,
+    val fpsCeilingHz: Float? = null,
+
+    /**
      * Frames SurfaceFlinger counted as missed in the current window. Only the SurfaceFlinger
      * channel reports this, so it is null on the Choreographer fallback.
      */
     val jankyFrames: Int? = null,
+
+    /**
+     * Missed / (presented + missed) over the samples that carried a missed count, or null when
+     * no sample did. The fallback's frames join the average but never this ratio — a 0 there
+     * would assert something unmeasured.
+     */
+    val jankPercent: Float? = null,
 
     /**
      * Total CPU load across all cores, or null when it could not be measured. `/proc/stat` is
@@ -47,6 +62,16 @@ data class MetricsState(
      */
     val cpuPercentage: Int? = null,
     val cpuReadStatus: MetricReadStatus = MetricReadStatus.Loading,
+
+    /**
+     * Per-cluster current frequencies in MHz (efficiency / performance / ultra), each null
+     * when its cluster cannot be placed. Read from cpufreq policy dirs — no privilege, no
+     * shell — so a locked-down kernel simply yields nulls with [cpuClusterReadStatus].
+     */
+    val cpuClusterEffMhz: Int? = null,
+    val cpuClusterPerfMhz: Int? = null,
+    val cpuClusterUltraMhz: Int? = null,
+    val cpuClusterReadStatus: MetricReadStatus = MetricReadStatus.Loading,
 
     val ramUsedGb: Float? = null,
     val ramTotalGb: Float? = null,

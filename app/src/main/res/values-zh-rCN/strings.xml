@@ -14,6 +14,7 @@
     <string name="custom_upload_failed">上传失败：%1$s</string>
     <string name="overlay_fps_initial">FPS：正在读取…</string>
     <string name="overlay_cpu_initial">CPU：正在读取…</string>
+    <string name="overlay_cluster_initial">Clus：正在读取…</string>
     <string name="overlay_power_initial">功耗：正在读取…</string>
     <string name="overlay_ram_initial">RAM：正在读取…</string>
     <string name="overlay_temp_initial">温度：正在读取…</string>
@@ -36,6 +37,12 @@
     <string name="logs_share">分享</string>
     <string name="logs_filter_placeholder">筛选日志…</string>
     <string name="logs_empty">暂无日志。</string>
+    <string name="logs_recording_start">记录指标时间线</string>
+    <string name="logs_recording_stop">停止记录</string>
+    <string name="logs_recording_share">导出并分享记录</string>
+    <string name="logs_recording_share_title">会话记录——%1$s</string>
+    <string name="logs_recording_count">已记录 %1$d 个样本</string>
+    <string name="logs_recording_empty">尚未记录——请先开始记录。</string>
     <string name="notification_stop">停止</string>
     <!-- Group summary row bundling every Catsmoker notification in the shade. -->
     <string name="notif_summary_sub">点击打开 Catsmoker</string>

@@ -2,6 +2,7 @@ package com.catsmoker.app.features.gamingtools.engine
 
 import android.annotation.SuppressLint
 import android.app.NotificationManager
+import android.content.ComponentName
 import android.content.Context
 import android.content.pm.ApplicationInfo
 import android.content.pm.PackageManager
@@ -18,6 +19,7 @@ import com.catsmoker.app.features.gamingtools.tools.firewall.BackgroundDataRestr
 import com.catsmoker.app.features.gamingtools.tools.forcestop.SuspendListStore
 import com.catsmoker.app.features.gamingtools.tools.interventions.GameInterventions
 import com.catsmoker.app.system.shell.ShellRunner
+import com.catsmoker.app.shared.util.DeviceCapabilities
 import com.catsmoker.app.shared.util.isVivoOrIqoo
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
@@ -115,6 +117,17 @@ data class GamingModeReport(
      * reason [gpuPerformanceMode] gives: a curated chipset list goes stale.
      */
     val qtiGameFps: Boolean? = null,
+    /**
+     * Whether MediaTek's game-mode knobs (GED boost parameters + PPM policy states from
+     * HunterX-Reborn-II's service payload) were confirmed by read-back.
+     *
+     * null when the device carries neither `/sys/module/ged/parameters` nor `/proc/ppm`
+     * (every non-MediaTek SoC, and MediaTek builds without the nodes) — not applicable
+     * rather than failed, so the report row is omitted. Per-node presence gates mean a
+     * partial table still applies what exists; the value is true only when every attempted
+     * node read back at its target.
+     */
+    val mediaTekGameMode: Boolean? = null,
     /** Refresh rate the panel was actually pinned to, or null when the ROM ignored the keys. */
     val lockedRefreshHz: Int? = null,
     val touchResponseBoost: Boolean = false,
@@ -255,14 +268,16 @@ data class BoosterState(
  * Whether one package is worth a `cmd package compile -m [mode]` run.
  *
  * The sweep's own skip rules, factored out so the single-game path honors them too: forcing
- * compiles everything; an app already at the requested filter is done; a never-opened app at
- * `verify` has no runtime profile for `speed-profile` to work with ("nothing to do yet", not
- * a failure — forced runs compile them anyway). An unreadable status compiles, because asking
- * the platform is the only way to find out.
+ * compiles everything; an app already at the requested filter — or at a strictly better one
+ * (`speed`/`everything` cover a `speed-profile` target, which recompiling could only
+ * downgrade from) — is done; a never-opened app at `verify` has no runtime profile for
+ * `speed-profile` to work with ("nothing to do yet", not a failure — forced runs compile
+ * them anyway). An unreadable status compiles, because asking the platform is the only way
+ * to find out.
  */
 fun shouldCompilePackage(currentStatus: String?, mode: String, force: Boolean): Boolean {
     if (force) return true
-    if (currentStatus == mode) return false
+    if (isFilterOptimalForTarget(currentStatus, mode)) return false
     if (mode == "speed-profile" && currentStatus == "verify") return false
     return true
 }
@@ -327,6 +342,15 @@ class GamingEngine(
     private val _boosterLog = MutableStateFlow<List<String>>(emptyList())
     val boosterLog: StateFlow<List<String>> = _boosterLog.asStateFlow()
 
+    /**
+     * The same lines as [boosterLog], typed. Every string line is also filed here as `INFO`;
+     * lifecycle events (`ANALYZING`, `NO_PROFILE`, `SKIPPED`, …) carry their own type so a
+     * future surface can tell "nothing to do yet" from "already done" without re-parsing
+     * words. Capped at [MAX_BOOSTER_LOG_ENTRIES], oldest evicted first.
+     */
+    private val _boosterLogEntries = MutableStateFlow<List<BoosterLogEntry>>(emptyList())
+    val boosterLogEntries: StateFlow<List<BoosterLogEntry>> = _boosterLogEntries.asStateFlow()
+
     private val _boosterState = MutableStateFlow(BoosterState())
     val boosterState: StateFlow<BoosterState> = _boosterState.asStateFlow()
 
@@ -338,6 +362,23 @@ class GamingEngine(
      * is real disk I/O however small.
      */
     private val _boosterHistory = MutableStateFlow<List<BoosterRun>>(emptyList())
+    /**
+     * Static device facts, resolved once: which mechanisms this device can honor.
+     * Device facts never change at runtime, so there is no reason to re-probe them
+     * per activation — and every version gate below reads from here instead of
+     * scattering `Build.VERSION` checks.
+     */
+    private val deviceCapabilities: DeviceCapabilities.Flags by lazy {
+        DeviceCapabilities.detect(
+            DeviceCapabilities.DeviceInfo(
+                manufacturer = Build.MANUFACTURER,
+                brand = Build.BRAND,
+                hardware = Build.HARDWARE,
+                board = Build.BOARD,
+                sdkInt = Build.VERSION.SDK_INT
+            )
+        )
+    }
     val boosterHistory: StateFlow<List<BoosterRun>> = _boosterHistory.asStateFlow()
 
     private val _animationScales = MutableStateFlow(Triple(1f, 1f, 1f))
@@ -420,6 +461,31 @@ class GamingEngine(
         androidx.core.app.NotificationManagerCompat
             .getEnabledListenerPackages(context)
             .contains(context.packageName)
+
+    /**
+     * Re-binds [GamingNotificationListener] with a disable/enable pulse on its component.
+     *
+     * Best-effort and silent by design: a refused toggle must not fail activation, and there
+     * is nothing to report either way — the arming read right after says whether the listener
+     * is granted, which is the only fact the report carries.
+     */
+    private suspend fun pulseNotificationListenerBinding() {
+        runCatching {
+            val component = ComponentName(context, GamingNotificationListener::class.java)
+            val pm = context.packageManager
+            pm.setComponentEnabledSetting(
+                component,
+                PackageManager.COMPONENT_ENABLED_STATE_DISABLED,
+                PackageManager.DONT_KILL_APP
+            )
+            delay(100)
+            pm.setComponentEnabledSetting(
+                component,
+                PackageManager.COMPONENT_ENABLED_STATE_ENABLED,
+                PackageManager.DONT_KILL_APP
+            )
+        }
+    }
 
     private fun getGlobalString(key: String): String? {
         return Settings.Global.getString(context.contentResolver, key)
@@ -529,9 +595,15 @@ class GamingEngine(
                 suspendListStore.getSuspendPackages(), packageName, context.packageName
             )).distinct()
             val currentlyAffected = prefs.getStringSet("affected_pkgs", emptySet())?.toMutableSet() ?: mutableSetOf()
+            // One `cmd package list packages -s` call before the loop: apps someone else already
+            // suspended are skipped, so this session never records them as its own and
+            // deactivation never unsuspends an app it never froze. An unreadable answer behaves
+            // as before (nothing known suspended) rather than skipping work on a guess.
+            val preSuspended = querySuspendedPackages()
+            val freshTargets = targets.filter { it !in preSuspended }
             var suspendedNow = 0
             var suspendFailures = 0
-            for (pkg in targets) {
+            for (pkg in freshTargets) {
                 if (pkg in currentlyAffected) continue
                 // Record only what actually got suspended. disableGamingMode unsuspends exactly
                 // this set, so a package listed here that was never frozen makes the revert lie —
@@ -569,6 +641,15 @@ class GamingEngine(
             // all activation does — the listener (bound by the system only once the user has
             // granted notification access) does the cancelling, including a purge of what is
             // already on screen.
+            //
+            // OriginOS/Vivo coma fix, also from the reference: a listener the system let fall
+            // asleep does not wake on being armed, so arming fresh starts with a disable/enable
+            // pulse on our own component to re-bind it. An app can always toggle its own
+            // components — no permission involved — and a ROM that refuses the toggle still
+            // arms below; the pulse is best-effort, never a gate.
+            if (!_notificationSuppressionActive.value && isNotificationListenerEnabled()) {
+                pulseNotificationListenerBinding()
+            }
             val notificationSuppression = isNotificationListenerEnabled()
             _notificationSuppressionActive.value = notificationSuppression
 
@@ -620,6 +701,16 @@ class GamingEngine(
                 unavailable += GamingModeNotice.Res(R.string.gt_eng_un_qti)
             }
 
+            // MediaTek's game-mode knobs (GED boost parameters + PPM policy states). Gated on
+            // the nodes existing at all — non-MediaTek silicon is "not applicable" — root-only
+            // (a shell-uid session cannot write /sys), and every write is read back; see
+            // [GamingModeReport.mediaTekGameMode] for the lineage.
+            val mtkNodes = readLastSnapshot()?.mediatekGameNodes.orEmpty()
+            val mtkOk = applyMediaTekGameMode(mtkNodes)
+            if (mtkOk == false) {
+                unavailable += GamingModeNotice.Res(R.string.gt_eng_un_mtk)
+            }
+
             // The two developer options, applied through the same verified helpers the Developer
             // Options card uses — so the switches there and the state here can never disagree.
             _state.value = GamingModeState.Enabling(0.92f, context.getString(R.string.gt_eng_dev))
@@ -667,7 +758,7 @@ class GamingEngine(
                 // reference entry); it is read here, at activation, so a change mid-session
                 // waits for the next run instead of rewriting the table under a running game
                 // that would need a restart to honor it anyway.
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                if (deviceCapabilities.supportsGameInterventions) {
                     val downscale = _interventionDownscale.value
                     val outcome = gameInterventions.apply(packageName, maxHz, downscale)
                     gameInterventionApplied = outcome.applied
@@ -703,6 +794,7 @@ class GamingEngine(
                 fixedPerformance = fixedPerfOk,
                 gpuPerformanceMode = gpuPerfOk,
                 qtiGameFps = qtiFpsOk,
+                mediaTekGameMode = mtkOk,
                 lockedRefreshHz = lockedHz,
                 touchResponseBoost = touchOk,
                 pointerSpeed = pointerSpeedApplied,
@@ -1062,8 +1154,12 @@ class GamingEngine(
             addBoosterLog(context.getString(R.string.gt_eng_booster_running))
             return
         }
+        // Per-app compile times from our own past successes, persisted on the way out so a
+        // cancelled sweep keeps the successes it banked before the stop landed.
+        val compiledTimes = readBoosterCompiledTimes().toMutableMap()
         try {
             _boosterLog.value = emptyList()
+            _boosterLogEntries.value = emptyList()
             boosterCancelRequested.set(false)
             activeBoosterMode = mode
             activeBoosterStartedAt = System.currentTimeMillis()
@@ -1101,23 +1197,57 @@ class GamingEngine(
             // it up front what each app is compiled with and say which ones are being skipped.
             val currentStatuses = if (force) emptyMap() else queryDexoptStatuses()
 
+            // Pre-scan first: the tallies say what this run will do before it does anything, so
+            // a sweep that skips everything still reports why instead of looking stalled.
+            val analysis = analyzeDexoptStatuses(currentStatuses, mode, apps)
+            logBooster(
+                BoosterLogType.ANALYZING,
+                null,
+                context.getString(
+                    R.string.gt_eng_booster_analysis,
+                    analysis.appsNeedingOptimization,
+                    analysis.appsAlreadyOptimized,
+                    analysis.appsWithNoProfile,
+                    analysis.unknownPackages.size
+                )
+            )
+
+            // Per-app compile times from our own past successes: the 7-day re-optimization gate
+            // and the update-after-compile rule need them, and the platform never reports them.
+            // Absent times leave those rules dormant rather than guessing.
+            // (`compiledTimes` is loaded before the try and persisted in the finally below.)
+
             for (pkg in apps) {
                 if (boosterCancelRequested.get()) return
 
-                if (!force && currentStatuses[pkg] == mode) {
-                    addBoosterLog(context.getString(R.string.gt_eng_booster_skip_done, pkg))
-                    _boosterState.update { it.copy(currentPackage = null, skippedCount = it.skippedCount + 1) }
-                    continue
-                }
-
-                // A `verify` status means the app has never been opened, so no runtime profile
-                // exists yet and a speed-profile compile has nothing to work with — the platform's
-                // own first-use dexopt will do the same job. "Nothing to do yet", not "already
-                // done" and not a failure; forced runs compile them anyway.
-                if (!force && mode == "speed-profile" && currentStatuses[pkg] == "verify") {
-                    addBoosterLog(context.getString(R.string.gt_eng_booster_skip_verify, pkg))
-                    _boosterState.update { it.copy(currentPackage = null, skippedCount = it.skippedCount + 1) }
-                    continue
+                // One decision path for skips: already optimal (or recently compiled to it) is
+                // "already done"; `verify` under speed-profile is "nothing to do yet" — a
+                // never-opened app with no runtime profile, not a failure. Forced runs compile
+                // everything by explicit request.
+                if (!force) {
+                    val (needs, reason) = evaluateOptimization(
+                        compilerFilter = currentStatuses[pkg],
+                        lastCompilationTimeMs = compiledTimes[pkg],
+                        lastUpdateTimeMs = lastUpdateTimeMs(pkg),
+                        targetFilter = mode
+                    )
+                    if (!needs) {
+                        if (reason is CompileSkipReason.NoProfile) {
+                            logBooster(
+                                BoosterLogType.NO_PROFILE,
+                                pkg,
+                                context.getString(R.string.gt_eng_booster_skip_verify, pkg)
+                            )
+                        } else {
+                            logBooster(
+                                BoosterLogType.SKIPPED,
+                                pkg,
+                                context.getString(R.string.gt_eng_booster_skip_done, pkg)
+                            )
+                        }
+                        _boosterState.update { it.copy(currentPackage = null, skippedCount = it.skippedCount + 1) }
+                        continue
+                    }
                 }
 
                 _boosterState.update { it.copy(currentPackage = pkg) }
@@ -1128,6 +1258,7 @@ class GamingEngine(
                 if (boosterCancelRequested.get()) return
 
                 if (outcome.succeeded) {
+                    compiledTimes[pkg] = System.currentTimeMillis()
                     addBoosterLog(
                         context.getString(
                             R.string.gt_eng_booster_ok,
@@ -1173,7 +1304,9 @@ class GamingEngine(
                 context.getString(R.string.gt_eng_booster_failed, reason)
             )
         } finally {
-            // Whatever happened, nothing is left compiling and a new run can start.
+            // Whatever happened, nothing is left compiling and a new run can start. Persist the
+            // per-app compile times first, so successes banked before a cancel survive it.
+            writeBoosterCompiledTimes(compiledTimes)
             if (boosterCancelRequested.get()) markBoosterCancelled()
             currentCompileProcess?.destroy()
             currentCompileProcess = null
@@ -1345,6 +1478,55 @@ class GamingEngine(
         return withContext(Dispatchers.IO) {
             DexoptStatusParser.parse(execute("dumpsys package dexopt"))
         }
+    }
+
+    /**
+     * When this app last successfully compiled each package, epoch millis by package name.
+     *
+     * Stored as `pkg@time` strings under one prefs key: a structured store would be nicer, but
+     * this is write-rarely (once per sweep) and read-once per sweep, and a corrupt entry is
+     * simply dropped rather than failing the run. Times feed the 7-day re-optimization gate;
+     * a package with no recorded time leaves the gate dormant for it.
+     */
+    private fun readBoosterCompiledTimes(): Map<String, Long> {
+        val raw = prefs.getStringSet("booster_compiled_times", emptySet()) ?: emptySet()
+        val out = HashMap<String, Long>(raw.size)
+        for (entry in raw) {
+            val at = entry.lastIndexOf('@')
+            if (at <= 0) continue
+            entry.substring(at + 1).toLongOrNull()?.let { out[entry.substring(0, at)] = it }
+        }
+        return out
+    }
+
+    private fun writeBoosterCompiledTimes(times: Map<String, Long>) {
+        prefs.edit { putStringSet("booster_compiled_times", times.map { (pkg, t) -> "$pkg@$t" }.toSet()) }
+    }
+
+    /** When the package was last updated, or null when the package manager cannot say. */
+    private fun lastUpdateTimeMs(pkg: String): Long? = runCatching {
+        if (Build.VERSION.SDK_INT >= 33) {
+            context.packageManager.getPackageInfo(pkg, PackageManager.PackageInfoFlags.of(0)).lastUpdateTime
+        } else {
+            @Suppress("DEPRECATION")
+            context.packageManager.getPackageInfo(pkg, 0).lastUpdateTime
+        }
+    }.getOrNull()
+
+    /**
+     * Packages the platform already reports as suspended (`cmd package list packages -s`).
+     * Unreadable output means "nothing known suspended" — the sweep then behaves as before
+     * rather than skipping work on a guess. An answer that fails [SuspendVerdict]'s
+     * trustworthiness check (a broken `-s` flag listing nearly everything, as observed on
+     * Android 10 MTK) is likewise discarded whole: excluding it would gut the sweep.
+     */
+    private suspend fun querySuspendedPackages(): Set<String> {
+        val result = runCatching {
+            shellRunner.execSafeResult("cmd", "package", "list", "packages", "-s")
+        }.getOrNull() ?: return emptySet()
+        if (result.exitCode != 0) return emptySet()
+        val parsed = SuspendVerdict.parseSuspendedPackages(result.stdout)
+        return if (SuspendVerdict.isSuspendListTrustworthy(parsed)) parsed else emptySet()
     }
 
     /** What `cmd package compile` actually reported for one package. */
@@ -1525,6 +1707,16 @@ class GamingEngine(
      */
     private fun addBoosterLog(msg: String) {
         _boosterLog.update { it + msg }
+        _boosterLogEntries.update { appendBoosterLogEntry(it, BoosterLogEntry(BoosterLogType.INFO, null, msg)) }
+    }
+
+    /**
+     * Appends one typed line: the same words go to the string log the UI already shows, and
+     * the type goes to [boosterLogEntries] for future surfacing.
+     */
+    private fun logBooster(type: BoosterLogType, pkg: String?, msg: String) {
+        _boosterLog.update { it + msg }
+        _boosterLogEntries.update { appendBoosterLogEntry(it, BoosterLogEntry(type, pkg, msg)) }
     }
 
     suspend fun execute(command: String): String = shellRunner.exec(command)
@@ -1633,7 +1825,7 @@ class GamingEngine(
         // revert can put back what was there or delete ours if nothing was. Game interventions
         // exist from Android 12 only; an unreadable answer is stored as null, which the revert
         // reads as "leave the flag alone" rather than guessing at its prior shape.
-        val gameOverlay = if (packageName != null && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+        val gameOverlay = if (packageName != null && deviceCapabilities.supportsGameInterventions) {
             when (val overlay = gameInterventions.readOverlay(packageName)) {
                 is GameInterventions.OverlayValue.Set -> SettingValue(overlay.value, existed = true)
                 is GameInterventions.OverlayValue.Unset -> SettingValue("", existed = false)
@@ -1651,6 +1843,11 @@ class GamingEngine(
         // the debug property area, the one deletion Android offers. See the snapshot field's
         // KDoc; recorded either way so a prior value is never lost.
         val debugVendorQtiGameFps = propSettingValue(DEBUG_VENDOR_QTI_GAME_FPS)
+
+        // MediaTek game-mode knobs, as the vendor booted with them. Only nodes the device
+        // actually has are recorded — read failures mean "never touch", and an empty map tells
+        // both the activation gate and the revert there is nothing to do.
+        val mediatekGameNodes = captureMediaTekGameNodes()
 
         val snapshot = GamingOptimizationSnapshot(
             activeGamePackage = packageName,
@@ -1677,7 +1874,8 @@ class GamingEngine(
             gameOverlay = gameOverlay,
             vendorGpuMode = vendorGpuMode,
             vendorGfxLowQuality = vendorGfxLowQuality,
-            debugVendorQtiGameFps = debugVendorQtiGameFps
+            debugVendorQtiGameFps = debugVendorQtiGameFps,
+            mediatekGameNodes = mediatekGameNodes
         )
         prefs.edit { putString("last_snapshot", snapshot.toJson()) }
         return true
@@ -1870,6 +2068,9 @@ class GamingEngine(
         // until the next reboot. That bounded leftover is stated in the snapshot field's KDoc and
         // in GamingModeReport.qtiGameFps's, not hidden.
         restoreProp(DEBUG_VENDOR_QTI_GAME_FPS, snapshot.debugVendorQtiGameFps)
+        // MediaTek game-mode nodes, back to the snapshot values. Only nodes the snapshot
+        // recorded are touched — an empty map means there was never anything to restore.
+        restoreMediaTekGameNodes(snapshot.mediatekGameNodes)
         prefs.edit { remove("last_snapshot") }
         return problems
     }
@@ -1978,6 +2179,114 @@ class GamingEngine(
         return dump.isSuccess && dump.stdout.contains("[ro.vendor.qti.")
     }
 
+    /** The just-written snapshot, or null when none was recorded or it no longer parses. */
+    private fun readLastSnapshot(): GamingOptimizationSnapshot? =
+        prefs.getString("last_snapshot", null)?.let { GamingOptimizationSnapshot.fromJson(it) }
+
+    /**
+     * Captures the MediaTek game-mode nodes' current values for the snapshot. Only nodes the
+     * device actually has are recorded — read failures (absent dir, SELinux denial) mean
+     * "never touch", and an empty map tells both the activation gate and the revert there is
+     * nothing to do. Reads need no privilege; only the writes below are root-gated.
+     */
+    private suspend fun captureMediaTekGameNodes(): Map<String, String> {
+        val priors = linkedMapOf<String, String>()
+        for (node in MediaTekGameMode.gedParams.keys) {
+            readSysfsNode(node)?.let { priors[node] = it }
+        }
+        readSysfsNode(MediaTekGameMode.PPM_POLICY_STATUS_NODE)?.let {
+            priors[MediaTekGameMode.PPM_POLICY_STATUS_NODE] = it
+        }
+        return priors
+    }
+
+    /**
+     * Applies the MediaTek game-mode tables (GED boost parameters + PPM policy states from
+     * HunterX-Reborn-II's service payload) and confirms every write by read-back.
+     *
+     * @return null when [priors] is empty — no nodes, not applicable — otherwise whether every
+     *   attempted node landed at its target. Root-only: a shell-uid session cannot write
+     *   `/sys`, and that surfaces here as a refusal rather than as silence.
+     */
+    private suspend fun applyMediaTekGameMode(priors: Map<String, String>): Boolean? {
+        if (priors.isEmpty()) return null
+        if (!shellRunner.isRootAvailable()) return false
+        val plan = MediaTekGameMode.writePlan(priors)
+        var attempted = 0
+        var confirmed = 0
+        for ((node, target) in plan) {
+            attempted++
+            if (writeSysfsVerified(node, target)) confirmed++
+        }
+        if (priors.containsKey(MediaTekGameMode.PPM_POLICY_STATUS_NODE)) {
+            for (write in MediaTekGameMode.ppmGameWrites()) {
+                attempted++
+                shellRunner.execSafeResult("sh", "-c", "echo $write > ${MediaTekGameMode.PPM_POLICY_STATUS_NODE}")
+            }
+            // The node reports status text rather than re-writable content, so the read-back
+            // is a re-parse: the dump must now describe exactly the states just written.
+            if (verifyPpmStates(MediaTekGameMode.ppmPolicies)) confirmed += MediaTekGameMode.ppmPolicies.size
+        }
+        return confirmed == attempted
+    }
+
+    /**
+     * Puts the MediaTek nodes back to their snapshot values. Only nodes the snapshot recorded
+     * are touched; a PPM status dump is restored by re-issuing its parsed per-index states.
+     * Root-gated like the apply — without it there is nothing that could have changed them
+     * through this path.
+     */
+    private suspend fun restoreMediaTekGameNodes(priors: Map<String, String>) {
+        if (priors.isEmpty() || !shellRunner.isRootAvailable()) return
+        for ((node, prior) in priors) {
+            if (node == MediaTekGameMode.PPM_POLICY_STATUS_NODE) {
+                for (write in MediaTekGameMode.ppmRestoreWrites(prior)) {
+                    shellRunner.execSafeResult("sh", "-c", "echo $write > $node")
+                }
+            } else if (isSafeSysfsValue(prior)) {
+                shellRunner.execSafeResult("sh", "-c", "echo $prior > $node")
+            }
+        }
+    }
+
+    /** Re-reads the PPM status dump and checks it describes exactly [expected] states. */
+    private suspend fun verifyPpmStates(expected: List<Pair<Int, Int>>): Boolean {
+        val dump = readSysfsNode(MediaTekGameMode.PPM_POLICY_STATUS_NODE) ?: return false
+        val actual = MediaTekGameMode.ppmRestoreWrites(dump)
+            .mapNotNull { line ->
+                val parts = line.split(" ")
+                if (parts.size != 2) null
+                else {
+                    val idx = parts[0].toIntOrNull()
+                    val on = parts[1].toIntOrNull()
+                    if (idx == null || on == null) null else idx to on
+                }
+            }
+            .toMap()
+        return expected.all { (idx, on) -> actual[idx] == on }
+    }
+
+    /** One sysfs/proc node read, or null when unreadable or blank. */
+    private suspend fun readSysfsNode(node: String): String? {
+        val result = shellRunner.execSafeResult("cat", node)
+        return if (result.isSuccess) result.stdout.trim().takeIf { it.isNotEmpty() } else null
+    }
+
+    /** Writes one sysfs value and confirms it by read-back. Root-only (see callers). */
+    private suspend fun writeSysfsVerified(node: String, value: String): Boolean {
+        if (!isSafeSysfsValue(value)) return false
+        shellRunner.execSafeResult("sh", "-c", "echo $value > $node")
+        return readSysfsNode(node) == value
+    }
+
+    /**
+     * Whether [value] is safe to embed in a `sh -c 'echo … > node'` script. Node values are
+     * numbers and short tokens in practice; anything with shell metacharacters is refused
+     * rather than quoted-and-hoped.
+     */
+    private fun isSafeSysfsValue(value: String): Boolean =
+        value.isNotBlank() && value.all { it.isLetterOrDigit() || it in "._- " }
+
     /** @return the property's value, or "" when it is not set or could not be read. */
     private suspend fun readProp(key: String): String {
         val result = shellRunner.execSafeResult("getprop", key)
@@ -2060,6 +2369,12 @@ class GamingEngine(
             if (qtiFpsOk == false) {
                 unavailable += GamingModeNotice.Res(R.string.gt_eng_un_qti)
             }
+            // MediaTek knobs with the same re-assert rule; the snapshot still holds the
+            // vendor's originals, so the eventual deactivation restores them either way.
+            val mtkOk = applyMediaTekGameMode(readLastSnapshot()?.mediatekGameNodes.orEmpty())
+            if (mtkOk == false) {
+                unavailable += GamingModeNotice.Res(R.string.gt_eng_un_mtk)
+            }
             execute(PrivilegeCommands.DEVICE_IDLE_FORCE)
 
             // OEM specific recovery
@@ -2108,6 +2423,7 @@ class GamingEngine(
                 fixedPerformance = fixedPerfOk,
                 gpuPerformanceMode = gpuPerfOk,
                 qtiGameFps = qtiFpsOk,
+                mediaTekGameMode = mtkOk,
                 lockedRefreshHz = lockedHz,
                 touchResponseBoost = touchOk,
                 pointerSpeed = pointerSpeedApplied,

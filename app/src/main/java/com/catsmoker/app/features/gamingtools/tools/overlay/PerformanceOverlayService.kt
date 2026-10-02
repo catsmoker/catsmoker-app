@@ -110,6 +110,7 @@ class PerformanceOverlayService : Service() {
             metricsEngine.state.collect { state ->
                 val fpsView = overlayView?.findViewById<TextView>(R.id.fpsNumber)
                 val cpuView = overlayView?.findViewById<TextView>(R.id.cpuNumber)
+                val clusterView = overlayView?.findViewById<TextView>(R.id.clusterNumber)
                 val powerView = overlayView?.findViewById<TextView>(R.id.powerNumber)
                 val ramView = overlayView?.findViewById<TextView>(R.id.ramNumber)
                 val tempView = overlayView?.findViewById<TextView>(R.id.tempNumber)
@@ -119,6 +120,7 @@ class PerformanceOverlayService : Service() {
                 val fpsLabel = if (state.fpsSource == FpsSource.Choreographer) "UI FPS" else "FPS"
                 fpsView?.text = row(fpsLabel, state.fps?.toString(), state.fpsReadStatus)
                 cpuView?.text = row("CPU", state.cpuPercentage?.let { "$it%" }, state.cpuReadStatus)
+                clusterView?.text = row("Clus", clusterText(state), state.cpuClusterReadStatus)
                 powerView?.text = row(
                     "Power",
                     state.powerW?.let { String.format(Locale.US, "%.2f W", it) },
@@ -158,6 +160,21 @@ class PerformanceOverlayService : Service() {
      */
     private fun row(label: String, value: String?, status: MetricReadStatus): String =
         "$label: ${value ?: getString(status.labelRes)}"
+
+    /**
+     * Per-cluster MHz in the reference's compact shape (`U:2.8 P:2.2 E:1.6`, GHz with one
+     * decimal), ultra first. Tiers the kernel did not place are omitted, not zeroed; all
+     * missing means the row reports its own reason instead.
+     */
+    private fun clusterText(state: com.catsmoker.app.shared.data.model.MetricsState): String? {
+        fun ghz(mhz: Int?): String? = mhz?.let { String.format(Locale.US, "%.1f", it / 1000f) }
+        val parts = listOf(
+            state.cpuClusterUltraMhz?.let { "U${ghz(it)}" },
+            state.cpuClusterPerfMhz?.let { "P${ghz(it)}" },
+            state.cpuClusterEffMhz?.let { "E${ghz(it)}" }
+        ).filterNotNull()
+        return parts.takeIf { it.isNotEmpty() }?.joinToString(" ")
+    }
 
     /**
      * The ongoing notification, with a quick-toggle and a Stop action so the overlay can be

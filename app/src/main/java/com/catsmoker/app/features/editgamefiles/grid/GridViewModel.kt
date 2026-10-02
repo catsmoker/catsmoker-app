@@ -36,7 +36,27 @@ data class GridUiState(
     val lastApply: String? = null,
     val hasBackup: Boolean = false,
     val canUseShell: Boolean = false,
-    val hasSafGrant: Boolean = false
+    val hasSafGrant: Boolean = false,
+    /**
+     * "Show anyway" override for a confirmed-missing install. False until the user taps the
+     * small secondary button on the GAME NOT FOUND failure card — then the editor renders
+     * below the card even though no install was found. Same contract as the File
+     * Engineering screen's own override (EditGameFilesViewModel.UiState.showEditorAnyway):
+     * the card stays visible, re-probes never clear the choice, and the flag is meaningless
+     * once a real read succeeds. Seeding an empty read (below) is what lets the existing
+     * editor render with nothing on the device to read: every key reads absent, so the
+     * controls grey out exactly as they do for an installed game whose file lacks them.
+     */
+    val showEditorAnyway: Boolean = false,
+    /**
+     * The install probe's own answer, refreshed with every load: true when the game's
+     * package is absent, however the read failed. GAME_NOT_INSTALLED says so directly;
+     * NO_CHANNEL cannot reach any stage that would, so the probe answers there instead —
+     * without it a channel-less device would never be offered "Show anyway" for a game
+     * that is not there. FILE_NOT_FOUND and READ_FAILED imply an install (or a file that
+     * answered), so they report present and keep the existing behavior.
+     */
+    val gameMissing: Boolean = false
 )
 
 @HiltViewModel
@@ -60,6 +80,52 @@ class GridViewModel @Inject constructor(
         refresh()
     }
 
+    /**
+     * The GAME NOT FOUND failure card's small secondary "Show anyway" action: reveals the
+     * existing editor below the card even though no install was found. With nothing on the
+     * device to read, the read is seeded empty (every key absent), so the editor renders
+     * exactly as it does for an installed game whose file lacks those keys — rows greyed,
+     * captions honest — and applies attempted from there report the missing install through
+     * the manager like any other failure. The failure card stays visible above, so the
+     * screen never pretends a game is there. One-way: stays set until the ViewModel is
+     * cleared; a later successful read simply replaces the seeded copy.
+     */
+    fun onShowEditorAnyway() {
+        val state = _uiState.value
+        if (state.gameMissing && state.read == null) {
+            val seed = emptyShowAnywayRead()
+            _uiState.update {
+                it.copy(
+                    read = seed,
+                    edits = GridPreferences.Edits(),
+                    missingKeys = missingKeys(seed),
+                    showEditorAnyway = true
+                )
+            }
+        } else {
+            _uiState.update { it.copy(showEditorAnyway = true) }
+        }
+    }
+
+    /**
+     * The empty read a "Show anyway" reveal starts from: nothing held, every key absent.
+     * Never a fabricated device value — nulls are exactly what the screen already renders
+     * as greyed rows and "not in the file yet" captions for an installed game whose file
+     * lacks them.
+     */
+    private fun emptyShowAnywayRead(): GridPreferences.ReadResult = GridPreferences.ReadResult(
+        isFeralRegistry = false,
+        gameVersion = null,
+        screenWidth = null,
+        screenHeight = null,
+        fixedScreenHeight = null,
+        maxFps = null,
+        highMaxFps = null,
+        ladder = GridPreferences.LADDER_KEYS.associateWith { null },
+        anisotropic = null,
+        switches = GridPreferences.SWITCH_TARGETS.keys.associateWith { null }
+    )
+
     /** Full reload — re-reads the file through the best channel and re-derives the gates. */
     fun refresh() {
         viewModelScope.launch {
@@ -80,14 +146,31 @@ class GridViewModel @Inject constructor(
                         missingKeys = missingKeys(result.read),
                         channelUsed = result.channelUsed,
                         gameVersion = result.read.gameVersion,
-                        hasBackup = manager.hasBackup()
+                        hasBackup = manager.hasBackup(),
+                        // A successful read is the device proving the game is there — a
+                        // stale missing flag must not hide the status card afterwards.
+                        gameMissing = false
                     )
                 }
-                is GridPreferencesManager.ReadResult.Failure -> _uiState.update {
-                    it.copy(
+                is GridPreferencesManager.ReadResult.Failure -> _uiState.update { state ->
+                    // A "Show anyway" tap that landed while a reload was in flight leaves the
+                    // flag set with no read yet — seed here too, so the retry that confirms
+                    // "still missing" still reveals the editor instead of nothing. Any other
+                    // stage keeps the previous behavior (no read, no seed).
+                    val missing = result.stage == GridPreferencesManager.ReadResult.Stage.GAME_NOT_INSTALLED ||
+                        (result.stage == GridPreferencesManager.ReadResult.Stage.NO_CHANNEL &&
+                            !manager.isInstalled())
+                    val seed = if (missing && state.showEditorAnyway) {
+                        state.read ?: emptyShowAnywayRead()
+                    } else {
+                        null
+                    }
+                    state.copy(
                         loading = false,
                         loadFailure = result,
-                        read = null,
+                        read = seed,
+                        gameMissing = missing,
+                        missingKeys = if (seed != null) missingKeys(seed) else state.missingKeys,
                         hasBackup = manager.hasBackup()
                     )
                 }

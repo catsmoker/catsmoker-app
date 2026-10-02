@@ -1,0 +1,73 @@
+<resources>
+    <!-- Legal screens (Privacy Policy + Terms of Service). Mirror of values/strings_legal.xml. -->
+
+    <string name="legal_section_title">Legal</string>
+    <string name="legal_privacy_title">Política de privacidad</string>
+    <string name="legal_privacy_subtitle">Qué almacena y comparte la app.</string>
+    <string name="legal_privacy_updated">Última actualización: 2026-09-30</string>
+    <string name="legal_terms_title">Términos del servicio</string>
+    <string name="legal_terms_subtitle">Reglas para usar la app.</string>
+    <string name="legal_terms_updated">Última actualización: 2026-09-30</string>
+
+    <string name="legal_p_intro">CatSmoker es una app Android de código abierto sin cuentas, sin inicio de sesión y sin servidores propios. Casi todo lo que la app conoce permanece en tu dispositivo. Esta política explica qué se almacena localmente, qué sale del dispositivo y cuándo.</string>
+
+    <string name="legal_p_local_title">1. Datos almacenados en tu dispositivo</string>
+    <string name="legal_p_local_body">Los ajustes y el estado se guardan solo en el dispositivo: tema, idioma, opciones de inicio, contadores de uso, preferencias de anuncios y de actualizaciones, biblioteca de juegos, perfiles de spoofing y asignaciones por app, opciones del modo gaming (DNS, frecuencia de actualización, patrones de limpieza, listas de suspensión), posiciones del overlay y la mira, copias de seguridad de configs, grabaciones de sesión y registros. Nada de esto se sube al desarrollador — no hay servidor al cual subirlo. Desinstalar la app, o borrar sus datos, lo elimina.</string>
+
+    <string name="legal_p_ads_title">2. Publicidad (Start.io)</string>
+    <string name="legal_p_ads_body">La versión completa (fuera de Play Store) muestra anuncios de banner del SDK de Start.io. El SDK puede recopilar tu ID de publicidad e información del dispositivo para mostrar y medir anuncios. Puedes desactivar los anuncios en Ajustes; el cambio se aplica de inmediato. La versión de Play Store usa AdMob en lugar de Start.io, bajo las políticas de publicidad de Google.</string>
+
+    <string name="legal_p_updates_title">3. Comprobación de actualizaciones</string>
+    <string name="legal_p_updates_body">Al pulsar \u201cBuscar actualizaciones\u201d (o activar la comprobación automática), la app consulta la API pública de releases de GitHub del proyecto. Esa solicitud revela tu dirección IP y la versión de la app a GitHub, bajo sus propios términos de privacidad. La comprobación automática está desactivada por defecto. Los archivos descargados se guardan en el directorio privado de la app y se instalan solo tras tu confirmación.</string>
+
+    <string name="legal_p_sharing_title">4. Registros y grabaciones que decides compartir</string>
+    <string name="legal_p_sharing_body">Los registros de diagnóstico y las grabaciones de sesión nunca salen del dispositivo por sí solos. Solo se exportan cuando pulsas Compartir, mediante el menú de Android hacia la app que elijas. Los registros pueden contener detalles del dispositivo — revísalos antes de enviarlos.</string>
+
+    <string name="legal_p_external_title">5. Enlaces externos y donaciones</string>
+    <string name="legal_p_external_body">Los enlaces comunitarios (GitHub, web, Discord, Telegram) y las opciones de donación (PayPal, Binance, direcciones cripto) se abren fuera de la app. Al usarlos, esos servicios reciben los datos que recogen normalmente (como tu IP y, en pagos, tus datos de pago) bajo sus propias políticas. Las donaciones son voluntarias y las procesan esos servicios externos — la app nunca ve ni guarda tus datos de pago.</string>
+
+    <string name="legal_p_permissions_title">6. Permisos del dispositivo</string>
+    <string name="legal_p_permissions_body">La app solicita permisos solo para las funciones que pides: acceso a archivos para leer y respaldar configs de juegos, permiso de overlay para los overlays de rendimiento y mira, acceso de uso para detectar sesiones de juego, acceso a notificaciones para el modo silencioso, micrófono solo para el visualizador de audio opcional, y Bluetooth solo para identificar dispositivos de audio. Puedes denegar cada uno — la función correspondiente se mostrará como no disponible.</string>
+
+    <string name="legal_p_vpn_title">7. Cortafuegos VPN local</string>
+    <string name="legal_p_vpn_body">El cortafuegos opcional usa el framework VPN de Android como filtro local en el dispositivo. Las reglas se aplican en el propio teléfono; ningún tráfico se envía a servidores del proyecto, porque no existen.</string>
+
+    <string name="legal_p_contact_title">8. Contacto y cambios</string>
+    <string name="legal_p_contact_body">Las preguntas sobre esta política pueden plantearse como issue en el repositorio GitHub del proyecto. Si la política cambia, el texto actualizado llegará dentro de la app con una nueva fecha de actualización.</string>
+
+    <string name="legal_t_intro">Al instalar y usar CatSmoker aceptas estos términos. Si no estás de acuerdo, no uses la app.</string>
+
+    <string name="legal_t_license_title">1. Licencia de código abierto</string>
+    <string name="legal_t_license_body">El código fuente se publica bajo la licencia Creative Commons Atribución-NoComercial-CompartirIgual 4.0 Internacional (CC BY-NC-SA 4.0). Puedes compartirlo y adaptarlo con fines no comerciales, con atribución y bajo la misma licencia. El texto completo está enlazado desde la pantalla de inicio y el repositorio.</string>
+
+    <string name="legal_t_games_title">2. Las reglas de cada juego siguen aplicando</string>
+    <string name="legal_t_games_body">Suplantar la identidad del dispositivo o modificar archivos de juegos puede violar los términos de servicio de esos juegos y provocar sanciones como funciones restringidas o cuentas baneadas. Los desarrolladores no son responsables de baneos ni pérdidas en juegos de terceros. Usa estas funciones bajo tu propio riesgo.</string>
+
+    <string name="legal_t_risk_title">3. Los cambios del sistema son tu responsabilidad</string>
+    <string name="legal_t_risk_body">La app se ofrece \u201ctal cual\u201d, sin garantías. Las funciones que cambian ajustes del sistema (resolución, frecuencia, animaciones, DNS, audio, compilación dexopt) o usan privilegios root o Shizuku actúan bajo tu instrucción; la app respalda las configs antes de escribirlas cuando es posible, pero aceptas el riesgo de inestabilidad o pérdida de datos. Nada te impide revertir los cambios o desinstalar la app.</string>
+
+    <string name="legal_t_donations_title">4. Donaciones</string>
+    <string name="legal_t_donations_body">Las donaciones son regalos voluntarios que apoyan el desarrollo. No son reembolsables, las procesan servicios externos y no desbloquean funciones premium ni dan derecho a soporte o influencia sobre el proyecto.</string>
+
+    <string name="legal_t_use_title">5. Uso aceptable</string>
+    <string name="legal_t_use_body">Usa la app de forma lícita y solo para mejorar el rendimiento en juegos. No la uses para dañar dispositivos, redes u otras personas, ni para hacer pasar clientes modificados por originales donde eso importe.</string>
+
+    <string name="legal_t_changes_title">6. Cambios de estos términos</string>
+    <string name="legal_t_changes_body">Estos términos pueden actualizarse con la evolución de la app; la versión vigente siempre está en esta pantalla dentro de la app.</string>
+
+    <!-- Donate-screen voluntary-gift notice. -->
+    <string name="donate_notice">Las donaciones son regalos voluntarios y no son reembolsables. Los pagos los procesan externamente PayPal, Binance o la red cripto correspondiente — CatSmoker nunca ve tus datos de pago.</string>
+
+    <!-- Settings ads toggle explanation. -->
+    <string name="sys_ads_sub">Los banners de Start.io mantienen la app gratis. Desactívalos para ocultarlos. Consulta la Política de privacidad para saber qué recopila el proveedor.</string>
+
+    <!-- Content descriptions for previously unlabeled icon-only buttons. -->
+    <string name="core_desc_add">Añadir</string>
+    <string name="core_desc_more">Más opciones</string>
+    <string name="core_desc_save">Guardar</string>
+    <string name="core_desc_random">Generar valor aleatorio</string>
+
+    <!-- Onboarding legal dialogs. -->
+    <string name="core_terms_read_privacy">Leer Política de privacidad</string>
+    <string name="core_terms_read_terms">Leer Términos del servicio</string>
+</resources>

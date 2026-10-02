@@ -28,12 +28,24 @@ import com.catsmoker.app.shared.ui.components.SectionCard
 import com.catsmoker.app.shared.ui.theme.CatsmokerTheme
 
 @Composable
-fun AboutRoute(onBack: () -> Unit, onOpenLogs: () -> Unit, onDonate: () -> Unit) {
-    AboutScreen(onBack = onBack, onOpenLogs = onOpenLogs, onDonate = onDonate)
+fun AboutRoute(
+    onBack: () -> Unit,
+    onOpenLogs: () -> Unit,
+    onDonate: () -> Unit,
+    onPrivacy: () -> Unit,
+    onTerms: () -> Unit
+) {
+    AboutScreen(onBack = onBack, onOpenLogs = onOpenLogs, onDonate = onDonate, onPrivacy = onPrivacy, onTerms = onTerms)
 }
 
 @Composable
-fun AboutScreen(onBack: () -> Unit, onOpenLogs: () -> Unit, onDonate: () -> Unit) {
+fun AboutScreen(
+    onBack: () -> Unit,
+    onOpenLogs: () -> Unit,
+    onDonate: () -> Unit,
+    onPrivacy: () -> Unit,
+    onTerms: () -> Unit
+) {
     val uriHandler = LocalUriHandler.current
     val githubUrl = stringResource(R.string.url_github)
 
@@ -143,6 +155,30 @@ fun AboutScreen(onBack: () -> Unit, onOpenLogs: () -> Unit, onDonate: () -> Unit
                     }
                 }
             }
+
+            Spacer(modifier = Modifier.height(16.dp))
+            Text(
+                text = stringResource(R.string.legal_section_title),
+                style = MaterialTheme.typography.titleMedium,
+                color = MaterialTheme.colorScheme.onSurface
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                AboutLinkButton(
+                    title = stringResource(R.string.legal_privacy_title),
+                    imageVector = Icons.Default.Policy,
+                    iconTint = MaterialTheme.colorScheme.primary,
+                    external = false,
+                    onClick = onPrivacy
+                )
+                AboutLinkButton(
+                    title = stringResource(R.string.legal_terms_title),
+                    imageVector = Icons.Default.Description,
+                    iconTint = MaterialTheme.colorScheme.primary,
+                    external = false,
+                    onClick = onTerms
+                )
+            }
         }
     }
 }
@@ -196,6 +232,6 @@ fun AboutLinkButton(
 @Composable
 fun AboutPreview() {
     CatsmokerTheme {
-        AboutScreen(onBack = {}, onOpenLogs = {}, onDonate = {})
+        AboutScreen(onBack = {}, onOpenLogs = {}, onDonate = {}, onPrivacy = {}, onTerms = {})
     }
 }

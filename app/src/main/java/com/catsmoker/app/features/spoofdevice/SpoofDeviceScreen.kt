@@ -12,6 +12,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -93,7 +94,13 @@ fun SpoofDeviceScreen(
                             strokeWidth = 2.dp
                         )
                     } else {
-                        IconButton(onClick = onRefresh) { Icon(Icons.Default.Refresh, null, tint = MaterialTheme.colorScheme.primary) }
+                        IconButton(onClick = onRefresh) {
+                            Icon(
+                                Icons.Default.Refresh,
+                                contentDescription = stringResource(R.string.logs_refresh),
+                                tint = MaterialTheme.colorScheme.primary
+                            )
+                        }
                     }
                 }
                 if (uiState.isRefreshing) {
@@ -158,18 +165,22 @@ fun SpoofDeviceScreen(
                     isLoading = uiState.isGeneratingMagisk
                 )
                 
-                if (uiState.isRooted) {
-                    Spacer(modifier = Modifier.height(8.dp))
-                    QuickActionButton(
-                        title = stringResource(R.string.spoof_root_manager_title),
-                        subtitle = stringResource(R.string.spoof_root_manager_desc),
-                        iconContainerColor = MaterialTheme.colorScheme.surfaceVariant,
-                        iconContentColor = MaterialTheme.colorScheme.onSurface,
-                        icon = { Icon(Icons.Default.Settings, null) },
-                        onClick = onOpenRootManager,
-                        isFullWidth = true
-                    )
-                }
+                Spacer(modifier = Modifier.height(8.dp))
+                // Global rule: always show, gray when unsupported. Opening a root
+                // manager without root can do nothing, so the tile stays visible
+                // but disabled with the reason instead of disappearing.
+                QuickActionButton(
+                    title = stringResource(R.string.spoof_root_manager_title),
+                    subtitle = if (uiState.isRooted) stringResource(R.string.spoof_root_manager_desc)
+                    else stringResource(R.string.spoof_root_manager_need),
+                    iconContainerColor = MaterialTheme.colorScheme.surfaceVariant,
+                    iconContentColor = MaterialTheme.colorScheme.onSurface,
+                    icon = { Icon(Icons.Default.Settings, null) },
+                    onClick = onOpenRootManager,
+                    isFullWidth = true,
+                    enabled = uiState.isRooted,
+                    modifier = Modifier.alpha(if (uiState.isRooted) 1f else 0.6f)
+                )
             }
         }
     }

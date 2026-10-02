@@ -24,20 +24,6 @@ import javax.inject.Inject
 enum class WuwaDeployChannel { SHELL, SAF }
 
 /**
- * One analyzed Client.log: the parsed facts, which channel read the bytes, whether the
- * decryptor actually ran (a plaintext log is read as-is, never reported as decrypted), and
- * the line count the parse covered.
- */
-data class WuwaLogAnalysis(
-    val info: WuwaLogParser.LogInfo,
-    val channelUsed: String,
-    val decrypted: Boolean,
-    val lineCount: Int,
-    /** Battle totals counted from the same decrypted text — no second read. */
-    val battle: WuwaBattleStats.BattleStats
-)
-
-/**
  * Screen state for the Wuthering Waves config generator.
  *
  * The generated previews are recomputed from (preset, options) on every change —
@@ -51,6 +37,16 @@ data class WuwaConfigUiState(
     val loading: Boolean = true,
     /** null = the package could not be checked (query threw). */
     val gameInstalled: Boolean? = null,
+    /**
+     * "Show anyway" override for a confirmed-missing install. False until the user taps the
+     * small secondary button on the install-first card — then the generator renders below
+     * the card even though the game is absent. Same contract as the File Engineering
+     * screen's own override (EditGameFilesViewModel.UiState.showEditorAnyway): the card
+     * stays visible, refreshes never clear the choice, and the flag is meaningless once
+     * the game is installed. No seeding is needed here — unlike the HSR/GRID editors, the
+     * generator runs on device facts and its previews exist with no install at all.
+     */
+    val showEditorAnyway: Boolean = false,
     val preset: String = "balanced",
     // The generator's own defaults leave the two optional files off; the screen turns them on
     // so a first deploy delivers the full five-file set the game's monitor watches.
@@ -58,7 +54,25 @@ data class WuwaConfigUiState(
         generateScalability = true,
         generateHardware = true
     ),
+    /**
+     * The raw `key=value` block backing [WuWaConfigGenerator.Options.cvarOverrides].
+     * Text (not the map) is the UI's source of truth: the map is derived on every
+     * keystroke via [WuWaConfigGenerator.parseCvarOverrides], and regenerating text
+     * from the map would clobber typing. Malformed lines never reach the map.
+     */
+    val cvarOverrideText: String = "",
     val previews: Map<String, String> = emptyMap(),
+    /**
+     * Backup-vs-generated diff summary for the previewed Engine.ini; null means no
+     * backup exists or its bytes would not decode — never a fabricated zero-diff.
+     */
+    val engineBackupDiff: WuwaDiffSummary? = null,
+    /**
+     * Accepted/rejected/RT-flagged cvars for the previewed Engine.ini, computed
+     * inside generation from its pre/post-strip snapshots. Null before the first
+     * generation runs.
+     */
+    val engineReport: WuwaGenerationReport.FileReport? = null,
     val applying: Boolean = false,
     val deployReport: WuwaConfigManager.DeploySuccess? = null,
     val deployFailure: String? = null,
@@ -68,18 +82,6 @@ data class WuwaConfigUiState(
     val recommendation: WuwaSmartBrain.Recommendation? = null,
     /** This device's chipset, read once — an unscored note beside the recommendation. */
     val chipset: WuwaChipset.ChipsetInfo? = null,
-    /** The last Client.log analysis, when one has been read and parsed. */
-    val logAnalysis: WuwaLogAnalysis? = null,
-    /** True while a log read/decrypt/parse is running. */
-    val analyzingLog: Boolean = false,
-    /** Why the last log analysis could not happen, when it could not. */
-    val logFailure: String? = null,
-    /** The last installed-profile reading — databases + ini counts (+ log facts when a log exists). */
-    val installedProfile: WuwaProfileExtractor.InstalledProfile? = null,
-    /** True while an installed-profile read is running. */
-    val readingProfile: Boolean = false,
-    /** Why the last installed-profile read could not happen, when it could not. */
-    val profileFailure: String? = null,
     /** Newest-first deploy history; null-verification records have not been re-checked. */
     val history: List<WuwaDeployHistoryStore.Record> = emptyList(),
     /** The record whose after-the-fact verification is running, if any. */
@@ -95,16 +97,7 @@ data class WuwaConfigUiState(
     /** Why the last pack import could not happen, when it could not. */
     val packFailure: String? = null,
     /** The "packId/variantName" whose deploy is running, if any. */
-    val deployingPackKey: String? = null,
-    // ----------------------------------------------------------------- Convene (gacha) tracker
-    /** The last successful Convene fetch: totals, per-pool pity predictions, records. */
-    val gachaData: WuwaGacha.GachaData? = null,
-    /** Summary of the 12-hour cache, when one is live — restore offers this without a refetch. */
-    val gachaCacheSummary: WuwaGachaHistoryStore.Entry? = null,
-    /** True while a Convene fetch (URL parse → per-pool POST → aggregate) is running. */
-    val gachaLoading: Boolean = false,
-    /** Why the last Convene read could not happen, when it could not. */
-    val gachaFailure: String? = null
+    val deployingPackKey: String? = null
 )
 
 @HiltViewModel
@@ -145,14 +138,20 @@ class WuwaConfigViewModel @Inject constructor(
      */
     private val tunerStateFile = java.io.File(context.filesDir, "wuwa_tuner_state.json")
 
-    /** The 12-hour Convene cache — same filesDir-JSON shape, reference's `gacha_history.json`. */
-    private val gachaHistoryStore = WuwaGachaHistoryStore(context)
-
     init {
         refresh()
         resumeTunerState()
-        restoreGachaCache()
     }
+
+    /**
+     * The install-first card's small secondary "Show anyway" action: reveals the existing
+     * generator below the card even though the game is absent. The previews are generated
+     * from device facts and the selected preset/options, so browsing and editing work with
+     * no install; deploys attempted from there report honestly through the manager. The
+     * card stays visible above, so the screen never pretends the game is installed.
+     * One-way: stays set until the ViewModel is cleared; refreshes preserve it.
+     */
+    fun onShowEditorAnyway() = _uiState.update { it.copy(showEditorAnyway = true) }
 
     fun refresh() {
         viewModelScope.launch {
@@ -173,11 +172,9 @@ class WuwaConfigViewModel @Inject constructor(
                 } catch (_: Exception) {
                     false
                 }
-                // A refresh keeps the log axes an earlier analysis earned — only a fresh
-                // analyzeGameLog() changes them.
-                val rec = computeRecommendation(
-                    log = _uiState.value.logAnalysis?.info
-                )
+                // The recommendation scores device facts only — the log-analysis card is
+                // gone, so there are no log axes to merge.
+                val rec = computeRecommendation(log = null)
                 RefreshOutcome(
                     installed = installed,
                     engineIni = if (manager.canDeployViaShell()) {
@@ -270,6 +267,24 @@ class WuwaConfigViewModel @Inject constructor(
         regenerate()
     }
 
+    /**
+     * Edits the custom-CVar block: the text is kept verbatim for the field, the
+     * parsed map feeds the next generation (see [WuWaConfigGenerator.Options]).
+     * Regenerates like any other option change, so the Preview section always
+     * shows what the current text produces.
+     */
+    fun onCvarOverrideTextChange(text: String) {
+        _uiState.update {
+            it.copy(
+                cvarOverrideText = text,
+                options = it.options.copy(
+                    cvarOverrides = WuWaConfigGenerator.parseCvarOverrides(text)
+                )
+            )
+        }
+        regenerate()
+    }
+
     private fun regenerate(existingEngineIni: String? = null) {
         val state = _uiState.value
         viewModelScope.launch(Dispatchers.IO) {
@@ -281,10 +296,27 @@ class WuwaConfigViewModel @Inject constructor(
                 state.preset,
                 state.options,
                 WuWaConfigGenerator.DeviceInfo(),
-                existing
+                existing,
+                // No log-sourced cvars: the log-analysis card is gone, so there is nothing
+                // to merge — never an empty promise.
+                logCvars = emptyMap()
+            )
+            // Pair the generated Engine.ini with the newest device backup, when one
+            // exists and decodes: a pre/post diff the game was never needed for.
+            // Local file bytes, so this stays on the IO dispatcher with the rest.
+            val backupEntry = WuwaBackupDiff.matchEntry(state.backups, "Engine.ini")
+            val backupDiff = WuwaBackupDiff.compare(
+                backupEntry?.let { manager.readBackupBytes(it) },
+                configs.engine
             )
             withContext(Dispatchers.Main) {
-                _uiState.update { it.copy(previews = configs.asMap()) }
+                _uiState.update {
+                    it.copy(
+                        previews = configs.asMap(),
+                        engineReport = configs.engineReport,
+                        engineBackupDiff = backupDiff
+                    )
+                }
             }
         }
     }
@@ -454,83 +486,6 @@ class WuwaConfigViewModel @Inject constructor(
         _uiState.update { it.copy(history = emptyList()) }
     }
 
-    // ------------------------------------------------------------------- game log
-
-    /**
-     * Reads the game's encrypted Client.log (byte-exactly — the manager never `cat`s it into a
-     * String), decrypts, parses, and re-scores the recommendation with the axes only the log
-     * can measure. A read failure is surfaced as the device's own refusal text, never as an
-     * empty analysis that would look like a clean log.
-     */
-    fun analyzeGameLog() {
-        if (_uiState.value.analyzingLog) return
-        viewModelScope.launch {
-            _uiState.update { it.copy(analyzingLog = true, logFailure = null) }
-            try {
-                when (val read = manager.readClientLog()) {
-                    is WuwaConfigManager.ClientLogResult.Failure -> {
-                        _uiState.update { it.copy(logFailure = read.detail) }
-                        _events.emit(WuwaEvent.Toast(read.detail, true))
-                    }
-                    is WuwaConfigManager.ClientLogResult.Read -> withContext(Dispatchers.IO) {
-                        val (text, decode) = WuwaLogDecryptor.decodeLogBytes(read.bytes)
-                        val info = WuwaLogParser.parseLog(text)
-                        val analysis = WuwaLogAnalysis(
-                            info = info,
-                            channelUsed = read.channelUsed,
-                            decrypted = decode == WuwaLogDecryptor.DecodeResult.DECRYPTED,
-                            lineCount = text.lineSequence().count(),
-                            battle = WuwaBattleStats.parseBattleStats(text)
-                        )
-                        val rec = computeRecommendation(info)
-                        withContext(Dispatchers.Main) {
-                            _uiState.update { it.copy(logAnalysis = analysis, recommendation = rec) }
-                        }
-                        _events.emit(
-                            WuwaEvent.Toast(
-                                context.getString(
-                                    R.string.gf_log_rescored,
-                                    context.getString(if (analysis.decrypted) R.string.gf_log_decrypted else R.string.gf_log_plain),
-                                    read.channelUsed,
-                                    analysis.lineCount
-                                ),
-                                isLong = true
-                            )
-                        )
-                    }
-                }
-            } finally {
-                _uiState.update { it.copy(analyzingLog = false) }
-            }
-        }
-    }
-
-    /**
-     * Reads the installed game's own record of itself — the LocalStorage/DeviceStorage databases
-     * (UID, server, level, last login, tower progress, versions, language) plus a settings count
-     * over each deployed ini, merged with the log's device facts when Client.log exists. The halves
-     * fail independently inside the read; only a total failure reaches [WuwaConfigUiState.profileFailure].
-     */
-    fun readInstalledProfile() {
-        if (_uiState.value.readingProfile) return
-        viewModelScope.launch {
-            _uiState.update { it.copy(readingProfile = true, profileFailure = null) }
-            try {
-                when (val result = manager.readInstalledProfile()) {
-                    is WuwaConfigManager.InstalledProfileResult.Failure -> {
-                        _uiState.update { it.copy(profileFailure = result.detail) }
-                        _events.emit(WuwaEvent.Toast(result.detail, true))
-                    }
-                    is WuwaConfigManager.InstalledProfileResult.Read -> {
-                        _uiState.update { it.copy(installedProfile = result.profile) }
-                    }
-                }
-            } finally {
-                _uiState.update { it.copy(readingProfile = false) }
-            }
-        }
-    }
-
     // ---------------------------------------------------------------- community packs
 
     /**
@@ -638,110 +593,6 @@ class WuwaConfigViewModel @Inject constructor(
         variant: WuwaCommunityPack.Variant,
         stripped: Boolean
     ): String = "community: ${pack.name}/${variant.name}" + if (stripped) " (restricted stripped)" else ""
-
-    // ----------------------------------------------------------------- Convene (gacha) tracker
-
-    /**
-     * Brings the 12-hour cache onto the screen at init: its summary is offered as a restore,
-     * and a cache still alive after process death is shown read-only until the user refetches.
-     * A load never throws — expiry and corruption were handled as absence inside the store.
-     */
-    private fun restoreGachaCache() {
-        viewModelScope.launch(Dispatchers.IO) {
-            val entry = gachaHistoryStore.load()
-            withContext(Dispatchers.Main) {
-                _uiState.update { it.copy(gachaCacheSummary = entry) }
-            }
-        }
-    }
-
-    /**
-     * The whole Convene read in one tap: extract the record URL from the game's decrypted
-     * Client.log, parse it, POST one query per pool, aggregate, and cache for 12 h.
-     *
-     * Each stage that can fail does so with its own words — no log at all, no URL in the log
-     * (the user has to open Convene History in-game once first; that is what writes it), a URL
-     * missing its parameters, and the fetcher's two distinct failures (transport vs
-     * every-pool-rejected) all say different things. Nothing here reports a fabricated empty
-     * history: the "must not masquerade as empty" rule from the reference is enforced inside
-     * [WuwaGacha.combinePoolResults] and its message is surfaced verbatim.
-     */
-    fun fetchGachaFromLog() {
-        if (_uiState.value.gachaLoading) return
-        viewModelScope.launch {
-            _uiState.update { it.copy(gachaLoading = true, gachaFailure = null) }
-            try {
-                val read = manager.readClientLog()
-                if (read is WuwaConfigManager.ClientLogResult.Failure) {
-                    failGacha(read.detail)
-                    return@launch
-                }
-                val bytes = (read as WuwaConfigManager.ClientLogResult.Read).bytes
-                val (text, _) = withContext(Dispatchers.IO) { WuwaLogDecryptor.decodeLogBytes(bytes) }
-                val url = withContext(Dispatchers.IO) { WuwaGacha.extractConveneUrl(text) }
-                if (url == null) {
-                    failGacha(context.getString(R.string.gf_gacha_no_url))
-                    return@launch
-                }
-                val params = WuwaGacha.parseUrl(url)
-                if (params == null) {
-                    failGacha(context.getString(R.string.gf_gacha_bad_url))
-                    return@launch
-                }
-                val result = WuwaGachaFetcher.fetchAllRecords(params)
-                when {
-                    result.isSuccess -> {
-                        val data = result.getOrThrow()
-                        withContext(Dispatchers.IO) { gachaHistoryStore.save(data) }
-                        _uiState.update {
-                            it.copy(
-                                gachaData = data,
-                                gachaCacheSummary = gachaHistoryStore.load(),
-                                gachaFailure = null
-                            )
-                        }
-                        _events.emit(
-                            WuwaEvent.Toast(
-                                context.getString(
-                                    R.string.gf_gacha_loaded,
-                                    data.totalPulls,
-                                    data.fiveStars,
-                                    data.fourStars,
-                                    data.poolsWithData.size
-                                ),
-                                true
-                            )
-                        )
-                    }
-                    else -> failGacha(context.getString(R.string.gf_gacha_failed, result.exceptionOrNull()?.message))
-                }
-            } finally {
-                _uiState.update { it.copy(gachaLoading = false) }
-            }
-        }
-    }
-
-    /** Puts the cached [WuwaGacha.GachaData] back on screen without a refetch. */
-    fun restoreGachaFromCache() {
-        val data = gachaHistoryStore.loadData()
-        if (data == null) {
-            viewModelScope.launch {
-                _events.emit(WuwaEvent.Toast(context.getString(R.string.gf_gacha_no_cache), false))
-            }
-            return
-        }
-        _uiState.update { it.copy(gachaData = data) }
-    }
-
-    fun clearGachaCache() {
-        gachaHistoryStore.delete()
-        _uiState.update { it.copy(gachaData = null, gachaCacheSummary = null) }
-    }
-
-    private suspend fun failGacha(detail: String) {
-        _uiState.update { it.copy(gachaFailure = detail) }
-        _events.emit(WuwaEvent.Toast(detail, true))
-    }
 
     // ------------------------------------------------------------------- auto-tune
 

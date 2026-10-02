@@ -35,6 +35,10 @@ fun LogsRoute(onBack: () -> Unit) {
         onRefresh = viewModel::refreshLogs,
         onClear = viewModel::clearLogs,
         onShare = viewModel::shareLogs,
+        isRecording = uiState.isRecording,
+        recordedSamples = uiState.recordedSamples,
+        onToggleRecording = viewModel::toggleRecording,
+        onShareRecording = viewModel::shareRecording,
         onBack = onBack
     )
 }
@@ -48,6 +52,10 @@ fun LogsScreen(
     onRefresh: () -> Unit,
     onClear: () -> Unit,
     onShare: () -> Unit,
+    isRecording: Boolean,
+    recordedSamples: Int,
+    onToggleRecording: () -> Unit,
+    onShareRecording: () -> Unit,
     onBack: () -> Unit
 ) {
     val scrollState = rememberLazyListState()
@@ -70,6 +78,20 @@ fun LogsScreen(
             IconButton(onClick = onRefresh, enabled = !isLoading) {
                 Icon(Icons.Default.Refresh, contentDescription = stringResource(R.string.logs_refresh), tint = MaterialTheme.colorScheme.onSurface)
             }
+            // Metrics-timeline recording behind the session CSV: diagnostics only, touches
+            // nothing. The share action exports first — an empty buffer reports instead.
+            IconButton(onClick = onToggleRecording) {
+                Icon(
+                    if (isRecording) Icons.Default.Stop else Icons.Default.PlayArrow,
+                    contentDescription = stringResource(
+                        if (isRecording) R.string.logs_recording_stop else R.string.logs_recording_start
+                    ),
+                    tint = if (isRecording) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurface
+                )
+            }
+            IconButton(onClick = onShareRecording) {
+                Icon(Icons.Default.FileDownload, contentDescription = stringResource(R.string.logs_recording_share), tint = MaterialTheme.colorScheme.onSurface)
+            }
             IconButton(onClick = onShare) {
                 Icon(Icons.Default.Share, contentDescription = stringResource(R.string.logs_share), tint = MaterialTheme.colorScheme.onSurface)
             }
@@ -79,6 +101,14 @@ fun LogsScreen(
         }
     ) {
         Column(modifier = Modifier.fillMaxSize()) {
+            if (isRecording || recordedSamples > 0) {
+                Text(
+                    text = stringResource(R.string.logs_recording_count, recordedSamples),
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    fontSize = 11.sp,
+                    modifier = Modifier.padding(vertical = 4.dp)
+                )
+            }
             OutlinedTextField(
                 value = filterQuery,
                 onValueChange = onFilterQueryChanged,

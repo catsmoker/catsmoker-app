@@ -7,6 +7,7 @@ import androidx.core.content.FileProvider
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.catsmoker.app.R
+import com.catsmoker.app.features.main.engine.SessionRecorder
 import com.catsmoker.app.system.shell.ShellRunner
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -14,6 +15,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -22,13 +24,16 @@ import javax.inject.Inject
 @HiltViewModel
 class LogsViewModel @Inject constructor(
     @ApplicationContext private val context: Context,
-    private val shellRunner: ShellRunner
+    private val shellRunner: ShellRunner,
+    private val sessionRecorder: SessionRecorder
 ) : ViewModel() {
 
     data class LogsUiState(
         val logs: List<String> = emptyList(),
         val isLoading: Boolean = false,
-        val filterQuery: String = ""
+        val filterQuery: String = "",
+        val isRecording: Boolean = false,
+        val recordedSamples: Int = 0
     )
 
     private val _uiState = MutableStateFlow(LogsUiState())
@@ -36,6 +41,16 @@ class LogsViewModel @Inject constructor(
 
     init {
         refreshLogs()
+        viewModelScope.launch {
+            sessionRecorder.isRecording.collect { recording ->
+                _uiState.update { it.copy(isRecording = recording) }
+            }
+        }
+        viewModelScope.launch {
+            sessionRecorder.sampleCount.collect { count ->
+                _uiState.update { it.copy(recordedSamples = count) }
+            }
+        }
     }
 
     fun refreshLogs() {
@@ -64,6 +79,57 @@ class LogsViewModel @Inject constructor(
         viewModelScope.launch(Dispatchers.IO) {
             shellRunner.exec("logcat -c")
             refreshLogs()
+        }
+    }
+
+    /**
+     * Toggles the metrics-timeline recording behind the session CSV export.
+     *
+     * Diagnostics only: sampling reads the already-running engine and touches no setting.
+     * Export (below) shares the file when there is one and says so when there is not —
+     * an empty buffer exports nothing rather than an empty document.
+     */
+    fun toggleRecording() {
+        if (sessionRecorder.isRecording.value) {
+            sessionRecorder.stopRecording()
+        } else {
+            sessionRecorder.startRecording()
+        }
+    }
+
+    /** Exports the recorded window to CSV and shares it through the FileProvider. */
+    fun shareRecording() {
+        viewModelScope.launch(Dispatchers.IO) {
+            val file = sessionRecorder.exportCsv()
+            withContext(Dispatchers.Main) {
+                if (file == null) {
+                    runCatching {
+                        android.widget.Toast.makeText(
+                            context,
+                            context.getString(R.string.logs_recording_empty),
+                            android.widget.Toast.LENGTH_SHORT
+                        ).show()
+                    }
+                    return@withContext
+                }
+                val uri = FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", file)
+                val intent = Intent(Intent.ACTION_SEND).apply {
+                    type = "text/csv"
+                    putExtra(Intent.EXTRA_STREAM, uri)
+                    putExtra(Intent.EXTRA_SUBJECT, context.getString(R.string.logs_recording_share_title, file.name))
+                    addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                }
+                runCatching {
+                    context.startActivity(
+                        Intent.createChooser(intent, context.getString(R.string.logs_recording_share_title, file.name)).apply {
+                            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                        }
+                    )
+                }.onFailure { e ->
+                    Log.w(TAG, "No app to share the recording with", e)
+                }
+            }
         }
     }
 

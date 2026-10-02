@@ -101,7 +101,11 @@ fun ProfilesListScreen(
                     Text(stringResource(R.string.spoof_action_import))
                 }
                 IconButton(onClick = { showCreateDialog = true }) {
-                    Icon(Icons.Default.Add, null, tint = MaterialTheme.colorScheme.primary)
+                    Icon(
+                        Icons.Default.Add,
+                        contentDescription = stringResource(R.string.core_desc_add),
+                        tint = MaterialTheme.colorScheme.primary
+                    )
                 }
             }
         }
@@ -230,7 +234,7 @@ private fun ProfileRow(
                 // Overflow menu only: Share + Delete. Tapping the row is the edit action.
                 Box {
                     IconButton(onClick = { showMenuState = true }) {
-                        Icon(Icons.Default.MoreVert, null)
+                        Icon(Icons.Default.MoreVert, contentDescription = stringResource(R.string.core_desc_more))
                     }
                     DropdownMenu(expanded = showMenuState, onDismissRequest = { showMenuState = false }) {
                         DropdownMenuItem(

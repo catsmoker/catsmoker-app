@@ -143,6 +143,7 @@ fun EditGameFilesRoute(onBack: () -> Unit) {
         onRecheckInstalls = viewModel::probeInstallStates,
         onOpenStore = viewModel::openPlayStore,
         onLaunchGame = viewModel::onLaunchGame,
+        onShowAnyway = viewModel::onShowEditorAnyway,
         onBack = onBack
     )
 }
@@ -377,6 +378,7 @@ fun EditGameFilesScreen(
     onRecheckInstalls: () -> Unit = {},
     onOpenStore: (String) -> Unit = {},
     onLaunchGame: () -> Unit,
+    onShowAnyway: () -> Unit = {},
     onBack: () -> Unit
 ) {
     ScreenScaffold(
@@ -452,146 +454,46 @@ fun EditGameFilesScreen(
                 // game is absent, a GAME NOT FOUND card replaces every working section — the
                 // "preferences file not found" those editors reported for an uninstalled game
                 // was exactly this fact discovered one step later than it needed to be. Unknown
-                // (unprobed) shows the sections; only a confirmed "no" hides them. The whole
-                // profile-push body sits inside the else branch — an earlier version gated only
-                // the PROFILE card and left custom upload and the save editor reachable for a
-                // game that was not there.
-                if (uiState.installedGames[uiState.selectedGame] == false) {
+                // (unprobed) shows the sections; only a confirmed "no" hides them. The small
+                // secondary "Show anyway" button on the card reveals the same profile editor
+                // the installed path shows ([ProfileGameEditor]) below the card — the card
+                // itself stays visible, so the screen never pretends the game is installed.
+                // EditGameFilesViewModel.UiState.showEditorAnyway is per-selection (reset on
+                // every game pick) and survives re-probes, recomposition, and navigating away
+                // and back with the screen's ViewModel.
+                val gameMissing = uiState.installedGames[uiState.selectedGame] == false
+                if (gameMissing && !uiState.showEditorAnyway) {
                     GameNotFoundCard(
                         gameName = uiState.selectedGame.displayName,
                         packageName = uiState.gamePackageName,
                         onRecheck = onRecheckInstalls,
-                        onOpenStore = onOpenStore
+                        onOpenStore = onOpenStore,
+                        onShowAnyway = onShowAnyway
                     )
                 } else {
-                    SectionCard {
-                        Column {
-                            Text(stringResource(R.string.gf_profile_section), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary)
-                            // Only this card's own jobs light the bar: push / reset / restore /
-                            // backup-delete. Other cards stay dark while their buttons disable.
-                            val profileBusy = uiState.busyArea == EditGameFilesViewModel.BusyArea.PROFILE_PUSH ||
-                                uiState.busyArea == EditGameFilesViewModel.BusyArea.RESET ||
-                                uiState.busyArea == EditGameFilesViewModel.BusyArea.RESTORE ||
-                                uiState.busyArea == EditGameFilesViewModel.BusyArea.BACKUP_DELETE
-                            if (profileBusy) {
-                                Spacer(modifier = Modifier.height(8.dp))
-                                SquigglyProgressBar(progress = null, animate = true, modifier = Modifier.fillMaxWidth())
-                            }
-                            Spacer(modifier = Modifier.height(10.dp))
-                            // Per-game label IDs from the view model — PUBG has two profiles, Genshin one —
-                            // resolved here (not in the ViewModel) so they follow the current language.
-                            uiState.profileLabelResIds.forEachIndexed { index, labelResId ->
-                                Row(
-                                    modifier = Modifier.fillMaxWidth().clickable { onProfileSelected(index) }.padding(vertical = 10.dp),
-                                    verticalAlignment = Alignment.CenterVertically
-                                ) {
-                                    RadioButton(selected = uiState.selectedProfile == index, onClick = { onProfileSelected(index) })
-                                    Text(stringResource(labelResId), color = MaterialTheme.colorScheme.onSurface)
-                                }
-                            }
-                            Spacer(modifier = Modifier.height(12.dp))
-                            CatsmokerButton(
-                                onClick = onApplyProfile,
-                                modifier = Modifier.fillMaxWidth(),
-                                enabled = !uiState.isLoading
-                            ) {
-                                if (uiState.busyArea == EditGameFilesViewModel.BusyArea.PROFILE_PUSH) {
-                                    CircularProgressIndicator(modifier = Modifier.size(18.dp), strokeWidth = 2.dp)
-                                    Spacer(modifier = Modifier.width(8.dp))
-                                    Text(stringResource(R.string.gf_working))
-                                } else {
-                                    Text(stringResource(R.string.gf_apply_profile))
-                                }
-                            }
-                            // Games with a resettable file only (config's resetFilePath): deleting it lets
-                            // the game regenerate from defaults — the revert for every push above. The
-                            // label is the game's own file name; Genshin has no reset and hides the button.
-                            if (uiState.canReset && uiState.configFileLabel != null) {
-                                Spacer(modifier = Modifier.height(8.dp))
-                                CatsmokerOutlinedButton(
-                                    onClick = onResetSave,
-                                    modifier = Modifier.fillMaxWidth(),
-                                    enabled = !uiState.isLoading,
-                                    colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.error)
-                                ) {
-                                    if (uiState.busyArea == EditGameFilesViewModel.BusyArea.RESET) {
-                                        CircularProgressIndicator(modifier = Modifier.size(18.dp), strokeWidth = 2.dp)
-                                        Spacer(modifier = Modifier.width(8.dp))
-                                        Text(stringResource(R.string.gf_working))
-                                    } else {
-                                        Text(stringResource(R.string.gf_reset_file, uiState.configFileLabel).uppercase())
-                                    }
-                                }
-                            }
-                            // Every overwrite above takes a timestamped backup first; this is the way
-                            // back to any of them. Available for every game, unlike the reset.
-                            Spacer(modifier = Modifier.height(8.dp))
-                            CatsmokerOutlinedButton(
-                                onClick = onRestoreBackup,
-                                modifier = Modifier.fillMaxWidth(),
-                                enabled = !uiState.isLoading
-                            ) {
-                                if (uiState.busyArea == EditGameFilesViewModel.BusyArea.RESTORE ||
-                                    uiState.busyArea == EditGameFilesViewModel.BusyArea.BACKUP_DELETE
-                                ) {
-                                    CircularProgressIndicator(modifier = Modifier.size(18.dp), strokeWidth = 2.dp)
-                                    Spacer(modifier = Modifier.width(8.dp))
-                                    Text(stringResource(R.string.gf_working))
-                                } else {
-                                    Text(stringResource(R.string.gf_restore_backup))
-                                }
-                            }
-                        }
-                    }
-
-                    // Custom upload only exists for games whose config is an opaque save blob the
-                    // user might bring from elsewhere (PUBG's Active.sav) — hidden for templated
-                    // configs like Genshin, where a dropped-in file would break the model lookup.
-                    if (uiState.canUploadCustom) {
-                        Spacer(modifier = Modifier.height(12.dp))
-
-                        SectionCard {
-                            Column {
-                                Text(stringResource(R.string.gf_custom_upload), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary)
-                                if (uiState.busyArea == EditGameFilesViewModel.BusyArea.CUSTOM_UPLOAD) {
-                                    Spacer(modifier = Modifier.height(8.dp))
-                                    SquigglyProgressBar(progress = null, animate = true, modifier = Modifier.fillMaxWidth())
-                                }
-                                Spacer(modifier = Modifier.height(10.dp))
-                                Text(uiState.selectedItemText, fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f))
-                                Spacer(modifier = Modifier.height(12.dp))
-                                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                                    CatsmokerOutlinedButton(onClick = onSelectFile, modifier = Modifier.weight(1f), enabled = !uiState.isLoading) { Text(stringResource(R.string.gf_select)) }
-                                    CatsmokerButton(onClick = onUploadFile, modifier = Modifier.weight(1f), enabled = !uiState.isLoading) {
-                                        if (uiState.busyArea == EditGameFilesViewModel.BusyArea.CUSTOM_UPLOAD) {
-                                            CircularProgressIndicator(modifier = Modifier.size(18.dp), strokeWidth = 2.dp)
-                                        } else {
-                                            Text(stringResource(R.string.gf_upload))
-                                        }
-                                    }
-                                }
-                                if (uiState.selectedItemText != stringResource(R.string.selected_item_placeholder)) {
-                                    Spacer(modifier = Modifier.height(4.dp))
-                                    TextButton(onClick = onClearSelection, modifier = Modifier.align(Alignment.CenterHorizontally)) {
-                                        Text(stringResource(R.string.gf_clear_selection), color = Color.Red.copy(alpha = 0.7f))
-                                    }
-                                }
-                            }
-                        }
-                    }
-
-                    // The inline save editor: read-modify-write of the ints the game's own save
-                    // carries — the closed-source references' core mechanism, without replacing
-                    // the file. Only for the game whose layout is verified ([canPatchSave]).
-                    if (uiState.canPatchSave) {
-                        Spacer(modifier = Modifier.height(12.dp))
-                        PubgSaveEditorSection(
-                            uiState = uiState,
-                            onReadSave = onReadSave,
-                            onSaveEditSelected = onSaveEditSelected,
-                            onApplySaveEdits = onApplySaveEdits
+                    if (gameMissing) {
+                        GameNotFoundCard(
+                            gameName = uiState.selectedGame.displayName,
+                            packageName = uiState.gamePackageName,
+                            onRecheck = onRecheckInstalls,
+                            onOpenStore = onOpenStore,
+                            onShowAnyway = null
                         )
+                        Spacer(modifier = Modifier.height(12.dp))
                     }
+                    ProfileGameEditor(
+                        uiState = uiState,
+                        onProfileSelected = onProfileSelected,
+                        onApplyProfile = onApplyProfile,
+                        onResetSave = onResetSave,
+                        onRestoreBackup = onRestoreBackup,
+                        onSelectFile = onSelectFile,
+                        onUploadFile = onUploadFile,
+                        onClearSelection = onClearSelection,
+                        onReadSave = onReadSave,
+                        onSaveEditSelected = onSaveEditSelected,
+                        onApplySaveEdits = onApplySaveEdits
+                    )
                 }
             }
         }
@@ -696,17 +598,173 @@ fun EditGameFilesScreen(
 }
 
 /**
+ * The profile-game editor: PROFILE card, CUSTOM FILE UPLOAD card (PUBG only), and the
+ * inline SAVE editor (verified GVAS layout only). One implementation shared by the
+ * installed path and the "Show anyway" path — the screen never keeps two copies of these
+ * sections, so a fix to any of them applies to both.
+ */
+@Composable
+private fun ProfileGameEditor(
+    uiState: EditGameFilesViewModel.UiState,
+    onProfileSelected: (Int) -> Unit,
+    onApplyProfile: () -> Unit,
+    onResetSave: () -> Unit,
+    onRestoreBackup: () -> Unit,
+    onSelectFile: () -> Unit,
+    onUploadFile: () -> Unit,
+    onClearSelection: () -> Unit,
+    onReadSave: () -> Unit,
+    onSaveEditSelected: (String, Int?) -> Unit,
+    onApplySaveEdits: () -> Unit
+) {
+    Column {
+        SectionCard {
+            Column {
+                Text(stringResource(R.string.gf_profile_section), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary)
+                // Only this card's own jobs light the bar: push / reset / restore /
+                // backup-delete. Other cards stay dark while their buttons disable.
+                val profileBusy = uiState.busyArea == EditGameFilesViewModel.BusyArea.PROFILE_PUSH ||
+                    uiState.busyArea == EditGameFilesViewModel.BusyArea.RESET ||
+                    uiState.busyArea == EditGameFilesViewModel.BusyArea.RESTORE ||
+                    uiState.busyArea == EditGameFilesViewModel.BusyArea.BACKUP_DELETE
+                if (profileBusy) {
+                    Spacer(modifier = Modifier.height(8.dp))
+                    SquigglyProgressBar(progress = null, animate = true, modifier = Modifier.fillMaxWidth())
+                }
+                Spacer(modifier = Modifier.height(10.dp))
+                // Per-game label IDs from the view model — PUBG has two profiles, Genshin one —
+                // resolved here (not in the ViewModel) so they follow the current language.
+                uiState.profileLabelResIds.forEachIndexed { index, labelResId ->
+                    Row(
+                        modifier = Modifier.fillMaxWidth().clickable { onProfileSelected(index) }.padding(vertical = 10.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        RadioButton(selected = uiState.selectedProfile == index, onClick = { onProfileSelected(index) })
+                        Text(stringResource(labelResId), color = MaterialTheme.colorScheme.onSurface)
+                    }
+                }
+                Spacer(modifier = Modifier.height(12.dp))
+                CatsmokerButton(
+                    onClick = onApplyProfile,
+                    modifier = Modifier.fillMaxWidth(),
+                    enabled = !uiState.isLoading
+                ) {
+                    if (uiState.busyArea == EditGameFilesViewModel.BusyArea.PROFILE_PUSH) {
+                        CircularProgressIndicator(modifier = Modifier.size(18.dp), strokeWidth = 2.dp)
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(stringResource(R.string.gf_working))
+                    } else {
+                        Text(stringResource(R.string.gf_apply_profile))
+                    }
+                }
+                // Games with a resettable file only (config's resetFilePath): deleting it lets
+                // the game regenerate from defaults — the revert for every push above. The
+                // label is the game's own file name; Genshin has no reset and hides the button.
+                if (uiState.canReset && uiState.configFileLabel != null) {
+                    Spacer(modifier = Modifier.height(8.dp))
+                    CatsmokerOutlinedButton(
+                        onClick = onResetSave,
+                        modifier = Modifier.fillMaxWidth(),
+                        enabled = !uiState.isLoading,
+                        colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.error)
+                    ) {
+                        if (uiState.busyArea == EditGameFilesViewModel.BusyArea.RESET) {
+                            CircularProgressIndicator(modifier = Modifier.size(18.dp), strokeWidth = 2.dp)
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(stringResource(R.string.gf_working))
+                        } else {
+                            Text(stringResource(R.string.gf_reset_file, uiState.configFileLabel).uppercase())
+                        }
+                    }
+                }
+                // Every overwrite above takes a timestamped backup first; this is the way
+                // back to any of them. Available for every game, unlike the reset.
+                Spacer(modifier = Modifier.height(8.dp))
+                CatsmokerOutlinedButton(
+                    onClick = onRestoreBackup,
+                    modifier = Modifier.fillMaxWidth(),
+                    enabled = !uiState.isLoading
+                ) {
+                    if (uiState.busyArea == EditGameFilesViewModel.BusyArea.RESTORE ||
+                        uiState.busyArea == EditGameFilesViewModel.BusyArea.BACKUP_DELETE
+                    ) {
+                        CircularProgressIndicator(modifier = Modifier.size(18.dp), strokeWidth = 2.dp)
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(stringResource(R.string.gf_working))
+                    } else {
+                        Text(stringResource(R.string.gf_restore_backup))
+                    }
+                }
+            }
+        }
+
+        // Custom upload only exists for games whose config is an opaque save blob the
+        // user might bring from elsewhere (PUBG's Active.sav) — hidden for templated
+        // configs like Genshin, where a dropped-in file would break the model lookup.
+        if (uiState.canUploadCustom) {
+            Spacer(modifier = Modifier.height(12.dp))
+
+            SectionCard {
+                Column {
+                    Text(stringResource(R.string.gf_custom_upload), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary)
+                    if (uiState.busyArea == EditGameFilesViewModel.BusyArea.CUSTOM_UPLOAD) {
+                        Spacer(modifier = Modifier.height(8.dp))
+                        SquigglyProgressBar(progress = null, animate = true, modifier = Modifier.fillMaxWidth())
+                    }
+                    Spacer(modifier = Modifier.height(10.dp))
+                    Text(uiState.selectedItemText, fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f))
+                    Spacer(modifier = Modifier.height(12.dp))
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        CatsmokerOutlinedButton(onClick = onSelectFile, modifier = Modifier.weight(1f), enabled = !uiState.isLoading) { Text(stringResource(R.string.gf_select)) }
+                        CatsmokerButton(onClick = onUploadFile, modifier = Modifier.weight(1f), enabled = !uiState.isLoading) {
+                            if (uiState.busyArea == EditGameFilesViewModel.BusyArea.CUSTOM_UPLOAD) {
+                                CircularProgressIndicator(modifier = Modifier.size(18.dp), strokeWidth = 2.dp)
+                            } else {
+                                Text(stringResource(R.string.gf_upload))
+                            }
+                        }
+                    }
+                    if (uiState.selectedItemText != stringResource(R.string.selected_item_placeholder)) {
+                        Spacer(modifier = Modifier.height(4.dp))
+                        TextButton(onClick = onClearSelection, modifier = Modifier.align(Alignment.CenterHorizontally)) {
+                            Text(stringResource(R.string.gf_clear_selection), color = Color.Red.copy(alpha = 0.7f))
+                        }
+                    }
+                }
+            }
+        }
+
+        // The inline save editor: read-modify-write of the ints the game's own save
+        // carries — the closed-source references' core mechanism, without replacing
+        // the file. Only for the game whose layout is verified ([canPatchSave]).
+        if (uiState.canPatchSave) {
+            Spacer(modifier = Modifier.height(12.dp))
+            PubgSaveEditorSection(
+                uiState = uiState,
+                onReadSave = onReadSave,
+                onSaveEditSelected = onSaveEditSelected,
+                onApplySaveEdits = onApplySaveEdits
+            )
+        }
+    }
+}
+
+/**
  * The GAME NOT FOUND card, shown in place of every working section when the probe confirms
  * the game's package is absent. Names the exact package the probe checked (a one-size-fits-all
  * "no PUBG-family package" line once claimed this under Genshin, which never looks at a PUBG
  * package), re-checks on tap for the just-installed case, and offers the store listing.
+ * The small secondary "Show anyway" [TextButton] (offered only when [onShowAnyway] is
+ * non-null, i.e. the editor is still hidden) reveals the profile editor below this card
+ * without pretending the game is installed — the card stays visible either way.
  */
 @Composable
 private fun GameNotFoundCard(
     gameName: String,
     packageName: String?,
     onRecheck: () -> Unit,
-    onOpenStore: (String) -> Unit
+    onOpenStore: (String) -> Unit,
+    onShowAnyway: (() -> Unit)? = null
 ) {
     SectionCard {
         Column {
@@ -728,6 +786,15 @@ private fun GameNotFoundCard(
                     CatsmokerButton(onClick = { onOpenStore(packageName) }, modifier = Modifier.weight(1f)) {
                         Text(stringResource(R.string.gf_open_play_store))
                     }
+                }
+            }
+            if (onShowAnyway != null) {
+                Spacer(modifier = Modifier.height(4.dp))
+                TextButton(
+                    onClick = onShowAnyway,
+                    modifier = Modifier.align(Alignment.CenterHorizontally)
+                ) {
+                    Text(stringResource(R.string.gf_show_anyway))
                 }
             }
         }

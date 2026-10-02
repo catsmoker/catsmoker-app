@@ -12,11 +12,13 @@ class DeviceCapabilitiesTest {
 
     private fun info(
         manufacturer: String = "Google",
+        brand: String = "google",
         hardware: String = "google",
         board: String = "lynx",
         sdk: Int = 34
     ) = DeviceCapabilities.DeviceInfo(
         manufacturer = manufacturer,
+        brand = brand,
         hardware = hardware,
         board = board,
         sdkInt = sdk
@@ -26,6 +28,10 @@ class DeviceCapabilitiesTest {
     fun detectsVivoFamily() {
         assertTrue(DeviceCapabilities.detect(info(manufacturer = "vivo")).isVivo)
         assertTrue(DeviceCapabilities.detect(info(manufacturer = "iQOO")).isVivo)
+        // Either field can carry the vendor name — the established isVivoOrIqoo rule.
+        assertTrue(
+            DeviceCapabilities.detect(info(manufacturer = "unknown", brand = "vivo")).isVivo
+        )
         assertFalse(DeviceCapabilities.detect(info()).isVivo)
     }
 

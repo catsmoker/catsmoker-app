@@ -7,7 +7,7 @@ Requirements and commands for building CatSmoker locally.
 - **Android Studio** (stable).
 - **JDK 17**.
 - **Android SDK** with the platform/NDK versions referenced below.
-- **Android NDK** `27.0.12077973` (set in `app/build.gradle.kts`).
+- **Android NDK** `28.2.13676358` (set in `app/build.gradle.kts`).
 
 ## Key versions
 
@@ -21,7 +21,7 @@ Requirements and commands for building CatSmoker locally.
 | Target SDK  | 37               |
 | Compile SDK | 37               |
 | Version     | 2.0.2 (code 8)   |
-| NDK         | 27.0.12077973    |
+| NDK         | 28.2.13676358    |
 
 ## Build
 
@@ -52,7 +52,7 @@ interventions, and related utilities.
 ## Lint
 
 Lint is configured **not** to abort the build on errors (`abortOnError = false`,
-`checkReleaseBuilds = false`) so minor warnings never block a build. You can
+`checkReleaseBuilds = true`) so minor warnings never block a build. You can
 still run it explicitly:
 
 ```bash

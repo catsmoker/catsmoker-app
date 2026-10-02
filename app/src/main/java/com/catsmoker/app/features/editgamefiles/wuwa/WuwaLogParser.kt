@@ -13,8 +13,11 @@ package com.catsmoker.app.features.editgamefiles.wuwa
  * `r.RHI` cvar → per-line flags). [WuwaForbiddenCvars.isForbidden] supplies the forbidden
  * count — the app already ships that key list verbatim from the same reference.
  *
- * Deliberately not ported: `parseBattleStats` (Chinese in-game event strings for a battle
- * statistics screen this app does not have). The Convene-URL extraction the reference runs
+ * Deliberately not ported as a separate screen: `parseBattleStats` (Chinese in-game event
+ * strings) lives in [WuwaBattleStats] instead, parsed from the same decrypted text in the same
+ * log tap (`WuwaConfigViewModel.analyzeGameLog`) and rendered in the `GameLogCard` battle
+ * section — so the battle-stats surface IS reachable from the UI, just not as its own
+ * screen. The Convene-URL extraction the reference runs
  * over the same decrypted text lives in [WuwaGacha.extractConveneUrl] instead — next to the
  * pool table and pity math that consume it — so both readers share one regex without a
  * second copy to drift.

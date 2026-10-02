@@ -432,6 +432,12 @@ class SpoofRepository @Inject constructor(
         addProp("screen.width", if (profile.screenWidth > 0) profile.screenWidth.toString() else "")
         addProp("screen.height", if (profile.screenHeight > 0) profile.screenHeight.toString() else "")
         addProp("screen.density", if (profile.screenDensity > 0) profile.screenDensity.toString() else "")
+        // The metrics gate: explicit opt-in, blank/off by default. Rendered as one of our own
+        // profile keys (never a system property), read only by the display-metrics hooks —
+        // absent means the target keeps its real geometry even with screen.* values present.
+        if (profile.applyScreenMetrics) {
+            addProp(LSPosedConfig.KEY_APPLY_SCREEN_METRICS, "1")
+        }
         // Rendered as one of our own profile keys (never a system property), read only by the
         // Display hook — zero means the hook is not installed for this profile at all, the same
         // blank-means-off contract the GPU strings follow.
@@ -623,7 +629,11 @@ class SpoofRepository @Inject constructor(
                 val winner = pickRateCandidate(ladder, panelPeakHz) ?: return null
                 return data.profiles.firstOrNull { it.id == winner.profileId }?.profile
             }
-            val profileId = data.assignments[packageName] ?: return null
+            // Exact assignments first; wildcard families (`com.pubg.*`) second, so a
+            // per-variant assignment always beats the family it sits in.
+            val profileId = data.assignments[packageName]
+                ?: AssignmentMatcher.match(data.assignments, packageName)
+                ?: return null
             return data.profiles.firstOrNull { it.id == profileId }?.profile
         }
 

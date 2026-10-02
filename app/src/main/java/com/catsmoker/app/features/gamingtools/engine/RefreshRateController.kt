@@ -101,6 +101,18 @@ class RefreshRateController @Inject constructor(
 
     private suspend fun putVerified(key: String, value: String): Boolean {
         shellRunner.execSafeResult("settings", "put", "system", key, value)
+        if (isVerified(key, value)) return true
+        // The shell path missed (typically no privilege on a legacy device): with the
+        // WRITE_SETTINGS grant the app writes the setting directly instead of through the
+        // shell — the reference's `<=29 putInt` fallback, modernized with no version gate,
+        // since the grant works on every version this app supports. Without the grant there
+        // is nothing to fall back to.
+        if (!Settings.System.canWrite(context)) return false
+        runCatching { Settings.System.putString(context.contentResolver, key, value) }
+        return isVerified(key, value)
+    }
+
+    private fun isVerified(key: String, value: String): Boolean {
         val readBack = readRaw(key) ?: return false
         val actual = readBack.toFloatOrNull()
         val wanted = value.toFloatOrNull()

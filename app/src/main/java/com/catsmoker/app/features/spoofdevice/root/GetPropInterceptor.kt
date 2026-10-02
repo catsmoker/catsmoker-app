@@ -25,7 +25,7 @@ internal class GetPropInterceptor(
     private val properties: () -> Map<String, String>
 ) {
     /** What a parsed command line is asking for. */
-    private sealed interface Request {
+    internal sealed interface Request {
         /** Bare `getprop`, which prints every property. */
         object FullDump : Request
         data class SingleKey(val key: String) : Request
@@ -45,19 +45,49 @@ internal class GetPropInterceptor(
         }
 
         runCatching { XposedHelpers.findAndHookMethod(ProcessBuilder::class.java, "start", hook) }
+        // Every Runtime.exec shape: any unhooked one reopens the SystemProperties-vs-subprocess
+        // disagreement this interceptor exists to close. Each install is individually guarded.
         runCatching {
             XposedHelpers.findAndHookMethod(
                 Runtime::class.java, "exec",
                 Array<String>::class.java, Array<String>::class.java, File::class.java, hook
             )
         }
+        runCatching {
+            XposedHelpers.findAndHookMethod(Runtime::class.java, "exec", String::class.java, hook)
+        }
+        runCatching {
+            XposedHelpers.findAndHookMethod(
+                Runtime::class.java, "exec", String::class.java, Array<String>::class.java, hook
+            )
+        }
+        runCatching {
+            XposedHelpers.findAndHookMethod(Runtime::class.java, "exec", Array<String>::class.java, hook)
+        }
+        runCatching {
+            XposedHelpers.findAndHookMethod(
+                Runtime::class.java, "exec", Array<String>::class.java, Array<String>::class.java, hook
+            )
+        }
+        runCatching {
+            XposedHelpers.findAndHookMethod(
+                Runtime::class.java, "exec",
+                String::class.java, Array<String>::class.java, File::class.java, hook
+            )
+        }
     }
 
-    /** Reads the argv out of whichever of the two hooked methods fired. */
+    /** Reads the argv out of whichever of the hooked methods fired. */
     @Suppress("UNCHECKED_CAST")
     private fun commandOf(param: XC_MethodHook.MethodHookParam): List<String>? {
         (param.args.getOrNull(0) as? Array<*>)?.let { argv ->
             return argv.filterIsInstance<String>()
+        }
+        // The single-string Runtime.exec forms (`exec("getprop ro.product.model")`): split to
+        // argv so the same parser sees them. Anything else falls through to the
+        // ProcessBuilder shape below.
+        (param.args.getOrNull(0) as? String)?.let { command ->
+            return command.trim().split(WHITESPACE).filter { it.isNotEmpty() }
         }
         return runCatching { XposedHelpers.callMethod(param.thisObject, "command") as? List<String> }
             .getOrNull()
@@ -78,6 +108,13 @@ internal class GetPropInterceptor(
         }
         return null
     }
+
+    /** Command classification shared with tests: every exec shape funnels through here. */
+    internal fun classifyCommand(command: List<String>): Request? = parse(command)
+
+    /** Single-string commands (`Runtime.exec(String)`) split to argv before classifying. */
+    internal fun classifyShellCommand(command: String): Request? =
+        parse(command.trim().split(WHITESPACE).filter { it.isNotEmpty() })
 
     private fun parseShellLine(line: String): Request? {
         val parts = line.trim().split(WHITESPACE).filter { it.isNotEmpty() }

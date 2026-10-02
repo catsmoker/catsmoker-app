@@ -114,7 +114,7 @@ object WuWaConfigGenerator {
     )
 
     /** The options the generator branches on — the reference's `GeneratorOptions`, minus the
-     *  options belonging to subsystems not ported (cvar DB, log import, retune). */
+     *  options belonging to subsystems not ported (log import, per-device retune). */
     data class Options(
         val fps: Int = 60,
         val unlock120: Boolean = false,
@@ -136,7 +136,21 @@ object WuWaConfigGenerator {
         val generateHardware: Boolean = false,
         val allowRestrictedCvars: Boolean = true,
         val enableGSR: Boolean = false,
-        val experimentalCvars: Boolean = false
+        val experimentalCvars: Boolean = false,
+        /** Run the CVar-database hygiene pass over Engine.ini (needs [cvarDb] supplied). */
+        val optimizeWithCvarDb: Boolean = false,
+        /**
+         * Merge the analyzed log's live cvars into Engine.ini (see [mergeLogCvars]).
+         * Only cvars the preset never emitted are appended; generated keys are never
+         * clobbered. Needs a decrypted log analysis supplied as [generate] input —
+         * without one there is nothing to merge, never an empty promise.
+         */
+        val importFromLog: Boolean = false,
+        /**
+         * User-supplied `key=value` pairs rewritten into Engine.ini after the builders
+         * run (see [applyWuwaCvarOverrides]). Empty by default: no override, no change.
+         */
+        val cvarOverrides: Map<String, String> = emptyMap()
     )
 
     enum class GameMode(val label: String) {
@@ -164,7 +178,13 @@ object WuWaConfigGenerator {
         val deviceProfiles: String,
         val gameUserSettings: String,
         val scalability: String = "",
-        val hardware: String = ""
+        val hardware: String = "",
+        /**
+         * Accepted/rejected/RT-flagged cvars for Engine.ini, computed from the
+         * pre/post-strip snapshots inside [generateWithCorePaths]. Empty (the
+         * default) means "not computed", never "zero of everything".
+         */
+        val engineReport: WuwaGenerationReport.FileReport = WuwaGenerationReport.FileReport()
     ) {
         /** File name to content, deployment order. Blank entries are left out. */
         fun asMap(): Map<String, String> = buildMap {
@@ -181,16 +201,20 @@ object WuWaConfigGenerator {
      * reference). [existingEngineIni] is the `Engine.ini` already on the device when it could
      * be read: its `[Core.System]` paths are reused verbatim, because that list tracks the
      * game's own installed content plugins and a stale copy could break content resolution.
+     * [cvarDb] feeds the optional CVar-database hygiene pass (see [Options.optimizeWithCvarDb]);
+     * null or unloaded means the pass is skipped, never faked.
      */
     fun generate(
         preset: String,
         opts: Options,
         deviceInfo: DeviceInfo,
-        existingEngineIni: String? = null
+        existingEngineIni: String? = null,
+        cvarDb: WuWaCvarDatabase? = null,
+        logCvars: Map<String, String> = emptyMap()
     ): GeneratedConfigs {
         val p = PRESETS[preset] ?: PRESETS.getValue("balanced")
         val corePaths = extractCoreSystemPaths(existingEngineIni)
-        return generateWithCorePaths(p, if (preset in PRESETS) preset else "balanced", opts, deviceInfo, corePaths)
+        return generateWithCorePaths(p, if (preset in PRESETS) preset else "balanced", opts, deviceInfo, corePaths, cvarDb, logCvars)
     }
 
     internal fun generateWithCorePaths(
@@ -198,17 +222,32 @@ object WuWaConfigGenerator {
         preset: String,
         opts: Options,
         deviceInfo: DeviceInfo,
-        corePaths: List<String>
+        corePaths: List<String>,
+        cvarDb: WuWaCvarDatabase? = null,
+        logCvars: Map<String, String> = emptyMap()
     ): GeneratedConfigs {
         var engine = buildEngineIni(p, preset, opts, deviceInfo, corePaths)
+        if (opts.importFromLog && logCvars.isNotEmpty()) {
+            engine = mergeLogCvars(engine, logCvars)
+        }
         var deviceProfiles = buildDeviceProfilesIni(p, preset, opts, deviceInfo)
         val gameUserSettings = buildGameUserSettingsIni(p, opts, deviceInfo)
         var scalability = if (opts.generateScalability) buildScalabilityIni(p) else ""
         var hardware = if (opts.generateHardware) buildHardwareIni(p, preset, opts, deviceInfo) else ""
 
-        // Same post-processing order as the reference: dedup, then the forbidden-cvar strip
-        // over all five files (only when restricted cvars are disallowed).
+        // Same post-processing order as the reference: user overrides first, then
+        // CVar-database hygiene, then dedup, then the forbidden-cvar strip over all
+        // five files (only when restricted cvars are disallowed). Overrides land
+        // before the strip on purpose, so a forbidden override is still stripped
+        // unless restricted cvars are explicitly allowed.
+        engine = applyWuwaCvarOverrides(engine, opts.cvarOverrides)
+        if (opts.optimizeWithCvarDb && cvarDb != null) {
+            engine = cvarDb.optimizeIniText(engine)
+        }
         engine = deduplicateIniText(engine)
+        // Snapshot for the generation report BEFORE the strip: the report compares
+        // exactly these two texts, so rejected means "removed by this strip".
+        val preStripEngine = engine
         if (!opts.allowRestrictedCvars) {
             engine = WuWaForbiddenCvars.stripForbiddenCvars(engine)
             deviceProfiles = WuWaForbiddenCvars.stripForbiddenCvars(deviceProfiles)
@@ -220,7 +259,8 @@ object WuWaConfigGenerator {
                 deviceProfiles = deviceProfiles,
                 gameUserSettings = strippedGus,
                 scalability = scalability,
-                hardware = hardware
+                hardware = hardware,
+                engineReport = WuwaGenerationReport.report(preStripEngine, engine)
             )
         }
         return GeneratedConfigs(
@@ -228,7 +268,8 @@ object WuWaConfigGenerator {
             deviceProfiles = deviceProfiles,
             gameUserSettings = gameUserSettings,
             scalability = scalability,
-            hardware = hardware
+            hardware = hardware,
+            engineReport = WuwaGenerationReport.report(preStripEngine, engine)
         )
     }
 
@@ -294,7 +335,7 @@ object WuWaConfigGenerator {
         lines.addAll(buildEffectsParticlesSection(p))
         lines.addAll(buildWaterReflectionSection(p, opts, dt))
         lines.addAll(buildScreenSpaceEffectsSection(p, opts, dt))
-        lines.addAll(buildEnvironmentSection(p, dt))
+        lines.addAll(buildEnvironmentSection(p, dt, opts))
         lines.addAll(buildNpcWorldSection(p, dt, opts))
         lines.addAll(buildAdvancedLodCullingSection(p))
         lines.addAll(buildAnimationBlueprintSection(p))
@@ -541,9 +582,19 @@ object WuWaConfigGenerator {
         return lines
     }
 
-    private fun buildEnvironmentSection(p: PresetProfile, dt: DeviceTier): List<String> {
+    private fun buildEnvironmentSection(p: PresetProfile, dt: DeviceTier, opts: Options): List<String> {
         val lines = mutableListOf<String>()
         lines.add("; ── ENVIRONMENT ──────────────────────────────────────")
+        // The reference's own fog switch, verbatim: disabling fog writes the pair off, leaving
+        // it on writes the pair on. Last-wins dedup against the perf-tweaks section below keeps
+        // the low presets' forced-off standing, whichever way this switch points.
+        if (opts.fog) {
+            lines.add("r.Fog=0")
+            lines.add("r.KuroVolumeCloudEnable=0")
+        } else {
+            lines.add("r.Fog=1")
+            lines.add("r.KuroVolumeCloudEnable=1")
+        }
         lines.add("r.Kuro.SuperFarFogGlobalDistanceScale=${if (p.q1) 1 else 0}")
         lines.add("r.LightFunctionQuality=1")
         lines.add("r.Kuro.LightFunction=1")
@@ -1338,6 +1389,129 @@ object WuWaConfigGenerator {
         return lines.filterIndexed { i, _ -> i !in toRemove }.joinToString("\n")
     }
 
+    /**
+     * Rewrites [overrides] into a generated INI text, returning it unchanged when empty.
+     *
+     * Ported from the reference's `ConfigGenUtil.applyCvarOverrides` (read in full),
+     * with one deliberate divergence: key matching is case-insensitive, like
+     * [deduplicateIniText] two dozen lines above (UE cvars are case-insensitive,
+     * and a case-mismatched override that silently no-ops would be a footgun).
+     * Every occurrence is rewritten, not just the first — dedup keeps the LAST
+     * occurrence, so a first-only rewrite would be silently discarded for keys the
+     * builders emit more than once. Unknown keys are ignored: overrides retune
+     * what the generator emitted, they never inject new lines (injection would
+     * bypass the forbidden-cvar strip, which runs after this merge).
+     */
+    internal fun applyWuwaCvarOverrides(
+        text: String,
+        overrides: Map<String, String>
+    ): String {
+        if (overrides.isEmpty()) return text
+        val lines = text.lines().toMutableList()
+        val indicesByKey = mutableMapOf<String, MutableList<Int>>()
+        for (i in lines.indices) {
+            val trimmed = lines[i].trim()
+            val eq = trimmed.indexOf('=')
+            if (eq > 0) {
+                val key = trimmed.substring(0, eq).trim().lowercase()
+                indicesByKey.getOrPut(key) { mutableListOf() }.add(i)
+            }
+        }
+        for ((key, newValue) in overrides) {
+            val idxs = indicesByKey[key.trim().lowercase()] ?: continue
+            for (idx in idxs) {
+                val raw = lines[idx]
+                val rawEq = raw.indexOf('=')
+                val existingVal = raw.substring(rawEq + 1).trim()
+                if (existingVal != newValue) {
+                    lines[idx] = raw.substring(0, rawEq + 1) + newValue
+                }
+            }
+        }
+        return lines.joinToString("\n")
+    }
+
+    /**
+     * Parses a user-typed `key=value` block (one per line) into an overrides map.
+     * Blank lines, `;` comments, and malformed lines (no `=`, empty key or value)
+     * are refused, never stored; repeats resolve last-wins. Never throws.
+     */
+    internal fun parseCvarOverrides(text: String): Map<String, String> {
+        val out = linkedMapOf<String, String>()
+        for (rawLine in text.lines()) {
+            val line = rawLine.trim()
+            if (line.isEmpty() || line.startsWith(";")) continue
+            val eq = line.indexOf('=')
+            if (eq <= 0) continue
+            val key = line.substring(0, eq).trim()
+            val value = line.substring(eq + 1).trim()
+            if (key.isEmpty() || value.isEmpty()) continue
+            out[key] = value
+        }
+        return out
+    }
+
+    /**
+     * Merges a decrypted log's live cvars into generated Engine.ini (see
+     * [Options.importFromLog]).
+     *
+     * Ported from the reference's `ConfigGenUtil.mergeWithLogCvars` (read in full):
+     * only log cvars in the same prefix family the generator emits ([CVAR_PREFIXES])
+     * and absent from the generated text are appended, under a marker comment after
+     * `[SystemSettings]`, followed by a dedup pass. Generated keys are never
+     * clobbered — the log supplements the preset, it does not second-guess it —
+     * and the forbidden strip downstream still applies to merged lines.
+     */
+    internal fun mergeLogCvars(
+        generatedIni: String,
+        logCvars: Map<String, String>
+    ): String {
+        if (logCvars.isEmpty()) return generatedIni
+        val generatedKeys = extractCvarNames(generatedIni).map { it.lowercase() }.toSet()
+        val logLines = mutableListOf<String>()
+        for ((key, value) in logCvars) {
+            val kl = key.lowercase()
+            if (CVAR_PREFIXES.any { kl.startsWith(it) } && kl !in generatedKeys) {
+                logLines.add("$key=$value")
+            }
+        }
+        if (logLines.isEmpty()) return generatedIni
+        val lines = generatedIni.lines().toMutableList()
+        val ssIdx = lines.indexOfLast { it.trim().equals("[SystemSettings]", ignoreCase = true) }
+        val insertIdx = if (ssIdx >= 0) {
+            var after = ssIdx + 1
+            while (after < lines.size && lines[after].isBlank()) after++
+            after
+        } else {
+            lines.size
+        }
+        lines.addAll(insertIdx, listOf("", "; ── IMPORTED FROM Client.log (not in preset) ─────") + logLines + listOf(""))
+        return deduplicateIniText(lines.joinToString("\n"))
+    }
+
+    /**
+     * Cvar key names in an INI text, verbatim from the reference's
+     * `ConfigGenUtil.extractCvarNames` — same skips, same `+CVars=` handling,
+     * same prefix family ([CVAR_PREFIXES]), original spelling kept.
+     */
+    internal fun extractCvarNames(iniText: String): Set<String> {
+        val names = linkedSetOf<String>()
+        for (line in iniText.lines()) {
+            val trimmed = line.trim()
+            if (trimmed.isEmpty() || trimmed.startsWith(";") || trimmed.startsWith("#") ||
+                trimmed.startsWith("//") || trimmed.startsWith("[")
+            ) {
+                continue
+            }
+            val kv = trimmed.removePrefix("+CVars=").removePrefix("-CVars=").trim()
+            val eq = kv.indexOf('=')
+            if (eq <= 0) continue
+            val key = kv.substring(0, eq).trim()
+            if (CVAR_PREFIXES.any { key.lowercase().startsWith(it) }) names.add(key)
+        }
+        return names
+    }
+
     /** `"1440 x 3200"`, `"1440*3200"` and `"1440x3200"` all parse; anything else is null. */
     internal fun parseResolution(res: String?): Pair<Int, Int>? {
         if (res.isNullOrBlank()) return null
@@ -1348,7 +1522,12 @@ object WuWaConfigGenerator {
         return w to h
     }
 
-    private val CVAR_PREFIXES = listOf(
+    /**
+     * The console-variable namespaces, shared with the dedup pass and the CVar-database
+     * hygiene pass so section keys like `Paths=` can never be mistaken for unknown cvars.
+     * Verbatim from the reference's `ConfigGenUtil.CVAR_PREFIXES`.
+     */
+    internal val CVAR_PREFIXES = listOf(
         "a.", "bbm.", "compat.", "cook.", "fx.", "foliage.", "gc.", "grass.",
         "kuro.", "lod.", "n.", "niagara.", "r.", "s.", "sg.", "slate.",
         "t.", "tick.", "vr.", "wp."

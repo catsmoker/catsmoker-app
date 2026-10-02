@@ -74,7 +74,15 @@ android {
         checkReleaseBuilds = true
     }
 
-    ndkVersion = "27.0.12077973"
+    ndkVersion = "28.2.13676358"
+
+    // In-app native bridge (M152 NDK spike): ndk-build, whose scripts ship inside the NDK
+    // itself, so no CMake SDK component is needed. The library is one C file today.
+    externalNativeBuild {
+        ndkBuild {
+            path("src/main/jni/Android.mk")
+        }
+    }
 
     packaging {
         resources {

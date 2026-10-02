@@ -15,6 +15,7 @@ object DeviceCapabilities {
 
     data class DeviceInfo(
         val manufacturer: String = "",
+        val brand: String = "",
         val hardware: String = "",
         val board: String = "",
         val sdkInt: Int = 0
@@ -36,11 +37,17 @@ object DeviceCapabilities {
 
     fun detect(info: DeviceInfo): Flags {
         val m = info.manufacturer.trim().lowercase()
+        val b = info.brand.trim().lowercase()
         val hw = info.hardware.trim().lowercase()
         val board = info.board.trim().lowercase()
         val silicon = "$hw $board"
+        // Either field can carry the vendor name while the other carries something
+        // else — same rule `isVivoOrIqoo()` always used, now in one place.
+        val vivoish = m == "vivo" || m == "iqoo" ||
+            m.contains("vivo") || m.contains("iqoo") ||
+            b.contains("vivo") || b.contains("iqoo")
         return Flags(
-            isVivo = m == "vivo" || m == "iqoo",
+            isVivo = vivoish,
             isSamsung = m == "samsung",
             isXiaomi = m == "xiaomi" || m == "redmi" || m == "poco" || m == "black shark",
             isQualcomm = "qcom" in silicon || QUALCOMM_BOARDS.any { it in silicon } ||

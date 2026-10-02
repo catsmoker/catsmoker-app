@@ -31,7 +31,13 @@ import com.catsmoker.app.system.config.AppearanceStore
 import com.catsmoker.app.system.config.LocaleHelper
 
 @Composable
-fun SettingsRoute(onBack: () -> Unit, onOpenPermissions: () -> Unit, onOpenLogs: () -> Unit) {
+fun SettingsRoute(
+    onBack: () -> Unit,
+    onOpenPermissions: () -> Unit,
+    onOpenLogs: () -> Unit,
+    onOpenPrivacy: () -> Unit,
+    onOpenTerms: () -> Unit
+) {
     val viewModel: SettingsViewModel = hiltViewModel()
     val uiState by viewModel.uiState.collectAsState()
     val context = LocalContext.current
@@ -67,6 +73,8 @@ fun SettingsRoute(onBack: () -> Unit, onOpenPermissions: () -> Unit, onOpenLogs:
         onLanguageChanged = viewModel::onLanguageChanged,
         onOpenPermissions = onOpenPermissions,
         onOpenLogs = onOpenLogs,
+        onOpenPrivacy = onOpenPrivacy,
+        onOpenTerms = onOpenTerms,
         onBack = onBack,
         onCheckUpdates = viewModel::onCheckUpdates
     )
@@ -96,6 +104,8 @@ fun SettingsScreen(
     onLanguageChanged: (String) -> Unit,
     onOpenPermissions: () -> Unit,
     onOpenLogs: () -> Unit,
+    onOpenPrivacy: () -> Unit,
+    onOpenTerms: () -> Unit,
     onBack: () -> Unit,
     onCheckUpdates: () -> Unit
 ) {
@@ -140,6 +150,12 @@ fun SettingsScreen(
             Text(stringResource(R.string.sys_section_general), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(start = 4.dp, bottom = 8.dp))
             SectionCard {
                 SettingsToggle(stringResource(R.string.sys_ads_title), adsEnabled, onAdsToggled)
+                Text(
+                    stringResource(R.string.sys_ads_sub),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(top = 4.dp)
+                )
             }
 
             Spacer(modifier = Modifier.height(24.dp))
@@ -181,6 +197,31 @@ fun SettingsScreen(
                 isFullWidth = true,
                 showChevron = true,
                 icon = { Icon(Icons.Default.Terminal, null) }
+            )
+
+            Spacer(modifier = Modifier.height(24.dp))
+            Text(stringResource(R.string.legal_section_title), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(start = 4.dp, bottom = 8.dp))
+            QuickActionButton(
+                title = stringResource(R.string.legal_privacy_title),
+                subtitle = stringResource(R.string.legal_privacy_subtitle),
+                iconContainerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f),
+                iconContentColor = MaterialTheme.colorScheme.primary,
+                onClick = onOpenPrivacy,
+                isFullWidth = true,
+                showChevron = true,
+                icon = { Icon(Icons.Default.Policy, null) }
+            )
+
+            Spacer(modifier = Modifier.height(12.dp))
+            QuickActionButton(
+                title = stringResource(R.string.legal_terms_title),
+                subtitle = stringResource(R.string.legal_terms_subtitle),
+                iconContainerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f),
+                iconContentColor = MaterialTheme.colorScheme.primary,
+                onClick = onOpenTerms,
+                isFullWidth = true,
+                showChevron = true,
+                icon = { Icon(Icons.Default.Description, null) }
             )
         }
     }
@@ -279,6 +320,8 @@ fun SettingsPreview() {
             onLanguageChanged = {},
             onOpenPermissions = {},
             onOpenLogs = {},
+            onOpenPrivacy = {},
+            onOpenTerms = {},
             onBack = {},
             onCheckUpdates = {}
         )

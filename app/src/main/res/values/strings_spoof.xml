@@ -21,6 +21,7 @@
     <string name="spoof_magisk_desc">Flashable ZIP of your first profile. Carries the model identity only — kept minimal so a flash cannot boot-loop the device. Applies device-wide, so Safe Mode exclusions do not apply. After a reboot the module reports which properties actually landed, and its action button opens a WebUI. This app\'s own APK rides along, so the module can restore the app after it is gone.</string>
     <string name="spoof_root_manager_title">Open Root Manager</string>
     <string name="spoof_root_manager_desc">Access Magisk/KernelSU/APatch.</string>
+    <string name="spoof_root_manager_need">Needs root access.</string>
     <!-- Profiles list -->
     <string name="spoof_profiles_title">Spoof Profiles</string>
     <string name="spoof_profiles_subtitle">Manage your virtual device identities.</string>
@@ -62,6 +63,8 @@
     <string name="spoof_field_density">Density</string>
     <string name="spoof_field_refresh_rate">Refresh Rate (Hz)</string>
     <string name="spoof_refresh_note">Spoofs the reported rate and mode list inside the target app. Resident hook — blank means off.</string>
+    <string name="spoof_apply_metrics">Apply screen size to target</string>
+    <string name="spoof_metrics_note">Rewrites display metrics and size class inside the target app. Resident hooks — off means the fields above stay editor-only.</string>
     <string name="spoof_group_network">Network &amp; Region</string>
     <string name="spoof_action_roll_network">Roll Network &amp; Region</string>
     <string name="spoof_field_operator_name">Operator Name</string>
@@ -108,6 +111,8 @@
     <string name="spoof_diag_tags">Tags</string>
     <string name="spoof_diag_type">Type</string>
     <string name="spoof_diag_unknown">Unknown</string>
+    <string name="spoof_diag_native_title">Native bridge</string>
+    <string name="spoof_diag_native_bridge">In-app bridge</string>
     <!-- ViewModel toasts -->
     <string name="spoof_error_save">Could not save profiles: %1$s</string>
     <string name="spoof_error_write_failed">write failed</string>

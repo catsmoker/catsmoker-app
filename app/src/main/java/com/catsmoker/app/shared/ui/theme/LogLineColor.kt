@@ -1,6 +1,7 @@
 package com.catsmoker.app.shared.ui.theme
 
 import androidx.compose.ui.graphics.Color
+import com.catsmoker.app.shared.util.LogcatEntryParser
 
 /**
  * The colour a log line is drawn in, chosen from the line's own text.
@@ -19,6 +20,16 @@ import androidx.compose.ui.graphics.Color
 val LogTerminalBackground = Color(0xFF15181C)
 
 fun logLineColor(line: String): Color {
+    // A parsed threadtime level beats every heuristic: it is the platform's own severity for
+    // this line, so a debug line whose message merely mentions "error" cannot misfire red.
+    // Unparseable lines (brief format, our own shell output) keep the heuristics below.
+    when (LogcatEntryParser.levelOf(line)) {
+        'E', 'F' -> return Color(0xFFFF6B6B)
+        'W' -> return Color(0xFFFFD740)
+        'I' -> return Color(0xFF40C4FF)
+        'D' -> return Color(0xFFCFD8DC)
+        'V' -> return Color(0xFFF5F5F5)
+    }
     val upperLine = line.uppercase()
     return when {
         // Logcat tags

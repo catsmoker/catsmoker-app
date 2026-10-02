@@ -7,16 +7,21 @@ import android.content.IntentFilter
 import android.net.TrafficStats
 import android.os.BatteryManager
 import android.os.Build
+import com.catsmoker.app.shared.util.DeviceCapabilities
 import android.os.PowerManager
 import android.util.Log
+import com.catsmoker.app.features.gamingtools.engine.DisplayRefreshRateProvider
+import com.catsmoker.app.features.gamingtools.engine.KernelInfo
 import com.catsmoker.app.shared.data.model.FpsSource
 import com.catsmoker.app.shared.data.model.MetricReadStatus
 import com.catsmoker.app.shared.data.model.MetricsState
 import com.catsmoker.app.features.gamingtools.tools.dns.PingParser
 import com.catsmoker.app.features.main.engine.parsers.CpuInfoTopParser
 import com.catsmoker.app.features.main.engine.parsers.CpuStatParser
+import com.catsmoker.app.features.main.engine.parsers.FrameStatsAggregator
 import com.catsmoker.app.features.main.engine.parsers.ThermalHeadroom
 import com.catsmoker.app.features.main.engine.parsers.ThermalServiceParser
+import com.catsmoker.app.features.main.engine.parsers.clampFpsSample
 import com.catsmoker.app.system.shell.ShellRunner
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -32,7 +37,8 @@ import kotlin.time.Duration.Companion.seconds
 
 class MetricsEngine(
     private val context: Context,
-    private val shellRunner: ShellRunner
+    private val shellRunner: ShellRunner,
+    private val refreshRates: DisplayRefreshRateProvider? = null
 ) {
     private val _state = MutableStateFlow(MetricsState())
     val state: StateFlow<MetricsState> = _state.asStateFlow()
@@ -74,8 +80,22 @@ class MetricsEngine(
     /** Consecutive SurfaceFlinger dumps that carried no average. */
     private var sfFailures = 0
 
+    /**
+     * Windowed aggregation of the SurfaceFlinger samples (per-second fps + the missed count
+     * from the same dump): the average and the missed-frame share. Held repeats never enter —
+     * only fresh dumps feed it, so a held value cannot inflate the totals.
+     */
+    private val frameStats = FrameStatsAggregator()
+
     /** Whether the vsync fallback has been launched; it is launched at most once. */
     private var choreographerStarted = false
+
+    /**
+     * The push thermal listener, registered once per [start]. Null below API 29 (where the
+     * platform has no such listener) or when registration throws — the 10 s poll below then
+     * remains the only channel, exactly as before.
+     */
+    private var thermalStatusListener: PowerManager.OnThermalStatusChangedListener? = null
 
     /**
      * Whether the vsync fallback is the channel currently in use. Read from the Choreographer
@@ -114,11 +134,54 @@ class MetricsEngine(
         startHighCadencePoll()
         startBackgroundShellPoll()
         startFpsMonitor()
+        startThermalStatusListener()
+    }
+
+    /**
+     * Push thermal-status updates (API 29+): the platform calls back on throttle-state
+     * changes instead of the poll discovering them up to 10 s later.
+     *
+     * The callback writes only [MetricsState.thermalStatus] (plus an Ok status — a pushed
+     * status IS a reading); sensors and the polled verdict stay the poll's. A push arriving
+     * between polls is overwritten by the next poll either way, so the two can never
+     * disagree for longer than one poll interval.
+     */
+    private fun startThermalStatusListener() {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) return
+        if (thermalStatusListener != null) return
+        val power = context.getSystemService(Context.POWER_SERVICE) as? PowerManager ?: return
+        val listener = PowerManager.OnThermalStatusChangedListener { status ->
+            _state.update {
+                it.copy(
+                    thermalStatus = status,
+                    thermalReadStatus = MetricReadStatus.Ok
+                )
+            }
+        }
+        runCatching {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                power.addThermalStatusListener(context.mainExecutor, listener)
+            }
+        }.onSuccess {
+            thermalStatusListener = listener
+        }.onFailure {
+            Log.w(TAG, "Thermal status listener refused", it)
+        }
+    }
+
+    private fun stopThermalStatusListener() {
+        val listener = thermalStatusListener ?: return
+        thermalStatusListener = null
+        runCatching {
+            val power = context.getSystemService(Context.POWER_SERVICE) as? PowerManager
+            power?.removeThermalStatusListener(listener)
+        }
     }
 
     fun stop() {
         isRunning = false
         scope.cancel()
+        stopThermalStatusListener()
         // The vsync callback stops re-posting itself once isRunning is false, so a later start()
         // has to be able to launch it again.
         choreographerStarted = false
@@ -227,6 +290,7 @@ class MetricsEngine(
         if (parsed != null && parsed > 0) {
             lastKnownSfFps = parsed
             sfFailures = 0
+            frameStats.push(parsed, janky)
             publishFps(parsed, janky, FpsSource.SurfaceFlinger, MetricReadStatus.Ok)
         } else {
             sfFailures++
@@ -272,7 +336,11 @@ class MetricsEngine(
                         // Count regardless, but only publish while this is the chosen channel:
                         // SurfaceFlinger's reading is the better one whenever it is available.
                         if (choreographerFpsActive) {
-                            val fps = frameCount
+                            // Spike guard: a burst of callbacks can report a rate no panel can
+                            // display, so the count is coerced into the panel's measured range.
+                            // Unknown panel facts mean no clamp, never an invented ceiling.
+                            val ceiling = refreshRates?.getMaxHardwareRefreshRate()
+                            val fps = clampFpsSample(frameCount, ceiling)
                             _state.update {
                                 it.copy(
                                     fps = fps,
@@ -280,7 +348,9 @@ class MetricsEngine(
                                     // assert something this channel cannot see.
                                     jankyFrames = null,
                                     fpsSource = FpsSource.Choreographer,
-                                    fpsReadStatus = MetricReadStatus.Ok
+                                    fpsReadStatus = MetricReadStatus.Ok,
+                                    fpsTargetHz = refreshRates?.getCurrentRefreshRate(),
+                                    fpsCeilingHz = ceiling
                                 )
                             }
                             _fpsHistory.push(fps)
@@ -304,7 +374,13 @@ class MetricsEngine(
         status: MetricReadStatus
     ) = withContext(Dispatchers.Main) {
         _state.update {
-            it.copy(fps = fps, jankyFrames = jankyFrames, fpsSource = source, fpsReadStatus = status)
+            it.copy(
+                fps = fps,
+                jankyFrames = jankyFrames,
+                jankPercent = frameStats.snapshot().jankPercent,
+                fpsSource = source,
+                fpsReadStatus = status
+            )
         }
         fps?.let { _fpsHistory.push(it) }
     }
@@ -337,6 +413,35 @@ class MetricsEngine(
         val batteryReading = readBattery(battery)
         val power = readPowerDraw(battery)
         val (rx, tx) = getNetworkSpeeds()
+        // Per-cluster MHz from cpufreq policy dirs: plain sysfs file reads, no privilege, no
+        // shell fork — with a privileged `cat` fallback on kernels that deny the app UID
+        // (SELinux) but serve root/Shizuku. A locked-down kernel simply yields no policies.
+        val filePolicies = KernelInfo.readPolicies()
+        // A policy only maps when BOTH current and max came back: max alone cannot place a
+        // reading, and cur alone cannot rank it (see the lab device, where max reads for the
+        // app UID but cur does not). Anything less falls through to the shell below.
+        val policies = if (filePolicies.any { it.curKhz != null && it.maxKhz != null }) {
+            filePolicies
+        } else if (shellRunner.hasPrivilege()) {
+            // The listing itself can be hidden from the app UID too: enumerate through the
+            // privileged shell, then read each node through it. Same nulls-when-unreadable
+            // contract as the file path.
+            val root = "/sys/devices/system/cpu/cpufreq"
+            val dirs = runCatching { shellRunner.exec("ls $root") }.getOrNull()
+                ?.lineSequence()
+                ?.map { it.trim() }
+                ?.filter { it.startsWith("policy") }
+                ?.map { java.io.File(root, it) }
+                ?.toList()
+                .orEmpty()
+            KernelInfo.readPoliciesSuspend(dirs) { file ->
+                runCatching { shellRunner.exec("cat ${file.path}") }
+                    .getOrNull()?.trim()?.takeIf { it.isNotEmpty() }
+            }
+        } else {
+            emptyList()
+        }
+        val clusters = KernelInfo.mapClusterState(policies)
 
         withContext(Dispatchers.Main) {
             _state.update {
@@ -350,7 +455,15 @@ class MetricsEngine(
                     powerW = power.watts,
                     powerReadStatus = power.status,
                     networkRxKbps = rx,
-                    networkTxKbps = tx
+                    networkTxKbps = tx,
+                    cpuClusterEffMhz = clusters.effMhz,
+                    cpuClusterPerfMhz = clusters.perfMhz,
+                    cpuClusterUltraMhz = clusters.ultraMhz,
+                    cpuClusterReadStatus = if (clusters.effMhz != null || clusters.perfMhz != null || clusters.ultraMhz != null) {
+                        MetricReadStatus.Ok
+                    } else {
+                        MetricReadStatus.EmptyOutput
+                    }
                 )
             }
             // Only real readings enter the sparklines; a missing sample would otherwise be drawn
@@ -436,7 +549,10 @@ class MetricsEngine(
      * does not exist, so the status is Unsupported without ever calling it.
      */
     private suspend fun pollThermalHeadroom() {
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.R) {
+        val caps = DeviceCapabilities.detect(
+            DeviceCapabilities.DeviceInfo(sdkInt = Build.VERSION.SDK_INT)
+        )
+        if (!caps.supportsThermalHeadroom) {
             withContext(Dispatchers.Main) {
                 _state.update {
                     it.copy(

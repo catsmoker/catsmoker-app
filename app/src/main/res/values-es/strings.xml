@@ -14,6 +14,7 @@
     <string name="custom_upload_failed">Error al subir: %1$s</string>
     <string name="overlay_fps_initial">FPS: leyendo…</string>
     <string name="overlay_cpu_initial">CPU: leyendo…</string>
+    <string name="overlay_cluster_initial">Clus: leyendo…</string>
     <string name="overlay_power_initial">Energía: leyendo…</string>
     <string name="overlay_ram_initial">RAM: leyendo…</string>
     <string name="overlay_temp_initial">Temp: leyendo…</string>
@@ -36,6 +37,12 @@
     <string name="logs_share">Compartir</string>
     <string name="logs_filter_placeholder">Filtrar registros…</string>
     <string name="logs_empty">Aún no hay registros.</string>
+    <string name="logs_recording_start">Grabar línea de tiempo de métricas</string>
+    <string name="logs_recording_stop">Detener grabación</string>
+    <string name="logs_recording_share">Exportar y compartir grabación</string>
+    <string name="logs_recording_share_title">Grabación de sesión — %1$s</string>
+    <string name="logs_recording_count">%1$d muestras grabadas</string>
+    <string name="logs_recording_empty">Nada grabado aún — empieza a grabar primero.</string>
     <string name="notification_stop">Detener</string>
     <!-- Group summary row bundling every Catsmoker notification in the shade. -->
     <string name="notif_summary_sub">Toca para abrir Catsmoker</string>

@@ -3,17 +3,25 @@
 Current state of internationalization (i18n) in CatSmoker and how to move
 strings into resources.
 
-## TL;DR
+## TL;DR (verified 2026-09-28 — the pre-2026 "English-only" description below is obsolete)
 
-- The project **does** use Android resources for a subset of strings:
-  `app/src/main/res/values/strings.xml` (65 entries), read via
-  `stringResource(R.string.*)` in Compose and `context.getString(...)` in
-  ViewModels/services.
-- It is **English-only and partially migrated**. There are no `values-*`
-  locale folders, and many user-visible strings are still hardcoded inline in
-  Kotlin (100+ across screens, dialogs, cards, and services).
-- There is no runtime language switcher; translations are handled the
-  standard Android way — per-locale resource folders, selected by the system.
+- The project uses Android resources for user-visible copy, split by area:
+  `values/strings.xml` (core) + `strings_core/gamefiles/gaming/spoof/sys.xml`,
+  each mirrored key-for-key in `values-ar/`, `values-es/`, `values-zh-rCN/`
+  (`en ar es zh-CN`, declared in `resConfigs` + `res/xml/locales_config.xml`).
+  A key missing from a mirror falls back to the wrong language at runtime, so
+  `LocaleParityTest` pins parity for user-visible copy — extend it when adding
+  user-facing strings.
+- There IS a runtime language switcher: `LocaleHelper.wrap` in both
+  `attachBaseContext`s, the choice tagged in `appearance_prefs`, `recreate()`
+  for language (theme recomposes live). Never cache app/VM-context `getString`
+  in UI state (the app locale is frozen at process start while ViewModels
+  survive the `recreate()`); carry `@StringRes` and resolve with
+  `stringResource` at composition.
+- The migration backlog below is CLOSED: a 2026-09-28 sweep found exactly one
+  hardcoded `Text("…` label in `app/src/main` — a package identifier in
+  `GridScreen.kt`, which the allowlist covers. Everything else user-facing is
+  a resource.
 
 This document records the current state, the conventions to follow when
 adding strings, and a checklist for closing the migration gap.
@@ -49,21 +57,18 @@ that layout:
 - The only array in the file is `scope` (the LSPosed module scope game list) —
   per-game metadata lives in Kotlin and must **not** be duplicated as strings.
 
-## Known gaps (the migration backlog)
+## Known gaps (CLOSED 2026-09-28 — kept as a checklist for future screens)
 
-Strings still hardcoded in Kotlin, currently untranslatable:
+The migration backlog below was verified complete: the only hardcoded
+user-facing-adjacent literal left in `app/src/main` is a package identifier
+(`GridScreen.kt`), which the allowlist covers. `LocaleParityTest` guards
+against regressions. When adding a screen, verify the same holds:
 
-1. **Compose screens** — dialog titles/buttons, section headers, status
-   copies across `GamingToolsScreen.kt`, `SpoofDeviceScreen.kt`,
-   `ProfilesListScreen.kt`, `ProfileEditorScreen.kt`, `AppAssignmentScreen.kt`,
-   `EditGameFilesScreen.kt`, `SettingsScreen.kt`, `AboutScreen.kt`.
-2. **Cards** — `GamingModeCard.kt`, `FixedPerformanceModeCard.kt`,
-   `RamBoostCard.kt` and `GamingToolsScreen.kt` define their copy inline.
-3. **Foreground service notifications** — `GamingModeService.kt`
-   ("Background apps suspended • Performance locked"),
-   `CrosshairOverlayService.kt` ("The crosshair is taking taps while you move it.")
-   hardcode notification bodies, while other services (`AppBoosterService`,
-   etc.) correctly use resources.
+1. ~~**Compose screens** — dialog titles/buttons, section headers, status~~
+   ~~copies across `GamingToolsScreen.kt`, …~~ — migrated; keep new copy in resources.
+2. ~~**Cards** — `GamingModeCard.kt`, … define their copy inline.~~ — migrated.
+3. ~~**Foreground service notifications** — hardcoded notification bodies.~~ —
+   migrated; notification copy lives in resources like everything else.
 
 > [!WARNING]
 > Duplication hazard: some labels already exist as resources *and* as

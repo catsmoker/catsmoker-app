@@ -74,6 +74,8 @@ fun HsrGraphicsRoute(onBack: (() -> Unit)? = null) {
         onRedoSettings = viewModel::redoSettings,
         onUndoPrefs = viewModel::undoPrefs,
         onRedoPrefs = viewModel::redoPrefs,
+        onApplyPreset = viewModel::applyGraphicsPreset,
+        onShowAnyway = viewModel::onShowEditorAnyway,
         onBack = onBack
     )
 }
@@ -91,6 +93,8 @@ fun HsrGraphicsScreen(
     onRedoSettings: () -> Unit,
     onUndoPrefs: () -> Unit,
     onRedoPrefs: () -> Unit,
+    onApplyPreset: (Int) -> Unit,
+    onShowAnyway: () -> Unit = {},
     onBack: (() -> Unit)? = null
 ) {
     // One body, two hosts: standalone (own ScreenScaffold header + scroll) or embedded in File
@@ -103,6 +107,15 @@ fun HsrGraphicsScreen(
             modifier = if (onBack == null) Modifier
             else Modifier.fillMaxWidth().verticalScroll(rememberScrollState())
         ) {
+            // The install gate, mirroring the File Engineering screen's own pattern: a
+            // confirmed-missing install shows the GAME NOT FOUND failure card with a small
+            // secondary "Show anyway" button, and tapping it reveals the existing editor
+            // below the card (the ViewModel seeds the working copy with defaults — see
+            // onShowEditorAnyway). Other failure stages keep their card with no button, and
+            // installed games render the editor exactly as before. Missing is the probe's
+            // answer, not the stage: a root-less device reports NO_ROOT for a game that is
+            // not there.
+            val missingInstall = uiState.gameMissing
             when {
                 uiState.loading -> Box(
                     modifier = Modifier.fillMaxWidth().padding(top = 96.dp),
@@ -111,14 +124,28 @@ fun HsrGraphicsScreen(
                     CircularProgressIndicator()
                 }
 
-                uiState.loadFailure != null -> HsrLoadFailureCard(uiState.loadFailure, onRefresh)
+                uiState.loadFailure != null && (!missingInstall || !uiState.showEditorAnyway) ->
+                    HsrLoadFailureCard(
+                        uiState.loadFailure,
+                        onRefresh,
+                        onShowAnyway = if (missingInstall) onShowAnyway else null
+                    )
 
                 uiState.settings != null -> {
                     val settings = uiState.settings
 
-                    StatusCard(uiState)
+                    if (missingInstall && uiState.loadFailure != null) {
+                        HsrLoadFailureCard(uiState.loadFailure, onRefresh, onShowAnyway = null)
+                        Spacer(modifier = Modifier.height(12.dp))
+                    }
 
-                    Spacer(modifier = Modifier.height(12.dp))
+                    // The status card asserts a detected install — hidden when there is none,
+                    // so the screen never claims one; the failure card above is the indicator.
+                    if (!missingInstall) {
+                        StatusCard(uiState)
+
+                        Spacer(modifier = Modifier.height(12.dp))
+                    }
 
                     SectionCard {
                         Text(stringResource(R.string.gf_frame_rate), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary, letterSpacing = 1.sp)
@@ -204,6 +231,30 @@ fun HsrGraphicsScreen(
                         QualitySlider(stringResource(R.string.gf_hsr_q_bloom), settings.bloomQuality, qualityNameFor(settings.bloomQuality)) { v -> onUpdate { it.copy(bloomQuality = v) } }
                         Text(
                             stringResource(R.string.gf_hsr_sfx_note),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    // One-tap starting points from the community reference (Low…Max): a single
+                    // undo step, and every slider below stays adjustable afterwards.
+                    SectionCard {
+                        Text(stringResource(R.string.gf_hsr_preset_title), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary, letterSpacing = 1.sp)
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            HsrGraphicsSettings.GRAPHICS_PRESET_NAMES.forEachIndexed { level, name ->
+                                FilterChip(
+                                    selected = false,
+                                    onClick = { onApplyPreset(level) },
+                                    label = { Text(name) }
+                                )
+                            }
+                        }
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(
+                            stringResource(R.string.gf_hsr_preset_body),
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -352,6 +403,7 @@ fun HsrGraphicsScreen(
                         canUndo = uiState.canUndoSettings,
                         canRedo = uiState.canRedoSettings,
                         dirty = uiState.settingsDirty,
+                        pendingCount = uiState.pendingSettingsCount,
                         applying = uiState.applying,
                         onUndo = onUndoSettings,
                         onRedo = onRedoSettings
@@ -451,6 +503,7 @@ fun HsrGraphicsScreen(
                             canUndo = uiState.canUndoPrefs,
                             canRedo = uiState.canRedoPrefs,
                             dirty = uiState.prefsDirty,
+                            pendingCount = uiState.pendingPrefsCount,
                             applying = uiState.applyingPrefs,
                             onUndo = onUndoPrefs,
                             onRedo = onRedoPrefs
@@ -471,6 +524,11 @@ fun HsrGraphicsScreen(
                         }
                     }
                 }
+
+                // Defensive: override active but no working copy (seeding is the ViewModel's
+                // job and always runs first) — keep the indicator rather than showing nothing.
+                uiState.loadFailure != null ->
+                    HsrLoadFailureCard(uiState.loadFailure, onRefresh, onShowAnyway = null)
             }
         }
     }
@@ -493,13 +551,15 @@ fun HsrGraphicsScreen(
  *
  * The actions are no-ops when their stack is empty, so the buttons disable on the same
  * condition rather than running an edit that edits nothing. The dirty line reports whether
- * Apply would write anything the device does not already hold.
+ * Apply would write anything the device does not already hold, with the pending-change
+ * count behind the dots.
  */
 @Composable
 private fun UndoRedoRow(
     canUndo: Boolean,
     canRedo: Boolean,
     dirty: Boolean,
+    pendingCount: Int = 0,
     applying: Boolean,
     onUndo: () -> Unit,
     onRedo: () -> Unit
@@ -535,6 +595,13 @@ private fun UndoRedoRow(
             style = MaterialTheme.typography.labelSmall,
             color = Color(0xFFFFB74D)
         )
+        if (pendingCount > 0) {
+            Text(
+                text = stringResource(R.string.gf_hsr_pending_count, pendingCount),
+                style = MaterialTheme.typography.labelSmall,
+                color = Color(0xFFFFB74D)
+            )
+        }
     }
 }
 
@@ -549,6 +616,14 @@ private fun StatusCard(uiState: HsrGraphicsUiState) {
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
+        if (uiState.settingsExternalChanged || uiState.prefsExternalChanged) {
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(
+                stringResource(R.string.gf_hsr_external_changed),
+                style = MaterialTheme.typography.bodySmall,
+                color = Color(0xFFFFB74D)
+            )
+        }
         uiState.lastApply?.let { report ->
             Spacer(modifier = Modifier.height(8.dp))
             Text(stringResource(R.string.gf_last_apply, report), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.primary)
@@ -557,10 +632,16 @@ private fun StatusCard(uiState: HsrGraphicsUiState) {
 }
 
 @Composable
-private fun HsrLoadFailureCard(failure: HsrReadResult.Failure, onRefresh: () -> Unit) {
+private fun HsrLoadFailureCard(
+    failure: HsrReadResult.Failure,
+    onRefresh: () -> Unit,
+    onShowAnyway: (() -> Unit)? = null
+) {
     // Host-styled failure surface: the File Engineering screen's GAME NOT FOUND card is a
     // SectionCard with a labelSmall title (error red for a missing game, primary otherwise),
     // so a load failure here reads as the same kind of thing, not a different component.
+    // The small secondary "Show anyway" button is offered only when the caller passes it —
+    // callers do so solely for a confirmed-missing install, so other stages keep no button.
     SectionCard {
         Column {
             when (failure.stage) {
@@ -613,6 +694,15 @@ private fun HsrLoadFailureCard(failure: HsrReadResult.Failure, onRefresh: () -> 
             Spacer(modifier = Modifier.height(12.dp))
             CatsmokerOutlinedButton(onClick = onRefresh, modifier = Modifier.fillMaxWidth()) {
                 Text(stringResource(R.string.gf_retry))
+            }
+            if (onShowAnyway != null) {
+                Spacer(modifier = Modifier.height(4.dp))
+                TextButton(
+                    onClick = onShowAnyway,
+                    modifier = Modifier.align(Alignment.CenterHorizontally)
+                ) {
+                    Text(stringResource(R.string.gf_show_anyway))
+                }
             }
         }
     }
@@ -759,6 +849,7 @@ private fun HsrGraphicsScreenPreview() {
             onRedoSettings = {},
             onUndoPrefs = {},
             onRedoPrefs = {},
+            onApplyPreset = {},
             onBack = {}
         )
     }

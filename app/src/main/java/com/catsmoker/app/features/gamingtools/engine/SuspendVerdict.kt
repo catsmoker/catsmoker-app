@@ -28,4 +28,35 @@ object SuspendVerdict {
      */
     fun isUnsuspendConfirmed(exitCode: Int, stdout: String): Boolean =
         exitCode == 0 && !stdout.contains("state: true", ignoreCase = true)
+
+    /**
+     * Whether a `list packages -s` answer is safe to exclude from.
+     *
+     * Device evidence (Lenovo TB-8505X, Android 10 MTK: 167 of 176 packages listed, including
+     * running system apps): the `-s` flag on some builds lists nearly everything, in which case
+     * excluding its contents would gut the sweep. The `android` package (the system server) can
+     * never be suspended — `pm suspend` refuses it — so its presence proves flag misuse and the
+     * whole answer is discarded (fail-open to suspending normally) rather than trusted.
+     */
+    fun isSuspendListTrustworthy(suspended: Set<String>): Boolean =
+        SUSPEND_CANARY_PACKAGES.none { it in suspended }
+
+    /** Packages the platform cannot suspend; listing one proves a broken `-s` flag. */
+    private val SUSPEND_CANARY_PACKAGES = setOf("android")
+
+    /**
+     * The packages `cmd package list packages -s` reports as already suspended, one
+     * `package:<name>` per line. Read before the sweep so externally suspended apps are
+     * skipped — but only when [isSuspendListTrustworthy] passes; an untrustworthy answer is
+     * discarded whole rather than trusted. Non-package lines (failures, blanks) are
+     * ignored — an unreadable answer means "nothing known suspended", never a guess.
+     */
+    fun parseSuspendedPackages(output: String): Set<String> {
+        return output.lineSequence()
+            .map { it.trim() }
+            .filter { it.startsWith("package:") }
+            .map { it.removePrefix("package:").trim() }
+            .filter { it.isNotEmpty() }
+            .toSet()
+    }
 }

@@ -64,7 +64,7 @@ to `/proc/stat` and thermal sysfs for telemetry. Notes:
   `executeAndGetOutput`, `executeForResult`), telemetry reads
   (`readSysfsThermal`, `readProcStat`), and a file bridge (`readFile`,
   `writeFile`), plus `destroy`.
-- The helper is versioned via `BuildConfig.VERSION_CODE` (currently 7 — the
+- The helper is versioned via `BuildConfig.VERSION_CODE` (currently 8 — the
   bump is what forced Shizuku to restart the daemon when `readFile`/`writeFile`
   changed the AIDL contract) so Shizuku restarts it when the AIDL contract
   changes, instead of reusing a stale helper whose interface no longer matches.

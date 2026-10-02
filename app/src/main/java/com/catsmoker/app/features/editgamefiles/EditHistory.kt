@@ -58,4 +58,21 @@ class EditHistory<T>(private val maxSize: Int = 50) {
         if (!hasBaseline) return true
         return baseline != current
     }
+
+    /**
+     * The baseline for read-only diffing (pending-field counts). Never mutate the returned
+     * value: it IS the tracker's comparison point, and mutating it corrupts every later
+     * dirty check. Null when no baseline was ever set.
+     */
+    fun baselineOrNull(): T? = baseline.takeIf { hasBaseline }
+
+    /**
+     * Whether the value the device holds now differs from the baseline the editor was last
+     * shown — the external-change probe (something, usually the game itself, wrote behind
+     * the editor's back). No baseline yet means nothing to differ from, never dirty-by-default.
+     */
+    fun differsFromBaseline(value: T): Boolean {
+        if (!hasBaseline) return false
+        return baseline != value
+    }
 }

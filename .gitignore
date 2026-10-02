@@ -96,6 +96,13 @@ $RECYCLE.BIN/
 .AppleDouble
 .LSOverride
 # ai agent notes
-.ai
 /.claude
 AGENTS.md
+# AI development files - NEVER publish (permanent project rule; local use only)
+.ai/
+TODO.md
+AI.md
+AI.*.md
+prompts/
+.opencode/
+cloud.mt

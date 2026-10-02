@@ -291,9 +291,150 @@ class WuWaConfigGeneratorTest {
     }
 
     @Test
+    fun fogOptionDrivesTheEnvironmentFogPair() {
+        // The reference branches its environment section on opts.fog (r.Fog +
+        // r.KuroVolumeCloudEnable as a pair); the option existed here with no branch.
+        val off = WuWaConfigGenerator.generate("balanced", WuWaConfigGenerator.Options(fog = false), noDevice)
+        assertTrue(off.engine.contains("r.Fog=1"))
+        assertTrue(off.engine.contains("r.KuroVolumeCloudEnable=1"))
+
+        val on = WuWaConfigGenerator.generate("balanced", WuWaConfigGenerator.Options(fog = true), noDevice)
+        assertTrue(on.engine.contains("r.Fog=0"))
+        assertTrue(on.engine.contains("r.KuroVolumeCloudEnable=0"))
+        assertEquals(1, on.engine.lines().count { it.startsWith("r.Fog=") })
+    }
+
+    @Test
     fun headerNamesCatSmokerAndThePreset() {
         val out = WuWaConfigGenerator.generate("ultra", WuWaConfigGenerator.Options(), noDevice)
         assertTrue(out.engine.contains("CATSMOKER :: WUWA"))
         assertTrue(out.engine.contains("ULTRA"))
+    }
+
+    @Test
+    fun overridesRewriteAllOccurrencesAndIgnoreUnknown() {
+        // The reference applies an override to EVERY occurrence because its dedup keeps
+        // the last one — rewriting only the first would be silently discarded.
+        val text = "[SystemSettings]\nr.BloomQuality=4\n\nr.Fog=1\nr.BloomQuality=4"
+        val out = WuWaConfigGenerator.applyWuwaCvarOverrides(
+            text, mapOf("r.BloomQuality" to "0", "r.Nope=1" to "x", "not-a-cvar" to "y")
+        )
+        assertEquals(2, out.lines().count { it == "r.BloomQuality=0" })
+        assertTrue(out.lines().contains("r.Fog=1"))
+        assertTrue(out.lines().contains(""))
+        assertTrue(out.lines().contains("[SystemSettings]"))
+    }
+
+    @Test
+    fun emptyOverridesReturnTextUnchanged() {
+        val text = "[SystemSettings]\nr.BloomQuality=4"
+        assertEquals(text, WuWaConfigGenerator.applyWuwaCvarOverrides(text, emptyMap()))
+    }
+
+    @Test
+    fun generatorAppliesCvarOverrides() {
+        // Balanced bakes r.BloomQuality=4; the override must replace it exactly once —
+        // dedup runs after the merge, so a half-applied override cannot linger twice.
+        val out = WuWaConfigGenerator.generate(
+            "balanced",
+            WuWaConfigGenerator.Options(cvarOverrides = mapOf("r.BloomQuality" to "0")),
+            noDevice
+        )
+        val bloom = out.engine.lines().filter { it.startsWith("r.BloomQuality=") }
+        assertEquals(1, bloom.size)
+        assertEquals("r.BloomQuality=0", bloom[0])
+    }
+
+    @Test
+    fun overridesSurviveRestrictedStripWhenInnocent() {
+        // The forbidden strip runs after the merge; an innocent override must survive it.
+        val out = WuWaConfigGenerator.generate(
+            "balanced",
+            WuWaConfigGenerator.Options(
+                cvarOverrides = mapOf("r.BloomQuality" to "0"),
+                allowRestrictedCvars = false
+            ),
+            noDevice
+        )
+        assertTrue(out.engine.lines().contains("r.BloomQuality=0"))
+    }
+
+    @Test
+    fun overrideTextParsesKeyEqualsValueLines() {
+        val parsed = WuWaConfigGenerator.parseCvarOverrides("r.BloomQuality=0\nr.Fog=1\n")
+        assertEquals(mapOf("r.BloomQuality" to "0", "r.Fog" to "1"), parsed)
+    }
+
+    @Test
+    fun overrideTextSkipsBlanksCommentsAndMalformedLines() {
+        val parsed = WuWaConfigGenerator.parseCvarOverrides(
+            "\n  ; a comment\nr.BloomQuality = 0 \nno-equals-here\n=novalue\nr.Fog=1\nr.Fog=2\n"
+        )
+        // Last wins on repeats, keys and values trimmed, everything else refused.
+        assertEquals(mapOf("r.BloomQuality" to "0", "r.Fog" to "2"), parsed)
+    }
+
+    @Test
+    fun generationAttachesAnHonestEngineReport() {
+        // Restricted (default-true here is explicit): the report must count what the
+        // file carries and name what the strip removed — never invented numbers.
+        val out = WuWaConfigGenerator.generate(
+            "balanced",
+            WuWaConfigGenerator.Options(
+                cvarOverrides = mapOf("r.BloomQuality" to "0"),
+                allowRestrictedCvars = false
+            ),
+            noDevice
+        )
+        assertTrue(out.engineReport.accepted > 0)
+        assertTrue(out.engine.lines().contains("r.BloomQuality=0"))
+        for (key in out.engineReport.rejected) {
+            assertTrue(out.engine.lines().none { it.trim().lowercase().startsWith("$key=") })
+        }
+    }
+
+    @Test
+    fun logImportAppendsOnlyMissingCvars() {
+        // The reference merges log cvars the preset never emitted (same prefix family),
+        // under a marker comment, then dedups: generated keys are never clobbered.
+        val text = "[SystemSettings]\nr.BloomQuality=4"
+        val out = WuWaConfigGenerator.mergeLogCvars(
+            text,
+            mapOf("r.BloomQuality" to "0", "r.Fog" to "1", "Paths" to "../..")
+        )
+        assertTrue(out.lines().contains("r.BloomQuality=4"))
+        assertTrue(out.lines().contains("r.Fog=1"))
+        assertTrue(out.lines().none { it.startsWith("Paths=") })
+    }
+
+    @Test
+    fun logImportEmptyMeansUnchanged() {
+        val text = "[SystemSettings]\nr.BloomQuality=4"
+        assertEquals(text, WuWaConfigGenerator.mergeLogCvars(text, emptyMap()))
+    }
+
+    @Test
+    fun generatorMergesLogCvarsWhenEnabled() {
+        // r.CustomLogOnly is emitted by no builder: its presence proves the merge.
+        val out = WuWaConfigGenerator.generate(
+            "balanced",
+            WuWaConfigGenerator.Options(importFromLog = true),
+            noDevice,
+            logCvars = mapOf("r.CustomLogOnly" to "7")
+        )
+        assertTrue(out.engine.lines().contains("r.CustomLogOnly=7"))
+    }
+
+    @Test
+    fun generatorIgnoresLogCvarsWhenDisabled() {
+        // r.Fog IS generated by the fog switch (default off-branch emits r.Fog=1),
+        // so use a key the builders never emit to prove the gate.
+        val out = WuWaConfigGenerator.generate(
+            "balanced",
+            WuWaConfigGenerator.Options(importFromLog = false),
+            noDevice,
+            logCvars = mapOf("r.CustomLogOnly" to "7")
+        )
+        assertTrue(out.engine.lines().none { it.startsWith("r.CustomLogOnly=") })
     }
 }

@@ -62,6 +62,13 @@ data class HsrGraphicsSettings(
         /** The JSON blob's key inside the playerprefs map. */
         const val PREFS_KEY = "GraphicsSettings_Model"
 
+        /**
+         * The reference's five one-tap tiers, in its order. Names stay code-English like the
+         * `qualityName()` family — the sliders already name every step in English in all
+         * locales, so translated preset names would be the inconsistent ones.
+         */
+        val GRAPHICS_PRESET_NAMES = listOf("Low", "Medium", "High", "Ultra", "Max")
+
         fun fromEncoded(encoded: String): HsrGraphicsSettings? = try {
             val json = JSONObject(URLDecoder.decode(encoded, "UTF-8"))
             HsrGraphicsSettings(
@@ -211,5 +218,109 @@ data class HsrGraphicsSettings(
             screenWidth = width
             screenHeight = height
         }
+    }
+
+    /**
+     * A copy with one of the reference's five one-tap tiers applied (see
+     * `GraphicsViewModel.applyPreset`, ported field-for-field): all tiers raise, none caps —
+     * Ultra and Max both allow 120 FPS — and `graphicsQuality` drops to 0 (Custom) so the
+     * per-slider values survive the game's own preset system. Resolution siblings, the PSO
+     * warmup flag and fields the reference leaves alone at a tier ride through untouched;
+     * an unknown level returns the copy unchanged rather than inventing a tier.
+     */
+    fun withGraphicsPreset(level: Int): HsrGraphicsSettings {
+        val out = copy(graphicsQuality = 0)
+        when (level) {
+            0 -> { // Low
+                out.fps = 30
+                out.enableVSync = true
+                out.renderScale = 0.6
+                out.resolutionQuality = 0
+                out.shadowQuality = 0
+                out.lightQuality = 0
+                out.characterQuality = 0
+                out.envDetailQuality = 0
+                out.reflectionQuality = 0
+                out.sfxQuality = 1
+                out.bloomQuality = 0
+                out.aaMode = 0
+                out.enableSelfShadow = 0
+                out.dlssQuality = 0
+                out.particleTrailSmoothness = 0
+                out.enableMetalFXSU = false
+                out.enableHalfResTransparent = false
+            }
+            1 -> { // Medium
+                out.fps = 60
+                out.enableVSync = true
+                out.renderScale = 0.8
+                out.resolutionQuality = 1
+                out.shadowQuality = 1
+                out.lightQuality = 1
+                out.characterQuality = 1
+                out.envDetailQuality = 1
+                out.reflectionQuality = 1
+                out.sfxQuality = 2
+                out.bloomQuality = 1
+                out.aaMode = 1
+                out.enableSelfShadow = 0
+                out.dlssQuality = 0
+                out.particleTrailSmoothness = 1
+            }
+            2 -> { // High
+                out.fps = 60
+                out.enableVSync = true
+                out.renderScale = 1.0
+                out.resolutionQuality = 2
+                out.shadowQuality = 2
+                out.lightQuality = 2
+                out.characterQuality = 2
+                out.envDetailQuality = 2
+                out.reflectionQuality = 2
+                out.sfxQuality = 3
+                out.bloomQuality = 2
+                out.aaMode = 1
+                out.enableSelfShadow = 1
+                out.dlssQuality = 1
+                out.particleTrailSmoothness = 2
+            }
+            3 -> { // Ultra
+                out.fps = 120
+                out.enableVSync = false
+                out.renderScale = 1.2
+                out.resolutionQuality = 3
+                out.shadowQuality = 3
+                out.lightQuality = 3
+                out.characterQuality = 3
+                out.envDetailQuality = 3
+                out.reflectionQuality = 3
+                out.sfxQuality = 4
+                out.bloomQuality = 3
+                out.aaMode = 1
+                out.enableSelfShadow = 2
+                out.dlssQuality = 1
+                out.particleTrailSmoothness = 3
+            }
+            4 -> { // Max
+                out.fps = 120
+                out.enableVSync = false
+                out.renderScale = 2.0
+                out.resolutionQuality = 5
+                out.shadowQuality = 5
+                out.lightQuality = 5
+                out.characterQuality = 5
+                out.envDetailQuality = 5
+                out.reflectionQuality = 5
+                out.sfxQuality = 5
+                out.bloomQuality = 5
+                out.aaMode = 1
+                out.enableSelfShadow = 2
+                out.enableMetalFXSU = true
+                out.dlssQuality = 1
+                out.particleTrailSmoothness = 3
+            }
+            else -> return copy()
+        }
+        return out
     }
 }

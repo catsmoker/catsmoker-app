@@ -125,6 +125,16 @@ class EditGameFilesViewModel @Inject constructor(
         val backups: List<ConfigBackupStore.Entry> = emptyList(),
         val showBackupDialog: Boolean = false,
         val showRestoreChooser: Boolean = false,
+        /**
+         * "Show anyway" override for a confirmed-missing install. False until the user taps
+         * the small secondary button on the GAME NOT FOUND card — then the profile editor
+         * renders below the card even though the probe still says absent. Reset on every
+         * game selection (each game needs its own explicit tap); re-probes never clear it,
+         * so installing/uninstalling while the screen sits open keeps the user's choice.
+         * The card itself stays visible while set — the screen never pretends the game is
+         * installed.
+         */
+        val showEditorAnyway: Boolean = false,
     )
 
     private val _uiState = MutableStateFlow(UiState())
@@ -317,11 +327,23 @@ class EditGameFilesViewModel @Inject constructor(
                 // read from the previously selected game would describe the wrong file.
                 saveRead = null,
                 savePatchReport = null,
-                saveEdits = emptyMap()
+                saveEdits = emptyMap(),
+                // Each game needs its own explicit "Show anyway" tap — a carried-over
+                // override would reveal a different game's editor unasked.
+                showEditorAnyway = false
             )
         }
     }
     fun onProfileSelected(profile: Int) = _uiState.update { it.copy(selectedProfile = profile) }
+
+    /**
+     * The GAME NOT FOUND card's small secondary "Show anyway" action: reveals the profile
+     * editor below the card even though the probe says absent. One-way — once shown it
+     * stays shown until another game is selected (which resets it) or the screen's
+     * ViewModel is cleared. Installed/unknown games never need it; the screen only offers
+     * the button when the probe confirmed "no".
+     */
+    fun onShowEditorAnyway() = _uiState.update { it.copy(showEditorAnyway = true) }
 
     fun onApplyProfile() {
         if (setSelectedAssetPathFromProfile()) {
@@ -423,6 +445,16 @@ class EditGameFilesViewModel @Inject constructor(
 
             // The push is not the report — read the file back and say what it holds now.
             val readBack = pullSaveBytes(config)?.let { PubgSavePatcher.read(it) }
+            // Cold-start choreography (the reference's push-then-start shape): PUBG reads
+            // Active.sav at launch, so a running game would keep playing the old values —
+            // and overwrite the file with them on exit. Stop it after a verified push; the
+            // manual LAUNCH GAME button cold-starts it. Best-effort: a refused stop keeps
+            // the applied values (reported below), it just needs a manual restart.
+            val stopped = if (readBack != null) {
+                shellRunner.execSafeResult("am", "force-stop", config.packageName).isSuccess
+            } else {
+                false
+            }
             withContext(Dispatchers.Main) {
                 _uiState.update {
                     it.copy(
@@ -431,9 +463,17 @@ class EditGameFilesViewModel @Inject constructor(
                         savePatchReport = readBack?.summary()
                     )
                 }
+                val applied = if (readBack != null) {
+                    context.getString(R.string.gf_applied_holds, readBack.summary())
+                } else {
+                    context.getString(R.string.gf_written_no_readback)
+                }
                 showSnackbar(
-                    if (readBack != null) context.getString(R.string.gf_applied_holds, readBack.summary())
-                    else context.getString(R.string.gf_written_no_readback)
+                    if (stopped) {
+                        "$applied ${context.getString(R.string.gf_game_stopped_relaunch)}"
+                    } else {
+                        applied
+                    }
                 )
             }
             true
@@ -656,11 +696,20 @@ class EditGameFilesViewModel @Inject constructor(
                     else context.getString(R.string.gf_no_privileged_channel)
                 existing.isEmpty() -> context.getString(R.string.gf_not_there_nothing, config.resetFileLabel)
                 else -> {
-                    val result = shellRunner.execSafeResult("rm", "-f", path)
-                    when {
-                        result.isSuccess ->
-                            context.getString(R.string.gf_deleted_rebuilds, config.resetFileLabel)
-                        else -> context.getString(R.string.gf_rm_failed, result.exitCode, result.stderr.ifBlank { context.getString(R.string.gf_no_output) })
+                    // Backup-before-reset: every overwrite stashes the pre-write bytes, and a
+                    // reset that deletes without stashing would be the one write the restore
+                    // path cannot undo. A failed backup aborts the delete — same contract as
+                    // the overwrite channels — rather than deleting unrecoverably.
+                    val backedUp = backupStore.save(config.packageName, File(path).name, existing) != null
+                    if (!backedUp) {
+                        context.getString(R.string.gf_reset_backup_failed, config.resetFileLabel)
+                    } else {
+                        val result = shellRunner.execSafeResult("rm", "-f", path)
+                        when {
+                            result.isSuccess ->
+                                context.getString(R.string.gf_deleted_rebuilds, config.resetFileLabel)
+                            else -> context.getString(R.string.gf_rm_failed, result.exitCode, result.stderr.ifBlank { context.getString(R.string.gf_no_output) })
+                        }
                     }
                 }
             }
@@ -693,14 +742,15 @@ class EditGameFilesViewModel @Inject constructor(
             when (deleteSafDocument(treeUri, config, path)) {
                 SafDeleteResult.DELETED -> showSnackbar(context.getString(R.string.gf_deleted_rebuilds, config.resetFileLabel))
                 SafDeleteResult.NOT_FOUND -> showSnackbar(context.getString(R.string.gf_not_found_nothing, config.resetFileLabel))
+                SafDeleteResult.BACKUP_FAILED -> showSnackbar(context.getString(R.string.gf_reset_backup_failed, config.resetFileLabel))
                 SafDeleteResult.FAILED -> showSnackbar(context.getString(R.string.gf_provider_refused_delete))
             }
             true
         }
     }
 
-    /** Keeps the three SAF outcomes distinct rather than collapsing to a boolean. */
-    private enum class SafDeleteResult { DELETED, NOT_FOUND, FAILED }
+    /** Keeps the four SAF outcomes distinct rather than collapsing to a boolean. */
+    private enum class SafDeleteResult { DELETED, NOT_FOUND, BACKUP_FAILED, FAILED }
 
     private fun deleteSafDocument(
         treeUri: Uri,
@@ -716,11 +766,19 @@ class EditGameFilesViewModel @Inject constructor(
                 absolutePath.removePrefix(gameDataRoot)
             val uri = DocumentsContract.buildDocumentUriUsingTree(treeUri, docId)
             val exists = DocumentFile.fromSingleUri(context, uri)?.exists() == true
-            when {
-                !exists -> SafDeleteResult.NOT_FOUND
-                DocumentsContract.deleteDocument(context.contentResolver, uri) -> SafDeleteResult.DELETED
-                else -> SafDeleteResult.FAILED
+            if (!exists) return SafDeleteResult.NOT_FOUND
+            // Backup-before-reset, same contract as the shell channel: read the current bytes
+            // through the grant and stash them first; an unreadable file or a failed stash
+            // aborts the delete rather than deleting unrecoverably.
+            val bytes = runCatching {
+                context.contentResolver.openInputStream(uri)?.use { it.readBytes() }
+            }.getOrNull()
+            if (bytes == null || bytes.isEmpty()) return SafDeleteResult.BACKUP_FAILED
+            if (backupStore.save(config.packageName, File(absolutePath).name, bytes) == null) {
+                return SafDeleteResult.BACKUP_FAILED
             }
+            if (DocumentsContract.deleteDocument(context.contentResolver, uri)) SafDeleteResult.DELETED
+            else SafDeleteResult.FAILED
         } catch (_: Exception) {
             SafDeleteResult.FAILED
         }

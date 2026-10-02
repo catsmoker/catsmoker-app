@@ -43,9 +43,10 @@
     <!-- Shared scaffold back button (talkback). -->
     <string name="core_back">返回</string>
 
-    <!-- Onboarding terms step. Prefix/suffix carry their edge space via \u0020. -->
+    <!-- Onboarding terms step. Prefix/suffix carry their edge space via \u0020.
+         The link opens the CC license text (not the app Terms — those open as dialogs below). -->
     <string name="core_terms_prefix">使用本应用前，请先阅读</string>
-    <string name="core_terms_link">条款与条件</string>
+    <string name="core_terms_link">CC BY-NC-SA 4.0 许可协议</string>
     <string name="core_terms_suffix">。</string>
     <string name="core_terms_title">服务条款</string>
     <string name="core_terms_agree">我同意这些条款。</string>
@@ -74,6 +75,9 @@
     <string name="core_perm_bt_sub">手柄与耳机优化所需。</string>
     <string name="core_done">完成</string>
     <string name="core_grant">授予</string>
+    <!-- Permission rows gated on Android version: shown disabled with a reason, never hidden. -->
+    <string name="core_perm_need_13">需要 Android 13 或更高版本。</string>
+    <string name="core_perm_need_12">需要 Android 12 或更高版本。</string>
     <!-- MetricReadStatus full labels: the reason shown in place of a value on the dashboard
          and in the performance overlay, when the device never reported a number. -->
     <string name="core_read_loading">正在读取…</string>

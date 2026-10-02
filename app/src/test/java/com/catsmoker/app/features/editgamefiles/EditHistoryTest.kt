@@ -99,4 +99,15 @@ class EditHistoryTest {
         assertFalse(history.canRedo)
         assertFalse(history.isDirty(Cfg(90, 3)))
     }
+
+    @Test
+    fun differsFromBaselineSpotsAnUnderneathChange() {
+        // The external-change probe: the value the device holds now versus the value the
+        // editor was last shown. No baseline yet means nothing to differ from.
+        val history = EditHistory<Cfg>()
+        assertFalse(history.differsFromBaseline(Cfg(60, 2)))
+        history.setBaseline(Cfg(60, 2))
+        assertFalse(history.differsFromBaseline(Cfg(60, 2)))
+        assertTrue(history.differsFromBaseline(Cfg(60, 3)))
+    }
 }

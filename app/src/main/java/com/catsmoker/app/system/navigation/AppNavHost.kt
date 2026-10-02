@@ -12,6 +12,8 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import com.catsmoker.app.features.about.AboutRoute
 import com.catsmoker.app.features.about.DonateRoute
+import com.catsmoker.app.features.about.PrivacyPolicyRoute
+import com.catsmoker.app.features.about.TermsRoute
 import com.catsmoker.app.features.settings.SettingsRoute
 import com.catsmoker.app.features.logs.LogsRoute
 import com.catsmoker.app.features.main.MainRoute
@@ -130,14 +132,24 @@ fun AppNavHost(navController: NavHostController, startDestination: String) {
             AboutRoute(
                 onBack = { navController.popBackStack() },
                 onOpenLogs = { navController.navigate(Routes.LOGS) },
-                onDonate = { navController.navigate(Routes.DONATE) }
+                onDonate = { navController.navigate(Routes.DONATE) },
+                onPrivacy = { navController.navigate(Routes.PRIVACY) },
+                onTerms = { navController.navigate(Routes.TERMS) }
             )
+        }
+        composable(Routes.PRIVACY) {
+            PrivacyPolicyRoute(onBack = { navController.popBackStack() })
+        }
+        composable(Routes.TERMS) {
+            TermsRoute(onBack = { navController.popBackStack() })
         }
         composable(Routes.SETTINGS) {
             SettingsRoute(
                 onBack = { navController.popBackStack() },
                 onOpenPermissions = { navController.navigate(Routes.PERMISSION) },
-                onOpenLogs = { navController.navigate(Routes.LOGS) }
+                onOpenLogs = { navController.navigate(Routes.LOGS) },
+                onOpenPrivacy = { navController.navigate(Routes.PRIVACY) },
+                onOpenTerms = { navController.navigate(Routes.TERMS) }
             )
         }
         composable(Routes.LOGS) {

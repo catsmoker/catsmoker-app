@@ -1,0 +1,73 @@
+<resources>
+    <!-- Legal screens (Privacy Policy + Terms of Service). Mirror of values/strings_legal.xml. -->
+
+    <string name="legal_section_title">قانوني</string>
+    <string name="legal_privacy_title">سياسة الخصوصية</string>
+    <string name="legal_privacy_subtitle">ما يخزّنه التطبيق وما يشاركه.</string>
+    <string name="legal_privacy_updated">آخر تحديث: 2026-09-30</string>
+    <string name="legal_terms_title">شروط الخدمة</string>
+    <string name="legal_terms_subtitle">قواعد استخدام التطبيق.</string>
+    <string name="legal_terms_updated">آخر تحديث: 2026-09-30</string>
+
+    <string name="legal_p_intro">CatSmoker تطبيق أندرويد مفتوح المصدر، بلا حسابات ولا تسجيل دخول ولا خوادم خاصة بالمشروع. كل ما يعرفه التطبيق تقريبًا يبقى على جهازك. توضح هذه السياسة ما يُخزَّن محليًا وما يغادر الجهاز ومتى.</string>
+
+    <string name="legal_p_local_title">1. البيانات المخزنة على جهازك</string>
+    <string name="legal_p_local_body">تُحفظ الإعدادات وحالة التطبيق في تخزين الجهاز فقط: المظهر واللغة وخيارات البداية وعدادات التشغيل وتفضيلات الإعلانات والتحقق من التحديثات ومكتبة الألعاب وملفات انتحال الهوية وتعيينات التطبيقات وخيارات وضع الألعاب (DNS ومعدل التحديث وأنماط التنظيف وقوائم التجميد) ومواضع التراكب ومؤشر التصويب ونسخ configs الألعاب الاحتياطية وتسجيلات الجلسات والسجلات المخزنة. لا يُرفع أيٌّ من هذا إلى المطور — إذ لا يوجد خادم أصلًا. حذف التطبيق أو مسح بياناته يمحو كل ذلك.</string>
+
+    <string name="legal_p_ads_title">2. الإعلانات (Start.io)</string>
+    <string name="legal_p_ads_body">تعرض النسخة الكاملة (خارج متجر Play) إعلانات بانر من حزمة Start.io. قد تجمع حزمة الإعلانات معرّف الإعلان ومعلومات الجهاز لعرض الإعلانات وقياسها. يمكنك إيقاف الإعلانات في أي وقت من الإعدادات، ويسري التبديل فورًا. نسخة متجر Play تستخدم AdMob بدلًا من Start.io وتخضع لسياسات Google الإعلانية.</string>
+
+    <string name="legal_p_updates_title">3. التحقق من التحديثات</string>
+    <string name="legal_p_updates_body">عند النقر على \u201cالتحقق من التحديثات\u201d (أو تفعيل التحقق التلقائي)، يستعلم التطبيق واجهة releases العامة في GitHub الخاصة بالمشروع. يكشف هذا الطلب عنوان IP الخاص بك ونسخة التطبيق لـ GitHub وفق شروط الخصوصية لديها. التحقق التلقائي متوقف افتراضيًا. تُحفظ ملفات التحديث في مجلد التطبيق الخاص ولا تُثبَّت إلا بعد تأكيدك.</string>
+
+    <string name="legal_p_sharing_title">4. السجلات والتسجيلات التي تختار مشاركتها</string>
+    <string name="legal_p_sharing_body">لا تغادر سجلات التشخيص وتسجيلات الجلسات الجهاز من تلقاء نفسها أبدًا. لا تُصدَّر إلا عند النقر على مشاركة، عبر قائمة مشاركة أندرويد إلى تطبيق تختاره. قد تحتوي السجلات على تفاصيل الجهاز والنظام — راجعها قبل إرسالها لأي شخص.</string>
+
+    <string name="legal_p_external_title">5. الروابط الخارجية والتبرعات</string>
+    <string name="legal_p_external_body">تُفتح روابط المجتمع (GitHub والموقع وDiscord وTelegram) وخيارات التبرع (PayPal وBinance وعناوين العملات الرقمية) خارج التطبيق. عند استخدامها، تتلقى تلك الخدمات البيانات التي تجمعها عادة (مثل عنوان IP، وتفاصيل الدفع عند التبرع) وفق سياساتها الخاصة. التبرعات طوعية وتُعالَج بالكامل لدى تلك الخدمات الخارجية — ولا يرى التطبيق بيانات دفعك ولا يخزنها.</string>
+
+    <string name="legal_p_permissions_title">6. أذونات الجهاز</string>
+    <string name="legal_p_permissions_body">يطلب التطبيق الأذونات فقط للميزات التي تطلبها: الوصول للملفات لقراءة نسخ configs الألعاب واحتياطيها، وإذن التراكب لتراكبات الأداء والتصويب، والوصول للاستخدام لاكتشاف جلسات اللعب، والوصول للإشعارات لهدوء وضع الألعاب، والميكروفون فقط لميزة التصور الصوتي الاختيارية، والبلوتوث فقط لتمييز أجهزة الصوت. يمكن رفض كل إذن — وستظهر الميزة المرتبطة به كغير متاحة بدل أن تفشل بصمت.</string>
+
+    <string name="legal_p_vpn_title">7. جدار حماية VPN المحلي</string>
+    <string name="legal_p_vpn_body">يستخدم جدار حماية الشبكة الاختياري إطار VPN في أندرويد كمرشح محلي على الجهاز. تُطبَّق القواعد على الهاتف نفسه؛ ولا يُرسَل أي مرور إلى خوادم المشروع، لأنها غير موجودة.</string>
+
+    <string name="legal_p_contact_title">8. التواصل والتغييرات</string>
+    <string name="legal_p_contact_body">يمكن طرح الأسئلة حول هذه السياسة كـ issue في مستودع GitHub الخاص بالمشروع. عند تغيير السياسة، يُشحَن النص المحدَّث داخل التطبيق مع تاريخ تحديث جديد.</string>
+
+    <string name="legal_t_intro">بتثبيت CatSmoker واستخدامه فأنت توافق على هذه الشروط. إن لم توافق، لا تستخدم التطبيق.</string>
+
+    <string name="legal_t_license_title">1. رخصة المصدر المفتوح</string>
+    <string name="legal_t_license_body">شفرة المصدر مرخّصة بموجب رخصة المشاع الإبداعي نسب-غير تجاري-الترخيص بالمثل 4.0 الدولية (CC BY-NC-SA 4.0). يجوز لك المشاركة والتكييف لأغراض غير تجارية مع النسب وبنفس الرخصة. النص الكامل مرتبط من شاشة البداية ومن مستودع المشروع.</string>
+
+    <string name="legal_t_games_title">2. قواعد الألعاب نفسها ما زالت سارية</string>
+    <string name="legal_t_games_body">قد ينتهك انتحال هوية الجهاز أو تعديل ملفات الألعاب شروط خدمة تلك الألعاب ويؤدي لعقوبات كتقييد الميزات أو حظر الحسابات. المطورون غير مسؤولين عن حظر الحسابات أو أي خسارة في ألعاب خارجية. استخدام هذه الميزات على مسؤوليتك.</string>
+
+    <string name="legal_t_risk_title">3. تغييرات النظام مسؤوليتك</string>
+    <string name="legal_t_risk_body">يُقدَّم التطبيق \u201cكما هو\u201d بلا ضمان. الميزات التي تغيّر إعدادات النظام (الدقة ومعدل التحديث ومقاييس الحركة وDNS والصوت وتجميع dexopt) أو تستخدم صلاحيات الجذر أو Shizuku تعمل بناءً على تعليماتك؛ ينسخ التطبيق configs احتياطيًا قبل الكتابة حيث أمكن، لكنك تقبل مخاطر عدم الاستقرار أو مشاكل الإقلاع أو فقدان البيانات. ولا شيء يمنعك من التراجع عن التغييرات أو حذف التطبيق.</string>
+
+    <string name="legal_t_donations_title">4. التبرعات</string>
+    <string name="legal_t_donations_body">التبرعات هبات طوعية لدعم التطوير. وهي غير قابلة للاسترداد، وتُعالَج بالكامل لدى خدمات خارجية، ولا تفتح ميزات مميزة ولا تمنح المتبرعين حق الدعم أو التأثير على المشروع.</string>
+
+    <string name="legal_t_use_title">5. الاستخدام المقبول</string>
+    <string name="legal_t_use_body">استخدم التطبيق بشكل قانوني ولغرض تحسين أداء الألعاب فقط. لا تستخدمه للإضرار بالأجهزة أو الشبكات أو الآخرين، ولا لتقديم عملاء معدّلة كأنها أصلية حيث يهم ذلك.</string>
+
+    <string name="legal_t_changes_title">6. تغييرات هذه الشروط</string>
+    <string name="legal_t_changes_body">قد تُحدَّث هذه الشروط مع تطور التطبيق؛ والنسخة السارية دائمًا في هذه الشاشة داخل التطبيق.</string>
+
+    <!-- Donate-screen voluntary-gift notice. -->
+    <string name="donate_notice">التبرعات هبات طوعية وغير قابلة للاسترداد. تُعالَج المدفوعات خارجيًا لدى PayPal أو Binance أو شبكة العملة المعنية — ولا يرى CatSmoker بيانات دفعك أبدًا.</string>
+
+    <!-- Settings ads toggle explanation. -->
+    <string name="sys_ads_sub">بانرات Start.io تُبقي التطبيق مجانيًا. أوقفها للتعطيل. لمعرفة ما يجمعه مزود الإعلانات راجع سياسة الخصوصية.</string>
+
+    <!-- Content descriptions for previously unlabeled icon-only buttons. -->
+    <string name="core_desc_add">إضافة</string>
+    <string name="core_desc_more">خيارات أكثر</string>
+    <string name="core_desc_save">حفظ</string>
+    <string name="core_desc_random">إنشاء قيمة عشوائية</string>
+
+    <!-- Onboarding legal dialogs. -->
+    <string name="core_terms_read_privacy">قراءة سياسة الخصوصية</string>
+    <string name="core_terms_read_terms">قراءة شروط الخدمة</string>
+</resources>

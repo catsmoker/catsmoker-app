@@ -26,6 +26,13 @@ data class DeviceProfile(
     var screenHeight: Int = 2400,
     var screenDensity: Int = 420,
     var screenRefreshRate: Int = 0,
+    /**
+     * Whether the target should SEE the screen block above (display metrics, Configuration,
+     * size getters, bounds). Explicit opt-in, off by default: the fields carry real panel
+     * specs of preset devices, and applying another panel's geometry to a game changes what
+     * it renders — a choice, never a side effect of filling the fields in.
+     */
+    var applyScreenMetrics: Boolean = false,
     var operatorAlpha: String = "",
     var operatorNumeric: String = "",
     var simOperatorAlpha: String = "",

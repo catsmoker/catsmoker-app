@@ -75,6 +75,8 @@
     <string name="gf_package_not_found"> — paquete %1$s no encontrado</string>
     <string name="gf_install_run_once">. Instala el juego y ejecútalo una vez para que escriba su archivo de configuración, y vuelve aquí.</string>
     <string name="gf_open_play_store">ABRIR PLAY STORE</string>
+    <!-- Intentionally untranslated English (see values/strings_gamefiles.xml): exact label. -->
+    <string name="gf_show_anyway">Show anyway</string>
 
     <!-- EditGameFilesViewModel -->
     <string name="gf_profile_unlock_120">Desbloquear 120 FPS</string>
@@ -85,6 +87,7 @@
     <string name="gf_pick_tier_first">Elige primero un nivel de frecuencia de cuadros o calidad de renderizado.</string>
     <string name="gf_save_changed">El guardado cambió mientras tanto: %1$s</string>
     <string name="gf_applied_holds">Aplicado — el archivo ahora contiene: %1$s</string>
+    <string name="gf_game_stopped_relaunch">Juego detenido — ejecútalo de nuevo para jugar con los nuevos ajustes.</string>
     <string name="gf_written_no_readback">Escrito, pero falló la relectura — revisa RESTAURAR COPIA si algo va mal.</string>
     <string name="gf_save_not_created">%1$s no existe en %2$s — el juego aún no lo ha creado. Ejecuta el juego una vez para que escriba su propio guardado e inténtalo de nuevo.</string>
     <string name="gf_shizuku_channel_unavailable">Shizuku está en ejecución pero el canal de guardado no está disponible — comprueba que la app tenga permiso de Shizuku (app Shizuku → Apps → permitir) e inténtalo de nuevo con LEER.</string>
@@ -100,9 +103,10 @@
     <string name="gf_not_there_nothing">%1$s no está ahí — no hay nada que restablecer.</string>
     <string name="gf_not_found_nothing">%1$s no encontrado — no hay nada que restablecer.</string>
     <string name="gf_deleted_rebuilds">%1$s eliminado — el juego lo reconstruye al iniciarse.</string>
+    <string name="gf_reset_backup_failed">No se pudo respaldar %1$s primero — no se eliminó nada.</string>
     <string name="gf_rm_failed">rm salió con %1$d: %2$s</string>
     <string name="gf_provider_refused_delete">El proveedor rechazó la eliminación.</string>
-    <string name="gf_no_backups">Aún no hay copias — se toma una automáticamente antes de cada escritura.</string>
+    <string name="gf_no_backups">Aún no hay copias — se toma una automáticamente antes de cada escritura y restablecimiento.</string>
     <string name="gf_delete_backup_failed">No se pudo eliminar esa copia.</string>
     <string name="gf_shizuku_permission_required">Se requiere permiso de Shizuku.</string>
     <string name="gf_backup_unreadable">El archivo de esa copia es ilegible.</string>
@@ -195,6 +199,10 @@
     <string name="gf_hsr_q_unknown">Desconocido</string>
     <string name="gf_hsr_sfx_invalid">Inválido</string>
     <string name="gf_hsr_sfx_note">SFX usa una escala desplazada (1–5, donde 1 es Muy bajo) — el juego restablece un 0, así que se limita a 1.</string>
+    <string name="gf_hsr_preset_title">PREAJUSTES DE UN TOQUE</string>
+    <string name="gf_hsr_preset_body">Puntos de partida de la referencia — cada deslizador sigue ajustable.</string>
+    <string name="gf_hsr_pending_count">• %1$d pendientes</string>
+    <string name="gf_hsr_external_changed">El juego cambió estos ajustes fuera del editor — Actualizar cargó los nuevos valores.</string>
     <string name="gf_hidden_upscaling">REESCALADO OCULTO</string>
     <string name="gf_hsr_hidden_body">Parámetros del motor Unity que la pantalla de ajustes del juego no muestra. Se conservan intactos salvo que los cambies aquí.</string>
     <string name="gf_hsr_metalfx">MetalFX Super Resolution</string>
@@ -378,6 +386,8 @@
     <string name="gf_fx_vulkan_c">Desactivado salvo que el driver GLES del dispositivo sea el problema — lo decides tú, no se activa solo; la tarjeta GAME LOG dice qué API usó el juego la última sesión.</string>
     <string name="gf_fx_noauto_t">Desactivar ajuste automático de calidad</string>
     <string name="gf_fx_noauto_c">Fija la calidad donde la pone el preajuste y fija t.MaxFPS a la frecuencia de arriba.</string>
+    <string name="gf_fx_fog_t">Desactivar niebla</string>
+    <string name="gf_fx_fog_c">Apaga la niebla de distancia y las nubes volumétricas del entorno.</string>
     <string name="gf_files_section">ARCHIVOS</string>
     <string name="gf_files_scal_t">Generar Scalability.ini</string>
     <string name="gf_files_scal_c">Las tablas sg.* por nivel que lee el menú de calidad del juego.</string>
@@ -390,10 +400,20 @@
     <string name="gf_adv_exp_t">Cvars experimentales</string>
     <string name="gf_adv_exp_c">Cvars estilo renderswitch verificados en una sola GPU (Adreno 618).</string>
     <string name="gf_adv_gsr_t">Reescalado GSR</string>
+    <string name="gf_fx_logimport_t">Importar cvars en vivo del registro</string>
+    <string name="gf_fx_logimport_c">Fusiona las cvars del Client.log analizado que el preajuste no emitió. Necesita una lectura de registro descifrada primero; sin ella no hace nada.</string>
+    <string name="gf_fx_override_t">CVars personalizados</string>
+    <string name="gf_fx_override_c">Una línea key=value por línea, aplicada a Engine.ini tras los generadores. Se omiten líneas vacías, comentarios ; y líneas malformadas; una clave prohibida se elimina salvo que se permitan las CVars restringidas.</string>
+    <string name="gf_fx_override_hint">r.BloomQuality=0</string>
+    <string name="gf_fx_override_applied">%1$d aplicados</string>
     <string name="gf_adv_gsr_c">Snapdragon Game Super Resolution.</string>
     <string name="gf_preview">VISTA PREVIA</string>
     <string name="gf_preview_empty">Aún no se generó nada.</string>
     <string name="gf_preview_open">▾ %1$s</string>
+    <string name="gf_preview_report">%1$d cvars en el archivo, %2$d eliminadas por la lista de integridad</string>
+    <string name="gf_preview_report_rejected">Eliminadas: %1$s</string>
+    <string name="gf_preview_report_rt">Claves de renderizado (revisar en GPUs móviles): %1$s</string>
+    <string name="gf_preview_diff">vs. copia local: +%1$d/-%2$d líneas</string>
     <string name="gf_preview_closed">▸ %1$s\u0020\u0020(%2$d caract.)</string>
     <string name="gf_deploy">DESPLEGAR</string>
     <string name="gf_deploy_body">Los archivos llegan a la carpeta de configuración UE4 del juego. Cada escritura se respalda primero, cada envío se verifica con relectura md5, y el monitor hash de configuración del juego se resincroniza (solo root/Shizuku). El juego se detiene primero — reescribe sus configs desde memoria al salir.</string>

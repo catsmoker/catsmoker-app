@@ -77,6 +77,7 @@ fun GridRoute(onBack: (() -> Unit)? = null) {
         onRestoreBackup = viewModel::onRestoreBackup,
         onPickFolder = viewModel::requestFolderPicker,
         onRefresh = viewModel::refresh,
+        onShowAnyway = viewModel::onShowEditorAnyway,
         onBack = onBack
     )
 }
@@ -93,6 +94,7 @@ fun GridScreen(
     onRestoreBackup: () -> Unit,
     onPickFolder: () -> Unit,
     onRefresh: () -> Unit,
+    onShowAnyway: () -> Unit = {},
     onBack: (() -> Unit)? = null
 ) {
     // One body, two hosts: standalone (own ScreenScaffold header + scroll) or embedded in File
@@ -105,6 +107,14 @@ fun GridScreen(
             modifier = if (onBack == null) Modifier
             else Modifier.fillMaxWidth().verticalScroll(rememberScrollState())
         ) {
+            // The install gate, mirroring the File Engineering screen's own pattern: a
+            // confirmed-missing install shows the GAME NOT FOUND failure card with a small
+            // secondary "Show anyway" button, and tapping it reveals the existing editor
+            // below the card (the ViewModel seeds an empty read — see onShowEditorAnyway).
+            // Other failure stages keep their card with no button, and installed games
+            // render the editor exactly as before. Missing is the probe's answer, not the
+            // stage: a channel-less device reports NO_CHANNEL for a game that is not there.
+            val missingInstall = uiState.gameMissing
             when {
                 uiState.loading -> Box(
                     modifier = Modifier.fillMaxWidth().padding(top = 96.dp),
@@ -113,14 +123,29 @@ fun GridScreen(
                     CircularProgressIndicator()
                 }
 
-                uiState.loadFailure != null -> GridLoadFailureCard(uiState.loadFailure, onPickFolder, onRefresh)
+                uiState.loadFailure != null && (!missingInstall || !uiState.showEditorAnyway) ->
+                    GridLoadFailureCard(
+                        uiState.loadFailure,
+                        onPickFolder,
+                        onRefresh,
+                        onShowAnyway = if (missingInstall) onShowAnyway else null
+                    )
 
                 uiState.read != null -> {
                     val read = uiState.read
 
-                    StatusCard(uiState)
+                    if (missingInstall && uiState.loadFailure != null) {
+                        GridLoadFailureCard(uiState.loadFailure, onPickFolder, onRefresh, onShowAnyway = null)
+                        Spacer(modifier = Modifier.height(12.dp))
+                    }
 
-                    Spacer(modifier = Modifier.height(12.dp))
+                    // The status card asserts a detected install — hidden when there is none,
+                    // so the screen never claims one; the failure card above is the indicator.
+                    if (!missingInstall) {
+                        StatusCard(uiState)
+
+                        Spacer(modifier = Modifier.height(12.dp))
+                    }
 
                     SectionCard {
                         Text(stringResource(R.string.gf_frame_rate), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary, letterSpacing = 1.sp)
@@ -264,6 +289,11 @@ fun GridScreen(
                     }
                     Spacer(modifier = Modifier.height(8.dp))
                 }
+
+                // Defensive: override active but no read (seeding is the ViewModel's job and
+                // always runs first) — keep the indicator rather than showing nothing.
+                uiState.loadFailure != null ->
+                    GridLoadFailureCard(uiState.loadFailure, onPickFolder, onRefresh, onShowAnyway = null)
             }
         }
     }
@@ -388,11 +418,14 @@ private fun StatusCard(uiState: GridUiState) {
 private fun GridLoadFailureCard(
     failure: GridPreferencesManager.ReadResult.Failure,
     onPickFolder: () -> Unit,
-    onRefresh: () -> Unit
+    onRefresh: () -> Unit,
+    onShowAnyway: (() -> Unit)? = null
 ) {
     // Host-styled failure surface: the File Engineering screen's GAME NOT FOUND card is a
     // SectionCard with a labelSmall title (error red for a missing game, primary otherwise),
     // so a load failure here reads as the same kind of thing, not a different component.
+    // The small secondary "Show anyway" button is offered only when the caller passes it —
+    // callers do so solely for a confirmed-missing install, so other stages keep no button.
     SectionCard {
         Column {
             when (failure.stage) {
@@ -441,6 +474,15 @@ private fun GridLoadFailureCard(
                 Spacer(modifier = Modifier.height(12.dp))
                 CatsmokerOutlinedButton(onClick = onRefresh, modifier = Modifier.fillMaxWidth()) {
                     Text(stringResource(R.string.gf_retry))
+                }
+            }
+            if (onShowAnyway != null) {
+                Spacer(modifier = Modifier.height(4.dp))
+                TextButton(
+                    onClick = onShowAnyway,
+                    modifier = Modifier.align(Alignment.CenterHorizontally)
+                ) {
+                    Text(stringResource(R.string.gf_show_anyway))
                 }
             }
         }

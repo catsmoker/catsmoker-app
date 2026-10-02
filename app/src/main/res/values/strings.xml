@@ -40,6 +40,7 @@
     <!-- Performance overlay: shown until the first real reading arrives, then replaced by it -->
     <string name="overlay_fps_initial">FPS: reading…</string>
     <string name="overlay_cpu_initial">CPU: reading…</string>
+    <string name="overlay_cluster_initial">Clus: reading…</string>
     <string name="overlay_power_initial">Power: reading…</string>
     <string name="overlay_ram_initial">RAM: reading…</string>
     <string name="overlay_temp_initial">Temp: reading…</string>
@@ -76,6 +77,12 @@
     <string name="logs_share">Share</string>
     <string name="logs_filter_placeholder">Filter logs…</string>
     <string name="logs_empty">No logs captured yet.</string>
+    <string name="logs_recording_start">Record metrics timeline</string>
+    <string name="logs_recording_stop">Stop recording</string>
+    <string name="logs_recording_share">Export and share recording</string>
+    <string name="logs_recording_share_title">Session recording — %1$s</string>
+    <string name="logs_recording_count">Recorded %1$d samples</string>
+    <string name="logs_recording_empty">Nothing recorded yet — start recording first.</string>
 
     <!-- ========================================== -->
     <!--           EDIT GAME FILES SCREEN           -->

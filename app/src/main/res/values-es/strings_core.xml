@@ -43,9 +43,10 @@
     <!-- Shared scaffold back button (talkback). -->
     <string name="core_back">Atrás</string>
 
-    <!-- Onboarding terms step. Prefix/suffix carry their edge space via \u0020. -->
-    <string name="core_terms_prefix">Lee nuestros\u0020</string>
-    <string name="core_terms_link">Términos y condiciones</string>
+    <!-- Onboarding terms step. Prefix/suffix carry their edge space via \u0020.
+         The link opens the CC license text (not the app Terms — those open as dialogs below). -->
+    <string name="core_terms_prefix">Lee la\u0020</string>
+    <string name="core_terms_link">licencia CC BY-NC-SA 4.0</string>
     <string name="core_terms_suffix">\u0020antes de usar la app.</string>
     <string name="core_terms_title">Términos del servicio</string>
     <string name="core_terms_agree">Acepto los términos.</string>
@@ -74,6 +75,9 @@
     <string name="core_perm_bt_sub">Necesario para optimizaciones de mandos y auriculares.</string>
     <string name="core_done">LISTO</string>
     <string name="core_grant">OTORGAR</string>
+    <!-- Permission rows gated on Android version: shown disabled with a reason, never hidden. -->
+    <string name="core_perm_need_13">Requiere Android 13 o posterior.</string>
+    <string name="core_perm_need_12">Requiere Android 12 o posterior.</string>
     <!-- MetricReadStatus full labels: the reason shown in place of a value on the dashboard
          and in the performance overlay, when the device never reported a number. -->
     <string name="core_read_loading">leyendo…</string>

@@ -1,0 +1,73 @@
+<resources>
+    <!-- Legal screens (Privacy Policy + Terms of Service). Mirror of values/strings_legal.xml. -->
+
+    <string name="legal_section_title">法律信息</string>
+    <string name="legal_privacy_title">隐私政策</string>
+    <string name="legal_privacy_subtitle">本应用存储与共享的内容。</string>
+    <string name="legal_privacy_updated">最后更新：2026-09-30</string>
+    <string name="legal_terms_title">服务条款</string>
+    <string name="legal_terms_subtitle">使用本应用的规则。</string>
+    <string name="legal_terms_updated">最后更新：2026-09-30</string>
+
+    <string name="legal_p_intro">CatSmoker 是一款开源 Android 应用，无账号、无登录，也没有项目方运营的服务器。应用所知的一切几乎都保留在你的设备上。本政策说明哪些数据保存在本地、哪些会离开设备，以及在何时离开。</string>
+
+    <string name="legal_p_local_title">1. 保存在设备上的数据</string>
+    <string name="legal_p_local_body">设置与应用状态仅保存在设备存储中：主题、语言、初始选项、启动计数、广告偏好、更新检查偏好、游戏库、机型伪装配置与按应用分配、游戏模式选项（DNS 选择、刷新率、清理规则、冻结列表）、性能浮窗与准星位置、游戏配置文件备份、会话记录与缓存日志。以上内容均不会上传给开发者——因为根本没有可上传的后端服务器。卸载应用或清除数据即可将其删除。</string>
+
+    <string name="legal_p_ads_title">2. 广告（Start.io）</string>
+    <string name="legal_p_ads_body">完整版（非 Play 商店版）会展示 Start.io SDK 提供的横幅广告。广告 SDK 可能会收集你的广告 ID 与设备信息，用于投放与统计。你可以随时在设置中关闭广告，开关会立即生效。Play 商店版使用 AdMob 而非 Start.io，受 Google 广告政策约束。</string>
+
+    <string name="legal_p_updates_title">3. 更新检查</string>
+    <string name="legal_p_updates_body">当你点击“检查更新”（或开启自动检查）时，应用会查询本项目的 GitHub releases 公开 API。该请求会向 GitHub 暴露你的 IP 地址与应用版本，受 GitHub 自身隐私条款约束。自动检查默认关闭。下载的更新文件保存在应用私有目录中，仅在你确认后才会安装。</string>
+
+    <string name="legal_p_sharing_title">4. 由你主动分享的日志与记录</string>
+    <string name="legal_p_sharing_body">诊断日志与会话记录绝不会自行离开设备。只有当你点击“分享”时，才会通过 Android 分享菜单发送到你选择的 app。日志可能包含设备与系统信息——发送给他人之前请先检查。</string>
+
+    <string name="legal_p_external_title">5. 外部链接与捐赠</string>
+    <string name="legal_p_external_body">社区链接（GitHub、官网、Discord、Telegram）与捐赠方式（PayPal、Binance、加密货币地址）均在应用外部打开。使用这些服务时，对方会按其自身政策收集常规数据（如 IP 地址，支付时包括支付信息）。捐赠完全自愿，由外部服务处理——应用不会看到或保存你的支付信息。</string>
+
+    <string name="legal_p_permissions_title">6. 设备权限</string>
+    <string name="legal_p_permissions_body">应用仅为实现你要求的功能而请求权限：文件访问用于读取与备份游戏配置，悬浮窗权限用于性能浮窗与准星，使用情况访问用于检测游戏会话，通知访问用于游戏模式静音时段，麦克风仅用于可选的音频可视化增强，蓝牙信息仅用于识别音频设备。每项权限都可以拒绝——相关功能会显示为不可用，而不会静默失败。</string>
+
+    <string name="legal_p_vpn_title">7. 本地 VPN 防火墙</string>
+    <string name="legal_p_vpn_body">可选的应用联网防火墙使用 Android VPN 框架作为设备本地过滤器。规则在手机本机执行；不会向项目服务器发送任何流量，因为根本不存在这样的服务器。</string>
+
+    <string name="legal_p_contact_title">8. 联系与变更</string>
+    <string name="legal_p_contact_body">对本政策的疑问可在项目 GitHub 仓库中提出 issue。若政策变更，更新后的文本将随应用发布，并标注新的更新日期。</string>
+
+    <string name="legal_t_intro">安装并使用 CatSmoker 即表示你同意这些条款。若不同意，请勿使用本应用。</string>
+
+    <string name="legal_t_license_title">1. 开源许可</string>
+    <string name="legal_t_license_body">本应用源代码采用知识共享署名-非商业性使用-相同方式共享 4.0 国际许可协议（CC BY-NC-SA 4.0）。你可以在署名、以相同许可发布的前提下，出于非商业目的分享与改编。完整许可文本可在初始设置页与项目仓库中找到链接。</string>
+
+    <string name="legal_t_games_title">2. 游戏自身规则仍然适用</string>
+    <string name="legal_t_games_body">伪装设备身份或修改游戏文件可能违反各游戏的服务条款，并导致功能受限或封号等处罚。开发者不对第三方游戏中的封号或任何损失负责。使用这些功能风险自负。</string>
+
+    <string name="legal_t_risk_title">3. 系统更改由你自行负责</string>
+    <string name="legal_t_risk_body">本应用按“现状”提供，不作任何保证。更改系统设置（分辨率、刷新率、动画缩放、DNS、音频、dexopt 编译）或使用 root、Shizuku 权限的功能均按你的指令执行；应用会在可行时先备份配置，但你需自行承担不稳定、启动问题或数据丢失的风险。你随时可以还原更改或卸载应用。</string>
+
+    <string name="legal_t_donations_title">4. 捐赠</string>
+    <string name="legal_t_donations_body">捐赠是支持开发的自愿赠与，不可退款，完全由外部服务处理，不会解锁高级功能，也不赋予捐赠者索取支持或干预项目的权利。</string>
+
+    <string name="legal_t_use_title">5. 可接受的使用</string>
+    <string name="legal_t_use_body">请合法使用本应用，且仅用于提升游戏性能。不得用其损害设备、网络或他人，也不得在重要场合将修改过的游戏客户端冒充为未修改的客户端。</string>
+
+    <string name="legal_t_changes_title">6. 条款变更</string>
+    <string name="legal_t_changes_body">这些条款可能随应用发展而更新；现行版本始终刊载于应用内的本页面。</string>
+
+    <!-- Donate-screen voluntary-gift notice. -->
+    <string name="donate_notice">捐赠为自愿赠与，不可退款。付款由 PayPal、Binance 或相应加密货币网络在外部处理——CatSmoker 不会看到你的支付信息。</string>
+
+    <!-- Settings ads toggle explanation. -->
+    <string name="sys_ads_sub">Start.io 横幅广告让本应用保持免费。关闭即可停用。广告方收集哪些数据，请见隐私政策。</string>
+
+    <!-- Content descriptions for previously unlabeled icon-only buttons. -->
+    <string name="core_desc_add">添加</string>
+    <string name="core_desc_more">更多选项</string>
+    <string name="core_desc_save">保存</string>
+    <string name="core_desc_random">生成随机值</string>
+
+    <!-- Onboarding legal dialogs. -->
+    <string name="core_terms_read_privacy">阅读隐私政策</string>
+    <string name="core_terms_read_terms">阅读服务条款</string>
+</resources>

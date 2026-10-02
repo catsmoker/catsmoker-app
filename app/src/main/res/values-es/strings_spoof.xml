@@ -19,6 +19,7 @@
     <string name="spoof_magisk_desc">ZIP flasheable de tu primer perfil. Solo incluye la identidad del modelo, lo mínimo para que un flasheo no bloquee el arranque del dispositivo. Se aplica a todo el dispositivo, por lo que las exclusiones del Modo seguro no aplican. Tras reiniciar, el módulo informa qué propiedades se aplicaron realmente, y su botón de acción abre una WebUI. El APK de esta app viaja incluido, para que el módulo pueda restaurar la app si desaparece.</string>
     <string name="spoof_root_manager_title">Abrir gestor de root</string>
     <string name="spoof_root_manager_desc">Accede a Magisk/KernelSU/APatch.</string>
+    <string name="spoof_root_manager_need">Necesita acceso root.</string>
     <string name="spoof_profiles_title">Perfiles de suplantación</string>
     <string name="spoof_profiles_subtitle">Gestiona tus identidades virtuales de dispositivo.</string>
     <string name="spoof_list_empty">No se encontraron perfiles. ¡Crea uno!</string>
@@ -58,6 +59,8 @@
     <string name="spoof_field_density">Densidad</string>
     <string name="spoof_field_refresh_rate">Frecuencia de actualización (Hz)</string>
     <string name="spoof_refresh_note">Falsea la tasa y la lista de modos dentro de la app objetivo. Hook residente — vacío significa apagado.</string>
+    <string name="spoof_apply_metrics">Aplicar pantalla al objetivo</string>
+    <string name="spoof_metrics_note">Reescribe métricas y clase de tamaño dentro de la app objetivo. Hooks residentes — apagado deja los campos de arriba solo para el editor.</string>
     <string name="spoof_group_network">Red y región</string>
     <string name="spoof_action_roll_network">Generar red y región</string>
     <string name="spoof_field_operator_name">Nombre del operador</string>
@@ -101,6 +104,8 @@
     <string name="spoof_diag_tags">Etiquetas</string>
     <string name="spoof_diag_type">Tipo</string>
     <string name="spoof_diag_unknown">Desconocido</string>
+    <string name="spoof_diag_native_title">Puente nativo</string>
+    <string name="spoof_diag_native_bridge">Puente integrado</string>
     <string name="spoof_error_save">No se pudieron guardar los perfiles: %1$s</string>
     <string name="spoof_error_write_failed">falló la escritura</string>
     <string name="spoof_root_available">Acceso root disponible</string>

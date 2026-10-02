@@ -198,7 +198,7 @@ class LSPosedModule : IXposedHookLoadPackage {
 
     /** Per-package section of the Settings.Global document — readable from any process. */
     private fun sectionFromGlobal(resolver: ContentResolver, packageName: String): String? =
-        LSPosedConfig.parseSection(
+        LSPosedConfig.parseSectionWildcard(
             readGlobal(resolver, LSPosedConfig.KEY_GLOBAL_PROFILES_B64),
             packageName
         )
@@ -251,6 +251,10 @@ class LSPosedModule : IXposedHookLoadPackage {
         hookSystemProperties(classLoader)
         hookSettingsSecure(classLoader)
         hookTelephony(classLoader)
+        hookTelephonyCoherence(classLoader)
+        hookPackageManagerFeatures(classLoader)
+        hookSemSystemProperties(classLoader)
+        hookScreenMetrics(classLoader)
         hookBuildMethods(classLoader)
         hookWebView(classLoader)
         hookJavaSystemProperties()
@@ -318,7 +322,225 @@ class LSPosedModule : IXposedHookLoadPackage {
     }
 
     private fun hookSystemProperties(classLoader: ClassLoader) {
-        val sysPropClass = XposedHelpers.findClassIfExists("android.os.SystemProperties", classLoader) ?: return
+        // Loader attempts: the app loader, the bootstrap loader, then a runtime lookup that
+        // never touches the compile classpath (the class is hidden from it). Any unhooked
+        // shape reopens the SystemProperties-vs-subprocess disagreement the getprop
+        // interceptor closes, so every miss is retried through the next loader; repeat hits
+        // on the same Class are skipped (the hook body is idempotent, but thrice per call
+        // is still waste).
+        hookSystemPropertiesClass(
+            XposedHelpers.findClassIfExists("android.os.SystemProperties", classLoader)
+        )
+        hookSystemPropertiesClass(
+            XposedHelpers.findClassIfExists("android.os.SystemProperties", null)
+        )
+        hookSystemPropertiesClass(
+            runCatching { Class.forName("android.os.SystemProperties") }.getOrNull()
+        )
+    }
+
+    private val hookedSystemPropertiesClasses = HashSet<Class<*>>()
+
+    /**
+     * Intercepts Samsung's `SemSystemProperties` wrappers with the same get/getInt/getLong/
+     * getBoolean shape as [hookSystemPropertiesClass]: Samsung readers bypass
+     * `android.os.SystemProperties`, which would otherwise reopen the channel disagreement
+     * on exactly the devices whose readers use it. Device-specific and conditional — both
+     * class names, both loaders, every install guarded, a miss is a no-op on non-Samsung
+     * builds. Ported from the reference `VendorSystemPropertiesHooks` (minus its
+     * version-bypass, which this app tracks separately).
+     */
+    private fun hookSemSystemProperties(classLoader: ClassLoader) {
+        for (className in SEM_SYSTEM_PROPERTIES_CLASSES) {
+            hookSystemPropertiesClass(XposedHelpers.findClassIfExists(className, classLoader))
+            hookSystemPropertiesClass(XposedHelpers.findClassIfExists(className, null))
+        }
+    }
+
+    /**
+     * Rewrites display metrics, size getters, bounds and Configuration from the profile's
+     * screen block — the display half of form-factor coherence (a tablet profile beside a
+     * phone-sized `screenWidthDp` is self-contradictory).
+     *
+     * Gated on the explicit `device.apply_screen_metrics` opt-in (blank/off by default):
+     * geometry changes what a game renders, so filling the screen fields in never applies
+     * them as a side effect. Adapted from the reference `DisplayHooks` (read in full):
+     * Resources + Display + WindowMetrics surfaces with the same formulas (see
+     * [SpoofDisplayMetrics]); unassigning returns new reads to pass-through (already-handed
+     * copies in the target keep their values, like the reference).
+     */
+    private fun hookScreenMetrics(classLoader: ClassLoader) {
+        val metricsHook = object : XC_MethodHook() {
+            override fun afterHookedMethod(param: MethodHookParam) {
+                if (!SpoofDisplayMetrics.shouldApply(props)) return
+                val spec = SpoofDisplayMetrics.specFromProps(props) ?: return
+                val metrics = param.result as? android.util.DisplayMetrics ?: return
+                SpoofDisplayMetrics.applyMetrics(
+                    metrics,
+                    spec.width.takeIf { it > 0 },
+                    spec.height.takeIf { it > 0 },
+                    spec.densityDpi.takeIf { it > 0 }
+                )
+            }
+        }
+        try {
+            val resClass = XposedHelpers.findClassIfExists("android.content.res.Resources", null)
+                ?: return
+            XposedHelpers.findAndHookMethod(resClass, "getDisplayMetrics", metricsHook)
+        } catch (_: Throwable) {
+        }
+        val configHook = object : XC_MethodHook() {
+            override fun afterHookedMethod(param: MethodHookParam) {
+                if (!SpoofDisplayMetrics.shouldApply(props)) return
+                val spec = SpoofDisplayMetrics.specFromProps(props) ?: return
+                val config = param.result as? android.content.res.Configuration ?: return
+                SpoofDisplayMetrics.applyConfiguration(
+                    config,
+                    spec.width.takeIf { it > 0 },
+                    spec.height.takeIf { it > 0 },
+                    spec.densityDpi.takeIf { it > 0 }
+                )
+            }
+        }
+        try {
+            val resClass = XposedHelpers.findClassIfExists("android.content.res.Resources", null)
+                ?: return
+            XposedHelpers.findAndHookMethod(resClass, "getConfiguration", configHook)
+        } catch (_: Throwable) {
+        }
+
+        val displayClass = XposedHelpers.findClassIfExists("android.view.Display", classLoader)
+            ?: try {
+                android.view.Display::class.java
+            } catch (_: Throwable) {
+                return
+            }
+        val pointHook = { getPoint: (XC_MethodHook.MethodHookParam) -> android.graphics.Point? ->
+            object : XC_MethodHook() {
+                override fun afterHookedMethod(param: MethodHookParam) {
+                    if (!SpoofDisplayMetrics.shouldApply(props)) return
+                    val spec = SpoofDisplayMetrics.specFromProps(props) ?: return
+                    val point = getPoint(param) ?: return
+                    SpoofDisplayMetrics.applyPoint(
+                        point,
+                        spec.width.takeIf { it > 0 },
+                        spec.height.takeIf { it > 0 }
+                    )
+                }
+            }
+        }
+        try {
+            XposedHelpers.findAndHookMethod(
+                displayClass, "getMetrics", android.util.DisplayMetrics::class.java,
+                object : XC_MethodHook() {
+                    override fun afterHookedMethod(param: MethodHookParam) {
+                        if (!SpoofDisplayMetrics.shouldApply(props)) return
+                        val spec = SpoofDisplayMetrics.specFromProps(props) ?: return
+                        val metrics = param.args.getOrNull(0) as? android.util.DisplayMetrics ?: return
+                        SpoofDisplayMetrics.applyMetrics(
+                            metrics,
+                            spec.width.takeIf { it > 0 },
+                            spec.height.takeIf { it > 0 },
+                            spec.densityDpi.takeIf { it > 0 }
+                        )
+                    }
+                }
+            )
+        } catch (_: Throwable) {
+        }
+        try {
+            XposedHelpers.findAndHookMethod(
+                displayClass, "getRealMetrics", android.util.DisplayMetrics::class.java,
+                object : XC_MethodHook() {
+                    override fun afterHookedMethod(param: MethodHookParam) {
+                        if (!SpoofDisplayMetrics.shouldApply(props)) return
+                        val spec = SpoofDisplayMetrics.specFromProps(props) ?: return
+                        val metrics = param.args.getOrNull(0) as? android.util.DisplayMetrics ?: return
+                        SpoofDisplayMetrics.applyMetrics(
+                            metrics,
+                            spec.width.takeIf { it > 0 },
+                            spec.height.takeIf { it > 0 },
+                            spec.densityDpi.takeIf { it > 0 }
+                        )
+                    }
+                }
+            )
+        } catch (_: Throwable) {
+        }
+        try {
+            XposedHelpers.findAndHookMethod(
+                displayClass, "getSize", android.graphics.Point::class.java, pointHook { it.args.getOrNull(0) as? android.graphics.Point }
+            )
+        } catch (_: Throwable) {
+        }
+        try {
+            XposedHelpers.findAndHookMethod(
+                displayClass, "getRealSize", android.graphics.Point::class.java, pointHook { it.args.getOrNull(0) as? android.graphics.Point }
+            )
+        } catch (_: Throwable) {
+        }
+        val dimensionHook = { width: Boolean ->
+            object : XC_MethodHook() {
+                override fun afterHookedMethod(param: MethodHookParam) {
+                    if (!SpoofDisplayMetrics.shouldApply(props)) return
+                    val spec = SpoofDisplayMetrics.specFromProps(props) ?: return
+                    val value = (if (width) spec.width else spec.height).takeIf { it > 0 } ?: return
+                    param.result = value
+                }
+            }
+        }
+        try {
+            XposedHelpers.findAndHookMethod(displayClass, "getWidth", dimensionHook(true))
+        } catch (_: Throwable) {
+        }
+        try {
+            XposedHelpers.findAndHookMethod(displayClass, "getHeight", dimensionHook(false))
+        } catch (_: Throwable) {
+        }
+        try {
+            XposedHelpers.findAndHookMethod(
+                displayClass, "getRectSize", android.graphics.Rect::class.java,
+                object : XC_MethodHook() {
+                    override fun afterHookedMethod(param: MethodHookParam) {
+                        if (!SpoofDisplayMetrics.shouldApply(props)) return
+                        val spec = SpoofDisplayMetrics.specFromProps(props) ?: return
+                        val rect = param.args.getOrNull(0) as? android.graphics.Rect ?: return
+                        SpoofDisplayMetrics.applyBounds(
+                            rect,
+                            spec.width.takeIf { it > 0 },
+                            spec.height.takeIf { it > 0 }
+                        )
+                    }
+                }
+            )
+        } catch (_: Throwable) {
+        }
+        try {
+            val wmClass = XposedHelpers.findClassIfExists("android.view.WindowMetrics", classLoader)
+                ?: return
+            XposedHelpers.findAndHookMethod(
+                wmClass, "getBounds",
+                object : XC_MethodHook() {
+                    override fun afterHookedMethod(param: MethodHookParam) {
+                        if (!SpoofDisplayMetrics.shouldApply(props)) return
+                        val spec = SpoofDisplayMetrics.specFromProps(props) ?: return
+                        val bounds = param.result as? android.graphics.Rect ?: return
+                        val spoofed = android.graphics.Rect(bounds)
+                        SpoofDisplayMetrics.applyBounds(
+                            spoofed,
+                            spec.width.takeIf { it > 0 },
+                            spec.height.takeIf { it > 0 }
+                        )
+                        param.result = spoofed
+                    }
+                }
+            )
+        } catch (_: Throwable) {
+        }
+    }
+
+    private fun hookSystemPropertiesClass(sysPropClass: Class<*>?) {
+        if (sysPropClass == null || !hookedSystemPropertiesClasses.add(sysPropClass)) return
         val hook = object : XC_MethodHook() {
             override fun afterHookedMethod(param: MethodHookParam) {
                 val key = param.args.getOrNull(0) as? String ?: return
@@ -475,15 +697,31 @@ class LSPosedModule : IXposedHookLoadPackage {
     }
 
     private fun hookSettingsSecure(classLoader: ClassLoader) {        val settingsSecure = XposedHelpers.findClassIfExists("android.provider.Settings\$Secure", classLoader) ?: return
+        // ANDROID_ID plus the GSF half: the profile carries device.gsf_id but no hook consumed
+        // it (a write-only field), while any GMS-adjacent reader asking for a gsf-flavored key
+        // got the real one. Both getString arities, like the reference SettingsHooks.
         val hook = object : XC_MethodHook() {
             override fun afterHookedMethod(param: MethodHookParam) {
-                if (param.args.getOrNull(1) as? String != Settings.Secure.ANDROID_ID) return
-                props["ANDROID_ID"]?.let { param.result = it }
+                val name = param.args.getOrNull(1) as? String ?: return
+                if (name == Settings.Secure.ANDROID_ID) {
+                    props["ANDROID_ID"]?.let { param.result = it }
+                    return
+                }
+                if (name == "gsf_id" || name.contains("gsf")) {
+                    props["device.gsf_id"]?.let { param.result = it }
+                }
             }
         }
         try {
             XposedHelpers.findAndHookMethod(
                 settingsSecure, "getString", ContentResolver::class.java, String::class.java, hook
+            )
+        } catch (_: Throwable) {
+        }
+        try {
+            XposedHelpers.findAndHookMethod(
+                settingsSecure, "getString",
+                ContentResolver::class.java, String::class.java, String::class.java, hook
             )
         } catch (_: Throwable) {
         }
@@ -512,6 +750,221 @@ class LSPosedModule : IXposedHookLoadPackage {
         }
     }
 
+    /**
+     * Telephony coherence: a tablet profile answering `getImei` beside `PHONE_TYPE_NONE` is
+     * the half-spoof mismatch the getprop interceptor's KDoc warns about, so form-factor
+     * channels move together.
+     *
+     * Derived from the profile's own `ro.build.characteristics` (see [SpoofCoherence]) —
+     * no new model: a tablet profile hides telephony (`PHONE_TYPE_NONE`, absent SIM,
+     * empty subscriptions), a phone profile passes the device's real answers through
+     * everywhere the profile carries no value (the value hooks above own the spoofed half).
+     * MCC/MNC/country answer from the profile's operator numeric when present. Adapted from
+     * the reference `TelephonyHooks` (read in full); deliberately not ported is its
+     * *synthetic* `SubscriptionInfo` construction — there are no subscription fields in the
+     * profile to synthesize from, and inventing MCC/MNC would be fabrication.
+     */
+    private fun hookTelephonyCoherence(classLoader: ClassLoader) {
+        val telephonyManager =
+            XposedHelpers.findClassIfExists("android.telephony.TelephonyManager", classLoader)
+                ?: return
+        val tablet: () -> Boolean = { SpoofCoherence.isTabletProfile(props) }
+
+        fun hookInt(method: String, vararg params: Any, answer: () -> Int?) {
+            try {
+                XposedHelpers.findAndHookMethod(
+                    telephonyManager, method, *params,
+                    object : XC_MethodHook() {
+                        override fun beforeHookedMethod(param: MethodHookParam) {
+                            answer()?.let { param.result = it }
+                        }
+                    }
+                )
+            } catch (_: Throwable) {
+            }
+        }
+
+        fun hookBoolean(method: String, vararg params: Any, answer: () -> Boolean?) {
+            try {
+                XposedHelpers.findAndHookMethod(
+                    telephonyManager, method, *params,
+                    object : XC_MethodHook() {
+                        override fun beforeHookedMethod(param: MethodHookParam) {
+                            answer()?.let { param.result = it }
+                        }
+                    }
+                )
+            } catch (_: Throwable) {
+            }
+        }
+
+        hookInt("getPhoneType") { if (tablet()) android.telephony.TelephonyManager.PHONE_TYPE_NONE else null }
+        hookBoolean("hasIccCard") { if (tablet()) false else null }
+        hookBoolean("hasIccCard", Int::class.java) { if (tablet()) false else null }
+        hookInt("getSimState") { if (tablet()) android.telephony.TelephonyManager.SIM_STATE_ABSENT else null }
+        hookInt("getSimState", Int::class.java) { if (tablet()) android.telephony.TelephonyManager.SIM_STATE_ABSENT else null }
+        hookInt("getSimCardState") { if (tablet()) android.telephony.TelephonyManager.SIM_STATE_ABSENT else null }
+        hookInt("getSimApplicationState") { if (tablet()) android.telephony.TelephonyManager.SIM_STATE_ABSENT else null }
+        hookInt("getPhoneCount") { if (tablet()) 0 else null }
+        hookInt("getSimCount") { if (tablet()) 0 else null }
+        hookBoolean("isVoiceCapable") { if (tablet()) false else null }
+        hookBoolean("isSmsCapable") { if (tablet()) false else null }
+
+        val mccMnc: () -> Pair<String?, String?> = {
+            val numeric = (props["gsm.sim.operator.numeric"] ?: "").ifBlank { props["gsm.operator.numeric"] }
+            if (numeric.isNullOrBlank()) null to null else SpoofCoherence.splitMccMnc(numeric)
+        }
+        fun hookString(method: String, answer: () -> String?) {
+            try {
+                XposedHelpers.findAndHookMethod(
+                    telephonyManager, method,
+                    object : XC_MethodHook() {
+                        override fun afterHookedMethod(param: MethodHookParam) {
+                            answer()?.let { param.result = it }
+                        }
+                    }
+                )
+            } catch (_: Throwable) {
+            }
+        }
+        hookInt("getMcc") {
+            if (tablet()) 0 else mccMnc().first?.toIntOrNull()
+        }
+        hookInt("getMnc") {
+            if (tablet()) 0 else mccMnc().second?.toIntOrNull()
+        }
+        hookString("getMccString") {
+            if (tablet()) "" else mccMnc().first
+        }
+        hookString("getMncString") {
+            if (tablet()) "" else mccMnc().second
+        }
+        hookString("getSimCountryIso") {
+            if (tablet()) "" else props["gsm.sim.operator.iso-country"]?.ifBlank { null }
+        }
+        hookString("getNetworkCountryIso") {
+            if (tablet()) "" else props["gsm.sim.operator.iso-country"]?.ifBlank { null }
+        }
+
+        val subscriptionManager =
+            XposedHelpers.findClassIfExists("android.telephony.SubscriptionManager", classLoader)
+                ?: return
+        fun subInt(method: String, vararg params: Any, answer: () -> Int?) {
+            try {
+                XposedHelpers.findAndHookMethod(
+                    subscriptionManager, method, *params,
+                    object : XC_MethodHook() {
+                        override fun beforeHookedMethod(param: MethodHookParam) {
+                            answer()?.let { param.result = it }
+                        }
+                    }
+                )
+            } catch (_: Throwable) {
+            }
+        }
+        subInt("getActiveSubscriptionInfoCount") { if (tablet()) 0 else null }
+        subInt("getActiveSubscriptionInfoCountMax") { if (tablet()) 0 else null }
+        try {
+            XposedHelpers.findAndHookMethod(
+                subscriptionManager, "getActiveSubscriptionIdList",
+                object : XC_MethodHook() {
+                    override fun beforeHookedMethod(param: MethodHookParam) {
+                        if (tablet()) param.result = IntArray(0)
+                    }
+                }
+            )
+        } catch (_: Throwable) {
+        }
+        for (listMethod in listOf(
+            "getActiveSubscriptionInfoList",
+            "getCompleteActiveSubscriptionInfoList",
+            "getAccessibleSubscriptionInfoList",
+            "getAllSubscriptionInfoList"
+        )) {
+            try {
+                XposedHelpers.findAndHookMethod(
+                    subscriptionManager, listMethod,
+                    object : XC_MethodHook() {
+                        override fun afterHookedMethod(param: MethodHookParam) {
+                            if (tablet()) param.result = emptyList<Any>()
+                        }
+                    }
+                )
+            } catch (_: Throwable) {
+            }
+        }
+        try {
+            XposedHelpers.findAndHookMethod(
+                subscriptionManager, "getActiveSubscriptionInfo", Int::class.java,
+                object : XC_MethodHook() {
+                    override fun beforeHookedMethod(param: MethodHookParam) {
+                        if (tablet()) param.result = null
+                    }
+                }
+            )
+        } catch (_: Throwable) {
+        }
+    }
+
+    /**
+     * PackageManager feature gating by form factor: a tablet profile beside `TELEPHONY=true`
+     * is self-contradictory, so telephony features are denied on tablet builds and emulator
+     * tells are always denied; everything else passes through. Adapted from the reference
+     * `PackageManagerHooks` (read in full) with the same two sets and the same PC-type rule.
+     */
+    private fun hookPackageManagerFeatures(classLoader: ClassLoader) {
+        val pmClass = XposedHelpers.findClassIfExists(
+            "android.app.ApplicationPackageManager", classLoader
+        ) ?: return
+        val tablet: () -> Boolean = { SpoofCoherence.isTabletProfile(props) }
+        val hook = object : XC_MethodHook() {
+            override fun afterHookedMethod(param: MethodHookParam) {
+                val feature = param.args.getOrNull(0) as? String ?: return
+                SpoofCoherence.overrideFeature(feature, tablet())?.let { param.result = it }
+            }
+        }
+        try {
+            XposedHelpers.findAndHookMethod(pmClass, "hasSystemFeature", String::class.java, hook)
+        } catch (_: Throwable) {
+        }
+        try {
+            XposedHelpers.findAndHookMethod(
+                pmClass, "hasSystemFeature", String::class.java, Int::class.java, hook
+            )
+        } catch (_: Throwable) {
+        }
+        try {
+            XposedHelpers.findAndHookMethod(
+                pmClass, "getSystemAvailableFeatures",
+                object : XC_MethodHook() {
+                    override fun afterHookedMethod(param: MethodHookParam) {
+                        val features = param.result as? Array<*> ?: return
+                        val componentType = features.javaClass.componentType ?: return
+                        val kept = features.filter { feature ->
+                            try {
+                                val name = XposedHelpers.getObjectField(feature, "name") as? String
+                                if (name == null) {
+                                    true
+                                } else {
+                                    val override = SpoofCoherence.overrideFeature(name, tablet())
+                                    override == null || override
+                                }
+                            } catch (_: Throwable) {
+                                true
+                            }
+                        }
+                        val remade = java.lang.reflect.Array.newInstance(componentType, kept.size)
+                        kept.forEachIndexed { index, feature ->
+                            java.lang.reflect.Array.set(remade, index, feature)
+                        }
+                        param.result = remade
+                    }
+                }
+            )
+        } catch (_: Throwable) {
+        }
+    }
+
     private fun hookBuildMethods(classLoader: ClassLoader) {
         val buildClass = XposedHelpers.findClassIfExists("android.os.Build", classLoader) ?: return
         // Build.SERIAL has been hardcoded to "unknown" since API 26; getSerial() is the live read.
@@ -534,6 +987,58 @@ class LSPosedModule : IXposedHookLoadPackage {
                         props["webview.user_agent"]?.let { param.result = it }
                     }
                 })
+        } catch (_: Throwable) {
+        }
+
+        // Write-path supplement to the read hook above: a WebView that captured its settings
+        // before any read gets the spoofed UA pushed in at construction and at getSettings.
+        // Touching live objects is the documented cost — blank profile key means off, and every
+        // set is guarded so a missing method is a miss, not a break. Adapted from the reference
+        // WebViewHooks (read in full).
+        val webViewClass = XposedHelpers.findClassIfExists("android.webkit.WebView", classLoader) ?: return
+        val pushUa = object : XC_MethodHook() {
+            override fun afterHookedMethod(param: MethodHookParam) {
+                val ua = props["webview.user_agent"] ?: return
+                try {
+                    val settings = XposedHelpers.callMethod(param.thisObject, "getSettings") ?: return
+                    XposedHelpers.callMethod(settings, "setUserAgentString", ua)
+                } catch (_: Throwable) {
+                }
+            }
+        }
+        try {
+            XposedHelpers.findAndHookMethod(
+                webViewClass, "getSettings",
+                object : XC_MethodHook() {
+                    override fun afterHookedMethod(param: MethodHookParam) {
+                        val ua = props["webview.user_agent"] ?: return
+                        try {
+                            XposedHelpers.callMethod(param.result, "setUserAgentString", ua)
+                        } catch (_: Throwable) {
+                        }
+                    }
+                }
+            )
+        } catch (_: Throwable) {
+        }
+        try {
+            XposedHelpers.findAndHookConstructor(webViewClass, Context::class.java, pushUa)
+        } catch (_: Throwable) {
+        }
+        try {
+            XposedHelpers.findAndHookConstructor(
+                webViewClass, Context::class.java, android.util.AttributeSet::class.java, pushUa
+            )
+        } catch (_: Throwable) {
+        }
+        try {
+            XposedHelpers.findAndHookConstructor(
+                webViewClass,
+                Context::class.java,
+                android.util.AttributeSet::class.java,
+                Int::class.javaPrimitiveType,
+                pushUa
+            )
         } catch (_: Throwable) {
         }
     }
@@ -716,6 +1221,16 @@ class LSPosedModule : IXposedHookLoadPackage {
         const val OWN_PACKAGE = "com.catsmoker.app"
         const val TAG_SDK_INT = "VERSION.SDK_INT"
         const val MEDIA_DRM_UNIQUE_ID = "deviceUniqueId"
+
+        /**
+         * Samsung's SystemProperties wrappers, both historical class names. Hooked with the
+         * same get/getInt/getLong/getBoolean shape as the platform class because Samsung
+         * readers bypass it — same lookup, same coercions, miss-is-no-op on other builds.
+         */
+        val SEM_SYSTEM_PROPERTIES_CLASSES = listOf(
+            "android.os.SemSystemProperties",
+            "com.samsung.android.os.SemSystemProperties"
+        )
 
         /** `AppSetIdInfo.SCOPE_APP`, inlined because the GMS class is not on our classpath. */
         const val APP_SET_SCOPE_APP = 1

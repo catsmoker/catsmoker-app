@@ -185,6 +185,17 @@ The debug APK is generated at `app/build/outputs/apk/debug/app-debug.apk`.
 
 ---
 
+## 🔒 Privacy & Terms
+
+- **Local-first**: settings, profiles, backups and logs stay on your device. There is no account system and no project-operated server.
+- **Ads**: the full build shows Start.io banner ads (disable them in Settings). The Play Store build uses AdMob instead.
+- **Update checks** query the public GitHub releases API only when you ask (automatic checks are opt-in and off by default).
+- **Logs and session recordings** leave the device only when you explicitly share them.
+- **Donations** (PayPal, Binance, crypto) are voluntary gifts processed entirely by those external services.
+- The full **Privacy Policy** and **Terms of Service** ship inside the app (About → Legal, also linked from Settings and the first-run agreement).
+
+---
+
 ## 📄 License
 Licensed under the **Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International License**. See [LICENSE](LICENSE) for more details.
 

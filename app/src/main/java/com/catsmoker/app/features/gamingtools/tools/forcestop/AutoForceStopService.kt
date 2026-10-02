@@ -114,6 +114,9 @@ class AutoForceStopService : Service() {
         var previousForegroundPackage: String? = null
         var lastEventTime = System.currentTimeMillis() - POLL_INTERVAL_MS
         var stoppedCount = 0
+        // Per-package last-kill timestamps behind the kill cooldown: a rapid A→B→A switch
+        // must not kill A twice within seconds for nothing.
+        val lastKills = mutableMapOf<String, Long>()
 
         while (true) {
             delay(POLL_INTERVAL_MS.milliseconds)
@@ -136,11 +139,17 @@ class AutoForceStopService : Service() {
 
             if (current != null && current != previousForegroundPackage) {
                 val left = previousForegroundPackage
-                if (left != null && !kept.contains(left) && !isProtected(left)) {
+                if (left != null && !kept.contains(left) && !isProtected(left) &&
+                    KillCooldown.shouldKill(left, now, lastKills)
+                ) {
                     // Counted from the shell's exit code, so the notification's tally is of apps the
-                    // platform actually stopped rather than of commands sent.
+                    // platform actually stopped rather than of commands sent — and the cooldown
+                    // timestamp is banked only on a confirmed kill, never on an attempt.
                     val result = shellRunner.execSafeResult("am", "force-stop", left)
-                    if (result.isSuccess) stoppedCount++
+                    if (result.isSuccess) {
+                        stoppedCount++
+                        lastKills[left] = now
+                    }
                 }
                 previousForegroundPackage = current
             }

@@ -114,7 +114,9 @@ fun GamingModeCard(
                 ) {
                     Icon(
                         imageVector = Icons.Default.PowerSettingsNew,
-                        contentDescription = null,
+                        contentDescription = stringResource(
+                            if (isActive) R.string.gt_gm_toggle_off else R.string.gt_gm_toggle_on
+                        ),
                         tint = when {
                             isActive -> MaterialTheme.colorScheme.primary
                             !canActivate -> MaterialTheme.colorScheme.onSurfaceVariant
@@ -188,22 +190,52 @@ fun GamingModeCard(
                         applied = report.fixedPerformance
                     )
                     // Null means the device carries no vendor GPU mode property at all — every
-                    // non-Qualcomm SoC — so the row is omitted rather than shown as refused, the
-                    // same rule as the game frame cap row below.
-                    report.gpuPerformanceMode?.let { applied ->
+                    // non-Qualcomm SoC — so the row stays visible but grayed out with the reason,
+                    // instead of disappearing entirely.
+                    if (report.gpuPerformanceMode != null) {
                         GamingModeResultRow(
                             label = stringResource(R.string.gt_gm_label_gpu),
-                            value = if (applied) stringResource(R.string.gt_gm_qc_perf) else stringResource(R.string.gt_gm_not_applied),
-                            applied = applied
+                            value = if (report.gpuPerformanceMode) stringResource(R.string.gt_gm_qc_perf) else stringResource(R.string.gt_gm_not_applied),
+                            applied = report.gpuPerformanceMode
+                        )
+                    } else {
+                        GamingModeResultRow(
+                            label = stringResource(R.string.gt_gm_label_gpu),
+                            value = stringResource(R.string.gt_gm_na_value),
+                            applied = false,
+                            reason = stringResource(R.string.gt_gm_na_qualcomm)
                         )
                     }
-                    // Same null rule — omitted on non-Qualcomm silicon. The value shown is the
+                    // Same null rule — grayed out on non-Qualcomm silicon. The value shown is the
                     // measured panel peak the hint carries, read back from the property.
-                    report.qtiGameFps?.let { applied ->
+                    if (report.qtiGameFps != null) {
                         GamingModeResultRow(
                             label = stringResource(R.string.gt_gm_label_fps_hint),
-                            value = if (applied) stringResource(R.string.gt_gm_qc_peak) else stringResource(R.string.gt_gm_not_applied),
-                            applied = applied
+                            value = if (report.qtiGameFps) stringResource(R.string.gt_gm_qc_peak) else stringResource(R.string.gt_gm_not_applied),
+                            applied = report.qtiGameFps
+                        )
+                    } else {
+                        GamingModeResultRow(
+                            label = stringResource(R.string.gt_gm_label_fps_hint),
+                            value = stringResource(R.string.gt_gm_na_value),
+                            applied = false,
+                            reason = stringResource(R.string.gt_gm_na_qualcomm)
+                        )
+                    }
+                    // Same null rule — grayed out where the GED/PPM nodes do not exist. The row
+                    // reports the read-back verdict, never the write request.
+                    if (report.mediaTekGameMode != null) {
+                        GamingModeResultRow(
+                            label = stringResource(R.string.gt_gm_label_mtk),
+                            value = if (report.mediaTekGameMode) stringResource(R.string.gt_gm_mtk_on) else stringResource(R.string.gt_gm_not_applied),
+                            applied = report.mediaTekGameMode
+                        )
+                    } else {
+                        GamingModeResultRow(
+                            label = stringResource(R.string.gt_gm_label_mtk),
+                            value = stringResource(R.string.gt_gm_na_value),
+                            applied = false,
+                            reason = stringResource(R.string.gt_gm_na_mediatek)
                         )
                     }
                     GamingModeResultRow(
@@ -234,35 +266,55 @@ fun GamingModeCard(
                         applied = report.dndEngaged
                     )
                     // Null means notification access was never granted, so the second layer was
-                    // never switchable on this run — omitted rather than shown as refused, the
-                    // same rule as the background-data row below.
-                    report.notificationSuppression?.let {
+                    // never switchable on this run — grayed out with the reason instead of omitted.
+                    if (report.notificationSuppression != null) {
                         GamingModeResultRow(
                             label = stringResource(R.string.gt_gm_label_notif),
-                            value = if (it) stringResource(R.string.gt_gm_notif_on) else stringResource(R.string.gt_gm_notif_off),
-                            applied = it
+                            value = if (report.notificationSuppression) stringResource(R.string.gt_gm_notif_on) else stringResource(R.string.gt_gm_notif_off),
+                            applied = report.notificationSuppression
+                        )
+                    } else {
+                        GamingModeResultRow(
+                            label = stringResource(R.string.gt_gm_label_notif),
+                            value = stringResource(R.string.gt_gm_na_value),
+                            applied = false,
+                            reason = stringResource(R.string.gt_gm_na_notif)
                         )
                     }
-                    report.networkWhitelisted?.let { whitelisted ->
+                    if (report.networkWhitelisted != null) {
                         GamingModeResultRow(
                             label = stringResource(R.string.gt_gm_label_net),
-                            value = if (whitelisted) stringResource(R.string.gt_gm_net_ok) else stringResource(R.string.gt_gm_net_no),
-                            applied = whitelisted
+                            value = if (report.networkWhitelisted) stringResource(R.string.gt_gm_net_ok) else stringResource(R.string.gt_gm_net_no),
+                            applied = report.networkWhitelisted
+                        )
+                    } else {
+                        GamingModeResultRow(
+                            label = stringResource(R.string.gt_gm_label_net),
+                            value = stringResource(R.string.gt_gm_na_value),
+                            applied = false,
+                            reason = stringResource(R.string.gt_gm_na_nogame)
                         )
                     }
                     // Null means no game was targeted or the device predates game interventions
-                    // (Android 12) — not applicable, so the row is omitted rather than shown as
-                    // refused, exactly like the background-data row above.
-                    report.gameInterventionApplied?.let { applied ->
+                    // (Android 12) — not applicable, so the row stays visible but grayed out with
+                    // the reason, exactly like the chipset rows above.
+                    if (report.gameInterventionApplied != null) {
                         GamingModeResultRow(
                             label = stringResource(R.string.gt_gm_label_cap),
-                            value = if (applied) {
+                            value = if (report.gameInterventionApplied) {
                                 stringResource(R.string.gt_gm_cap_raised) +
                                     (report.gameInterventionDownscale?.let { " · ${formatDownscale(it)}" } ?: "")
                             } else {
                                 stringResource(R.string.gt_gm_cap_no)
                             },
-                            applied = applied
+                            applied = report.gameInterventionApplied
+                        )
+                    } else {
+                        GamingModeResultRow(
+                            label = stringResource(R.string.gt_gm_label_cap),
+                            value = stringResource(R.string.gt_gm_na_value),
+                            applied = false,
+                            reason = stringResource(R.string.gt_gm_na_intervention)
                         )
                     }
                     // Reported from the read-back of always_finish_activities, so "Applied" means the

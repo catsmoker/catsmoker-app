@@ -72,7 +72,11 @@ fun ProfileEditorScreen(
         onBack = onBack,
         trailingContent = {
             IconButton(onClick = { onSave(profileId, profileName, profile) }) {
-                Icon(Icons.Default.Save, null, tint = MaterialTheme.colorScheme.primary)
+                Icon(
+                    Icons.Default.Save,
+                    contentDescription = stringResource(R.string.core_desc_save),
+                    tint = MaterialTheme.colorScheme.primary
+                )
             }
         }
     ) {
@@ -260,6 +264,25 @@ fun ProfileEditorScreen(
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
+                // The display-metrics gate: explicit opt-in, off by default. Applying another
+                // panel's geometry changes what a game renders (and how it classifies the
+                // device), so filling the width/height/density fields above never applies them
+                // as a side effect — this switch is the only thing that does.
+                Spacer(modifier = Modifier.height(8.dp))
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(stringResource(R.string.spoof_apply_metrics))
+                        Text(
+                            stringResource(R.string.spoof_metrics_note),
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                    Switch(
+                        checked = profile.applyScreenMetrics,
+                        onCheckedChange = { profile = profile.copy(applyScreenMetrics = it) }
+                    )
+                }
             }
 
             EditorGroup(title = stringResource(R.string.spoof_group_network)) {
@@ -391,7 +414,11 @@ fun AdvancedField(label: String, value: String, onValueChange: (String) -> Unit,
             placeholder = { Text(stringResource(R.string.spoof_hint_blank), color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f), fontSize = 12.sp) }
         )
         IconButton(onClick = { onValueChange(onRandomize()) }) {
-            Icon(Icons.Default.Casino, null, tint = MaterialTheme.colorScheme.primary)
+            Icon(
+                Icons.Default.Casino,
+                contentDescription = stringResource(R.string.core_desc_random),
+                tint = MaterialTheme.colorScheme.primary
+            )
         }
     }
 }

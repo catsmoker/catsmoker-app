@@ -30,6 +30,15 @@ class PubgSavePatcherTest {
         return file.readBytes()
     }
 
+    /** The small real-world save — `reference/pubg-save-tools/reference-saves/4/Active.sav`
+     *  (3674 bytes, older/smaller schema), copied as a test resource so the absent-field path is
+     *  exercised against a file the game wrote, not a truncated synthetic. */
+    private fun smallSchemaFixture(): ByteArray {
+        val file = File("src/test/resources/pubg_small_schema_fixture.sav")
+        assumeTrue("small-schema PUBG fixture not found at ${file.absolutePath}", file.isFile)
+        return file.readBytes()
+    }
+
     /** The bundled MaxFPS save — tq.tech.Fps's own 120fps unlock save (7777 bytes), byte-identical
      *  to `reference/pubg-save-tools/reference-saves/{1,2,5}/Active.sav`. */
     private fun bundledMaxFps(): ByteArray {
@@ -204,6 +213,29 @@ class PubgSavePatcherTest {
         assertEquals(110, values["TpViewValue"])
         assertEquals(103, values["FpViewValue"])
         assertEquals(1, values["ArtQuality"])
+    }
+
+    @Test
+    fun smallRealWorldSaveExercisesTheAbsentPath() {
+        // The 3674-byte older-schema save: FPS fields present (patcher agrees with the old
+        // schema too), camera fields absent (the all-or-nothing rule refuses view edits
+        // against a real file, not just the synthetic fixture).
+        val result = PubgSavePatcher.read(smallSchemaFixture())
+        assertTrue(result.isGvas)
+        assertTrue(result.fields[PubgSavePatcher.FIELD_BATTLE_FPS] is PubgSavePatcher.FieldOutcome.Value)
+        assertTrue(result.fields[PubgSavePatcher.FIELD_FPS_LEVEL] is PubgSavePatcher.FieldOutcome.Value)
+        assertTrue(result.fields["TpViewValue"] is PubgSavePatcher.FieldOutcome.Absent)
+        assertTrue(result.fields["FpViewValue"] is PubgSavePatcher.FieldOutcome.Absent)
+
+        val refused = PubgSavePatcher.patch(smallSchemaFixture(), PubgSavePatcher.viewEdits(tpView = 110, fpView = 103))
+        assertTrue(refused is PubgSavePatcher.PatchResult.Refused)
+
+        // …while the FPS tier it does carry patches cleanly at the same length.
+        val patched = PubgSavePatcher.patch(smallSchemaFixture(), PubgSavePatcher.fpsEdits(120))
+        assertTrue(patched is PubgSavePatcher.PatchResult.Ok)
+        assertEquals(smallSchemaFixture().size, (patched as PubgSavePatcher.PatchResult.Ok).data.size)
+        val readBack = PubgSavePatcher.read(patched.data)
+        assertEquals(8, (readBack.fields[PubgSavePatcher.FIELD_BATTLE_FPS] as PubgSavePatcher.FieldOutcome.Value).value)
     }
 
     @Test

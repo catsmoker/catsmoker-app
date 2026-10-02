@@ -124,6 +124,13 @@ fun DonateScreen(onBack: () -> Unit) {
             modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(bottom = 32.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
+            // Donations are voluntary gifts handled entirely by external processors —
+            // stated up front so nobody mistakes them for a purchase.
+            Text(
+                stringResource(R.string.donate_notice),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
             SectionCard {
                 Column {
                     Text(

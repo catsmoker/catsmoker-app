@@ -43,9 +43,10 @@
     <!-- Shared scaffold back button (talkback). -->
     <string name="core_back">Back</string>
 
-    <!-- Onboarding terms step. Prefix/suffix carry their edge space via \u0020. -->
+    <!-- Onboarding terms step. Prefix/suffix carry their edge space via \u0020.
+         The link opens the CC license text (not the app Terms — those open as dialogs below). -->
     <string name="core_terms_prefix">Please read our\u0020</string>
-    <string name="core_terms_link">Terms and Conditions</string>
+    <string name="core_terms_link">CC BY-NC-SA 4.0 license</string>
     <string name="core_terms_suffix">\u0020before using the app.</string>
     <string name="core_terms_title">Terms of Service</string>
     <string name="core_terms_agree">I agree to the terms.</string>
@@ -74,6 +75,9 @@
     <string name="core_perm_bt_sub">Required for Gamepad and headset optimizations.</string>
     <string name="core_done">DONE</string>
     <string name="core_grant">GRANT</string>
+    <!-- Permission rows gated on Android version: shown disabled with a reason, never hidden. -->
+    <string name="core_perm_need_13">Requires Android 13 or newer.</string>
+    <string name="core_perm_need_12">Requires Android 12 or newer.</string>
     <!-- MetricReadStatus full labels: the reason shown in place of a value on the dashboard
          and in the performance overlay, when the device never reported a number. -->
     <string name="core_read_loading">reading…</string>

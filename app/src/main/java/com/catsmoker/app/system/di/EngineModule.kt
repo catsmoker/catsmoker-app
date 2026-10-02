@@ -24,8 +24,9 @@ object EngineModule {
     @Singleton
     fun provideMetricsEngine(
         @ApplicationContext context: Context,
-        shellRunner: ShellRunner
-    ): MetricsEngine = MetricsEngine(context, shellRunner)
+        shellRunner: ShellRunner,
+        refreshRates: DisplayRefreshRateProvider
+    ): MetricsEngine = MetricsEngine(context, shellRunner, refreshRates)
 
     @Provides
     @Singleton

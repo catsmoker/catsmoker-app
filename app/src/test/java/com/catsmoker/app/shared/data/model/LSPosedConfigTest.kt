@@ -243,4 +243,41 @@ class LSPosedConfigTest {
         val packages = LSPosedConfig.parseTargetPackages("com.b,com.a,com.b\ncom.c")
         assertEquals(listOf("com.b", "com.a", "com.c"), packages.toList())
     }
+
+    // -------------------------------------------------------- never-spoof backstop
+
+    @Test
+    fun neverSpoofKeepsTheBankingBackstop() {
+        for (pkg in setOf(
+            "com.bbl.mobilebanking",
+            "com.sbi.YONO",
+            "com.hdfcbank.payzapp",
+            "com.csam.icici.bank.imobile"
+        )) {
+            assertTrue(
+                "$pkg must stay on the never-spoof list",
+                pkg in LSPosedConfig.NEVER_SPOOF_PACKAGES
+            )
+        }
+    }
+
+    @Test
+    fun neverSpoofCoversPrivilegeAndIdentityInfrastructure() {
+        // Added after the lab proved why: spoofing the Magisk app crashed it (SDK-37
+        // module host on Android 10), and a spoofed root/identity manager risks breaking
+        // the very infrastructure — plus the safety checks that read through it.
+        for (pkg in setOf(
+            "com.topjohnwu.magisk",
+            "me.weishu.kernelsu",
+            "me.bmax.apatch",
+            "org.lsposed.manager",
+            "moe.shizuku.privileged.api",
+            "com.catsmoker.app"
+        )) {
+            assertTrue(
+                "$pkg must stay on the never-spoof list",
+                pkg in LSPosedConfig.NEVER_SPOOF_PACKAGES
+            )
+        }
+    }
 }

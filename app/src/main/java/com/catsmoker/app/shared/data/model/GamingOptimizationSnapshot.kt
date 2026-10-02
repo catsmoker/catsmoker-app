@@ -103,7 +103,20 @@ data class GamingOptimizationSnapshot(
      * stated (see `GamingModeReport.qtiGameFps`) rather than hidden. null means the read failed
      * and the property is left completely alone.
      */
-    val debugVendorQtiGameFps: SettingValue? = null
+    val debugVendorQtiGameFps: SettingValue? = null,
+    /**
+     * MediaTek game-mode nodes as they were before Gaming Mode wrote them: GED parameter node
+     * path → prior raw value, plus [MediaTekGameMode.PPM_POLICY_STATUS_NODE] → the prior
+     * status-dump text (restored by re-issuing per-index states parsed from it, since the node
+     * reports status rather than re-writable text).
+     *
+     * Empty is the normal case on every non-MediaTek SoC (and on MediaTek builds without the
+     * nodes): the activation-side gate then skips the switch entirely, so there is nothing to
+     * restore. Only nodes the device actually had are recorded, so the revert touches nothing
+     * it never changed. Gson serializes the map as-is; an unreadable snapshot still parses
+     * (missing map = empty) rather than failing the whole restore.
+     */
+    val mediatekGameNodes: Map<String, String> = emptyMap()
 ) {
     fun toJson(): String = gson.toJson(this)
 
