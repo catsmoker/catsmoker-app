@@ -9,6 +9,10 @@ junit = "4.13.2"
 material = "1.14.0"
 activity = "1.13.0"
 startioSdk = "5.3.2"
+# Play distribution variant only (AdMob banner + interstitial). Declared here so the
+# version is pinned; the dependency itself is added via playstoreImplementation in
+# app/build.gradle.kts and never enters the full variant.
+playServicesAds = "25.5.0"
 provider = "13.1.5"
 coreKtx = "1.19.1"
 kotlin = "2.4.20"
@@ -35,6 +39,7 @@ libsu-core = { module = "com.github.topjohnwu.libsu:core", version.ref = "coreVe
 material = { group = "com.google.android.material", name = "material", version.ref = "material" }
 activity = { group = "androidx.activity", name = "activity", version.ref = "activity" }
 startio-sdk = { module = "com.startapp:inapp-sdk", version.ref = "startioSdk" }
+play-services-ads = { module = "com.google.android.gms:play-services-ads", version.ref = "playServicesAds" }
 provider = { module = "dev.rikka.shizuku:provider", version.ref = "provider" }
 shizuku-api = { module = "dev.rikka.shizuku:api", version.ref = "provider" }
 core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }

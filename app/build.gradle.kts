@@ -39,6 +39,20 @@ android {
         buildConfigField("String", "STARTIO_APP_ID", "\"$startIoId\"")
     }
 
+    // Single codebase, two distribution variants (see docs/FLAVOR_WORKFLOW.md when added):
+    // full = complete GitHub app (spoof/LSPosed/Magisk/Start.io/self-updater),
+    // playstore = Play-safe build (no spoof implementation, AdMob instead of Start.io).
+    // src/main stays Play-safe shared code; variant code lives in src/full and src/playstore.
+    flavorDimensions += "distribution"
+    productFlavors {
+        create("full") {
+            dimension = "distribution"
+        }
+        create("playstore") {
+            dimension = "distribution"
+        }
+    }
+
     buildTypes {
         getByName("release") {
             isMinifyEnabled = true
