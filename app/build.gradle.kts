@@ -6,6 +6,8 @@ plugins {
     alias(libs.plugins.ksp)
     alias(libs.plugins.compose.compiler)
     alias(libs.plugins.hilt.android)
+    // Reads app/google-services.json (project catsmoker-5b6c6, gitignored — local-only).
+    alias(libs.plugins.google.services)
 }
 
 android {
@@ -171,6 +173,10 @@ dependencies {
 
     // --- JSON ---
     implementation(libs.gson)
+
+    // --- Firebase (BoM keeps all Firebase libs compatible; no versions on products) ---
+    implementation(platform(libs.firebase.bom))
+    implementation(libs.firebase.analytics)
 
     // --- Ads (AdMob; playstore branch — see PLAYSTORE.md) ---
     implementation(libs.play.services.ads)

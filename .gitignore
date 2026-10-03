@@ -58,6 +58,7 @@ service-account*.json
 *.bak
 *.orig
 *.rej
+TODO.md
 
 # ── Android Studio / IntelliJ: user- and machine-specific state ─────────────
 # Kept shared on purpose: compiler.xml, gradle.xml, misc.xml, vcs.xml,
@@ -97,5 +98,6 @@ $RECYCLE.BIN/
 .AppleDouble
 .LSOverride
 # ai
+.ai
 /.claude
 AGENTS.md

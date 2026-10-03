@@ -4,6 +4,9 @@ plugins {
     alias(libs.plugins.ksp) apply false
     alias(libs.plugins.compose.compiler) apply false
     alias(libs.plugins.hilt.android) apply false
+    // Firebase: makes google-services.json values available to Firebase SDKs.
+    // Version lives in gradle/libs.versions.toml (googleServices). No buildscript block.
+    alias(libs.plugins.google.services) apply false
 }
 
 allprojects {

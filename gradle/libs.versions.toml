@@ -1,6 +1,6 @@
 [versions]
 agp = "9.4.1"
-core = "1.19.0"
+core = "1.19.1"
 coreSplashscreen = "1.2.0"
 coreVersion = "6.0.0"
 documentfile = "1.1.0"
@@ -11,17 +11,21 @@ activity = "1.13.0"
 # Main keeps Start.io — do not re-add it here without updating PLAYSTORE.md.
 playServicesAds = "25.5.0"
 provider = "13.1.5"
-coreKtx = "1.19.0"
+coreKtx = "1.19.1"
 kotlin = "2.4.20"
 composeBom = "2026.09.00"
-navigationCompose = "2.10.1"
+navigationCompose = "2.10.2"
 lifecycle = "2.11.0"
 ksp = "2.3.10"
 androidxHilt = "1.4.0"
 hilt = "2.60.1"
 kotlinxCoroutines = "1.11.0"
 gson = "2.14.0"
-work = "2.11.2"
+work = "2.12.0"
+# Firebase (google-services plugin reads app/google-services.json into the build;
+# BoM keeps all Firebase libs compatible — no versions on individual Firebase deps).
+googleServices = "4.5.0"
+firebaseBom = "34.19.0"
 
 [libraries]
 gson = { group = "com.google.code.gson", name = "gson", version.ref = "gson" }
@@ -59,9 +63,13 @@ androidx-hilt-work = { group = "androidx.hilt", name = "hilt-work", version.ref 
 androidx-hilt-compiler = { group = "androidx.hilt", name = "hilt-compiler", version.ref = "androidxHilt" }
 kotlinx-coroutines-android = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-android", version.ref = "kotlinxCoroutines" }
 work-runtime-ktx = { group = "androidx.work", name = "work-runtime-ktx", version.ref = "work" }
+# Firebase BoM (import via platform()) + products (version comes from the BoM).
+firebase-bom = { group = "com.google.firebase", name = "firebase-bom", version.ref = "firebaseBom" }
+firebase-analytics = { group = "com.google.firebase", name = "firebase-analytics" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
 compose-compiler = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
 ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
 hilt-android = { id = "com.google.dagger.hilt.android", version.ref = "hilt" }
+google-services = { id = "com.google.gms.google-services", version.ref = "googleServices" }
