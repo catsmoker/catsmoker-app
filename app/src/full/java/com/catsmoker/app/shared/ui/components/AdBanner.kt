@@ -16,8 +16,14 @@ import androidx.compose.ui.viewinterop.AndroidView
 import com.startapp.sdk.ads.banner.Banner
 import com.startapp.sdk.ads.banner.BannerListener
 
+/**
+ * Full-variant banner (Start.io).
+ *
+ * Same FQN/signature as the playstore variant's [AdBanner] (AdMob): shared
+ * screens call `AdBanner()` once and each variant links its own SDK body.
+ */
 @Composable
-fun StartAppBanner(modifier: Modifier = Modifier) {
+fun AdBanner(modifier: Modifier = Modifier) {
     // Container size, not the configuration screen width: on foldables and in multi-window
     // the activity window is narrower than the screen, and the configuration value goes stale.
     val containerWidth = with(LocalDensity.current) { LocalWindowInfo.current.containerSize.width.toDp() }

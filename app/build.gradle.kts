@@ -30,16 +30,11 @@ android {
             useSupportLibrary = true
         }
 
-        val localProperties = Properties()
-        val localPropertiesFile = project.rootProject.file("local.properties")
-        if (localPropertiesFile.exists()) {
-            localProperties.load(localPropertiesFile.inputStream())
-        }
-        val startIoId = localProperties.getProperty("STARTIO_APP_ID") ?: "205489527"
-        buildConfigField("String", "STARTIO_APP_ID", "\"$startIoId\"")
+        // No per-variant IDs here: full declares STARTIO_APP_ID, playstore declares
+        // ADMOB_* + the ADMOB_APP_ID manifest placeholder in their flavor blocks.
     }
 
-    // Single codebase, two distribution variants (see docs/FLAVOR_WORKFLOW.md when added):
+    // Single codebase, two distribution variants:
     // full = complete GitHub app (spoof/LSPosed/Magisk/Start.io/self-updater),
     // playstore = Play-safe build (no spoof implementation, AdMob instead of Start.io).
     // src/main stays Play-safe shared code; variant code lives in src/full and src/playstore.
@@ -47,9 +42,57 @@ android {
     productFlavors {
         create("full") {
             dimension = "distribution"
+            val localProperties = Properties()
+            val localPropertiesFile = project.rootProject.file("local.properties")
+            if (localPropertiesFile.exists()) {
+                localProperties.load(localPropertiesFile.inputStream())
+            }
+            val startIoId = localProperties.getProperty("STARTIO_APP_ID") ?: "205489527"
+            buildConfigField("String", "STARTIO_APP_ID", "\"$startIoId\"")
         }
         create("playstore") {
             dimension = "distribution"
+            val localProperties = Properties()
+            val localPropertiesFile = project.rootProject.file("local.properties")
+            if (localPropertiesFile.exists()) {
+                localProperties.load(localPropertiesFile.inputStream())
+            }
+            // Real production IDs never enter git; unset keys fall back to Google's
+            // documented sample (test) IDs, which serve test ads and are safe to build with.
+            val admobAppId = localProperties.getProperty("ADMOB_APP_ID") ?: "ca-app-pub-3940256099942544~3347511713"
+            val admobBannerId = localProperties.getProperty("ADMOB_BANNER_ID") ?: "ca-app-pub-3940256099942544/6300978111"
+            val admobInterstitialId = localProperties.getProperty("ADMOB_INTERSTITIAL_ID") ?: "ca-app-pub-3940256099942544/1033173712"
+            manifestPlaceholders["ADMOB_APP_ID"] = admobAppId
+            buildConfigField("String", "ADMOB_BANNER_ID", "\"$admobBannerId\"")
+            buildConfigField("String", "ADMOB_INTERSTITIAL_ID", "\"$admobInterstitialId\"")
+        }
+    }
+
+    // Release-signing credentials (git-ignored signing.properties at the repo root;
+    // four keys required: storeFile, storePassword, keyAlias, keyPassword).
+    // Shared by both variants; without the file, releases stay debug-signed so any
+    // clone still builds.
+    val signingProps = Properties()
+    val signingPropsFile = project.rootProject.file("signing.properties")
+    if (signingPropsFile.exists()) {
+        signingProps.load(signingPropsFile.inputStream())
+    }
+    val hasReleaseSigning = signingProps.containsKey("storeFile")
+        && signingProps.containsKey("storePassword")
+        && signingProps.containsKey("keyAlias")
+        && signingProps.containsKey("keyPassword")
+    if (!hasReleaseSigning) {
+        logger.warn("signing.properties missing or incomplete — release will be debug-signed.")
+    }
+
+    signingConfigs {
+        create("release") {
+            if (hasReleaseSigning) {
+                storeFile = file(signingProps.getProperty("storeFile"))
+                storePassword = signingProps.getProperty("storePassword")
+                keyAlias = signingProps.getProperty("keyAlias")
+                keyPassword = signingProps.getProperty("keyPassword")
+            }
         }
     }
 
@@ -59,7 +102,8 @@ android {
             isShrinkResources = true
             isDebuggable = false
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
-            signingConfig = signingConfigs.getByName("debug")
+            signingConfig = if (hasReleaseSigning) signingConfigs.getByName("release")
+            else signingConfigs.getByName("debug")
         }
         getByName("debug") {
             isMinifyEnabled = false
@@ -155,12 +199,17 @@ dependencies {
     // --- JSON ---
     implementation(libs.gson)
 
-    // --- Ads ---
-    implementation(libs.startio.sdk)
+    // --- Ads (variant-specific: Start.io on full, AdMob on playstore) ---
+    // String-based configurations: flavor-qualified accessors (fullImplementation,
+    // playstoreImplementation, ...) are not available as Kotlin-DSL members here.
+    add("fullImplementation", libs.startio.sdk)
+    add("playstoreImplementation", libs.play.services.ads)
 
-    // --- Root & System ---
+    // --- Root & System (shared: libsu + Shizuku serve the gaming engine on both) ---
     implementation(libs.libsu.core)
-    compileOnly(libs.api) // Xposed API
+    // Xposed API is full-only and compileOnly (never packaged): only the LSPosed
+    // module in src/full references it.
+    add("fullCompileOnly", libs.api) // Xposed API
 
     // --- Shizuku ---
     implementation(libs.shizuku.api)

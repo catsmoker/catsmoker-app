@@ -27,6 +27,7 @@ import com.catsmoker.app.shared.ui.components.CatsmokerButton
 import com.catsmoker.app.shared.ui.components.LanguageOptions
 import com.catsmoker.app.shared.ui.components.ThemeModeOptions
 import com.catsmoker.app.shared.ui.components.languageDisplayName
+import com.catsmoker.app.system.VariantCapabilities
 import com.catsmoker.app.system.config.AppearanceStore
 import com.catsmoker.app.system.config.LocaleHelper
 
@@ -158,20 +159,24 @@ fun SettingsScreen(
                 )
             }
 
-            Spacer(modifier = Modifier.height(24.dp))
-            Text(stringResource(R.string.sys_section_updates), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(start = 4.dp, bottom = 8.dp))
-            SectionCard {
-                if (isUpdating) {
-                    Column {
-                        Text(stringResource(R.string.sys_updating), fontSize = 14.sp, color = MaterialTheme.colorScheme.onSurface)
-                        Spacer(modifier = Modifier.height(8.dp))
-                        LinearProgressIndicator(progress = { updateProgress }, modifier = Modifier.fillMaxWidth())
+            // GitHub self-updater exists only where it is compiled in (full).
+            // Play updates come from the Play Store itself — no section, no entry point.
+            if (VariantCapabilities.HAS_SELF_UPDATE) {
+                Spacer(modifier = Modifier.height(24.dp))
+                Text(stringResource(R.string.sys_section_updates), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(start = 4.dp, bottom = 8.dp))
+                SectionCard {
+                    if (isUpdating) {
+                        Column {
+                            Text(stringResource(R.string.sys_updating), fontSize = 14.sp, color = MaterialTheme.colorScheme.onSurface)
+                            Spacer(modifier = Modifier.height(8.dp))
+                            LinearProgressIndicator(progress = { updateProgress }, modifier = Modifier.fillMaxWidth())
+                        }
+                    } else {
+                        CatsmokerButton(onClick = onCheckUpdates, modifier = Modifier.fillMaxWidth()) { Text(stringResource(R.string.sys_check_updates)) }
                     }
-                } else {
-                    CatsmokerButton(onClick = onCheckUpdates, modifier = Modifier.fillMaxWidth()) { Text(stringResource(R.string.sys_check_updates)) }
+                    HorizontalDivider(modifier = Modifier.padding(vertical = 12.dp), thickness = 0.5.dp, color = MaterialTheme.colorScheme.outlineVariant)
+                    SettingsToggle(stringResource(R.string.sys_auto_check), autoCheck, onAutoCheckToggled)
                 }
-                HorizontalDivider(modifier = Modifier.padding(vertical = 12.dp), thickness = 0.5.dp, color = MaterialTheme.colorScheme.outlineVariant)
-                SettingsToggle(stringResource(R.string.sys_auto_check), autoCheck, onAutoCheckToggled)
             }
 
             Spacer(modifier = Modifier.height(24.dp))

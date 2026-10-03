@@ -38,7 +38,8 @@ import com.catsmoker.app.shared.data.model.MetricReadStatus
 import com.catsmoker.app.shared.data.model.MetricsState
 import com.catsmoker.app.shared.ui.components.QuickActionButton
 import com.catsmoker.app.shared.ui.components.SectionCard
-import com.catsmoker.app.shared.ui.components.StartAppBanner
+import com.catsmoker.app.shared.ui.components.AdBanner
+import com.catsmoker.app.system.VariantCapabilities
 import com.catsmoker.app.system.navigation.Routes
 import com.catsmoker.app.shared.ui.theme.CatsmokerTheme
 import com.catsmoker.app.shared.ui.theme.NothingRed
@@ -331,34 +332,57 @@ fun MainScreen(
                     modifier = Modifier.weight(1f),
                     verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
-                    Row(
-                        modifier = Modifier.weight(1f),
-                        horizontalArrangement = Arrangement.spacedBy(12.dp)
-                    ) {
-                        QuickActionButton(
-                            title = stringResource(R.string.dash_spoof_title),
-                            subtitle = stringResource(R.string.dash_spoof_subtitle),
-                            iconContainerColor = MaterialTheme.colorScheme.surfaceVariant,
-                            iconContentColor = MaterialTheme.colorScheme.onSurface,
-                            onClick = onOpenSpoofDevice,
-                            modifier = Modifier.weight(1f).fillMaxHeight(),
-                            spreadGridContent = true,
-                            contentPadding = 12.dp,
-                            iconSize = 40.dp,
-                            icon = { Icon(Icons.Default.SettingsInputComponent, null) }
-                        )
-                        QuickActionButton(
-                            title = stringResource(R.string.dash_edit_files_title),
-                            subtitle = stringResource(R.string.dash_edit_files_subtitle),
-                            iconContainerColor = MaterialTheme.colorScheme.surfaceVariant,
-                            iconContentColor = MaterialTheme.colorScheme.onSurface,
-                            onClick = onOpenEditGameFiles,
-                            modifier = Modifier.weight(1f).fillMaxHeight(),
-                            spreadGridContent = true,
-                            contentPadding = 12.dp,
-                            iconSize = 40.dp,
-                            icon = { Icon(Icons.Default.FolderOpen, null) }
-                        )
+                    // Spoof card exists only where the implementation is compiled in
+                    // (full variant). Play keeps the no-scroll 2x2 rhythm by letting
+                    // File Engineering span the row instead.
+                    if (VariantCapabilities.HAS_SPOOF) {
+                        Row(
+                            modifier = Modifier.weight(1f),
+                            horizontalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
+                            QuickActionButton(
+                                title = stringResource(R.string.dash_spoof_title),
+                                subtitle = stringResource(R.string.dash_spoof_subtitle),
+                                iconContainerColor = MaterialTheme.colorScheme.surfaceVariant,
+                                iconContentColor = MaterialTheme.colorScheme.onSurface,
+                                onClick = onOpenSpoofDevice,
+                                modifier = Modifier.weight(1f).fillMaxHeight(),
+                                spreadGridContent = true,
+                                contentPadding = 12.dp,
+                                iconSize = 40.dp,
+                                icon = { Icon(Icons.Default.SettingsInputComponent, null) }
+                            )
+                            QuickActionButton(
+                                title = stringResource(R.string.dash_edit_files_title),
+                                subtitle = stringResource(R.string.dash_edit_files_subtitle),
+                                iconContainerColor = MaterialTheme.colorScheme.surfaceVariant,
+                                iconContentColor = MaterialTheme.colorScheme.onSurface,
+                                onClick = onOpenEditGameFiles,
+                                modifier = Modifier.weight(1f).fillMaxHeight(),
+                                spreadGridContent = true,
+                                contentPadding = 12.dp,
+                                iconSize = 40.dp,
+                                icon = { Icon(Icons.Default.FolderOpen, null) }
+                            )
+                        }
+                    } else {
+                        Row(
+                            modifier = Modifier.weight(1f),
+                            horizontalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
+                            QuickActionButton(
+                                title = stringResource(R.string.dash_edit_files_title),
+                                subtitle = stringResource(R.string.dash_edit_files_subtitle),
+                                iconContainerColor = MaterialTheme.colorScheme.surfaceVariant,
+                                iconContentColor = MaterialTheme.colorScheme.onSurface,
+                                onClick = onOpenEditGameFiles,
+                                modifier = Modifier.weight(1f).fillMaxHeight(),
+                                spreadGridContent = true,
+                                contentPadding = 12.dp,
+                                iconSize = 40.dp,
+                                icon = { Icon(Icons.Default.FolderOpen, null) }
+                            )
+                        }
                     }
 
                     Row(
@@ -414,7 +438,7 @@ fun MainScreen(
         // 4. Ads (Ultra Deferred)
         val adSlotHeight = if (LocalConfiguration.current.screenWidthDp >= 600) 90.dp else 50.dp
         if (adsEnabled && hydrationPhase >= 3 && showAdsDeferred) {
-            StartAppBanner(modifier = Modifier.padding(bottom = 8.dp))
+            AdBanner(modifier = Modifier.padding(bottom = 8.dp))
         } else {
             Spacer(
                 modifier = Modifier

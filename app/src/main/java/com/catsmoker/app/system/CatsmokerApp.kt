@@ -4,12 +4,10 @@ import android.app.Application
 import android.content.Context
 import androidx.hilt.work.HiltWorkerFactory
 import androidx.work.Configuration
-import com.catsmoker.app.BuildConfig
 import com.catsmoker.app.features.main.engine.MetricsEngine
 import com.catsmoker.app.system.config.AppearanceStore
 import com.catsmoker.app.system.config.LocaleHelper
 import com.catsmoker.app.system.shell.ShellRunner
-import com.startapp.sdk.adsbase.StartAppSDK
 import com.topjohnwu.superuser.Shell
 import dagger.hilt.android.HiltAndroidApp
 import kotlinx.coroutines.CoroutineScope
@@ -83,23 +81,8 @@ class CatsmokerApp : Application(), Configuration.Provider {
             metricsEngine.get()
             shellRunner.get()
 
-            // Initialize Start.io SDK
-            val prefs = getSharedPreferences("app_prefs", MODE_PRIVATE)
-            val adsEnabledSetting = prefs.getBoolean("ads_enabled", true)
-            val appId = BuildConfig.STARTIO_APP_ID
-            if (appId.isNotEmpty()) {
-                StartAppSDK.init(this@CatsmokerApp, appId, true)
-                StartAppSDK.enableReturnAds(false) // Disable to prevent early WebView creation
-                
-                // If ads are disabled in settings, make sure SDK knows (though init still happens)
-                if (!adsEnabledSetting) {
-                    StartAppSDK.enableReturnAds(false)
-                }
-                // Demo ID: 205489527
-                if (appId == "205489527") {
-                    StartAppSDK.setTestAdsEnabled(true)
-                }
-            }
+            // Variant ads bootstrap: Start.io on full, AdMob on playstore.
+            AdsInit.init(this@CatsmokerApp)
         }
     }
 }

@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Play Store variant additions. Merged with src/main/AndroidManifest.xml:
+    only the AdMob App ID. The value comes from the ADMOB_APP_ID manifest
+    placeholder (Google's sample test ID by default, overridden via
+    ADMOB_APP_ID in local.properties). Missing exactly this tag crashes the
+    app with "Missing application ID".
+-->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <application>
+        <meta-data
+            android:name="com.google.android.gms.ads.APPLICATION_ID"
+            android:value="${ADMOB_APP_ID}" />
+    </application>
+</manifest>

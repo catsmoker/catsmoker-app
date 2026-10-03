@@ -38,9 +38,7 @@ import kotlin.time.Duration.Companion.milliseconds
 
 import android.app.ActivityManager
 import android.content.Intent
-import android.net.Uri
 import android.os.Build
-import android.os.Parcelable
 import androidx.core.net.toUri
 import com.catsmoker.app.R
 import androidx.compose.material3.AlertDialog
@@ -210,40 +208,12 @@ class MainActivity : ComponentActivity() {    override fun attachBaseContext(new
 
     /**
      * Stashes an incoming device-profile share for the Profiles screen's preview.
-     *
-     * Guarded by the `catsmoker-device-profile` marker so the broad SEND filter never
-     * hijacks unrelated shares — anything else is ignored silently. Content is capped
-     * well below the binder limit; the inbox holds text, never a Uri, so a dead
-     * granting process cannot break the later import.
+     * Delegates to the variant [ProfileShareHandler]: real on full, no-op on
+     * playstore (where the spoof implementation is absent).
      */
     private fun handleProfileShareIntent(intent: Intent?) {
-        try {
-            val text = when (intent?.action) {
-                Intent.ACTION_SEND -> {
-                    intent.getStringExtra(Intent.EXTRA_TEXT)?.takeIf { it.isNotBlank() }
-                        ?: (intent.getParcelableExtra<Parcelable>(Intent.EXTRA_STREAM) as? Uri)
-                            ?.let(::readProfileUri)
-                }
-                Intent.ACTION_VIEW -> intent.data?.let(::readProfileUri)
-                else -> null
-            }
-            if (!text.isNullOrBlank() &&
-                text.length < MAX_PROFILE_SHARE_CHARS &&
-                text.contains("catsmoker-device-profile")
-            ) {
-                com.catsmoker.app.features.spoofdevice.SpoofProfileImportInbox.offer(text)
-            }
-        } catch (_: Exception) {
-        }
+        ProfileShareHandler.handleIntent(this, intent)
     }
-
-    private fun readProfileUri(uri: Uri): String? = runCatching {
-        contentResolver.openInputStream(uri)?.use { stream ->
-            val bytes = ByteArray(MAX_PROFILE_SHARE_CHARS)
-            val read = stream.read(bytes)
-            if (read <= 0) null else bytes.copyOf(read).toString(Charsets.UTF_8)
-        }
-    }.getOrNull()
 
     private fun updateTaskDescription() {
         try {
@@ -287,10 +257,5 @@ class MainActivity : ComponentActivity() {    override fun attachBaseContext(new
 
     private fun setSupportNeverAsk() {
         getSharedPreferences("app_prefs", MODE_PRIVATE).edit { putBoolean("support_never_ask", true) }
-    }
-
-    private companion object {
-        /** Incoming share cap: far below binder limits, far above any real profile. */
-        const val MAX_PROFILE_SHARE_CHARS = 200_000
     }
 }

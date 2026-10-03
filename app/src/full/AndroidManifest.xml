@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Full (GitHub) variant additions. Merged with src/main/AndroidManifest.xml:
+    LSPosed module metadata + scope, the spoof config provider the Xposed hooks
+    read cross-process, the profile-share intent filters, and the Start.io
+    auto-init removal. None of this ships in the Play Store variant.
+-->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <application>
+        <meta-data android:name="xposedmodule" android:value="true" />
+        <meta-data android:name="xposeddescription" android:value="Unlock max FPS and optimize supported games." />
+        <meta-data android:name="xposedminversion" android:value="93" />
+        <meta-data android:name="xposedsharedprefs" android:value="true" />
+        <meta-data android:name="xposedscope" android:resource="@array/scope" />
+
+        <!--
+            Exported because the Xposed hooks read it from inside the target app's process, under
+            that app's UID. The provider only ever serves a caller its own profile, so being
+            exported does not let an app enumerate the user's spoof assignments.
+        -->
+        <provider
+            android:name=".system.config.SpoofConfigProvider"
+            android:authorities="com.catsmoker.app.configprovider"
+            android:exported="true" />
+
+        <activity android:name=".system.MainActivity">
+            <!-- Incoming device profiles: Catsmoker shares .catsmoker.json as application/json.
+                File-picker import inside the app covers the rest. -->
+            <intent-filter>
+                <action android:name="android.intent.action.SEND" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:mimeType="application/json" />
+                <data android:mimeType="text/plain" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:scheme="content" android:mimeType="application/json" />
+                <data android:scheme="file" android:mimeType="application/json" />
+            </intent-filter>
+        </activity>
+
+        <!-- Disable StartApp SDK Auto-Initialization -->
+        <provider
+            android:name="com.startapp.sdk.adsbase.StartAppInitProvider"
+            android:authorities="${applicationId}.startappinitprovider"
+            tools:node="remove" />
+    </application>
+</manifest>
