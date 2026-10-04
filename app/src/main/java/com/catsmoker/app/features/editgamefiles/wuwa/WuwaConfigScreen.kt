@@ -3,7 +3,6 @@ package com.catsmoker.app.features.editgamefiles.wuwa
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -31,6 +30,7 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import com.catsmoker.app.shared.ui.components.CatsmokerButton
 import com.catsmoker.app.shared.ui.components.CatsmokerOutlinedButton
+import com.catsmoker.app.shared.ui.components.ChipFlowRow
 
 /**
  * Wuthering Waves config generator. Cloned from the HSR Graphics screen's shape rather than
@@ -196,13 +196,13 @@ fun WuwaConfigScreen(
             SectionCard {
                 Text(stringResource(R.string.gf_preset_section), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary, letterSpacing = 1.sp)
                 Spacer(modifier = Modifier.height(8.dp))
-                Row(modifier = Modifier.horizontalScroll(rememberScrollState())) {
+                // Every preset visible at once — a wrapping flow, never a sideways strip.
+                ChipFlowRow {
                     WuWaConfigGenerator.PRESET_ORDER.forEach { preset ->
                         FilterChip(
                             selected = uiState.preset == preset,
                             onClick = { onSelectPreset(preset) },
-                            label = { Text(presetLabel(preset)) },
-                            modifier = Modifier.padding(end = 8.dp)
+                            label = { Text(presetLabel(preset)) }
                         )
                     }
                 }
@@ -219,13 +219,12 @@ fun WuwaConfigScreen(
             SectionCard {
                 Text(stringResource(R.string.gf_frame_rate), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary, letterSpacing = 1.sp)
                 Spacer(modifier = Modifier.height(8.dp))
-                Row(modifier = Modifier.horizontalScroll(rememberScrollState())) {
+                ChipFlowRow {
                     listOf(30, 60, 90, 120).forEach { fps ->
                         FilterChip(
                             selected = uiState.options.fps == fps,
                             onClick = { onUpdateOptions { it.copy(fps = fps) } },
-                            label = { Text("$fps") },
-                            modifier = Modifier.padding(end = 8.dp)
+                            label = { Text("$fps") }
                         )
                     }
                 }

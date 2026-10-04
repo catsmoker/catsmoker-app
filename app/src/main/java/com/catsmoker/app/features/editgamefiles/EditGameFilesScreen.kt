@@ -8,7 +8,6 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
@@ -44,6 +43,7 @@ import com.catsmoker.app.shared.ui.theme.CatsmokerTheme
 import kotlinx.coroutines.flow.collectLatest
 import com.catsmoker.app.shared.ui.components.CatsmokerButton
 import com.catsmoker.app.shared.ui.components.CatsmokerOutlinedButton
+import com.catsmoker.app.shared.ui.components.ChipFlowRow
 import com.catsmoker.app.shared.ui.components.SquigglyProgressBar
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -218,10 +218,9 @@ fun GameSelector(
         Spacer(modifier = Modifier.height(10.dp))
         Text(stringResource(R.string.gf_version_label), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
         Spacer(modifier = Modifier.height(6.dp))
-        Row(
-            modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
+        // All six variants at once: a wrapping flow, never a sideways-scrolling strip —
+        // every store version stays visible and directly tappable on any width.
+        ChipFlowRow {
             PUBG_VARIANTS.forEach { variant ->
                 val variantInstalled = installedGames[variant]
                 FilterChip(
@@ -872,7 +871,7 @@ private fun PubgSaveEditorSection(
             Spacer(modifier = Modifier.height(12.dp))
             Text(stringResource(R.string.gf_frame_rate), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary)
             Spacer(modifier = Modifier.height(6.dp))
-            Row(modifier = Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            ChipFlowRow {
                 PubgSavePatcher.FPS_TIERS.forEach { tier ->
                     val selected = uiState.saveEdits[PubgSavePatcher.FIELD_BATTLE_FPS] == tier.battleFps &&
                         uiState.saveEdits[PubgSavePatcher.FIELD_LOBBY_FPS] == tier.lobbyFps &&
@@ -889,7 +888,7 @@ private fun PubgSaveEditorSection(
             Spacer(modifier = Modifier.height(12.dp))
             Text(stringResource(R.string.gf_render_quality), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary)
             Spacer(modifier = Modifier.height(6.dp))
-            Row(modifier = Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            ChipFlowRow {
                 PubgSavePatcher.RENDER_TIERS.forEach { tier ->
                     val selected = uiState.saveEdits[PubgSavePatcher.FIELD_BATTLE_RENDER] == tier.value &&
                         uiState.saveEdits[PubgSavePatcher.FIELD_LOBBY_RENDER] == tier.value
@@ -905,7 +904,7 @@ private fun PubgSaveEditorSection(
             Spacer(modifier = Modifier.height(12.dp))
             Text(stringResource(R.string.gf_camera_view), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary)
             Spacer(modifier = Modifier.height(6.dp))
-            Row(modifier = Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            ChipFlowRow {
                 PubgSavePatcher.VIEW_PRESETS.forEach { preset ->
                     val selected = uiState.saveEdits[PubgSavePatcher.FIELD_TP_VIEW] == preset.tpView &&
                         uiState.saveEdits[PubgSavePatcher.FIELD_FP_VIEW] == preset.fpView

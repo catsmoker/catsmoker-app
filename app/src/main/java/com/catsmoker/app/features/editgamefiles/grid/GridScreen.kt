@@ -3,7 +3,6 @@ package com.catsmoker.app.features.editgamefiles.grid
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -23,6 +22,7 @@ import com.catsmoker.app.shared.ui.components.SectionCard
 import kotlinx.coroutines.flow.collectLatest
 import com.catsmoker.app.shared.ui.components.CatsmokerButton
 import com.catsmoker.app.shared.ui.components.CatsmokerOutlinedButton
+import com.catsmoker.app.shared.ui.components.ChipFlowRow
 
 /**
  * GRID Autosport graphics editor. Cloned from the HSR Graphics screen's shape, per the house
@@ -150,7 +150,8 @@ fun GridScreen(
                     SectionCard {
                         Text(stringResource(R.string.gf_frame_rate), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary, letterSpacing = 1.sp)
                         Spacer(modifier = Modifier.height(8.dp))
-                        Row(modifier = Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        // All five FPS options visible at once — a wrapping flow, never sideways scroll.
+                        ChipFlowRow {
                             listOf(30, 60, 90, 120, 144).forEach { fps ->
                                 FilterChip(
                                     selected = uiState.edits.fps == fps,
@@ -182,7 +183,7 @@ fun GridScreen(
                     SectionCard {
                         Text(stringResource(R.string.gf_resolution_section), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary, letterSpacing = 1.sp)
                         Spacer(modifier = Modifier.height(8.dp))
-                        Row(modifier = Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        ChipFlowRow {
                             listOf(480, 600, 720, 1080, 1440).forEach { height ->
                                 FilterChip(
                                     selected = uiState.edits.screenHeight == height,
@@ -371,7 +372,8 @@ private fun LadderRow(
                 Text(stringResource(R.string.gf_grid_device_value, current), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
         }
-        Row(modifier = Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+        // Every tier visible at once — a wrapping flow, never sideways scroll.
+        ChipFlowRow {
             options.forEach { tier ->
                 FilterChip(
                     selected = selected == tier,
