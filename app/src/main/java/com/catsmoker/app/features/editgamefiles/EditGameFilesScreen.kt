@@ -253,7 +253,7 @@ fun GameSelector(
 /**
  * The full game list — one entry per game. The PUBG variants collapse into the single
  * "PUBG Mobile" row (their dot is green when *any* variant is installed, red only when none
- * of the five is, unknown when unprobed); choosing it reveals the variant chips under the
+ * of the six is, unknown when unprobed); choosing it reveals the variant chips under the
  * field, so the two decisions — which game, which store version — happen in two steps.
  */
 @Composable

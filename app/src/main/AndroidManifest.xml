@@ -14,10 +14,11 @@
             visible in practice, but visibility by intent-match is implicit; a stricter
             OEM filter would turn a real installation into a silent NameNotFoundException and
             a false "not installed" dot. Naming the packages makes the probe's world
-            explicit: Genshin + five PUBG variants, GRID, WuWa, five HSR variants.
+            explicit: Genshin + six PUBG variants, GRID, WuWa, five HSR variants.
         -->
         <package android:name="com.miHoYo.GenshinImpact" />
         <package android:name="com.tencent.ig" />
+        <package android:name="com.tencent.igfit" />
         <package android:name="com.pubg.krmobile" />
         <package android:name="com.vng.pubgmobile" />
         <package android:name="com.pubg.imobile" />

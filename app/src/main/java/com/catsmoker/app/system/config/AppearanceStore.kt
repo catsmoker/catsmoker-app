@@ -1,6 +1,7 @@
 package com.catsmoker.app.system.config
 
 import android.content.Context
+import android.os.Build
 import androidx.core.content.edit
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -18,6 +19,24 @@ import kotlinx.coroutines.flow.asStateFlow
 object AppearanceStore {
 
     enum class ThemeMode { SYSTEM, DARK, LIGHT, DYNAMIC }
+
+    /**
+     * Capability, not preference: Material You dynamic color exists only on Android 12+
+     * (API 31). A plain `val` on this singleton, so it is computed once per process —
+     * the OS version cannot change under a running app, and no prefs/DataStore is spent
+     * remembering it. The UI offers the Dynamic option only where this is true; the
+     * stored [ThemeMode] preference itself is untouched.
+     */
+    val supportsDynamicColor: Boolean = Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
+
+    /**
+     * Theme options the UI may offer. Pure in the capability argument so it stays
+     * JVM-testable (`Build.VERSION.SDK_INT` is 0 in unit tests): pass nothing in the
+     * app, `true`/`false` in tests.
+     */
+    fun availableThemeModes(supportsDynamic: Boolean = supportsDynamicColor): List<ThemeMode> =
+        if (supportsDynamic) listOf(ThemeMode.SYSTEM, ThemeMode.DARK, ThemeMode.LIGHT, ThemeMode.DYNAMIC)
+        else listOf(ThemeMode.SYSTEM, ThemeMode.DARK, ThemeMode.LIGHT)
 
     /** Empty means "follow the system". Otherwise a BCP-47 tag resolvable by Resources. */
     const val LANGUAGE_SYSTEM = ""
@@ -70,10 +89,17 @@ object AppearanceStore {
         prefs(context).edit(commit = true) { putBoolean(KEY_CHOSEN, true) }
     }
 
+    /**
+     * Synchronous commit, not apply: every caller restarts the process immediately after
+     * ([LocaleHelper.restartApp] ends it with `exit(0)`), and an async `apply()` queued
+     * write dies with the VM before it flushes — the fresh process then reads the stale
+     * tag and stays on the previous language (Arabic-selected English showing Arabic).
+     * Same reason [setChosen] commits.
+     */
     fun setLanguage(context: Context, tag: String) {
         // Normalized on write so a region variant (e.g. `ar-SA` from a previous build)
         // can never persist and resolve to the wrong table later.
-        prefs(context).edit { putString(KEY_LANGUAGE, LocaleHelper.normalizeTag(tag)) }
+        prefs(context).edit(commit = true) { putString(KEY_LANGUAGE, LocaleHelper.normalizeTag(tag)) }
     }
 
     /** Whether the onboarding appearance gate was answered (survives a locale restart). */

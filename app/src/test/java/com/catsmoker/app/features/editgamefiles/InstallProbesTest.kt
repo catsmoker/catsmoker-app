@@ -5,12 +5,19 @@ import org.junit.Assert.assertEquals
 import org.junit.Test
 
 /**
- * Pins the picker's PUBG group-dot rule: any install = green; all five probed and none
+ * Pins the picker's PUBG group-dot rule: any install = green; all six probed and none
  * installed = red; a missing probe anywhere = unknown, never a false red.
  */
 class InstallProbesTest {
 
     private val variants = PUBG_VARIANTS
+
+    @Test
+    fun `pubg variants cover all six store packages including Flash`() {
+        // PUBG Mobile Flash (com.tencent.igfit, formerly Lite) is the sixth variant.
+        assertEquals(6, PUBG_VARIANTS.size)
+        assertEquals(true, PUBG_VARIANTS.contains(GameType.PUBG_FLASH))
+    }
 
     @Test
     fun `any installed variant shows green regardless of missing probes`() {
@@ -32,8 +39,8 @@ class InstallProbesTest {
 
     @Test
     fun `one missing probe among all-absent makes the dot unknown`() {
-        // Four probed and absent, one never answered — the fifth might still be installed.
-        val four = variants.dropLast(1).associateWith { false }
-        assertEquals(null, pubgGroupDot(four))
+        // Five probed and absent, one never answered — the sixth might still be installed.
+        val five = variants.dropLast(1).associateWith { false }
+        assertEquals(null, pubgGroupDot(five))
     }
 }

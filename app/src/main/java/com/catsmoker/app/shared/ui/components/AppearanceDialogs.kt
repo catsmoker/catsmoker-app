@@ -11,6 +11,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -50,28 +51,26 @@ fun ThemeModeOptions(
     selected: AppearanceStore.ThemeMode,
     onSelect: (AppearanceStore.ThemeMode) -> Unit
 ) {
+    // Process-cached capability read once per composition: Dynamic appears only on
+    // Android 12+, where the OS can actually supply a Material You palette.
+    val modes = remember { AppearanceStore.availableThemeModes() }
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        SelectableOptionRow(
-            selected = selected == AppearanceStore.ThemeMode.SYSTEM,
-            label = stringResource(R.string.sys_theme_system),
-            onClick = { onSelect(AppearanceStore.ThemeMode.SYSTEM) }
-        )
-        SelectableOptionRow(
-            selected = selected == AppearanceStore.ThemeMode.DARK,
-            label = stringResource(R.string.sys_theme_dark),
-            onClick = { onSelect(AppearanceStore.ThemeMode.DARK) }
-        )
-        SelectableOptionRow(
-            selected = selected == AppearanceStore.ThemeMode.LIGHT,
-            label = stringResource(R.string.sys_theme_light),
-            onClick = { onSelect(AppearanceStore.ThemeMode.LIGHT) }
-        )
-        SelectableOptionRow(
-            selected = selected == AppearanceStore.ThemeMode.DYNAMIC,
-            label = stringResource(R.string.sys_theme_dynamic),
-            onClick = { onSelect(AppearanceStore.ThemeMode.DYNAMIC) }
-        )
+        modes.forEach { mode ->
+            SelectableOptionRow(
+                selected = selected == mode,
+                label = themeModeLabel(mode),
+                onClick = { onSelect(mode) }
+            )
+        }
     }
+}
+
+@Composable
+private fun themeModeLabel(mode: AppearanceStore.ThemeMode): String = when (mode) {
+    AppearanceStore.ThemeMode.SYSTEM -> stringResource(R.string.sys_theme_system)
+    AppearanceStore.ThemeMode.DARK -> stringResource(R.string.sys_theme_dark)
+    AppearanceStore.ThemeMode.LIGHT -> stringResource(R.string.sys_theme_light)
+    AppearanceStore.ThemeMode.DYNAMIC -> stringResource(R.string.sys_theme_dynamic)
 }
 
 /** Native name per language tag — never translated, by definition. */

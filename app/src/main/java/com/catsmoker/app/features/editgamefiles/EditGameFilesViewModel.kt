@@ -188,7 +188,8 @@ class EditGameFilesViewModel @Inject constructor(
             GameType.PUBG_KRJP to "com.pubg.krmobile",
             GameType.PUBG_VN to "com.vng.pubgmobile",
             GameType.BGMI to "com.pubg.imobile",
-            GameType.PUBG_REKOO to "com.rekoo.pubgm"
+            GameType.PUBG_REKOO to "com.rekoo.pubgm",
+            GameType.PUBG_FLASH to "com.tencent.igfit"
         )
         pubgGames.forEach { (type, pkg) ->
             gameConfigs[type] = buildPubgConfig(pkg)
@@ -1416,7 +1417,8 @@ class EditGameFilesViewModel @Inject constructor(
          * builds a PUBG config for, kept in one place so the editor's gate can never widen past it.
          */
         private val PUBG_PACKAGES = setOf(
-            "com.tencent.ig", "com.pubg.krmobile", "com.vng.pubgmobile", "com.pubg.imobile", "com.rekoo.pubgm"
+            "com.tencent.ig", "com.pubg.krmobile", "com.vng.pubgmobile", "com.pubg.imobile", "com.rekoo.pubgm",
+            "com.tencent.igfit"
         )
 
         /**
