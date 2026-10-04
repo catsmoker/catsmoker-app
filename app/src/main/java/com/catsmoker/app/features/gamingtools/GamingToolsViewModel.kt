@@ -1,6 +1,5 @@
 package com.catsmoker.app.features.gamingtools
 
-import android.annotation.SuppressLint
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
@@ -500,7 +499,6 @@ class GamingToolsViewModel @Inject constructor(
     }
 
     // Partial visibility is fine: the picker just lists whatever the platform returns.
-    @SuppressLint("QueryPermissionsNeeded")
     fun loadAllApps() {
         viewModelScope.launch(Dispatchers.IO) {
             val pm = context.packageManager

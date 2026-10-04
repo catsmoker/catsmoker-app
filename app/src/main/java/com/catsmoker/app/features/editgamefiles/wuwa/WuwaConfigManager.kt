@@ -565,9 +565,13 @@ class WuwaConfigManager @Inject constructor(
     /** What reading Client.log actually did. */
     sealed class ClientLogResult {
         /** The log's exact bytes, and which channel read them. */
-        // Raw log bytes are an identity carry for the decryptor, never compared.
-        @Suppress("ArrayInDataClass")
-        data class Read(val bytes: ByteArray, val channelUsed: String) : ClientLogResult()
+        // Raw log bytes are an identity carry for the decryptor, with content equality
+        // defined explicitly so copies compare bytes, never array references.
+        data class Read(val bytes: ByteArray, val channelUsed: String) : ClientLogResult() {
+            override fun equals(other: Any?): Boolean =
+                other is Read && channelUsed == other.channelUsed && bytes.contentEquals(other.bytes)
+            override fun hashCode(): Int = 31 * channelUsed.hashCode() + bytes.contentHashCode()
+        }
 
         /**
          * Named refusals, kept distinct: no channel at all, the log absent (the game writes it

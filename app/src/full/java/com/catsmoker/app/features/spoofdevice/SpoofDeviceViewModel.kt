@@ -831,7 +831,6 @@ class SpoofDeviceViewModel @Inject constructor(
         devicePrefs.edit(commit = true) { putString(k, v) }
     }
 
-    @Suppress("DEPRECATION")
     private fun openLsposedPrefs(context: Context): SharedPreferences =
         try {
             context.getSharedPreferences(LSPosedConfig.PREFS_NAME, Context.MODE_WORLD_READABLE)

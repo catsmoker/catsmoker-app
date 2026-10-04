@@ -185,8 +185,4 @@ object SpoofProfileSharing {
             .filter { it.isNotBlank() }.joinToString(" / ").ifBlank { "—" }
     )
 
-    /** Parses a JsonObject string field or null — keeps importer code free of Gson noise. */
-    @Suppress("unused")
-    private fun JsonObject.optString(key: String): String? =
-        get(key)?.takeIf { it.isJsonPrimitive }?.asString
 }

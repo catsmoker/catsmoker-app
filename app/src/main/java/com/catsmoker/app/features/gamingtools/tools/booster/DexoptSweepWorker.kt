@@ -19,7 +19,7 @@ import com.catsmoker.app.features.gamingtools.engine.GamingEngine
 import com.catsmoker.app.shared.util.CatsmokerNotifications
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
-import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import kotlin.math.roundToInt
 
@@ -75,31 +75,35 @@ class DexoptSweepWorker @AssistedInject constructor(
         }
 
         // The reference's own pattern: the notification follows the engine's real counts, which
-        // only advance when a command actually ran and answered.
-        val progressJob = CoroutineScope(coroutineContext).launch {
-            gamingEngine.boosterState.collect { state ->
-                if (foreground) runCatching { setForeground(foregroundInfo(state)) }
+        // only advance when a command actually ran and answered. A child of doWork's scope
+        // (not a standalone CoroutineScope): a WorkManager-initiated stop cancels doWork,
+        // which now takes the progress collection down with it.
+        return coroutineScope {
+            val progressJob = launch {
+                gamingEngine.boosterState.collect { state ->
+                    if (foreground) runCatching { setForeground(foregroundInfo(state)) }
+                }
             }
-        }
 
-        try {
-            // Never forced: the schedule exists to catch apps the phone has not compiled yet,
-            // which `cmd package compile` skips on its own when they are already done.
-            gamingEngine.runArtOptimization(mode = DexoptScheduleStore.SCHEDULED_MODE, force = false)
+            try {
+                // Never forced: the schedule exists to catch apps the phone has not compiled yet,
+                // which `cmd package compile` skips on its own when they are already done.
+                gamingEngine.runArtOptimization(mode = DexoptScheduleStore.SCHEDULED_MODE, force = false)
 
-            val outcome = gamingEngine.boosterState.value.outcome
-            if (outcome is BoosterOutcome.Unavailable) {
-                // Unavailable means the sweep never began (no privilege at wake time, no
-                // eligible apps) and the engine records no history entry for it by design — so
-                // without this notification a skipped run would leave no trace at all.
-                postSkippedNotification(outcome.reason)
+                val outcome = gamingEngine.boosterState.value.outcome
+                if (outcome is BoosterOutcome.Unavailable) {
+                    // Unavailable means the sweep never began (no privilege at wake time, no
+                    // eligible apps) and the engine records no history entry for it by design — so
+                    // without this notification a skipped run would leave no trace at all.
+                    postSkippedNotification(outcome.reason)
+                }
+                // Completed / Cancelled / Failed are all recorded by the engine in its own history,
+                // which the App Booster card shows; the worker has nothing to add on top.
+                CatsmokerNotifications.detachOwner(applicationContext, "DexoptSweep")
+                Result.success()
+            } finally {
+                progressJob.cancel()
             }
-            // Completed / Cancelled / Failed are all recorded by the engine in its own history,
-            // which the App Booster card shows; the worker has nothing to add on top.
-            CatsmokerNotifications.detachOwner(applicationContext, "DexoptSweep")
-            return Result.success()
-        } finally {
-            progressJob.cancel()
         }
     }
 

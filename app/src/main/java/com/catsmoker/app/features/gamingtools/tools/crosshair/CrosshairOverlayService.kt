@@ -147,7 +147,7 @@ class CrosshairOverlayService : Service() {
             overlayView = null
         }
 
-        @android.annotation.SuppressLint("InflateParams")
+        // No parent exists: the view is attached to the WindowManager, not a ViewGroup.
         val view = LayoutInflater.from(this).inflate(R.layout.overlay_crosshair, null)
         val image = view.findViewById<ImageView>(R.id.crosshair_image)
 
@@ -377,7 +377,7 @@ class CrosshairOverlayService : Service() {
     private fun showBanner() {
         if (bannerView != null) return
 
-        @android.annotation.SuppressLint("InflateParams")
+        // No parent exists: the view is attached to the WindowManager, not a ViewGroup.
         val view = LayoutInflater.from(this).inflate(R.layout.overlay_crosshair_banner, null)
 
         view.findViewById<View>(R.id.banner_done)?.setOnClickListener { setMoveMode(false) }

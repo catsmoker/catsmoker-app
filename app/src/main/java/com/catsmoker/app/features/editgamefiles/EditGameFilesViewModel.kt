@@ -489,9 +489,12 @@ class EditGameFilesViewModel @Inject constructor(
      * which read as nonsense on a device where root and Shizuku were both gone.
      */
     private sealed interface PullOutcome {
-        // Bytes are carried, never compared: only presence/absence reaches the UI.
-        @Suppress("ArrayInDataClass")
-        data class Ok(val bytes: ByteArray) : PullOutcome
+        // Bytes are carried by identity; content equality is defined explicitly so
+        // a data-class copy never compares array references.
+        data class Ok(val bytes: ByteArray) : PullOutcome {
+            override fun equals(other: Any?): Boolean = other is Ok && bytes.contentEquals(other.bytes)
+            override fun hashCode(): Int = bytes.contentHashCode()
+        }
         data object Missing : PullOutcome
         data object NoChannel : PullOutcome
     }

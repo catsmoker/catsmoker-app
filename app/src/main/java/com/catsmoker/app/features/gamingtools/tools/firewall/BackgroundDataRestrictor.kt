@@ -1,6 +1,5 @@
 package com.catsmoker.app.features.gamingtools.tools.firewall
 
-import android.annotation.SuppressLint
 import android.content.Context
 import android.net.ConnectivityManager
 import androidx.core.content.edit
@@ -275,7 +274,6 @@ class BackgroundDataRestrictor @Inject constructor(
      */
     // Partial visibility is fine: invisible apps are skipped, never restricted.
     // Shared InstalledAppQuery (consolidation C4): same user-app + INTERNET rule as the VPN.
-    @SuppressLint("QueryPermissionsNeeded")
     private fun restrictableUids(gamePackages: List<String>): Set<Int> =
         InstalledAppQuery.restrictableUids(
             context.packageManager, context.packageName, gamePackages, MIN_APP_UID

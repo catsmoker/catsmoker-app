@@ -48,7 +48,6 @@ class PermToggleManager @Inject constructor(
                     PackageManager.PackageInfoFlags.of(PackageManager.GET_PERMISSIONS.toLong())
                 )
             } else {
-                @Suppress("DEPRECATION")
                 pm.getPackageInfo(pkg, PackageManager.GET_PERMISSIONS)
             }
         }.getOrNull() ?: return emptyList()
@@ -61,7 +60,8 @@ class PermToggleManager @Inject constructor(
         val protections = requested.associateWith { perm ->
             // PermissionInfoCompat reads the base protection on every version: .protection
             // exists only from API 28, older releases pack it into protectionLevel.
-            @Suppress("DEPRECATION")
+            // getPermissionInfo has no Flags overload on any API level — the int spelling
+            // is the only one that exists.
             runCatching {
                 PermissionInfoCompat.getProtection(pm.getPermissionInfo(perm, 0))
             }.getOrNull()

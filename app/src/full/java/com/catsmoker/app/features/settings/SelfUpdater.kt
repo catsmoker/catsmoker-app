@@ -8,6 +8,8 @@ import java.io.FileOutputStream
 import java.net.HttpURLConnection
 import java.net.URL
 import kotlin.math.max
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import org.json.JSONArray
 import org.json.JSONObject
 
@@ -18,7 +20,9 @@ import org.json.JSONObject
  * delegates here so the APK-download implementation is not compiled into the
  * Play Store variant at all (Play policy forbids self-updating).
  *
- * Network work runs on the caller's thread — call from Dispatchers.IO.
+ * Network work runs on Dispatchers.IO internally — safe to call from any dispatcher.
+ * Progress callbacks inherit the IO context; StateFlow.update is thread-safe, but
+ * Compose state writes must hop to Main in the caller.
  */
 object SelfUpdater {
     const val SUPPORTED = true
@@ -54,26 +58,28 @@ object SelfUpdater {
         onProgress: (Float) -> Unit
     ): File? {
         if (url == null) return null
-        val destination = File(context.getExternalFilesDir(null), "update.apk")
-        val u = URL(url)
-        val conn = u.openConnection() as HttpURLConnection
-        conn.connect()
-        val fileLength = conn.contentLength
-        u.openStream().use { input ->
-            FileOutputStream(destination).use { output ->
-                val data = ByteArray(4096)
-                var total = 0L
-                var count: Int
-                while (input.read(data).also { count = it } != -1) {
-                    total += count
-                    if (fileLength > 0) {
-                        onProgress(total.toFloat() / fileLength)
+        return withContext(Dispatchers.IO) {
+            val destination = File(context.getExternalFilesDir(null), "update.apk")
+            val u = URL(url)
+            val conn = u.openConnection() as HttpURLConnection
+            conn.connect()
+            val fileLength = conn.contentLength
+            u.openStream().use { input ->
+                FileOutputStream(destination).use { output ->
+                    val data = ByteArray(4096)
+                    var total = 0L
+                    var count: Int
+                    while (input.read(data).also { count = it } != -1) {
+                        total += count
+                        if (fileLength > 0) {
+                            onProgress(total.toFloat() / fileLength)
+                        }
+                        output.write(data, 0, count)
                     }
-                    output.write(data, 0, count)
                 }
             }
+            destination
         }
-        return destination
     }
 
     fun installUpdate(context: Context, file: File) {
@@ -95,10 +101,10 @@ object SelfUpdater {
         return releases.getJSONObject(0)
     }
 
-    private fun fetchReleases(): JSONArray {
+    private suspend fun fetchReleases(): JSONArray = withContext(Dispatchers.IO) {
         val url = URL("https://api.github.com/repos/catsmoker/com.catsmoker.app/releases")
         val conn = url.openConnection() as HttpURLConnection
-        return try {
+        try {
             conn.connectTimeout = 5000
             conn.setRequestProperty("User-Agent", "Catsmoker-App")
             val response = conn.inputStream.bufferedReader().use { it.readText() }

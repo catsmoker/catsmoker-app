@@ -1,6 +1,5 @@
 package com.catsmoker.app.features.spoofdevice.root
 
-import android.annotation.SuppressLint
 import android.content.BroadcastReceiver
 import android.content.ContentResolver
 import android.content.Context
@@ -223,7 +222,6 @@ class LSPosedModule : IXposedHookLoadPackage {
         null
     }
 
-    @SuppressLint("UnspecifiedRegisterReceiverFlag")
     private fun registerReceiver(context: Context, lpparam: XC_LoadPackage.LoadPackageParam) {
         if (receiverRegistered) return
         receiverRegistered = true
@@ -663,7 +661,10 @@ class LSPosedModule : IXposedHookLoadPackage {
                     val rate = props[LSPosedConfig.KEY_SCREEN_REFRESH_RATE]?.toFloatOrNull()
                         ?: return
                     if (rate <= 0f) return
-                    val modes = param.result as? Array<Display.Mode> ?: return
+                    // Star projection first (reifiable, no unchecked cast); anything
+                    // non-Mode is dropped where the old erasure cast crashed it below.
+                    val modes = (param.result as? Array<*>)
+                        ?.filterIsInstance<Display.Mode>() ?: return
                     val kept = modes.filter {
                         abs(it.refreshRate - rate) <= RATE_TOLERANCE_HZ
                     }

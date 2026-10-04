@@ -166,7 +166,11 @@ object WuwaGacha {
         val map: Map<String, Any?> = gson.fromJson(responseText, mapType)
         val code = (map["code"] as? Double)?.toInt() ?: -1
         val message = map["message"] as? String ?: ""
-        val dataRaw = map["data"] as? List<Map<String, Any?>> ?: emptyList()
+        // Star projections first (reifiable checks, no unchecked cast); non-map elements
+        // are dropped where the old erasure cast crashed them into the catch below.
+        val dataRaw = (map["data"] as? List<*>)
+            ?.mapNotNull { it as? Map<*, *> }
+            .orEmpty()
         val records = dataRaw.mapNotNull { item ->
             try {
                 GachaRecord(

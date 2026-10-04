@@ -2,7 +2,6 @@ package com.catsmoker.app.system
 
 import android.content.Intent
 import android.net.Uri
-import android.os.Parcelable
 import androidx.activity.ComponentActivity
 import com.catsmoker.app.features.spoofdevice.SpoofProfileImportInbox
 
@@ -29,7 +28,9 @@ object ProfileShareHandler {
             val text = when (intent?.action) {
                 Intent.ACTION_SEND -> {
                     intent.getStringExtra(Intent.EXTRA_TEXT)?.takeIf { it.isNotBlank() }
-                        ?: (intent.getParcelableExtra<Parcelable>(Intent.EXTRA_STREAM) as? Uri)
+                        // Bundle.get has no typed-parcelable deprecation on any API level;
+                        // the checked cast restores the type safety getParcelableExtra gave.
+                        ?: (intent.extras?.get(Intent.EXTRA_STREAM) as? Uri)
                             ?.let { readProfileUri(activity, it) }
                 }
                 Intent.ACTION_VIEW -> intent.data?.let { readProfileUri(activity, it) }

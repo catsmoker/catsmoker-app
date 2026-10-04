@@ -1,6 +1,5 @@
 package com.catsmoker.app.features.gamingtools.engine
 
-import android.annotation.SuppressLint
 import android.app.NotificationManager
 import android.content.ComponentName
 import android.content.Context
@@ -439,7 +438,7 @@ class GamingEngine(
             scope.launch { reapplyFixedPerformanceMode() }
         }
 
-        _alwaysFinishActivities.value = getGlobalInt(Settings.Global.ALWAYS_FINISH_ACTIVITIES) == 1
+        _alwaysFinishActivities.value = getAlwaysFinishActivities() == 1
         _backgroundProcessLimit.value = getGlobalString("activity_manager_constants")?.contains("max_cached_processes=1") == true
 
         refreshAnimationScales()
@@ -447,9 +446,12 @@ class GamingEngine(
         scope.launch { _boosterHistory.value = boosterHistoryStore.load() }
     }
 
-    @Suppress("SameParameterValue") // general settings reader
-    private fun getGlobalInt(key: String): Int {
-        return try { Settings.Global.getInt(context.contentResolver, key, 0) } catch (_: Exception) { 0 }
+    // Single-purpose reader: every caller reads the always-finish flag, so there is
+    // no key parameter to warn about.
+    private fun getAlwaysFinishActivities(): Int {
+        return try {
+            Settings.Global.getInt(context.contentResolver, Settings.Global.ALWAYS_FINISH_ACTIVITIES, 0)
+        } catch (_: Exception) { 0 }
     }
 
     /**
@@ -667,13 +669,13 @@ class GamingEngine(
             }
             // Touch sampling boost. Only OEMs that ship the key honour it; captureAndSaveSnapshot
             // already recorded the old value, so disableGamingMode puts it back.
-            val touchOk = putSettingVerified("system", "touch_response_speed", "2")
+            val touchOk = putSettingVerified("touch_response_speed", "2")
             if (!touchOk) unavailable += GamingModeNotice.Res(R.string.gt_eng_un_touch)
             // The user's touch-speed choice, if any. Same snapshot/restore contract as the boost
             // above; a refused write is reported rather than counted as done.
             var pointerSpeedApplied: Int? = null
             PointerSpeed.sanitize(_pointerSpeedChoice.value)?.let { speed ->
-                if (putSettingVerified("system", "pointer_speed", speed.toString())) {
+                if (putSettingVerified("pointer_speed", speed.toString())) {
                     pointerSpeedApplied = speed
                 } else {
                     unavailable += GamingModeNotice.Res(R.string.gt_eng_un_pointer, listOf(speed.toString()))
@@ -1107,7 +1109,7 @@ class GamingEngine(
         val target = if (enabled) 1 else 0
         execute("settings put global always_finish_activities $target")
         // `settings put` is silent on success, so confirm by reading the value back.
-        val applied = getGlobalInt(Settings.Global.ALWAYS_FINISH_ACTIVITIES) == target
+        val applied = getAlwaysFinishActivities() == target
         _alwaysFinishActivities.value = applied && enabled
         return applied
     }
@@ -1430,7 +1432,6 @@ class GamingEngine(
      * explicitly asked for every package.
      */
     // Partial visibility is fine: an invisible app simply misses this sweep.
-    @SuppressLint("QueryPermissionsNeeded")
     private fun eligibleBoosterPackages(force: Boolean = false): List<String> {
         val userAdded = context.getSharedPreferences("AppPrefs", Context.MODE_PRIVATE)
             .getStringSet("user_games", emptySet()) ?: emptySet()
@@ -1508,7 +1509,6 @@ class GamingEngine(
         if (Build.VERSION.SDK_INT >= 33) {
             context.packageManager.getPackageInfo(pkg, PackageManager.PackageInfoFlags.of(0)).lastUpdateTime
         } else {
-            @Suppress("DEPRECATION")
             context.packageManager.getPackageInfo(pkg, 0).lastUpdateTime
         }
     }.getOrNull()
@@ -1722,7 +1722,6 @@ class GamingEngine(
     suspend fun execute(command: String): String = shellRunner.exec(command)
 
     // Partial visibility is fine: invisible packages are excluded, never suspended.
-    @SuppressLint("QueryPermissionsNeeded")
     private fun getSuspendTargets(activeGamePkg: String?): List<String> {
         val pm = context.packageManager
         val installedApps = pm.getInstalledApplications(PackageManager.GET_META_DATA)
@@ -1922,10 +1921,11 @@ class GamingEngine(
      * drop an unknown key, so the read-back is the only honest success signal. Numbers are compared
      * numerically because some providers normalise `120` to `120.0`.
      */
-    @Suppress("SameParameterValue") // general settings writer
-    private suspend fun putSettingVerified(namespace: String, key: String, value: String): Boolean {
-        shellRunner.execSafeResult("settings", "put", namespace, key, value)
-        val readBack = readSettingOrNull(namespace, key)?.takeIf { it.existed }?.value ?: return false
+    // Single-namespace writer: every caller targets Settings.System, so there is no
+    // namespace parameter to warn about.
+    private suspend fun putSettingVerified(key: String, value: String): Boolean {
+        shellRunner.execSafeResult("settings", "put", "system", key, value)
+        val readBack = readSettingOrNull("system", key)?.takeIf { it.existed }?.value ?: return false
         val actual = readBack.toFloatOrNull()
         val wanted = value.toFloatOrNull()
         return if (actual != null && wanted != null) actual == wanted else readBack == value
@@ -2015,7 +2015,7 @@ class GamingEngine(
         restoreSetting("global", Settings.Global.ALWAYS_FINISH_ACTIVITIES, snapshot.alwaysFinishActivities)
         restoreSetting("global", "activity_manager_constants", snapshot.activityManagerConstants)
         _alwaysFinishActivities.value =
-            getGlobalInt(Settings.Global.ALWAYS_FINISH_ACTIVITIES) == 1
+            getAlwaysFinishActivities() == 1
         _backgroundProcessLimit.value =
             getGlobalString("activity_manager_constants").orEmpty().contains("max_cached_processes=1")
 
@@ -2339,14 +2339,14 @@ class GamingEngine(
                 unavailable += GamingModeNotice.Res(R.string.gt_eng_un_refresh)
             }
 
-            val touchOk = putSettingVerified("system", "touch_response_speed", "2")
+            val touchOk = putSettingVerified("touch_response_speed", "2")
             if (!touchOk) unavailable += GamingModeNotice.Res(R.string.gt_eng_un_touch)
 
             // The touch-speed choice, re-asserted like everything else here — the snapshot still
             // holds the user's original, so the eventual deactivation restores it either way.
             var pointerSpeedApplied: Int? = null
             PointerSpeed.sanitize(_pointerSpeedChoice.value)?.let { speed ->
-                if (putSettingVerified("system", "pointer_speed", speed.toString())) {
+                if (putSettingVerified("pointer_speed", speed.toString())) {
                     pointerSpeedApplied = speed
                 } else {
                     unavailable += GamingModeNotice.Res(R.string.gt_eng_un_pointer, listOf(speed.toString()))

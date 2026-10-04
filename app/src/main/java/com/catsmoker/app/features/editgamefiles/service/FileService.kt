@@ -12,7 +12,6 @@ import java.util.concurrent.TimeUnit
  * forever, taking the binder thread with it.
  */
 // Shizuku user-service entry point, instantiated by the Shizuku framework via reflection.
-@Suppress("unused")
 class FileService : IFileService.Stub {
 
     constructor() : super()

@@ -39,6 +39,9 @@ object SpoofDisplayMetrics {
         if (densityDpi != null && densityDpi > 0) {
             metrics.densityDpi = densityDpi
             metrics.density = densityDpi / 160f
+            // Deprecated with no setter replacement; a fabricated DisplayMetrics with
+            // density but no scaledDensity would mis-scale every sp dimension, so the
+            // field is still written deliberately.
             metrics.scaledDensity = densityDpi / 160f
             metrics.xdpi = densityDpi.toFloat()
             metrics.ydpi = densityDpi.toFloat()
@@ -46,21 +49,21 @@ object SpoofDisplayMetrics {
     }
 
     fun applyConfiguration(config: Configuration, width: Int?, height: Int?, densityDpi: Int?) {
-        val widthOn = width != null && width > 0
-        val heightOn = height != null && height > 0
-        val densityOn = densityDpi != null && densityDpi > 0
-        if (!widthOn && !heightOn && !densityOn) return
+        val widthValue = width?.takeIf { it > 0 }
+        val heightValue = height?.takeIf { it > 0 }
+        val densityValue = densityDpi?.takeIf { it > 0 }
+        if (widthValue == null && heightValue == null && densityValue == null) return
 
         val originalDensity = config.densityDpi.takeIf { it > 0 } ?: densityDpi ?: 0
-        val effectiveDensity = if (densityOn) densityDpi!! else originalDensity
+        val effectiveDensity = densityValue ?: originalDensity
         if (effectiveDensity <= 0) return
 
-        val widthPixels = if (widthOn) width!! else (config.screenWidthDp * originalDensity / 160f).roundToInt()
-        val heightPixels = if (heightOn) height!! else (config.screenHeightDp * originalDensity / 160f).roundToInt()
+        val widthPixels = widthValue ?: (config.screenWidthDp * originalDensity / 160f).roundToInt()
+        val heightPixels = heightValue ?: (config.screenHeightDp * originalDensity / 160f).roundToInt()
 
-        if (densityOn) config.densityDpi = effectiveDensity
-        if (widthOn || densityOn) config.screenWidthDp = (widthPixels * 160f / effectiveDensity).roundToInt()
-        if (heightOn || densityOn) config.screenHeightDp = (heightPixels * 160f / effectiveDensity).roundToInt()
+        if (densityValue != null) config.densityDpi = effectiveDensity
+        if (widthValue != null || densityValue != null) config.screenWidthDp = (widthPixels * 160f / effectiveDensity).roundToInt()
+        if (heightValue != null || densityValue != null) config.screenHeightDp = (heightPixels * 160f / effectiveDensity).roundToInt()
 
         config.smallestScreenWidthDp = minOf(config.screenWidthDp, config.screenHeightDp)
         config.orientation = if (widthPixels >= heightPixels) {

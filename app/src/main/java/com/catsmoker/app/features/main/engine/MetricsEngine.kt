@@ -284,7 +284,7 @@ class MetricsEngine(
             if (started.isSuccess) {
                 timestatsEnabled = true
             } else {
-                publishFps(null, null, FpsSource.SurfaceFlinger, MetricReadStatus.PrivilegeDenied)
+                publishFps(null, null, MetricReadStatus.PrivilegeDenied)
             }
             return
         }
@@ -297,17 +297,17 @@ class MetricsEngine(
             lastKnownSfFps = parsed
             sfFailures = 0
             frameStats.push(parsed, janky)
-            publishFps(parsed, janky, FpsSource.SurfaceFlinger, MetricReadStatus.Ok)
+            publishFps(parsed, janky, MetricReadStatus.Ok)
         } else {
             sfFailures++
             val held = lastKnownSfFps
             if (held != null && sfFailures <= FPS_STALE_TOLERANCE) {
                 // A gap right after a clear is normal; keep the last real value.
-                publishFps(held, janky, FpsSource.SurfaceFlinger, MetricReadStatus.Ok)
+                publishFps(held, janky, MetricReadStatus.Ok)
             } else {
                 lastKnownSfFps = null
                 publishFps(
-                    null, null, FpsSource.SurfaceFlinger,
+                    null, null,
                     if (dump.stdout.isBlank()) MetricReadStatus.EmptyOutput else MetricReadStatus.ParseFailed
                 )
             }
@@ -372,11 +372,11 @@ class MetricsEngine(
         }
     }
 
-    // SameParameterValue: this publisher only ever reports the SurfaceFlinger channel.
+    // This publisher only ever reports the SurfaceFlinger channel (the Choreographer
+    // path writes fpsSource directly), so the source is fixed, not a parameter.
     private suspend fun publishFps(
         fps: Int?,
         jankyFrames: Int?,
-        @Suppress("SameParameterValue") source: FpsSource,
         status: MetricReadStatus
     ) = withContext(Dispatchers.Main) {
         _state.update {
@@ -384,7 +384,7 @@ class MetricsEngine(
                 fps = fps,
                 jankyFrames = jankyFrames,
                 jankPercent = frameStats.snapshot().jankPercent,
-                fpsSource = source,
+                fpsSource = FpsSource.SurfaceFlinger,
                 fpsReadStatus = status
             )
         }

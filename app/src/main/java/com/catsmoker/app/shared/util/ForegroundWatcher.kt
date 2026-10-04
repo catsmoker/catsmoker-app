@@ -21,17 +21,12 @@ object ForegroundWatcher {
     fun hasUsageAccess(context: Context): Boolean {
         val appOps = context.getSystemService(Context.APP_OPS_SERVICE) as? AppOpsManager
             ?: return false
+        // checkOpNoThrow is the non-deprecated spelling on the compile SDK and has
+        // existed since API 19, so no version branch is needed.
         val mode = try {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                appOps.unsafeCheckOpNoThrow(
-                    AppOpsManager.OPSTR_GET_USAGE_STATS, Process.myUid(), context.packageName
-                )
-            } else {
-                @Suppress("DEPRECATION")
-                appOps.checkOpNoThrow(
-                    AppOpsManager.OPSTR_GET_USAGE_STATS, Process.myUid(), context.packageName
-                )
-            }
+            appOps.checkOpNoThrow(
+                AppOpsManager.OPSTR_GET_USAGE_STATS, Process.myUid(), context.packageName
+            )
         } catch (_: Exception) {
             return false
         }

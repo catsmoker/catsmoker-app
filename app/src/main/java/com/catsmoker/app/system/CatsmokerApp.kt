@@ -63,9 +63,10 @@ class CatsmokerApp : Application(), Configuration.Provider {
             } catch (_: Exception) {}
         }
 
-        Shell.setDefaultBuilder(Shell.Builder.create()
-            .setFlags(Shell.FLAG_REDIRECT_STDERR)
-            .setTimeout(30))
+        // libsu 6.x redirects stderr only via this opt-in; the builder flag is
+        // deprecated. ShellRunner relies on the merge (result.err stays empty).
+        Shell.enableLegacyStderrRedirection = true
+        Shell.setDefaultBuilder(Shell.Builder.create().setTimeout(30))
     }
 
     /**

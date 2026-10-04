@@ -1,6 +1,5 @@
 package com.catsmoker.app.features.gamingtools.tools.firewall
 
-import android.annotation.SuppressLint
 import android.content.Context
 import android.content.Intent
 import android.net.ConnectivityManager
@@ -102,7 +101,6 @@ class VpnFirewall @Inject constructor(
      */
     // Partial visibility is fine: invisible apps are skipped, never blocked.
     // Shared InstalledAppQuery (consolidation C4): one user-app + INTERNET rule.
-    @SuppressLint("QueryPermissionsNeeded")
     fun blockTargets(gamePackages: List<String>): List<String> =
         InstalledAppQuery.blockTargets(context.packageManager, context.packageName, gamePackages)
 

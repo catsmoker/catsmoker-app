@@ -1,6 +1,5 @@
 package com.catsmoker.app.shared.util
 
-import android.annotation.SuppressLint
 import android.content.pm.ApplicationInfo
 import android.content.pm.PackageManager
 
@@ -70,7 +69,6 @@ object InstalledAppQuery {
     // ------------------------------------------------------------ Android-bound half
 
     /** Full installed set as detached entries. Partial visibility is fine — skipped, never blocked. */
-    @SuppressLint("QueryPermissionsNeeded")
     fun queryEntries(pm: PackageManager): List<AppEntry> {
         val installed = runCatching { pm.getInstalledApplications(0) }.getOrNull().orEmpty()
         return installed.map { info ->
@@ -83,7 +81,6 @@ object InstalledAppQuery {
     }
 
     /** Packages the VPN switch will block, computed fresh from the installed set. */
-    @SuppressLint("QueryPermissionsNeeded")
     fun blockTargets(
         pm: PackageManager,
         selfPackage: String,
@@ -92,7 +89,6 @@ object InstalledAppQuery {
         filterBlockPackageNames(queryEntries(pm), selfPackage, gamePackages.toSet())
 
     /** UIDs eligible for per-app netpolicy denial. */
-    @SuppressLint("QueryPermissionsNeeded")
     fun restrictableUids(
         pm: PackageManager,
         selfPackage: String,

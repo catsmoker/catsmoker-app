@@ -1,5 +1,6 @@
 package com.catsmoker.app.features.about
 
+import android.content.ClipData
 import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -22,20 +23,22 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalClipboardManager
+import androidx.compose.ui.platform.ClipEntry
+import androidx.compose.ui.platform.LocalClipboard
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.catsmoker.app.R
+import kotlinx.coroutines.launch
 import com.catsmoker.app.shared.ui.components.ScreenScaffold
 import com.catsmoker.app.shared.ui.components.SectionCard
 import com.catsmoker.app.shared.ui.theme.CatsmokerTheme
@@ -104,15 +107,18 @@ fun DonateRoute(onBack: () -> Unit) {
 @Composable
 fun DonateScreen(onBack: () -> Unit) {
     val uriHandler = LocalUriHandler.current
-    val clipboard = LocalClipboardManager.current
+    val clipboard = LocalClipboard.current
+    val scope = rememberCoroutineScope()
     val context = LocalContext.current
     // Resolved once here, at composition in the activity locale — the Toast below fires
     // immediately on tap, so it always matches the visible language (never a cached string).
     val copiedText = stringResource(R.string.donate_copied)
     val paypalUrl = stringResource(R.string.url_paypal)
     fun copy(value: String) {
-        clipboard.setText(AnnotatedString(value))
-        Toast.makeText(context, copiedText, Toast.LENGTH_SHORT).show()
+        scope.launch {
+            clipboard.setClipEntry(ClipEntry(ClipData.newPlainText("catsmoker", value)))
+            Toast.makeText(context, copiedText, Toast.LENGTH_SHORT).show()
+        }
     }
 
     ScreenScaffold(

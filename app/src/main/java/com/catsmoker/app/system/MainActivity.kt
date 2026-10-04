@@ -38,7 +38,6 @@ import kotlin.time.Duration.Companion.milliseconds
 
 import android.app.ActivityManager
 import android.content.Intent
-import android.os.Build
 import androidx.core.net.toUri
 import com.catsmoker.app.R
 import androidx.compose.material3.AlertDialog
@@ -216,12 +215,11 @@ class MainActivity : ComponentActivity() {    override fun attachBaseContext(new
     }
 
     private fun updateTaskDescription() {
+        // Every TaskDescription constructor is deprecated on the compile SDK with no
+        // replacement offered; the single-arg form is the minimal correct usage (label
+        // only, app icon by default) and still functions on all API levels.
         try {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
-                @Suppress("DEPRECATION")
-                val taskDesc = ActivityManager.TaskDescription(getString(R.string.app_name), R.mipmap.ic_launcher)
-                setTaskDescription(taskDesc)
-            }
+            setTaskDescription(ActivityManager.TaskDescription(getString(R.string.app_name)))
         } catch (_: Exception) {}
     }
 

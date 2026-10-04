@@ -78,7 +78,6 @@ internal class GetPropInterceptor(
     }
 
     /** Reads the argv out of whichever of the hooked methods fired. */
-    @Suppress("UNCHECKED_CAST")
     private fun commandOf(param: XC_MethodHook.MethodHookParam): List<String>? {
         (param.args.getOrNull(0) as? Array<*>)?.let { argv ->
             return argv.filterIsInstance<String>()
@@ -89,9 +88,13 @@ internal class GetPropInterceptor(
         (param.args.getOrNull(0) as? String)?.let { command ->
             return command.trim().split(WHITESPACE).filter { it.isNotEmpty() }
         }
-        return runCatching { XposedHelpers.callMethod(param.thisObject, "command") as? List<String> }
+        // Star-projection check first (reifiable, no unchecked cast), then keep only
+        // the strings: ProcessBuilder.command() is List<String>, and anything else is
+        // dropped instead of crashing a later trim on a ClassCastException.
+        return runCatching { XposedHelpers.callMethod(param.thisObject, "command") }
             .getOrNull()
-            ?.toList()
+            .let { result -> result as? List<*> }
+            ?.filterIsInstance<String>()
     }
 
     private fun parse(command: List<String>): Request? {

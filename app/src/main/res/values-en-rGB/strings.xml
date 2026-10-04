@@ -52,9 +52,7 @@
     <string name="gt_subtitle">Make your games run better</string>
     <string name="gt_section_your_library">YOUR GAMES</string>
     <string name="gt_no_games_detected">No games added yet ΓÇö tap + to add one</string>
-    <string name="gt_section_performance_boost">SPEED</string>
     <string name="gt_section_focus_network">INTERNET &amp; QUIET</string>
-    <string name="gt_section_system_advanced">SPACE &amp; BACKGROUND APPS</string>
 
     <!-- ========================================== -->
     <!--                HERO GAMING CARD            -->

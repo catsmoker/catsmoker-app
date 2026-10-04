@@ -111,10 +111,8 @@ class DisplayMetricsProvider @Inject constructor(
 
         // Pre-30, and wherever the call above came back empty: the real (not app-window) metrics.
         val real = runCatching {
-            @Suppress("DEPRECATION")
             val display = context.getSystemService(WindowManager::class.java)?.defaultDisplay
             DisplayMetrics().also { metrics ->
-                @Suppress("DEPRECATION")
                 display?.getRealMetrics(metrics)
             }
         }.getOrNull()

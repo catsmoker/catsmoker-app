@@ -1,7 +1,6 @@
 package com.catsmoker.app.features.permissions
 
 import android.Manifest
-import android.annotation.SuppressLint
 import android.content.Intent
 import android.os.Build
 import android.provider.Settings
@@ -329,7 +328,6 @@ fun AgreementStepScreen(
  * step that shows. Granting jumps to system Settings; back returns here.
  */
 // Pending Play declaration for REQUEST_IGNORE_BATTERY_OPTIMIZATIONS (PLAYSTORE.md REVIEW) — kept intentionally.
-@SuppressLint("BatteryLife")
 @Composable
 fun PermissionsListScreen(
     uiState: PermissionViewModel.UiState,

@@ -5,8 +5,8 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Redo
-import androidx.compose.material.icons.filled.Undo
+import androidx.compose.material.icons.automirrored.filled.Redo
+import androidx.compose.material.icons.automirrored.filled.Undo
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -574,7 +574,7 @@ private fun UndoRedoRow(
             modifier = Modifier.weight(1f),
             enabled = canUndo && !applying
         ) {
-            Icon(Icons.Default.Undo, contentDescription = null, modifier = Modifier.size(16.dp))
+            Icon(Icons.AutoMirrored.Filled.Undo, contentDescription = null, modifier = Modifier.size(16.dp))
             Spacer(modifier = Modifier.width(4.dp))
             Text(stringResource(R.string.gf_undo), fontSize = 12.sp)
         }
@@ -583,7 +583,7 @@ private fun UndoRedoRow(
             modifier = Modifier.weight(1f),
             enabled = canRedo && !applying
         ) {
-            Icon(Icons.Default.Redo, contentDescription = null, modifier = Modifier.size(16.dp))
+            Icon(Icons.AutoMirrored.Filled.Redo, contentDescription = null, modifier = Modifier.size(16.dp))
             Spacer(modifier = Modifier.width(4.dp))
             Text(stringResource(R.string.gf_redo), fontSize = 12.sp)
         }

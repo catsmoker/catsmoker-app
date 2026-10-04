@@ -1,7 +1,6 @@
 package com.catsmoker.app.features.gamingtools.tools.cleaner
 
 import android.Manifest
-import android.annotation.SuppressLint
 import android.content.Context
 import android.content.pm.PackageManager
 import android.os.Build
@@ -710,7 +709,6 @@ object CleaningFeature {
      *   app's package-visibility filter, unlike PackageManager.
      */
     // Partial visibility is fine: this is unioned with the shell package list.
-    @SuppressLint("QueryPermissionsNeeded")
     private suspend fun resolveInstalledPackages(context: Context, shellRunner: ShellRunner): Set<String>? {
         if (!shellRunner.hasPrivilege()) return null
         val result = shellRunner.execResult("pm list packages")

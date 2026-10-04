@@ -13,7 +13,6 @@
     android:layout_width="wrap_content"
     android:layout_height="wrap_content"
     android:background="#99000000"
-    tools:ignore="Overdraw"
     android:importantForAccessibility="noHideDescendants"
     android:orientation="vertical"
     android:padding="8dp">

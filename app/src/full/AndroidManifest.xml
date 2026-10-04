@@ -25,7 +25,7 @@
             android:authorities="com.catsmoker.app.configprovider"
             android:exported="true" />
 
-        <activity android:name=".system.MainActivity">
+        <activity android:name=".system.MainActivity" android:exported="true">
             <!-- Incoming device profiles: Catsmoker shares .catsmoker.json as application/json.
                 File-picker import inside the app covers the rest. -->
             <intent-filter>

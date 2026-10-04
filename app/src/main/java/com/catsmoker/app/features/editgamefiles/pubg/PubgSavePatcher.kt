@@ -156,9 +156,11 @@ object PubgSavePatcher {
 
     sealed class PatchResult {
         /** A copy of the input with every requested field rewritten to its new value. */
-        // ByteArray kept for zero-copy handoff; content equality is never relied upon.
-        @Suppress("ArrayInDataClass")
-        data class Ok(val data: ByteArray) : PatchResult()
+        // ByteArray kept for zero-copy handoff, with content equality defined explicitly.
+        data class Ok(val data: ByteArray) : PatchResult() {
+            override fun equals(other: Any?): Boolean = other is Ok && data.contentEquals(other.data)
+            override fun hashCode(): Int = data.contentHashCode()
+        }
 
         /** Nothing was written; every refusal is named so the UI can carry the reasons through. */
         data class Refused(val reasons: Map<String, String>) : PatchResult()

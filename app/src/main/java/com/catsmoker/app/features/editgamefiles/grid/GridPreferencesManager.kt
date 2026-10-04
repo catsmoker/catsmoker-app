@@ -51,8 +51,8 @@ class GridPreferencesManager @Inject constructor(
         context.getSharedPreferences("custom_upload_prefs", Context.MODE_PRIVATE)
     }
 
-    @Suppress("SameReturnValue") // fixed GRID install path
-    private val absoluteDir: String get() = "/storage/emulated/0/${GridPreferences.RELATIVE_DIR}"
+    // Fixed GRID install path — a constant, computed once.
+    private val absoluteDir: String = "/storage/emulated/0/${GridPreferences.RELATIVE_DIR}"
     private val absolutePath: String get() = "$absoluteDir/${GridPreferences.FILE_NAME}"
 
     // ------------------------------------------------------------------ channel gates

@@ -192,7 +192,6 @@ class SpoofRateCandidatesTest {
     // crashes with ClassCastException (seen on-device, retraced to assignedLabelFor).
     // `repaired` is the single place JSON enters the app, so it coerces those maps back.
 
-    @Suppress("UNCHECKED_CAST")
     private fun releaseShapedStore(): SpoofRepository.StoreData {
         // Exactly what stripped-signatures Gson leaves behind: a map, not a RateCandidate.
         val gson = Gson()
@@ -221,7 +220,6 @@ class SpoofRateCandidatesTest {
     @Test
     fun repairedDropsRungsThatAreNeitherCandidatesNorMaps() {
         val data = store(profileIds = arrayOf("a"))
-        @Suppress("UNCHECKED_CAST")
         val ladder = listOf("not-a-rung", 42) as List<SpoofRepository.RateCandidate>
         val healed = SpoofRepository.repaired(
             data.copy(rateAssignments = mapOf("com.game" to ladder))

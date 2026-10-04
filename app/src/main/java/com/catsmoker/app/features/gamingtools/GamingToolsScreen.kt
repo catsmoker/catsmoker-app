@@ -54,7 +54,6 @@ import com.catsmoker.app.features.gamingtools.tools.firewall.BackgroundDataRestr
 import com.catsmoker.app.features.gamingtools.tools.firewall.VpnFirewall
 import com.catsmoker.app.features.gamingtools.tools.graphics.GameDeveloperOptions
 import com.catsmoker.app.features.gamingtools.tools.graphics.AngleDriverOptions
-import java.util.Locale
 import com.catsmoker.app.features.gamingtools.ui.*
 import com.catsmoker.app.shared.ui.theme.LogTerminalBackground
 import com.catsmoker.app.shared.ui.theme.logLineColor
@@ -1274,20 +1273,13 @@ fun AutoForceStopContent(
     val hasUsageAccess = remember {
         runCatching {
             val appOps = context.getSystemService(android.app.AppOpsManager::class.java)
-            val mode = if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q) {
-                appOps?.unsafeCheckOpNoThrow(
-                    android.app.AppOpsManager.OPSTR_GET_USAGE_STATS,
-                    android.os.Process.myUid(),
-                    context.packageName
-                )
-            } else {
-                @Suppress("DEPRECATION")
-                appOps?.checkOpNoThrow(
-                    android.app.AppOpsManager.OPSTR_GET_USAGE_STATS,
-                    android.os.Process.myUid(),
-                    context.packageName
-                )
-            }
+            // checkOpNoThrow is the non-deprecated spelling on the compile SDK and has
+            // existed since API 19, so no version branch is needed.
+            val mode = appOps?.checkOpNoThrow(
+                android.app.AppOpsManager.OPSTR_GET_USAGE_STATS,
+                android.os.Process.myUid(),
+                context.packageName
+            )
             mode == android.app.AppOpsManager.MODE_ALLOWED
         }.getOrDefault(false)
     }
@@ -3106,7 +3098,7 @@ fun AppBoosterContent(
                 }
                 Spacer(modifier = Modifier.height(8.dp))
                 CatsmokerButton(
-                    onClick = { scopePkg?.let { onOptimizeSingle(it) } },
+                    onClick = { onOptimizeSingle(scopePkg) },
                     modifier = Modifier.fillMaxWidth(),
                     enabled = !state.isRunning && optimizingSinglePkg == null
                 ) {

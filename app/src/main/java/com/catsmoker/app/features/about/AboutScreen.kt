@@ -5,6 +5,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.OpenInNew
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -220,7 +221,7 @@ fun AboutLinkButton(
             style = MaterialTheme.typography.titleSmall
         )
         Icon(
-            imageVector = if (external) Icons.Default.OpenInNew else Icons.Default.ChevronRight,
+            imageVector = if (external) Icons.AutoMirrored.Filled.OpenInNew else Icons.Default.ChevronRight,
             contentDescription = null,
             tint = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.size(20.dp)
