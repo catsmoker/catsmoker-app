@@ -143,10 +143,10 @@ CatSmoker 支持 50+ 热门游戏，包括：
 环境要求：Android Studio、Java 17、Android SDK，以及项目已配置好的 Android NDK。
 
 ```bash
-bash ./gradlew assembleDebug
+bash ./gradlew :app:assembleFullDebug :app:assemblePlaystoreDebug
 ```
 
-调试版 APK 生成于 `app/build/outputs/apk/debug/app-debug.apk`。
+本分支构建两个分发版本（见 `docs/FLAVOR_WORKFLOW.md`）：`app/build/outputs/apk/full/debug/app-full-debug.apk`（完整 GitHub 版）与 `app/build/outputs/apk/playstore/debug/app-playstore-debug.apk`（Play 安全版）。Release 对应任务为 `:app:assembleFullRelease` 与 `:app:assemblePlaystoreRelease`。
 
 ---
 

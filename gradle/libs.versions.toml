@@ -13,6 +13,10 @@ startioSdk = "5.3.2"
 # version is pinned; the dependency itself is added via playstoreImplementation in
 # app/build.gradle.kts and never enters the full variant.
 playServicesAds = "25.5.0"
+# Firebase Analytics is SHARED (both variants, same project catsmoker-5b6c6).
+# google-services.json is gitignored/local-only; the build requires it present.
+googleServices = "4.5.0"
+firebaseBom = "34.19.0"
 provider = "13.1.5"
 coreKtx = "1.19.1"
 kotlin = "2.4.20"
@@ -40,6 +44,9 @@ material = { group = "com.google.android.material", name = "material", version.r
 activity = { group = "androidx.activity", name = "activity", version.ref = "activity" }
 startio-sdk = { module = "com.startapp:inapp-sdk", version.ref = "startioSdk" }
 play-services-ads = { module = "com.google.android.gms:play-services-ads", version.ref = "playServicesAds" }
+# Firebase BoM (import via platform()) + products (version comes from the BoM).
+firebase-bom = { group = "com.google.firebase", name = "firebase-bom", version.ref = "firebaseBom" }
+firebase-analytics = { group = "com.google.firebase", name = "firebase-analytics" }
 provider = { module = "dev.rikka.shizuku:provider", version.ref = "provider" }
 shizuku-api = { module = "dev.rikka.shizuku:api", version.ref = "provider" }
 core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -69,3 +76,4 @@ android-application = { id = "com.android.application", version.ref = "agp" }
 compose-compiler = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
 ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
 hilt-android = { id = "com.google.dagger.hilt.android", version.ref = "hilt" }
+google-services = { id = "com.google.gms.google-services", version.ref = "googleServices" }

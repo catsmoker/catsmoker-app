@@ -19,6 +19,7 @@ class LocaleParityTest {
 
     private val localeDirs = listOf(
         "values",
+        "values-en-rGB",
         "values-ar",
         "values-es",
         "values-zh-rCN"

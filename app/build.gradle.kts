@@ -5,6 +5,9 @@ plugins {
     alias(libs.plugins.ksp)
     alias(libs.plugins.compose.compiler)
     alias(libs.plugins.hilt.android)
+    // Firebase (google-services.json, project catsmoker-5b6c6, gitignored).
+    // Shared by both variants — same project, automatic Analytics init.
+    alias(libs.plugins.google.services)
 }
 
 android {
@@ -22,9 +25,10 @@ android {
         versionName = "2.0.2"
 
         // Only locales the app actually ships (see res/xml/locales_config.xml): strips the
-        // dozens of transitive locales dragged in by material/startio/splashscreen/work.
-        // Shrinking alone cannot do this.
-        resConfigs("en", "ar", "es", "zh-rCN")
+        // dozens of transitive locales dragged in by material/ads/splashscreen/work.
+        // Shrinking alone cannot do this. Qualifiers match res/values-* dirs exactly;
+        // in-app tags are en/ar/es/zh-CN (AppearanceStore), en-GB is a mirror.
+        resConfigs("en", "en-rGB", "ar", "es", "zh-rCN")
 
         vectorDrawables {
             useSupportLibrary = true
@@ -42,6 +46,8 @@ android {
     productFlavors {
         create("full") {
             dimension = "distribution"
+            // Full-only R8/ProGuard rules (Start.io, LSPosed, spoof models).
+            proguardFile("src/full/proguard-rules.pro")
             val localProperties = Properties()
             val localPropertiesFile = project.rootProject.file("local.properties")
             if (localPropertiesFile.exists()) {
@@ -198,6 +204,12 @@ dependencies {
 
     // --- JSON ---
     implementation(libs.gson)
+
+    // --- Firebase Analytics (SHARED: full + playstore, same project) ---
+    // No code references: initialization is automatic via the merged provider,
+    // exactly as on the old playstore branch. No custom consent gating exists.
+    implementation(platform(libs.firebase.bom))
+    implementation(libs.firebase.analytics)
 
     // --- Ads (variant-specific: Start.io on full, AdMob on playstore) ---
     // String-based configurations: flavor-qualified accessors (fullImplementation,

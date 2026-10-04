@@ -3,6 +3,7 @@
      levels via LocaleHelper; this only advertises the same list to the OS settings screen. -->
 <locale-config xmlns:android="http://schemas.android.com/apk/res/android">
     <locale android:name="en" />
+    <locale android:name="en-GB" />
     <locale android:name="ar" />
     <locale android:name="es" />
     <locale android:name="zh-CN" />

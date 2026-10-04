@@ -172,10 +172,14 @@ CatSmoker supports over 50+ popular titles, including:
 Requirements: Android Studio, Java 17, Android SDK, and the Android NDK configured by the project.
 
 ```bash
-bash ./gradlew assembleDebug
+bash ./gradlew :app:assembleFullDebug :app:assemblePlaystoreDebug
 ```
 
-The debug APK is generated at `app/build/outputs/apk/debug/app-debug.apk`.
+Two distribution variants build from this branch (`docs/FLAVOR_WORKFLOW.md`):
+`app/build/outputs/apk/full/debug/app-full-debug.apk` (complete GitHub app)
+and `app/build/outputs/apk/playstore/debug/app-playstore-debug.apk`
+(Play-safe build). Release equivalents: `:app:assembleFullRelease`
+and `:app:assemblePlaystoreRelease`.
 
 
 ---
