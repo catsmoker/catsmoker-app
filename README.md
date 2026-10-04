@@ -114,9 +114,9 @@ Utilizes the LSPosed framework to hook into game processes at runtime. This allo
 
 ## Google Play Version
 
-Catsmoker also has a dedicated `playstore` branch containing the version prepared for Google Play distribution.
+Catsmoker is one project with two Gradle flavors built from `main` (see `docs/FLAVOR_WORKFLOW.md`): `full` (the complete GitHub app) and `playstore` (the Google Play distribution, built from the `playstore` flavor/source set — there is no separate Git branch).
 
-The Google Play version is modified for **non-root users** and is designed to work without requiring root access. Some advanced features may still have requirements or limitations compared to the full version.
+The Google Play version is modified for **non-root users** and is designed to work without requiring root access. It excludes the Full-only capabilities (device spoofing/LSPosed, Magisk module generation, GitHub self-updater) and serves AdMob ads instead of Start.io. Some advanced features may still have requirements or limitations compared to the full version.
 
 ### Closed Testing
 
@@ -136,7 +136,7 @@ To access the app:
 
 If the testing page or app does not appear immediately after joining the group, wait a few minutes and try again.
 
-The `main` branch remains the primary/full development version, while the `playstore` branch contains the version prepared for Google Play distribution.
+The `main` branch is the single canonical development branch: shared features are implemented once in `src/main` and ship in both flavors automatically. Developers build the Play version with `:app:assemblePlaystoreRelease`, never by switching branches.
 
 ---
 

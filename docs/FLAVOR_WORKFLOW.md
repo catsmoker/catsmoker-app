@@ -78,8 +78,9 @@ filters — while still containing the `gms.ads.APPLICATION_ID` meta-data.
 
 ## Branches
 
-`main` is the single development branch; both variants build from it. The
-historical `playstore` branch is frozen reference only (do not develop on it):
-its Play-specific pieces already live in `src/playstore`, and its newer
-shared work was already in `main`. Delete it only after the team agrees the
-flavor builds have fully replaced it — never force-push, never rewrite history.
+`main` is the single canonical development branch; both variants build from
+it. The historical standalone `playstore` Git branch has been **deleted** —
+do not recreate it, do not develop on a second branch for the Play
+version, and do not cherry-pick shared changes between branches. Its
+Play-specific pieces live in `src/playstore`; its shared work was already in
+`main`. Never force-push, never rewrite history.

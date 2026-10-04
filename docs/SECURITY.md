@@ -13,7 +13,8 @@ codebase is written around.
 
 The app's stated privacy position: **no unnecessary data collection; all
 modifications are performed locally** (see README). Intermittent network
-behaviour is limited to ads (Start.io — see below), DNS optimisation for the
+behaviour is limited to ads (Start.io on Full, AdMob on Play — see below),
+Firebase Analytics (shared, same project), DNS optimisation for the
 game, and a ping to `8.8.8.8` for the latency metric.
 
 ## Privilege model
@@ -89,17 +90,27 @@ on one invariant enforced in `resolvePackageName`:
 This is a deliberate design trade-off: exported-but-scope-guarded content
 must stay correct, and a regression here would leak spoof assignments.
 
-## Ads: Start.io
+## Ads: Start.io (Full) / AdMob (Play)
 
-The app integrates the Start.io SDK for ads (`system/ads/AdManager.kt`,
-`com.startapp:inapp-sdk`). This is the primary place network traffic to a
-third party originates and is a real supply-chain + data-flow consideration:
+Each distribution flavor integrates exactly one ad SDK, isolated in its own
+source set — neither SDK is packaged into the other flavor:
 
-- SDK auto-initialization is **explicitly disabled** in the manifest
-  (`tools:node="remove"` on `StartAppInitProvider`); integration is manual.
-- The SDK id can be overridden via `STARTIO_APP_ID` in `local.properties`.
-- Any `build.gradle.kts` change here should be reviewed like any other
-  third-party dependency: pinned via the version catalog, not floating.
+- **Full** uses the Start.io SDK (`src/full/…/system/ads/AdManager.kt`,
+  `com.startapp:inapp-sdk` via `fullImplementation`). SDK auto-initialization
+  is **explicitly disabled** in the manifest (`tools:node="remove"` on
+  `StartAppInitProvider`); integration is manual. The SDK id can be
+  overridden via `STARTIO_APP_ID` in `local.properties`.
+- **Play Store** uses AdMob (`src/playstore/…/system/ads/AdManager.kt`,
+  `com.google.android.gms:play-services-ads` via `playstoreImplementation`).
+  IDs come from `ADMOB_APP_ID` / `ADMOB_BANNER_ID` /
+  `ADMOB_INTERSTITIAL_ID` in `local.properties`, defaulting to Google's
+  sample test ids. The App ID enters the manifest via placeholder.
+- Shared code only calls the common `AdManager` API / `AdBanner()` slot.
+
+This is a real supply-chain + data-flow consideration: any `build.gradle.kts`
+change here should be reviewed like any other third-party dependency (pinned
+via the version catalog, not floating). Firebase Analytics is additionally
+shared by both variants (same project, automatic init — see `BUILD.md`).
 
 ## Permissions requested (AndroidManifest)
 
@@ -138,7 +149,7 @@ The state machine in `GamingEngine` has security-adjacent guarantees:
 | ---------------------------------------------------------------- | ------------------- | ------------------------------------------------------------------------------------------------------------------------ |
 | Privilege escalation bug in `ShellRunner`'s command construction | High (root context) | Single choke point; `joinArgs` quoting; code review on the quoting path                                                  |
 | Exported provider leaks spoof config to other apps               | High                | `resolvePackageName` UID scoping; documented invariant                                                                   |
-| Third-party SDK (Start.io) supply chain / data flow              | Medium              | Pinned version; manual init; review dependency changes                                                                   |
+| Third-party SDK (Start.io / AdMob) supply chain / data flow     | Medium              | Pinned version; manual init; flavor-isolated (Start.io Full-only, AdMob Play-only); review dependency changes            |
 | Malicious app tricking the local VPN or overlays                 | Medium              | All overlay/FGS services are `exported="false"`; `BIND_VPN_SERVICE` enforced by the system; user must consent to the VPN |
 | Regression in Gaming Mode allowlist bricks session               | Medium              | `hardWhitelist` + system-critical exclusion keep essential packages alive; snapshot revert                               |
 | Shell injection from an untrusted profile/game value             | High (root context) | `joinArgs` quoting on all dynamic args; treat any value sourced from files or user input as untrusted                    |

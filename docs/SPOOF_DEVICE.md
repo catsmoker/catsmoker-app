@@ -1,7 +1,9 @@
-# Spoof Device
+# Spoof Device (Full flavor only)
 
 How CatSmoker lets a game see a different device — and the three channels it
-ships for applying a spoof.
+ships for applying a spoof. Everything in this document lives in `src/full`
+and is **absent from the Play Store flavor** (same-FQN shims + capability
+flags keep shared code compiling against both — see `FLAVOR_WORKFLOW.md`).
 
 ## What is spoofed
 
@@ -11,8 +13,9 @@ premium device so a game unlocks higher graphics settings, frame caps, and
 quality presets.
 
 Configuration lives in `SpoofConfigProvider`
-(`system/config/SpoofConfigProvider.kt`) serving `DeviceProfile` presets
-(`shared/data/model/DevicePreset.kt` + `DeviceProfile.kt`). Profiles are persisted as JSON (Gson).
+(`src/full/…/system/config/SpoofConfigProvider.kt`) serving `DeviceProfile`
+presets (`src/full/…/shared/data/model/DevicePreset.kt` + `DeviceProfile.kt`).
+Profiles are persisted as JSON (Gson).
 
 ## Three application channels
 
@@ -26,21 +29,21 @@ Plus **SAF / export mode** for manually granting access to game data folders.
 
 ## LSPosed module
 
-- `features/spoofdevice/root/LSPosedModule.kt` — declares the module scope
+- `src/full/…/features/spoofdevice/root/LSPosedModule.kt` — declares the module scope
   and lifecycle.
-- `features/spoofdevice/root/GetPropInterceptor.kt` — the actual runtime
+- `src/full/…/features/spoofdevice/root/GetPropInterceptor.kt` — the actual runtime
   hook that answers `getprop`/`ro.product.*` for the selected game with the
   active profile's values.
 - Activation is per-game: the LSPosed manager scopes the module to the games
   you want optimized.
 
-**Important:** the Xposed API is a `compileOnly` dependency. The module
-classes are only meaningful inside the LSPosed process; the app itself keeps
-running on a normal Android classpath.
+**Important:** the Xposed API is a `fullCompileOnly` dependency (never
+packaged). The module classes are only meaningful inside the LSPosed process;
+the app itself keeps running on a normal Android classpath.
 
 ## Magisk mode builder
 
-`MagiskModuleBuilder` (`features/spoofdevice/tools/MagiskModuleBuilder.kt`)
+`MagiskModuleBuilder` (`src/full/…/features/spoofdevice/tools/MagiskModuleBuilder.kt`)
 constructs a flashable Magisk module **entirely in code** as a `ZipOutputStream`.
 Two past bugs explain why:
 

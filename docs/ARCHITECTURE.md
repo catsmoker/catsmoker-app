@@ -12,39 +12,44 @@ A high-level map of the CatSmoker Android codebase and how the layers fit togeth
 | DI                   | Hilt (Dagger)                                  |
 | Async                | Kotlin Coroutines + Flow                       |
 | JSON                 | Gson                                           |
-| Root                 | libsu (`com.github.topjohnwu.libsu:core`)      |
-| Piecemeal privileges | Shizuku (`dev.rikka.shizuku:api` + `provider`) |
-| Runtime hooking      | LSPosed (Xposed API, `compileOnly`)            |
+| Root                 | libsu (`com.github.topjohnwu.libsu:core`, shared) |
+| Piecemeal privileges | Shizuku (`dev.rikka.shizuku:api` + `provider`, shared) |
+| Runtime hooking      | LSPosed (Xposed API, `fullCompileOnly` — Full flavor only) |
+| Ads                  | Start.io (Full only) / AdMob (Play flavor only) |
+| Analytics            | Firebase Analytics (shared, same project)      |
 | Min / target SDK     | API 27 / API 37                                |
 
 ## Module layout
 
-Single application module under `app/`. There is no separate
-`core`/`feature` Gradle split; features are separated by Kotlin packages.
+Single application module under `app/` with `distribution` product flavors
+(`full`, `playstore`) — see [`FLAVOR_WORKFLOW.md`](FLAVOR_WORKFLOW.md). There
+is no separate `core`/`feature` Gradle split and no separate Git branch;
+features are separated by Kotlin packages, variants by source set:
 
 ```
-app/src/main/java/com/catsmoker/app/
-├── system/                 # app-wide wiring: entry points, DI, shell, navigation, ads
-│   ├── MainActivity.kt
-│   ├── CatsmokerApp.kt
-│   ├── config/SpoofConfigProvider.kt
-│   ├── di/                 # Hilt modules (ServiceModule, EngineModule)
-│   ├── navigation/         # Routes + AppNavHost
-│   ├── shell/ShellRunner.kt  # root + Shizuku command execution
-│   └── ads/AdManager.kt      # Start.io ads
-├── shared/
-│   ├── data/               # models, repositories, presets
-│   └── ui/                 # theme, reusable components
-└── features/               # one package per feature screen
-    ├── main/               # home dashboard + telemetry (MetricsEngine)
-    ├── gamingtools/        # Gaming Mode, booster, RAM boost, overlays, firewall…
-    ├── spoofdevice/        # device spoofing (LSPosed, Shizuku, Magisk)
-    ├── editgamefiles/      # file engineering
-    ├── permissions/        # onboarding permission flow
-    ├── logs/               # engineering console
-    ├── settings/
-    └── about/
+app/src/
+├── main/                   # shared code — ships in BOTH variants
+│   └── java/com/catsmoker/app/
+│       ├── system/         # entry, DI, shell, navigation, ads call points
+│       │   ├── navigation/ # Routes + AppNavHost (+ variant spoofGraph())
+│       │   ├── shell/ShellRunner.kt  # root + Shizuku command execution
+│       │   └── ads/        # ( Implementations live per-flavor; see below)
+│       ├── shared/         # data/models, ui/theme, components
+│       └── features/       # main, gamingtools, editgamefiles, permissions,
+│                           # logs, settings, about (+ legal screens)
+├── full/                   # Full/GitHub-only: spoofdevice/ (+ root/ LSPosed,
+│                           # Magisk builder), SpoofRepository et al, Start.io
+│                           # AdManager/AdBanner/AdsInit, SelfUpdater, scope
+│                           # array, xposed_init, spoof manifest entries
+├── playstore/              # Play-only: AdMob AdManager/AdBanner/AdsInit,
+│                           # no-op variant shims, AdMob App ID manifest entry
+└── testFull/               # full-only unit tests (src/test/ runs on both)
 ```
+
+Variant seams are same-FQN pairs (`VariantCapabilities`, `AdsInit`,
+`AdManager`, `AdBanner`, `spoofGraph()`, `ProfileShareHandler`,
+`SelfUpdater`): `src/main` never imports `src/full`, so the Play compile
+cannot see the restricted implementations at all.
 
 ## Dependency direction
 
@@ -59,7 +64,8 @@ features/*  ──►  system/*  ──►  shared/*
 ```
 
 Pure-Kotlin logic (parsers, template builders, models) has no Android
-imports and is unit-tested under `app/src/test`.
+imports and is unit-tested under `app/src/test` (both variants) plus
+`app/src/testFull` (Full-only: spoof/LSPosed/Magisk).
 
 ## Key components
 

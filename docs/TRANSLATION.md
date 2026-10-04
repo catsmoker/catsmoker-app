@@ -6,9 +6,11 @@ strings into resources.
 ## TL;DR (verified 2026-09-28 — the pre-2026 "English-only" description below is obsolete)
 
 - The project uses Android resources for user-visible copy, split by area:
-  `values/strings.xml` (core) + `strings_core/gamefiles/gaming/spoof/sys.xml`,
-  each mirrored key-for-key in `values-ar/`, `values-es/`, `values-zh-rCN/`
-  (`en ar es zh-CN`, declared in `resConfigs` + `res/xml/locales_config.xml`).
+  `values/strings.xml` (core) + `strings_core/gamefiles/gaming/legal/sys.xml`
+  in `src/main`, plus `strings_spoof.xml` in `src/full` (Full flavor only),
+  each mirrored key-for-key in `values-en-rGB/`, `values-ar/`, `values-es/`,
+  `values-zh-rCN/` (`en en-rGB ar es zh-CN`, declared in `resConfigs` +
+  `res/xml/locales_config.xml`; in-app tags are `en/ar/es/zh-CN`).
   A key missing from a mirror falls back to the wrong language at runtime, so
   `LocaleParityTest` pins parity for user-visible copy — extend it when adding
   user-facing strings.
@@ -54,8 +56,9 @@ that layout:
   `logs_*`, `booster_*`, `overlay_*`, `crosshair_*`.
 - Keep the explanatory comment when a string has non-obvious context — e.g.
   `dash_fps_label_ui` documents *why* it says UI FPS.
-- The only array in the file is `scope` (the LSPosed module scope game list) —
-  per-game metadata lives in Kotlin and must **not** be duplicated as strings.
+- The LSPosed module scope game list lives in `src/full/res/values/spoof_scope.xml`
+  (`scope` array, Full flavor only, never translated) — per-game metadata lives
+  in Kotlin and must **not** be duplicated as strings.
 
 ## Known gaps (CLOSED 2026-09-28 — kept as a checklist for future screens)
 
@@ -83,6 +86,10 @@ Create a locale folder next to `values/` and mirror the keys:
 ```
 app/src/main/res/values-xx-rYY/strings.xml   # e.g. values-es, values-zh-rCN, values-in
 ```
+
+Update `resConfigs` (`app/build.gradle.kts`), `res/xml/locales_config.xml`,
+and `LocaleParityTest.localeDirs` to match. Full-only copy goes in the
+mirrored `src/full/res/values-*/strings_spoof.xml` instead.
 
 Rules:
 
