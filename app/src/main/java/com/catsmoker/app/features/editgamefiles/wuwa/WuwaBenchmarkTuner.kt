@@ -14,7 +14,7 @@ import java.io.File
  * persisted to JSON, the ladder order and both step rules (down one tier under 85% of target,
  * up one tier when the average clears the target by more than 15%), the avg/min/stability
  * formulas — `count(fps >= avg * 0.8) / size * 100` — and the tiered option escalation are
- * line-for-line. [WuwaBenchmarkTunerTest] pins them against the reference's own numbers.
+ * line-for-line. `WuwaBenchmarkTunerTest` pins them against the reference's own numbers.
  *
  * Deliberate divergences from the reference, each because the subsystem it hangs off was not
  * ported:

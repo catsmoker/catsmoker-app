@@ -617,6 +617,8 @@ class WuwaConfigManager @Inject constructor(
     // not the reference's base64-over-stdout) plus a settings count over each deployed ini.
 
     sealed class InstalledProfileResult {
+        // Carried payloads: no reader yet (readInstalledProfile awaits UI wiring),
+        // but a Read without the profile / Failure without the detail is meaningless.
         data class Read(val profile: WuwaProfileExtractor.InstalledProfile) : InstalledProfileResult()
         data class Failure(val detail: String) : InstalledProfileResult()
     }
@@ -626,9 +628,10 @@ class WuwaConfigManager @Inject constructor(
      * (when Client.log exists — it is written only after a play session), the two databases'
      * player fields, and a settings count over each monitored ini.
      *
-     * The halves fail independently and say so: a missing log leaves [InstalledProfile.log] null
-     * but the database fields still read; unreadable databases leave [InstalledProfile.dbChannel]
-     * null but the log half still parsed; only a total failure — no channel, and nothing read —
+     * The halves fail independently and say so: a missing log leaves
+     * [WuwaProfileExtractor.InstalledProfile.log] null but the database fields still read;
+     * unreadable databases leave [WuwaProfileExtractor.InstalledProfile.dbChannel] null
+     * but the log half still parsed; only a total failure — no channel, and nothing read —
      * is a [InstalledProfileResult.Failure].
      */
     suspend fun readInstalledProfile(): InstalledProfileResult = withContext(Dispatchers.IO) {
@@ -1070,11 +1073,11 @@ class WuwaConfigManager @Inject constructor(
 
         private const val LOG_FILE_NAME = "Client.log"
 
-        val CONFIG_DIR = "/storage/emulated/0/Android/data/$PACKAGE/$CONFIG_REL"
-        val LOG_PATH = "/storage/emulated/0/Android/data/$PACKAGE/$LOGS_REL/$LOG_FILE_NAME"
+const val CONFIG_DIR = "/storage/emulated/0/Android/data/$PACKAGE/$CONFIG_REL"
+const val LOG_PATH = "/storage/emulated/0/Android/data/$PACKAGE/$LOGS_REL/$LOG_FILE_NAME"
 
         /** The game's Android data root — the base every relative game path (DBs, configs) hangs off. */
-        val GAME_DATA_ROOT = "/storage/emulated/0/Android/data/$PACKAGE"
+        const val GAME_DATA_ROOT = "/storage/emulated/0/Android/data/$PACKAGE"
         const val HASH_MONITOR_PATH =
             "/storage/emulated/0/Android/data/$PACKAGE/files/UE4Game/Client/Client/Config/Kuro/KuroConfigMonitor.hash"
 

@@ -1,3 +1,5 @@
+// No-op Play shim: same FQN/signature as the full variant so MainActivity links
+// without spoof classes. Unused-parameter findings here are the seam contract.
 package com.catsmoker.app.system
 
 import android.content.Intent

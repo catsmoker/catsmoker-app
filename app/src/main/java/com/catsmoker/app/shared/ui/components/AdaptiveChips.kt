@@ -1,7 +1,6 @@
 package com.catsmoker.app.shared.ui.components
 
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.FlowRowScope
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -17,7 +16,6 @@ import androidx.compose.ui.unit.dp
  * visible without sideways scrolling; on a tablet they sit on one line. The
  * 8.dp rhythm matches the option rows elsewhere in the app.
  */
-@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun ChipFlowRow(
     modifier: Modifier = Modifier,

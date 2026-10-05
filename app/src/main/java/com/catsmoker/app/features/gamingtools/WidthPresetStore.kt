@@ -34,7 +34,7 @@ class WidthPresetStore(private val storeFile: File) {
      */
     fun savePreset(name: String, widthDp: Int): WidthPreset? {
         if (name.isBlank()) return null
-        if (widthDp < MIN_WIDTH_DP || widthDp > MAX_WIDTH_DP) return null
+        if (widthDp !in MIN_WIDTH_DP..MAX_WIDTH_DP) return null
         val presets = loadLocked().toMutableList()
         val preset = WidthPreset(
             id = UUID.randomUUID().toString(),

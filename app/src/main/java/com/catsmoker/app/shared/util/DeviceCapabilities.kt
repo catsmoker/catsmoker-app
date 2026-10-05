@@ -2,7 +2,7 @@ package com.catsmoker.app.shared.util
 
 /**
  * Static device facts in, supported-mechanism flags out — pure logic, no Context,
- * so every branch is unit-provable ([DeviceCapabilitiesTest]).
+ * so every branch is unit-provable (`DeviceCapabilitiesTest`).
  *
  * This is the capability-detection pattern, not a registry: callers pass what the
  * platform reports (`Build.MANUFACTURER`, `Build.HARDWARE`, `Build.VERSION.SDK_INT`)

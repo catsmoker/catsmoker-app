@@ -1281,7 +1281,7 @@ class GamingToolsViewModel @Inject constructor(
 
     /** `0.85x` — trailing zeros dropped, matching the intervention entry's own spelling. */
     private fun formatDownscale(factor: Float): String =
-        String.format(java.util.Locale.US, "%.2f", factor).trimEnd('0').trimEnd('.') + "x"
+        String.format(Locale.US, "%.2f", factor).trimEnd('0').trimEnd('.') + "x"
 
     /**
      * Chooses the touch speed (or null for stock). A pure preference write; the device verdict

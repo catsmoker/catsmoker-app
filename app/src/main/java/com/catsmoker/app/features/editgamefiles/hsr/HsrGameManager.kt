@@ -467,6 +467,7 @@ class HsrGameManager @Inject constructor(
         /** Same order as the reference: /data_mirror crosses the mount-namespace boundary first. */
         // Other apps' paths via root shell — getFilesDir() cannot address them, so the
         // paths are necessarily hardcoded.
+        @Suppress("SdCardPath")
         private val PREFS_PATH_TEMPLATES = listOf(
             "/data_mirror/data_ce/null/0/%s/shared_prefs/%s",
             "/data/user/0/%s/shared_prefs/%s",

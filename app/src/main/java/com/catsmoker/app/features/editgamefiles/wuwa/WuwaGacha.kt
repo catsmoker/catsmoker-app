@@ -6,7 +6,7 @@ import com.google.gson.reflect.TypeToken
 /**
  * The Convene (gacha) record pipeline's pure half: record-URL parsing, the pool table,
  * response decoding, and the pity math. No network, no Android — everything here is
- * JVM-testable, and [WuwaGachaTest] pins it.
+ * JVM-testable, and `WuwaGachaTest` pins it.
  *
  * Ported from `reference/gamingtools/WuWa-Config-Android-main/config/GachaApi.kt` and
  * `model/GachaRecord.kt`, both read in full before this file was written. The agreements:

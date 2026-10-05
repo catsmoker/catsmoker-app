@@ -9,7 +9,7 @@ package com.catsmoker.app.features.editgamefiles.wuwa
  * which was read in full before this file was written: the 8-preset table, every section
  * builder and its exact cvar lines, the device-tier ladders, the forbidden-cvar strip, the
  * dedup pass, and the `Core.System` path extraction are line-for-line where the surrounding
- * subsystems allow. The pinned format lives in [WuWaConfigGeneratorTest].
+ * subsystems allow. The pinned format lives in `WuWaConfigGeneratorTest`.
  *
  * Deliberate divergences from the reference, each because the subsystem it hangs off was
  * not ported:

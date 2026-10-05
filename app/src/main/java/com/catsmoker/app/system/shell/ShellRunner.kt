@@ -480,10 +480,10 @@ class ShellRunner @Inject constructor(
         return runCatching {
             val serviceManager = Class.forName("android.os.ServiceManager")
             val getService = serviceManager.getMethod("getService", String::class.java)
-            val binder = getService.invoke(null, "thermalservice") as? android.os.IBinder
+            val binder = getService.invoke(null, "thermalservice") as? IBinder
                 ?: return ""
             val stubClass = Class.forName("android.os.IThermalService\$Stub")
-            val asInterface = stubClass.getMethod("asInterface", android.os.IBinder::class.java)
+            val asInterface = stubClass.getMethod("asInterface", IBinder::class.java)
             val service = asInterface.invoke(null, binder) ?: return ""
             val getters = service.javaClass.methods
                 .filter { it.name.contains("emperature", ignoreCase = true) }

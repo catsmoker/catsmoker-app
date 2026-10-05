@@ -59,14 +59,15 @@
     <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
-    <uses-permission android:name="android.permission.PACKAGE_USAGE_STATS" />
+    <!-- tools:ignore: signature|privileged at install; read via app-ops + Shizuku/root at runtime. -->
+    <uses-permission android:name="android.permission.PACKAGE_USAGE_STATS" tools:ignore="ProtectedPermissions" />
     <!--
         Never granted at install: it is signature|privileged. It is declared so that the adb grant
         `pm grant com.catsmoker.app android.permission.WRITE_SECURE_SETTINGS` can actually take effect —
         without the declaration that command fails, and the animation-scale and Private DNS cards would
         offer a channel the app could never hold. Root and Shizuku remain the normal paths.
     -->
-    <uses-permission android:name="android.permission.WRITE_SECURE_SETTINGS" />
+    <uses-permission android:name="android.permission.WRITE_SECURE_SETTINGS" tools:ignore="ProtectedPermissions" />
     <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
     <!-- Needed by the overlay boot receiver: without the declaration, BOOT_COMPLETED is never delivered. -->
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />

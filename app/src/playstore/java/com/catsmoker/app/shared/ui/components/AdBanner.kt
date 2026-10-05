@@ -57,7 +57,7 @@ fun AdBanner(modifier: Modifier = Modifier) {
         if (adSize == null) return@BoxWithConstraints
 
         key(widthDp, adUnitId) {
-            AndroidView<View>(
+            AndroidView(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(adSize.height.dp),

@@ -1,3 +1,6 @@
+// No-op Play shim: parameters mirror the full variant's signatures so shared
+// callers compile against both; RedundantSuspendModifier/EmptyMethod/SameReturnValue
+// findings here are the seam contract, not dead code — do not "fix" by deletion.
 package com.catsmoker.app.features.settings
 
 import android.content.Context

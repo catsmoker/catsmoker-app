@@ -1,3 +1,5 @@
+// No-op Play shim: same FQN/extension as the full variant's spoofGraph so the
+// shared AppNavHost links. Empty body + unused receiver/param are the contract.
 package com.catsmoker.app.system.navigation
 
 import androidx.navigation.NavGraphBuilder

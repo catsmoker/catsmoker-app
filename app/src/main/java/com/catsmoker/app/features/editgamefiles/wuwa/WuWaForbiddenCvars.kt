@@ -8,7 +8,7 @@ package com.catsmoker.app.features.editgamefiles.wuwa
  * that file was read before this one was written — synced 2026-09-25 with the newer
  * community list `reference/gamingtools/Mobile-WuWa-Config-main/.github/forbidden_cvars.txt`
  * (v3.6, 51 entries), which was read line-by-line for the sync: every v3.6 key is covered,
- * and [WuWaForbiddenCvarsTest] pins the parity mechanically. Matching stays key-exact and
+ * and `WuWaForbiddenCvarsTest` pins the parity mechanically. Matching stays key-exact and
  * `+CVars=`-aware; the repo's substring CI match is deliberately not adopted. The exact
  * spelling of every key is the whole payload here: a renamed key strips nothing.
  *

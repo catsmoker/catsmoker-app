@@ -46,7 +46,6 @@ import com.catsmoker.app.shared.ui.components.CatsmokerOutlinedButton
 import com.catsmoker.app.shared.ui.components.ChipFlowRow
 import com.catsmoker.app.shared.ui.components.SquigglyProgressBar
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun EditGameFilesRoute(onBack: () -> Unit) {
     val viewModel: EditGameFilesViewModel = hiltViewModel()
@@ -148,7 +147,6 @@ fun EditGameFilesRoute(onBack: () -> Unit) {
     )
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun GameSelector(
     selectedGame: GameType,

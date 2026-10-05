@@ -437,7 +437,7 @@ class MetricsEngine(
                 ?.lineSequence()
                 ?.map { it.trim() }
                 ?.filter { it.startsWith("policy") }
-                ?.map { java.io.File(root, it) }
+                ?.map { File(root, it) }
                 ?.toList()
                 .orEmpty()
             KernelInfo.readPoliciesSuspend(dirs) { file ->
