@@ -4,6 +4,14 @@
     <string name="sys_settings_subtitle">App configuration and preferences.</string>
     <string name="sys_section_general">General</string>
     <string name="sys_ads_title">Enable Ads</string>
+    <!-- Play-variant paid ad removal (Google Play Billing one-time product remove_ads). -->
+    <string name="sys_remove_ads_title">Remove Ads</string>
+    <string name="sys_remove_ads_sub">One-time purchase. Pay once and browse ad-free forever.</string>
+    <string name="sys_ads_removed_title">Ads removed</string>
+    <string name="sys_ads_removed_sub">Thanks for your support — you are browsing ad-free.</string>
+    <string name="sys_billing_unavailable">Play Billing is unavailable. Check your connection and try again.</string>
+    <string name="sys_remove_ads_pending">Your purchase is pending. Ads will turn off once Google Play confirms it.</string>
+    <string name="sys_remove_ads_failed">The purchase could not be completed: %1$s</string>
     <string name="sys_later">LATER</string>
     <string name="sys_section_management">Management</string>
     <string name="sys_permissions_title">App Permissions</string>

@@ -1,12 +1,15 @@
 package com.catsmoker.app.features.settings
 
+import android.app.Activity
 import android.content.Context
 import androidx.core.content.edit
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.catsmoker.app.BuildConfig
 import com.catsmoker.app.R
+import com.catsmoker.app.system.VariantCapabilities
 import com.catsmoker.app.system.ads.AdManager
+import com.catsmoker.app.system.ads.RemoveAdsRepository
 import com.catsmoker.app.system.config.AppearanceStore
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -26,10 +29,17 @@ import javax.inject.Inject
 class SettingsViewModel @Inject constructor(
     @ApplicationContext private val context: Context,
     private val adManager: AdManager,
+    private val removeAdsRepository: RemoveAdsRepository,
 ) : ViewModel() {
 
     data class UiState(
         val adsEnabled: Boolean = true,
+        /** Play variant only: true while the verified remove_ads purchase is on record. */
+        val isAdFree: Boolean = false,
+        /** Play variant only: localized Play price of remove_ads, null until Play answers. */
+        val removeAdsPrice: String? = null,
+        /** Play variant only: true while a Play Billing query is in flight. */
+        val isBillingWorking: Boolean = false,
         val autoCheck: Boolean = false,
         val isPreRelease: Boolean = false,
         val isUpdating: Boolean = false,
@@ -59,14 +69,43 @@ class SettingsViewModel @Inject constructor(
     private val prefs by lazy { context.getSharedPreferences("app_prefs", Context.MODE_PRIVATE) }
 
     init {
+        val adsOn = adManager.isEnabled()
         _uiState.update {
             it.copy(
-                adsEnabled = adManager.isEnabled(),
+                adsEnabled = adsOn,
+                // Full variant: no purchase exists, never ad-free via billing.
+                isAdFree = !VariantCapabilities.HAS_FREE_ADS_TOGGLE && !adsOn,
                 autoCheck = prefs.getBoolean("auto_check_update", false),
                 isPreRelease = prefs.getBoolean("use_prerelease", false),
                 themeMode = AppearanceStore.themeModeSync(context),
                 languageTag = AppearanceStore.languageTag(context)
             )
+        }
+        if (!VariantCapabilities.HAS_FREE_ADS_TOGGLE) {
+            // Play variant: the ad state follows only the verified purchase,
+            // which arrives asynchronously from Play Billing — stay subscribed
+            // so a purchase (or revocation) updates Settings without reopening it.
+            viewModelScope.launch {
+                removeAdsRepository.isAdFree.collect { adFree ->
+                    _uiState.update { it.copy(isAdFree = adFree, adsEnabled = !adFree) }
+                }
+            }
+            viewModelScope.launch {
+                removeAdsRepository.displayPrice.collect { price ->
+                    _uiState.update { it.copy(removeAdsPrice = price) }
+                }
+            }
+            viewModelScope.launch {
+                removeAdsRepository.isWorking.collect { working ->
+                    _uiState.update { it.copy(isBillingWorking = working) }
+                }
+            }
+            viewModelScope.launch {
+                removeAdsRepository.messages.collect { message ->
+                    _toasts.emit(message)
+                }
+            }
+            refreshPurchases()
         }
     }
 
@@ -88,8 +127,26 @@ class SettingsViewModel @Inject constructor(
     }
 
     fun onAdsToggled(enabled: Boolean) {
+        // The Play variant has no free toggle: ignore so that path can never
+        // reach the ad gate there (its AdManager ignores setEnabled anyway).
+        if (!VariantCapabilities.HAS_FREE_ADS_TOGGLE) return
         adManager.setEnabled(enabled)
         _uiState.update { it.copy(adsEnabled = enabled) }
+    }
+
+    /** Play variant only: opens the Google Play sheet for the remove_ads product. */
+    fun onRemoveAdsClicked(activity: Activity) {
+        if (VariantCapabilities.HAS_FREE_ADS_TOGGLE) return
+        removeAdsRepository.launchPurchase(activity)
+    }
+
+    /**
+     * Play variant only: re-checks the remove_ads entitlement with Play (also
+     * restores it after reinstall). No-op on the full variant.
+     */
+    fun refreshPurchases() {
+        if (VariantCapabilities.HAS_FREE_ADS_TOGGLE) return
+        removeAdsRepository.refresh()
     }
 
     fun onAutoCheckToggled(enabled: Boolean) {

@@ -4,6 +4,14 @@
     <string name="sys_settings_subtitle">إعدادات التطبيق وتفضيلاته.</string>
     <string name="sys_section_general">عام</string>
     <string name="sys_ads_title">تفعيل الإعلانات</string>
+    <!-- Play-variant paid ad removal (Google Play Billing one-time product remove_ads). -->
+    <string name="sys_remove_ads_title">إزالة الإعلانات</string>
+    <string name="sys_remove_ads_sub">عملية شراء لمرة واحدة. ادفع مرة واحدة وتصفح بدون إعلانات للأبد.</string>
+    <string name="sys_ads_removed_title">تمت إزالة الإعلانات</string>
+    <string name="sys_ads_removed_sub">شكرًا لدعمك — أنت تتصفح الآن بدون إعلانات.</string>
+    <string name="sys_billing_unavailable">خدمة فوترة Google Play غير متاحة. تحقق من اتصالك وحاول مجددًا.</string>
+    <string name="sys_remove_ads_pending">عملية الشراء قيد الانتظار. ستتوقف الإعلانات فور تأكيد Google Play.</string>
+    <string name="sys_remove_ads_failed">تعذر إتمام عملية الشراء: %1$s</string>
     <string name="sys_section_updates">التحديثات</string>
     <string name="sys_updating">جارٍ تنزيل التحديث…</string>
     <string name="sys_check_updates">التحقق من وجود تحديثات</string>

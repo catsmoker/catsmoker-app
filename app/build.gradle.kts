@@ -21,8 +21,8 @@ android {
         // versionCode 7: IFileService gained readFile/writeFile — the bump is what forces
         // Shizuku to restart the daemonized helper whose AIDL no longer matches (see the
         // ShellRunner KDoc). Shipped helpers keep serving the old AIDL until this moves.
-        versionCode = 8
-        versionName = "2.0.2"
+        versionCode = 9
+        versionName = "2.0.3"
 
         // Only locales the app actually ships (see res/xml/locales_config.xml): strips the
         // dozens of transitive locales dragged in by material/ads/splashscreen/work.
@@ -216,6 +216,8 @@ dependencies {
     // playstoreImplementation, ...) are not available as Kotlin-DSL members here.
     add("fullImplementation", libs.startio.sdk)
     add("playstoreImplementation", libs.play.services.ads)
+    // Google Play Billing (remove_ads one-time product) is Play-only like AdMob.
+    add("playstoreImplementation", libs.billing.ktx)
 
     // --- Root & System (shared: libsu + Shizuku serve the gaming engine on both) ---
     implementation(libs.libsu.core)

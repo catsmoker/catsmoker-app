@@ -14,4 +14,11 @@ object VariantCapabilities {
 
     /** GitHub-release self-updater is absent (Play policy). */
     const val HAS_SELF_UPDATE = false
+
+    /**
+     * No free Settings "Enable Ads" toggle on this variant: ads follow only
+     * the verified `remove_ads` purchase ([AdManager] ignores `ads_enabled`),
+     * so the toggle must stay hidden and unwired here.
+     */
+    const val HAS_FREE_ADS_TOGGLE = false
 }

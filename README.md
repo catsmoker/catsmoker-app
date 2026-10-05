@@ -192,7 +192,7 @@ and `:app:assemblePlaystoreRelease`.
 ## 🔒 Privacy & Terms
 
 - **Local-first**: settings, profiles, backups and logs stay on your device. There is no account system and no project-operated server.
-- **Ads**: the full build shows Start.io banner ads (disable them in Settings). The Play Store build uses AdMob instead.
+- **Ads**: the full build shows Start.io banner ads (disable them in Settings). The Play Store build uses AdMob instead, removable only via the one-time Google Play `remove_ads` purchase (Settings → Remove Ads) — there is no free disable switch on that variant.
 - **Update checks** query the public GitHub releases API only when you ask (automatic checks are opt-in and off by default).
 - **Logs and session recordings** leave the device only when you explicitly share them.
 - **Donations** (PayPal, Binance, crypto) are voluntary gifts processed entirely by those external services.

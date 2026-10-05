@@ -104,8 +104,14 @@ source set — neither SDK is packaged into the other flavor:
   `com.google.android.gms:play-services-ads` via `playstoreImplementation`).
   IDs come from `ADMOB_APP_ID` / `ADMOB_BANNER_ID` /
   `ADMOB_INTERSTITIAL_ID` in `local.properties`, defaulting to Google's
-  sample test ids. The App ID enters the manifest via placeholder.
-- Shared code only calls the common `AdManager` API / `AdBanner()` slot.
+  sample test ids. The App ID enters the manifest via placeholder. Ads follow
+  only the verified `remove_ads` one-time product
+  (`src/playstore/…/system/ads/RemoveAdsRepository.kt`,
+  `com.android.billingclient:billing-ktx` via `playstoreImplementation`,
+  acknowledged non-consumable, never consumed); the `ads_enabled` preference
+  is ignored there, so no local toggle can disable ads on that variant.
+- Shared code only calls the common `AdManager` API / `AdBanner()` slot, plus
+  the `RemoveAdsRepository` seam (no-op stub on full, Play Billing on Play).
 
 This is a real supply-chain + data-flow consideration: any `build.gradle.kts`
 change here should be reviewed like any other third-party dependency (pinned

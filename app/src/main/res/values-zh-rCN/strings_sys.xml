@@ -4,6 +4,14 @@
     <string name="sys_settings_subtitle">应用配置和偏好设置。</string>
     <string name="sys_section_general">通用</string>
     <string name="sys_ads_title">启用广告</string>
+    <!-- Play-variant paid ad removal (Google Play Billing one-time product remove_ads). -->
+    <string name="sys_remove_ads_title">移除广告</string>
+    <string name="sys_remove_ads_sub">一次性购买。付费一次，即可永久享受无广告体验。</string>
+    <string name="sys_ads_removed_title">已移除广告</string>
+    <string name="sys_ads_removed_sub">感谢你的支持——你现在使用的是无广告版本。</string>
+    <string name="sys_billing_unavailable">Google Play 结算服务不可用。请检查网络连接后重试。</string>
+    <string name="sys_remove_ads_pending">购买正在处理中。Google Play 确认后广告将会关闭。</string>
+    <string name="sys_remove_ads_failed">无法完成购买：%1$s</string>
     <string name="sys_section_updates">更新</string>
     <string name="sys_updating">正在下载更新…</string>
     <string name="sys_check_updates">检查更新</string>

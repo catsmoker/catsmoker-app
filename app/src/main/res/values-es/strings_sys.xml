@@ -4,6 +4,14 @@
     <string name="sys_settings_subtitle">Configuración y preferencias de la app.</string>
     <string name="sys_section_general">General</string>
     <string name="sys_ads_title">Activar anuncios</string>
+    <!-- Play-variant paid ad removal (Google Play Billing one-time product remove_ads). -->
+    <string name="sys_remove_ads_title">Quitar anuncios</string>
+    <string name="sys_remove_ads_sub">Compra única. Paga una vez y navega sin anuncios para siempre.</string>
+    <string name="sys_ads_removed_title">Anuncios eliminados</string>
+    <string name="sys_ads_removed_sub">Gracias por tu apoyo: navegas sin anuncios.</string>
+    <string name="sys_billing_unavailable">La facturación de Google Play no está disponible. Revisa tu conexión e inténtalo de nuevo.</string>
+    <string name="sys_remove_ads_pending">Tu compra está pendiente. Los anuncios se desactivarán cuando Google Play la confirme.</string>
+    <string name="sys_remove_ads_failed">No se pudo completar la compra: %1$s</string>
     <string name="sys_section_updates">Actualizaciones</string>
     <string name="sys_updating">Descargando actualización…</string>
     <string name="sys_check_updates">Buscar actualizaciones</string>

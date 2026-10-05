@@ -118,6 +118,14 @@ class LocaleParityTest {
         "core_desc_random",
         // Ads-toggle explanation (names the Start.io provider).
         "sys_ads_sub",
+        // Play-variant paid ad removal (Settings purchase row + status + notices).
+        "sys_remove_ads_title",
+        "sys_remove_ads_sub",
+        "sys_ads_removed_title",
+        "sys_ads_removed_sub",
+        "sys_billing_unavailable",
+        "sys_remove_ads_pending",
+        "sys_remove_ads_failed",
         // Accessible name for the Gaming Mode power toggle (state-dependent).
         "gt_gm_toggle_on",
         "gt_gm_toggle_off",

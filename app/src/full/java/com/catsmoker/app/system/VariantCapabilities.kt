@@ -14,4 +14,11 @@ object VariantCapabilities {
 
     /** GitHub-release self-updater (APK download) is compiled in. */
     const val HAS_SELF_UPDATE = true
+
+    /**
+     * The free Settings "Enable Ads" toggle is available: ads follow the
+     * `ads_enabled` preference ([AdManager]). The Play variant sets this to
+     * false — there ads follow only the verified `remove_ads` purchase.
+     */
+    const val HAS_FREE_ADS_TOGGLE = true
 }

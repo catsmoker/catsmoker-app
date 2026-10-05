@@ -1,5 +1,6 @@
 package com.catsmoker.app.features.settings
 
+import android.app.Activity
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -18,6 +19,9 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.LifecycleOwner
 import com.catsmoker.app.R
 import com.catsmoker.app.shared.ui.components.QuickActionButton
 import com.catsmoker.app.shared.ui.components.ScreenScaffold
@@ -61,14 +65,34 @@ fun SettingsRoute(
         }
     }
 
+    // Play variant only: returning from the Play purchase sheet resumes this
+    // screen, which re-checks the remove_ads entitlement (restores after
+    // reinstall, picks up purchases made elsewhere). No-op on full.
+    DisposableEffect(context) {
+        val owner = context as? LifecycleOwner
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_RESUME) viewModel.refreshPurchases()
+        }
+        if (owner != null) owner.lifecycle.addObserver(observer)
+        onDispose {
+            if (owner != null) owner.lifecycle.removeObserver(observer)
+        }
+    }
+
+    val activity = context as? Activity
+
     SettingsScreen(
         adsEnabled = uiState.adsEnabled,
+        isAdFree = uiState.isAdFree,
+        removeAdsPrice = uiState.removeAdsPrice,
+        isBillingWorking = uiState.isBillingWorking,
         autoCheck = uiState.autoCheck,
         isUpdating = uiState.isUpdating,
         updateProgress = uiState.updateProgress,
         themeMode = uiState.themeMode,
         languageTag = uiState.languageTag,
         onAdsToggled = viewModel::onAdsToggled,
+        onRemoveAdsClicked = { activity?.let(viewModel::onRemoveAdsClicked) },
         onAutoCheckToggled = viewModel::onAutoCheckToggled,
         onThemeModeChanged = viewModel::onThemeModeChanged,
         onLanguageChanged = viewModel::onLanguageChanged,
@@ -94,12 +118,16 @@ fun SettingsRoute(
 @Composable
 fun SettingsScreen(
     adsEnabled: Boolean,
+    isAdFree: Boolean,
+    removeAdsPrice: String?,
+    isBillingWorking: Boolean,
     autoCheck: Boolean,
     isUpdating: Boolean,
     updateProgress: Float,
     themeMode: AppearanceStore.ThemeMode,
     languageTag: String,
     onAdsToggled: (Boolean) -> Unit,
+    onRemoveAdsClicked: () -> Unit,
     onAutoCheckToggled: (Boolean) -> Unit,
     onThemeModeChanged: (AppearanceStore.ThemeMode) -> Unit,
     onLanguageChanged: (String) -> Unit,
@@ -149,14 +177,30 @@ fun SettingsScreen(
 
             Spacer(modifier = Modifier.height(24.dp))
             Text(stringResource(R.string.sys_section_general), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(start = 4.dp, bottom = 8.dp))
-            SectionCard {
-                SettingsToggle(stringResource(R.string.sys_ads_title), adsEnabled, onAdsToggled)
-                Text(
-                    stringResource(R.string.sys_ads_sub),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.padding(top = 4.dp)
-                )
+            // Full keeps the free toggle; Play sells removal via Google Play
+            // Billing instead, so the free switch must not appear there.
+            if (VariantCapabilities.HAS_FREE_ADS_TOGGLE) {
+                SectionCard {
+                    SettingsToggle(stringResource(R.string.sys_ads_title), adsEnabled, onAdsToggled)
+                    Text(
+                        stringResource(R.string.sys_ads_sub),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.padding(top = 4.dp)
+                    )
+                }
+            } else {
+                SectionCard {
+                    if (isAdFree) {
+                        AdFreeRow()
+                    } else {
+                        RemoveAdsRow(
+                            price = removeAdsPrice,
+                            isWorking = isBillingWorking,
+                            onRemoveAdsClicked = onRemoveAdsClicked
+                        )
+                    }
+                }
             }
 
             // GitHub self-updater exists only where it is compiled in (full).
@@ -294,6 +338,64 @@ private fun themeModeLabel(mode: AppearanceStore.ThemeMode): String = when (mode
 }
 
 @Composable
+private fun RemoveAdsRow(price: String?, isWorking: Boolean, onRemoveAdsClicked: () -> Unit) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(12.dp))
+            .clickable(onClick = onRemoveAdsClicked)
+            .padding(vertical = 10.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Column(modifier = Modifier.weight(1f)) {
+            Text(stringResource(R.string.sys_remove_ads_title), color = MaterialTheme.colorScheme.onSurface)
+            Text(
+                stringResource(R.string.sys_remove_ads_sub),
+                fontSize = 12.sp,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+        if (isWorking && price == null) {
+            CircularProgressIndicator(modifier = Modifier.size(20.dp), strokeWidth = 2.dp)
+        } else {
+            if (price != null) {
+                Text(price, color = MaterialTheme.colorScheme.primary)
+            }
+            Icon(
+                Icons.Default.ChevronRight,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+    }
+}
+
+@Composable
+private fun AdFreeRow() {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 10.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Icon(
+            Icons.Default.Check,
+            contentDescription = null,
+            tint = MaterialTheme.colorScheme.primary
+        )
+        Spacer(modifier = Modifier.width(12.dp))
+        Column(modifier = Modifier.weight(1f)) {
+            Text(stringResource(R.string.sys_ads_removed_title), color = MaterialTheme.colorScheme.onSurface)
+            Text(
+                stringResource(R.string.sys_ads_removed_sub),
+                fontSize = 12.sp,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+    }
+}
+
+@Composable
 fun SettingsToggle(label: String, checked: Boolean, onCheckedChange: (Boolean) -> Unit) {
     Row(
         modifier = Modifier
@@ -314,12 +416,16 @@ fun SettingsPreview() {
     CatsmokerTheme {
         SettingsScreen(
             adsEnabled = true,
+            isAdFree = false,
+            removeAdsPrice = null,
+            isBillingWorking = false,
             autoCheck = false,
             isUpdating = false,
             updateProgress = 0f,
             themeMode = AppearanceStore.ThemeMode.SYSTEM,
             languageTag = AppearanceStore.LANGUAGE_SYSTEM,
             onAdsToggled = {},
+            onRemoveAdsClicked = {},
             onAutoCheckToggled = {},
             onThemeModeChanged = {},
             onLanguageChanged = {},
