@@ -73,6 +73,15 @@ class RemoveAdsRepository @Inject constructor(
     private var billingClient: BillingClient? = null
     private var productDetails: ProductDetails? = null
     private var connectionInFlight = false
+    /**
+     * Last Play failure explaining why [productDetails] is null (setup non-OK,
+     * product query non-OK, or OK-but-empty). Shown on the next
+     * [launchPurchase] tap via `sys_remove_ads_failed` so a side-loaded build
+     * (adb/Studio install, which always gets an empty product list) reports
+     * the real cause instead of the generic `sys_billing_unavailable`.
+     * Cleared on the first successful product query.
+     */
+    private var lastBillingError: String? = null
 
     private val purchasesListener =
         com.android.billingclient.api.PurchasesUpdatedListener { result, purchases ->
@@ -121,7 +130,14 @@ class RemoveAdsRepository @Inject constructor(
     fun launchPurchase(activity: Activity) {
         val details = productDetails
         if (details == null) {
-            emitMessage(context.getString(R.string.sys_billing_unavailable))
+            // Prefer the stored Play cause (side-load/empty product list, setup
+            // failure, query failure) over the generic "check connection" text
+            // so testers learn the install must come from Play, not adb.
+            val cause = lastBillingError
+            emitMessage(
+                if (cause != null) context.getString(R.string.sys_remove_ads_failed, cause)
+                else context.getString(R.string.sys_billing_unavailable)
+            )
             refresh()
             return
         }
@@ -185,6 +201,13 @@ class RemoveAdsRepository @Inject constructor(
                 if (result.responseCode == BillingClient.BillingResponseCode.OK) {
                     queryProductDetails(client)
                     queryPurchases(client)
+                } else {
+                    // Stored, not emitted: Settings opens (and therefore
+                    // refreshes) on every visit — toasting here would spam.
+                    // The next purchase tap surfaces it via launchPurchase().
+                    lastBillingError =
+                        "Billing setup ${result.responseCode}: ${result.debugMessage}"
+                    _isWorking.value = false
                 }
             }
 
@@ -214,6 +237,23 @@ class RemoveAdsRepository @Inject constructor(
                     .firstOrNull { it.productId == RemoveAdsPolicy.PRODUCT_ID }
                 productDetails = match
                 _displayPrice.value = match?.oneTimePurchaseOfferDetails?.formattedPrice
+                lastBillingError = if (match != null) {
+                    null
+                } else {
+                    // OK + empty is the classic side-loaded symptom: Play has
+                    // no product for THIS install (adb/Studio APK instead of a
+                    // Play-track install, wrong package/signature, product not
+                    // yet propagated, or tester/country mismatch).
+                    "Product ${RemoveAdsPolicy.PRODUCT_ID} not found for this install " +
+                        "(check Play-track install, tester opt-in, propagation)"
+                }
+            } else {
+                // Stored for the next tap; silent here to avoid a toast on
+                // every Settings open while offline or Play is down.
+                productDetails = null
+                _displayPrice.value = null
+                lastBillingError =
+                    "Product query ${result.responseCode}: ${result.debugMessage}"
             }
         }
     }
