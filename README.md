@@ -74,10 +74,10 @@
 
 CatSmoker operates by bridging the gap between hardware limitations and software potential.
 
-### Root Method (LSPosed/Xposed)
+### Root Method (Xposed)
 Utilizes the LSPosed framework to hook into game processes at runtime. This allows for seamless device property spoofing without modifying game files.
 
-### Non-Root Method (Shizuku / SAF)
+### Non-Root Method (Shizuku)
 - **Shizuku**: Uses the Shizuku API to gain elevated permissions on Android 11+, allowing direct modification of game data folders without root.
 - **SAF (Storage Access Framework)**: Provides a way for users to manually grant access to game directories for file-based optimizations.
 - **Export Mode**: Prepares optimized files that users can manually move using tools like ZArchiver.
@@ -108,15 +108,20 @@ Utilizes the LSPosed framework to hook into game processes at runtime. This allo
 
 4. **Verify Installation:** Open LSPosed Manager, if applicable, and confirm that the framework is active.
 
-6. *optional*: **Setup Shamiko**: Enable [Shamiko](https://github.com/LSPosed/LSPosed.github.io/releases) in your root manager settings.
+6. *optional*: **Hide your root** by enabling **only one** of the following modules in your root manager:
+
+   * [Shamiko](https://github.com/LSPosed/LSPosed.github.io/releases)
+   * [Zygisk-Assistant](https://github.com/snake-4/Zygisk-Assistant0)
+  
+7.  *optional*: **Hide  USB debugging / Developer options** install [DuckUSB](https://github.com/Bouteillepleine/DuckUSB) and enable it in vector/lsposed.
 
 8. **Enable CatSmoker**:
   - Grant it root access in your root manager.
-   - Open the **LSPosed Manager**.
+   - Open the **LSPosed/vector Manager**.
    - Navigate to **Modules** and enable **CatSmoker**.
    - Select the games you want to optimize in the module's scope.
 
-7. **Apply**: Force stop the selected games to let the hooks take effect, or reboot.
+9. **Apply**: Force stop the selected games to let the hooks take effect, or reboot.
 
 ### For Non-Rooted Devices (Shizuku)
 1. **Install Shizuku**: Download from the [Play Store](https://play.google.com/store/apps/details?id=moe.shizuku.privileged.api).
