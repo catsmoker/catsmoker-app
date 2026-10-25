@@ -9,12 +9,18 @@
     <string name="gf_working">TRABAJANDO…</string>
     <string name="gf_apply_to_game">APLICAR AL JUEGO</string>
     <string name="gf_restore_last_backup">RESTAURAR ÚLTIMA COPIA</string>
+    <string name="gf_no_pending_changes">No hay cambios sin guardar.</string>
+    <string name="gf_restore_backup_note">Se guarda una copia del archivo actual antes de restaurar, así que la restauración es reversible.</string>
+    <string name="gf_restore_confirm_title">¿Descartar los cambios sin guardar?</string>
+    <string name="gf_restore_confirm_body">Restaurar la copia más reciente reemplaza el archivo actual y tus cambios sin guardar. ¿Continuar?</string>
+    <string name="gf_hsr_res_presets_note">Ajustan el ancho y el alto de pantalla del juego. El control de calidad de resolución de arriba es un ajuste de renderizado distinto.</string>
     <!-- Editor undo/redo: buttons plus the dirty line. -->
     <string name="gf_undo">Deshacer</string>
     <string name="gf_redo">Rehacer</string>
     <string name="gf_unsaved">Cambios sin guardar</string>
     <string name="gf_last_apply">Última aplicación: %1$s</string>
     <string name="gf_frame_rate">VELOCIDAD DE FOTOGRAMAS</string>
+    <string name="gf_save_field_unsupported">Este guardado no contiene los campos de este ajuste, así que se deja intacto.</string>
     <string name="gf_quality">CALIDAD</string>
     <string name="gf_game_not_found">JUEGO NO ENCONTRADO</string>
     <string name="gf_recheck">VOLVER A COMPROBAR</string>
@@ -44,6 +50,15 @@
     <string name="gf_reset_file">Restablecer %1$s</string>
     <string name="gf_restore_backup">RESTAURAR COPIA</string>
     <string name="gf_custom_upload">SUBIDA PERSONALIZADA</string>
+    <string name="gf_custom_file_type">TIPO DE ARCHIVO</string>
+    <string name="gf_custom_destination">Destino: %1$s</string>
+    <string name="gf_file_active_sav">Active.sav</string>
+    <string name="gf_file_usercustom_ini">UserCustom.ini</string>
+    <string name="gf_upload_type_unsupported">Este juego no tiene un destino compatible para archivos personalizados.</string>
+    <string name="gf_upload_empty">El archivo seleccionado está vacío: no se escribió nada.</string>
+    <string name="gf_upload_not_gvas">Este no es un Active.sav de PUBG: el archivo no empieza con la cabecera GVAS.</string>
+    <string name="gf_upload_not_usercustom">Este no es un UserCustom.ini de PUBG: falta la sección [UserCustom DeviceProfile].</string>
+    <string name="gf_upload_verify_failed">No se pudo verificar la escritura en %1$s. No se informa nada como aplicado.</string>
     <string name="gf_select">ELEGIR</string>
     <string name="gf_upload">SUBIR</string>
     <string name="gf_clear_selection">Borrar selección</string>
@@ -123,7 +138,6 @@
     <string name="gf_select_file_first">Elige primero un archivo</string>
     <string name="gf_success_saf">¡Éxito con SAF!</string>
     <string name="gf_success_shizuku">¡Éxito con Shizuku!</string>
-    <string name="gf_custom_target_missing">%1$s no existe en %2$s — ejecuta el juego una vez para que cree su propio guardado y luego sube el archivo personalizado.</string>
     <string name="gf_game_not_installed_toast">Juego no instalado</string>
     <string name="gf_failed">Falló: %1$s</string>
     <string name="gf_zarchiver_copied">Archivo copiado a Descargas. Abre ZArchiver para pegarlo.</string>
@@ -143,6 +157,8 @@
     <string name="gf_grid_ladder_voice">Cantidad de voces</string>
     <string name="gf_grid_aniso">Filtrado anisotrópico</string>
     <string name="gf_grid_greyed">Las filas atenuadas son claves que este archivo aún no tiene — abre las opciones gráficas del juego una vez y vuelve.</string>
+    <string name="gf_more_options">MÁS OPCIONES</string>
+    <string name="gf_fewer_options">MENOS OPCIONES</string>
     <string name="gf_perf_switches">INTERRUPTORES DE RENDIMIENTO</string>
     <string name="gf_grid_sw_fog">Niebla avanzada</string>
     <string name="gf_grid_sw_lighting">Iluminación avanzada</string>
@@ -153,7 +169,7 @@
     <string name="gf_grid_sw_skid">Marcas de derrape</string>
     <string name="gf_grid_sw_fxaa">FXAA</string>
     <string name="gf_grid_window_scale">Escala de ventana</string>
-    <string name="gf_grid_window_scale_caption">El archivo de referencia incluye 80; el 100% es el valor de resolución completa del juego. Menos escala dibuja menos píxeles.</string>
+    <string name="gf_grid_window_scale_caption">El archivo de referencia incluye 80; el 100%% es el valor de resolución completa del juego. Menos escala dibuja menos píxeles.</string>
     <string name="gf_grid_not_in_file">aún no está en el archivo</string>
     <string name="gf_grid_device_holds">el dispositivo tiene: %1$s</string>
     <string name="gf_grid_device_value">dispositivo: %1$s</string>
@@ -347,7 +363,6 @@
     <string name="gf_preview_report">%1$d cvars en el archivo, %2$d eliminadas por la lista de integridad</string>
     <string name="gf_preview_report_rejected">Eliminadas: %1$s</string>
     <string name="gf_preview_report_rt">Claves de renderizado (revisar en GPUs móviles): %1$s</string>
-    <string name="gf_preview_diff">vs. copia local: +%1$d/-%2$d líneas</string>
     <string name="gf_deploy">DESPLEGAR</string>
     <string name="gf_deploy_body">Los archivos llegan a la carpeta de configuración UE4 del juego. Cada escritura se respalda primero, cada envío se verifica con relectura md5, y el monitor hash de configuración del juego se resincroniza (solo root/Shizuku). El juego se detiene primero — reescribe sus configs desde memoria al salir.</string>
     <string name="gf_deploy_shell">DESPLEGAR (ROOT / SHIZUKU)</string>

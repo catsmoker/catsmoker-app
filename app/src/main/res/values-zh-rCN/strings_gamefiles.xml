@@ -9,12 +9,18 @@
     <string name="gf_working">处理中…</string>
     <string name="gf_apply_to_game">应用到游戏</string>
     <string name="gf_restore_last_backup">恢复最近备份</string>
+    <string name="gf_no_pending_changes">没有未保存的更改。</string>
+    <string name="gf_restore_backup_note">恢复前会保存当前文件的副本，因此恢复操作可以撤销。</string>
+    <string name="gf_restore_confirm_title">放弃未保存的更改？</string>
+    <string name="gf_restore_confirm_body">恢复最新备份会替换当前文件和你的未保存更改。是否继续？</string>
+    <string name="gf_hsr_res_presets_note">这些选项写入游戏画面的宽度和高度。上方的分辨率质量滑块是独立的渲染设置。</string>
     <!-- Editor undo/redo: buttons plus the dirty line. -->
     <string name="gf_undo">撤销</string>
     <string name="gf_redo">重做</string>
     <string name="gf_unsaved">有未保存的更改</string>
     <string name="gf_last_apply">上次应用：%1$s</string>
     <string name="gf_frame_rate">帧率</string>
+    <string name="gf_save_field_unsupported">此存档不包含该设置的字段，因此保持原样。</string>
     <string name="gf_quality">画质</string>
     <string name="gf_game_not_found">未找到游戏</string>
     <string name="gf_recheck">重新检查</string>
@@ -44,6 +50,15 @@
     <string name="gf_reset_file">重置 %1$s</string>
     <string name="gf_restore_backup">恢复备份</string>
     <string name="gf_custom_upload">自定义文件上传</string>
+    <string name="gf_custom_file_type">文件类型</string>
+    <string name="gf_custom_destination">目标位置：%1$s</string>
+    <string name="gf_file_active_sav">Active.sav</string>
+    <string name="gf_file_usercustom_ini">UserCustom.ini</string>
+    <string name="gf_upload_type_unsupported">该游戏没有受支持的自定义文件目标位置。</string>
+    <string name="gf_upload_empty">所选文件为空——未写入任何内容。</string>
+    <string name="gf_upload_not_gvas">这不是 PUBG 的 Active.sav：文件没有 GVAS 文件头。</string>
+    <string name="gf_upload_not_usercustom">这不是 PUBG 的 UserCustom.ini：缺少 [UserCustom DeviceProfile] 段。</string>
+    <string name="gf_upload_verify_failed">无法在 %1$s 验证写入。不会将其报告为已应用。</string>
     <string name="gf_select">选择</string>
     <string name="gf_upload">上传</string>
     <string name="gf_clear_selection">清除选择</string>
@@ -123,7 +138,6 @@
     <string name="gf_select_file_first">请先选择文件</string>
     <string name="gf_success_saf">通过 SAF 成功！</string>
     <string name="gf_success_shizuku">通过 Shizuku 成功！</string>
-    <string name="gf_custom_target_missing">%1$s 不存在于 %2$s——请先运行一次游戏生成存档，再上传自定义文件。</string>
     <string name="gf_game_not_installed_toast">游戏未安装</string>
     <string name="gf_failed">失败：%1$s</string>
     <string name="gf_zarchiver_copied">文件已复制到下载目录。请打开 ZArchiver 粘贴。</string>
@@ -143,6 +157,8 @@
     <string name="gf_grid_ladder_voice">语音数量</string>
     <string name="gf_grid_aniso">各向异性过滤</string>
     <string name="gf_grid_greyed">灰色行是此文件还没有的键——先打开一次游戏的图形选项再回来。</string>
+    <string name="gf_more_options">更多选项</string>
+    <string name="gf_fewer_options">收起选项</string>
     <string name="gf_perf_switches">性能开关</string>
     <string name="gf_grid_sw_fog">高级雾效</string>
     <string name="gf_grid_sw_lighting">高级光照</string>
@@ -347,7 +363,6 @@
     <string name="gf_preview_report">文件含 %1$d 个 cvar，完整性列表剔除 %2$d 个</string>
     <string name="gf_preview_report_rejected">已剔除：%1$s</string>
     <string name="gf_preview_report_rt">渲染管线键（请在移动 GPU 上复核）：%1$s</string>
-    <string name="gf_preview_diff">与设备备份对比：+%1$d/-%2$d 行</string>
     <string name="gf_deploy">部署</string>
     <string name="gf_deploy_body">文件将落入游戏的 UE4 配置目录。每次覆盖前先备份，每次推送都经 md5 回读验证，并重新同步游戏自己的配置哈希监控（仅 root/Shizuku）。会先停止游戏——游戏退出时会从内存重写配置。</string>
     <string name="gf_deploy_shell">部署（ROOT / SHIZUKU）</string>

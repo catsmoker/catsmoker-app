@@ -10,12 +10,18 @@
     <string name="gf_working">WORKING…</string>
     <string name="gf_apply_to_game">APPLY TO GAME</string>
     <string name="gf_restore_last_backup">RESTORE LAST BACKUP</string>
+    <string name="gf_no_pending_changes">No unsaved changes.</string>
+    <string name="gf_restore_backup_note">A copy of the current file is saved before the restore, so the restore is reversible.</string>
+    <string name="gf_restore_confirm_title">Discard unsaved changes?</string>
+    <string name="gf_restore_confirm_body">Restoring the newest backup replaces the live file and your unsaved edits. Continue?</string>
+    <string name="gf_hsr_res_presets_note">These write the game\'s screen width and height. The resolution-quality slider above is a separate render setting.</string>
     <!-- Editor undo/redo: buttons plus the dirty line. -->
     <string name="gf_undo">Undo</string>
     <string name="gf_redo">Redo</string>
     <string name="gf_unsaved">Unsaved changes</string>
     <string name="gf_last_apply">Last apply: %1$s</string>
     <string name="gf_frame_rate">FRAME RATE</string>
+    <string name="gf_save_field_unsupported">This save does not carry the fields for this setting, so it is left untouched.</string>
     <string name="gf_quality">QUALITY</string>
     <string name="gf_game_not_found">GAME NOT FOUND</string>
     <string name="gf_recheck">RE-CHECK</string>
@@ -45,6 +51,15 @@
     <string name="gf_reset_file">Reset %1$s</string>
     <string name="gf_restore_backup">RESTORE BACKUP</string>
     <string name="gf_custom_upload">CUSTOM FILE UPLOAD</string>
+    <string name="gf_custom_file_type">FILE TYPE</string>
+    <string name="gf_custom_destination">Destination: %1$s</string>
+    <string name="gf_file_active_sav">Active.sav</string>
+    <string name="gf_file_usercustom_ini">UserCustom.ini</string>
+    <string name="gf_upload_type_unsupported">This game has no supported custom-file destination.</string>
+    <string name="gf_upload_empty">The selected file is empty - nothing was written.</string>
+    <string name="gf_upload_not_gvas">This is not a PUBG Active.sav: the file does not start with the GVAS header.</string>
+    <string name="gf_upload_not_usercustom">This is not a PUBG UserCustom.ini: the [UserCustom DeviceProfile] section is missing.</string>
+    <string name="gf_upload_verify_failed">The write could not be verified at %1$s. Nothing is being reported as applied.</string>
     <string name="gf_select">SELECT</string>
     <string name="gf_upload">UPLOAD</string>
     <string name="gf_clear_selection">Clear Selection</string>
@@ -126,7 +141,6 @@
     <string name="gf_select_file_first">Select a file first</string>
     <string name="gf_success_saf">Success via SAF!</string>
     <string name="gf_success_shizuku">Success via Shizuku!</string>
-    <string name="gf_custom_target_missing">%1$s does not exist at %2$s — launch the game once so it creates its own save, then upload the custom file.</string>
     <string name="gf_game_not_installed_toast">Game not installed</string>
     <string name="gf_failed">Failed: %1$s</string>
     <string name="gf_zarchiver_copied">File copied to Downloads. Open ZArchiver to paste.</string>
@@ -145,7 +159,9 @@
     <string name="gf_grid_ladder_night">Night lighting</string>
     <string name="gf_grid_ladder_voice">Voice count</string>
     <string name="gf_grid_aniso">Anisotropic filtering</string>
-    <string name="gf_grid_greyed">Greyed rows are keys this file does not carry yet — open the game\'s graphics options once and come back.</string>
+    <string name="gf_grid_greyed">Greyed rows are keys this file does not carry yet - open the game\'s graphics options once and come back.</string>
+    <string name="gf_more_options">MORE OPTIONS</string>
+    <string name="gf_fewer_options">FEWER OPTIONS</string>
     <string name="gf_perf_switches">PERFORMANCE SWITCHES</string>
     <string name="gf_grid_sw_fog">Advanced fog</string>
     <string name="gf_grid_sw_lighting">Advanced lighting</string>
@@ -350,7 +366,6 @@
     <string name="gf_preview_report">%1$d cvars in file, %2$d stripped by the integrity list</string>
     <string name="gf_preview_report_rejected">Stripped: %1$s</string>
     <string name="gf_preview_report_rt">Render-pipeline keys (review on mobile GPUs): %1$s</string>
-    <string name="gf_preview_diff">vs device backup: +%1$d/-%2$d lines</string>
     <string name="gf_deploy">DEPLOY</string>
     <string name="gf_deploy_body">Files land in the game\'s UE4 config folder. Every overwrite is backed up first, every push is verified by md5 read-back, and the game\'s own config hash monitor is re-synced (root/Shizuku only). The game is stopped first — it rewrites its configs from memory on exit.</string>
     <string name="gf_deploy_shell">DEPLOY (ROOT / SHIZUKU)</string>

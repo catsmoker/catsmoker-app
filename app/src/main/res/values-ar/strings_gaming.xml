@@ -25,7 +25,10 @@
     <string name="gt_library_launch">تشغيل</string>
     <string name="gt_library_remove">إزالة</string>
     <string name="gt_library_optimize">ترجمة مسبقة</string>
-    <string name="gt_library_edit_files">تعديل ملفات اللعبة</string>
+    <string name="gt_library_search">بحث عن الألعاب</string>
+    <string name="gt_library_no_match">لا توجد لعبة تطابق هذا البحث.</string>
+    <string name="gt_library_show_all">عرض الكل (%1$d)</string>
+    <string name="gt_library_show_less">عرض أقل</string>
     <!-- Pre-launch single-game compile outcomes (%1$s = package, %2$s = device detail). -->
     <string name="gt_game_opt_done">تم تجميع %1$s</string>
     <string name="gt_game_opt_done_detail">تم تجميع %1$s: %2$s</string>
@@ -429,7 +432,6 @@
     <string name="gt_booster_scope_hint_single">ترجمة مسبقة للعبة واحدة (speed-profile).</string>
     <string name="gt_booster_scope_hint_all">ترجمة مسبقة لجميع التطبيقات (speed). تستغرق دقائق.</string>
     <string name="gt_booster_precompile">ترجمة مسبقة</string>
-    <string name="gt_booster_pick_game">اختر لعبة</string>
     <string name="gt_booster_no_games_scope">أضف لعبة إلى مكتبتك أولًا لترجمة لعبة واحدة فقط.</string>
     <string name="gt_managed_by_gaming_mode">يتحكم به وضع الألعاب أثناء تفعيله.</string>
     <string name="gt_graphics_layers">ثلاث طبقات متراكمة: دقة النظام (هذه البطاقة) تغيّر شاشة أندرويد؛ مقياس الرسم (بطاقة وضع الألعاب) يغيّر عرض كل لعبة؛ مشغّل الرسوميات (خيارات المطور) يغيّر مسار العرض. كل واحدة مستقلة — خفض أي منها خيارك أنت، وليس حدًا تلقائيًا أبدًا.</string>
@@ -494,6 +496,16 @@
     <string name="gt_gm_na_qualcomm">متاح فقط على أجهزة كوالكوم.</string>
     <string name="gt_gm_na_mediatek">متاح فقط على أجهزة ميدياتك.</string>
     <string name="gt_gm_na_snapdragon">متاح فقط على أجهزة سناب دراجون.</string>
+    <string name="gt_gm_na_kernel">نواة جهازك لا توفر هذا التحكم.</string>
+    <string name="gt_gm_label_input_boost">تعزيز الإدخال</string>
+    <string name="gt_gm_label_governor">حاكم المعالج</string>
+    <string name="gt_gm_governor_perf">الأداء</string>
+    <string name="gt_gm_label_spectrum">ملف Spectrum</string>
+    <string name="gt_gm_spectrum_gaming">الألعاب</string>
+    <string name="gt_gm_spectrum_perf">الأداء</string>
+    <string name="gt_gm_label_readahead">القراءة المسبقة للتخزين</string>
+    <string name="gt_gm_kb">%1$d كيلوبايت</string>
+    <string name="gt_gm_label_mem">احتياطي الذاكرة</string>
     <string name="gt_gm_na_intervention">يتطلب لعبة محددة على أندرويد 12 أو أحدث.</string>
     <string name="gt_gm_na_notif">يتطلب إذن الوصول إلى الإشعارات.</string>
     <string name="gt_gm_na_nogame">لم يتم اختيار لعبة.</string>
@@ -632,6 +644,11 @@
     <string name="gt_eng_un_qti">تلميح FPS للألعاب من Qualcomm — رفض هاتفك التبديل</string>
     <string name="gt_eng_un_mtk">وضع ألعاب MediaTek — رفض هاتفك التبديل</string>
     <string name="gt_eng_un_snap">وضع Snapdragon — رفض هاتفك التبديل</string>
+    <string name="gt_eng_un_input_boost">تعزيز الإدخال — رفض هاتفك التبديل</string>
+    <string name="gt_eng_un_governor">حاكم الأداء — رفض هاتفك التبديل</string>
+    <string name="gt_eng_un_spectrum">ملف Spectrum — رفض هاتفك الملف</string>
+    <string name="gt_eng_un_storage">القراءة المسبقة للتخزين — رفض هاتفك التغيير</string>
+    <string name="gt_eng_un_memory">احتياطي الذاكرة — رفض هاتفك التغيير</string>
     <string name="gt_eng_un_vivo">وضع عرض vivo — رفض هاتفك التبديل</string>
     <string name="gt_eng_un_discard">إغلاق التطبيقات فور مغادرتها — لم يثبت الإعداد</string>
     <string name="gt_eng_un_limit">تقييد تطبيقات الخلفية — لم يثبت الإعداد</string>
@@ -647,6 +664,7 @@
     <string name="gt_eng_un_appops">تعذر تقييد %1$d من التطبيقات في الخلفية</string>
     <string name="gt_eng_thermal">مسح تجاوز الحرارة — قال هاتفك لا</string>
     <string name="gt_eng_revert_fail">تعذر إتمام التراجع: %1$s</string>
+    <string name="gt_eng_restore_refused">تعذّرت استعادة %1$s - احتفظ الهاتف بقيمة اللعب</string>
     <string name="gt_eng_fp_old">هاتفك قديم جداً لهذا. يتطلب أندرويد 11 وهاتفك أندرويد %1$s.</string>
     <string name="gt_eng_fp_ok">قبل هاتفك ذلك.</string>
     <string name="gt_eng_fp_off">تم إيقافه.</string>
@@ -723,16 +741,6 @@
     <string name="gt_angle_no">تعذّر ضبط المشغّل: %1$s</string>
     <string name="gt_angle_no_reason">الجهاز رفض</string>
     <!-- Panel refresh readout: what the display reports about itself. -->
-    <string name="gt_panel_title">تحديث الشاشة</string>
-    <string name="gt_panel_rates">المعدلات: %1$s هرتز</string>
-    <string name="gt_panel_seamless">تبديل سلس من الحالي: %1$s هرتز</string>
-    <string name="gt_panel_seamless_none">لا تبديلات سلسة</string>
-    <string name="gt_panel_seamless_unknown">التبديلات السلسة غير معروفة في نسخة أندرويد هذه</string>
-    <string name="gt_panel_arr">التحديث التكيفي: %1$s</string>
-    <string name="gt_panel_yes">نعم</string>
-    <string name="gt_panel_no">لا</string>
-    <string name="gt_panel_unknown">غير معروف</string>
-    <string name="gt_panel_unreadable">أوضاع الشاشة غير مقروءة</string>
     <!-- Filesystem trim: free blocks reported back to flash so writes stay fast. -->
     <string name="gt_trim_title">تقليم التخزين</string>
     <string name="gt_trim_need">يتطلب روت — لا يمكن تقليم التخزين دون صلاحيات</string>
@@ -760,11 +768,8 @@
     <string name="gt_keep_remove">إزالة</string>
     <!-- Auto game session: watch the foreground app, start Gaming Mode for library games. -->
     <string name="gt_session_title">وضع الألعاب التلقائي</string>
-    <string name="gt_session_sub">يبدأ وضع الألعاب عند فتح لعبة</string>
-    <string name="gt_session_what_1">يراقب التطبيق الأمامي ويبدأ وضع الألعاب لحظة فتح لعبة من مكتبتك، ويوقفه عند مغادرة اللعبة.</string>
-    <string name="gt_session_what_2">يتطلب إذن الوصول إلى الاستخدام (لرؤية التطبيق الأمامي) وروت أو Shizuku. وضع الألعاب الذي تبدأه بيدك يفوز دائمًا: المراقبة لا تسجله ولا تعكسه أبدًا.</string>
-    <string name="gt_session_watching">يراقب — لا لعبة في المقدمة</string>
-    <string name="gt_session_active">يعمل — تلقائي: %1$s</string>
+    <string name="gt_session_sub">يبدأ وضع الألعاب عند فتح لعبة من مكتبتك.</string>
+    <string name="gt_session_need_games">أضف لعبة أدناه لتفعيل الوضع التلقائي.</string>
     <string name="gt_svc_session_title">جلسة لعب تلقائية</string>
     <string name="gt_svc_session_channel">جلسة لعب تلقائية</string>
     <string name="gt_svc_session_off">المراقبة متوقفة — لا شيء يُراقب</string>

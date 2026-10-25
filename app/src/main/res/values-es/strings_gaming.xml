@@ -25,7 +25,10 @@
     <string name="gt_library_launch">INICIAR</string>
     <string name="gt_library_remove">Quitar</string>
     <string name="gt_library_optimize">PRECOMPILAR</string>
-    <string name="gt_library_edit_files">Editar archivos del juego</string>
+    <string name="gt_library_search">Buscar juegos</string>
+    <string name="gt_library_no_match">Ningún juego coincide con esa búsqueda.</string>
+    <string name="gt_library_show_all">Mostrar todos (%1$d)</string>
+    <string name="gt_library_show_less">Mostrar menos</string>
     <!-- Pre-launch single-game compile outcomes (%1$s = package, %2$s = device detail). -->
     <string name="gt_game_opt_done">%1$s compilado</string>
     <string name="gt_game_opt_done_detail">%1$s compilado: %2$s</string>
@@ -429,7 +432,6 @@
     <string name="gt_booster_scope_hint_single">Precompila un juego (speed-profile).</string>
     <string name="gt_booster_scope_hint_all">Precompila todas las apps (speed). Tarda minutos.</string>
     <string name="gt_booster_precompile">Precompilar</string>
-    <string name="gt_booster_pick_game">Elige un juego</string>
     <string name="gt_booster_no_games_scope">Añade un juego a tu biblioteca para precompilar solo uno.</string>
     <string name="gt_managed_by_gaming_mode">Controlado por el modo juego mientras está activo.</string>
     <string name="gt_graphics_layers">Tres capas que se combinan: Resolución del sistema (esta tarjeta) cambia la pantalla de Android; Escala de renderizado (tarjeta de modo juego) cambia el renderizado por juego; Controlador gráfico (opciones de desarrollador) cambia la ruta de renderizado. Cada una es independiente — bajar una es tu decisión, nunca un límite automático.</string>
@@ -494,6 +496,16 @@
     <string name="gt_gm_na_qualcomm">Solo disponible en dispositivos Qualcomm.</string>
     <string name="gt_gm_na_mediatek">Solo disponible en dispositivos MediaTek.</string>
     <string name="gt_gm_na_snapdragon">Solo disponible en dispositivos Snapdragon.</string>
+    <string name="gt_gm_na_kernel">Tu kernel no expone este control.</string>
+    <string name="gt_gm_label_input_boost">Impulso de entrada</string>
+    <string name="gt_gm_label_governor">Gobernador de CPU</string>
+    <string name="gt_gm_governor_perf">Rendimiento</string>
+    <string name="gt_gm_label_spectrum">Perfil de Spectrum</string>
+    <string name="gt_gm_spectrum_gaming">Juegos</string>
+    <string name="gt_gm_spectrum_perf">Rendimiento</string>
+    <string name="gt_gm_label_readahead">Lectura anticipada del almacenamiento</string>
+    <string name="gt_gm_kb">%1$d KB</string>
+    <string name="gt_gm_label_mem">Reserva de memoria</string>
     <string name="gt_gm_na_intervention">Necesita un juego seleccionado en Android 12 o posterior.</string>
     <string name="gt_gm_na_notif">Necesita acceso a las notificaciones.</string>
     <string name="gt_gm_na_nogame">Ningún juego seleccionado.</string>
@@ -632,6 +644,11 @@
     <string name="gt_eng_un_qti">Sugerencia de FPS de Qualcomm — tu teléfono rechazó el cambio</string>
     <string name="gt_eng_un_mtk">Modo juego MediaTek — tu teléfono rechazó el cambio</string>
     <string name="gt_eng_un_snap">Modo CPU Snapdragon — tu teléfono rechazó el cambio</string>
+    <string name="gt_eng_un_input_boost">Impulso de entrada — tu teléfono rechazó el cambio</string>
+    <string name="gt_eng_un_governor">Gobernador de rendimiento — tu teléfono rechazó el cambio</string>
+    <string name="gt_eng_un_spectrum">Perfil de Spectrum — tu teléfono rechazó el perfil</string>
+    <string name="gt_eng_un_storage">Lectura anticipada del almacenamiento — tu teléfono rechazó el cambio</string>
+    <string name="gt_eng_un_memory">Reserva de memoria — tu teléfono rechazó el cambio</string>
     <string name="gt_eng_un_vivo">Modo de pantalla vivo — tu teléfono rechazó el cambio</string>
     <string name="gt_eng_un_discard">Cerrar apps en cuanto sales — el ajuste no se mantendría</string>
     <string name="gt_eng_un_limit">Limitar apps en segundo plano — el ajuste no se mantendría</string>
@@ -647,6 +664,7 @@
     <string name="gt_eng_un_appops">%1$d apps no pudieron restringirse en segundo plano</string>
     <string name="gt_eng_thermal">Limpiando la anulación térmica — tu teléfono dijo no</string>
     <string name="gt_eng_revert_fail">No se pudo terminar de revertir: %1$s</string>
+    <string name="gt_eng_restore_refused">No se pudo restaurar %1$s: el teléfono mantuvo el valor de juego</string>
     <string name="gt_eng_fp_old">Tu teléfono es muy viejo para esto. Necesita Android 11 y el tuyo es Android %1$s.</string>
     <string name="gt_eng_fp_ok">Tu teléfono lo aceptó.</string>
     <string name="gt_eng_fp_off">Apagado.</string>
@@ -723,16 +741,6 @@
     <string name="gt_angle_no">No se pudo fijar el controlador: %1$s</string>
     <string name="gt_angle_no_reason">el dispositivo se negó</string>
     <!-- Panel refresh readout: what the display reports about itself. -->
-    <string name="gt_panel_title">Refresco del panel</string>
-    <string name="gt_panel_rates">Tasas: %1$s Hz</string>
-    <string name="gt_panel_seamless">Sin interrupción desde actual: %1$s Hz</string>
-    <string name="gt_panel_seamless_none">Sin cambios fluidos reportados</string>
-    <string name="gt_panel_seamless_unknown">Cambios fluidos desconocidos en esta versión de Android</string>
-    <string name="gt_panel_arr">Refresco adaptativo: %1$s</string>
-    <string name="gt_panel_yes">sí</string>
-    <string name="gt_panel_no">no</string>
-    <string name="gt_panel_unknown">desconocido</string>
-    <string name="gt_panel_unreadable">Modos del panel ilegibles</string>
     <!-- Filesystem trim: free blocks reported back to flash so writes stay fast. -->
     <string name="gt_trim_title">Recortar almacenamiento</string>
     <string name="gt_trim_need">Necesita root — el shell no puede recortar</string>
@@ -760,11 +768,8 @@
     <string name="gt_keep_remove">Quitar</string>
     <!-- Auto game session: watch the foreground app, start Gaming Mode for library games. -->
     <string name="gt_session_title">Modo juego automático</string>
-    <string name="gt_session_sub">Inicia el modo juego al abrir un juego</string>
-    <string name="gt_session_what_1">Vigila la app en primer plano e inicia el modo juego cuando se abre un juego de tu biblioteca, deteniéndolo al salir del juego.</string>
-    <string name="gt_session_what_2">Necesita acceso a uso (para ver la app frontal) y root o Shizuku. Un modo juego iniciado a mano siempre gana: la vigilancia nunca lo registra ni lo revierte.</string>
-    <string name="gt_session_watching">Vigilando — ningún juego al frente</string>
-    <string name="gt_session_active">ON — automático: %1$s</string>
+    <string name="gt_session_sub">Inicia el Modo juego cuando abres un juego de tu biblioteca.</string>
+    <string name="gt_session_need_games">Añade un juego abajo para activar el modo automático.</string>
     <string name="gt_svc_session_title">Sesión de juego auto</string>
     <string name="gt_svc_session_channel">Sesión de juego auto</string>
     <string name="gt_svc_session_off">Vigilancia desactivada — nada se vigila</string>

@@ -152,6 +152,9 @@ fun WuwaConfigScreen(
     onShowAnyway: () -> Unit = {},
     onBack: (() -> Unit)? = null
 ) {
+    // Engine/driver levers, generated-file toggles and CVar overrides are advanced; keep them
+    // one tap away instead of making the beginner scroll past six cards to reach DEPLOY.
+    var showAdvanced by remember { mutableStateOf(false) }
     // One body, two hosts: standalone (own ScreenScaffold header + scroll) or embedded in File
     // Engineering's selector, where the host already scrolled and padded the page — a second
     // header would double it, and a nested verticalScroll measured under the host's infinite
@@ -229,15 +232,8 @@ fun WuwaConfigScreen(
             SectionCard {
                 Text(stringResource(R.string.gf_frame_rate), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary, letterSpacing = 1.sp)
                 Spacer(modifier = Modifier.height(8.dp))
-                ChipFlowRow {
-                    listOf(30, 60, 90, 120).forEach { fps ->
-                        FilterChip(
-                            selected = uiState.options.fps == fps,
-                            onClick = { onUpdateOptions { it.copy(fps = fps) } },
-                            label = { Text("$fps") }
-                        )
-                    }
-                }
+                // No FPS picker: the generator always writes MAX_FPS (120). A lower choice
+                // would create a ceiling, which the no-cap rule forbids.
                 Spacer(modifier = Modifier.height(12.dp))
                 WuwaSwitchRow(
                     stringResource(R.string.gf_wuwa_unlock120_t),
@@ -261,13 +257,12 @@ fun WuwaConfigScreen(
             SectionCard {
                 Text(stringResource(R.string.gf_game_mode), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary, letterSpacing = 1.sp)
                 Spacer(modifier = Modifier.height(8.dp))
-                Row {
+                ChipFlowRow {
                     WuWaConfigGenerator.GameMode.entries.forEach { mode ->
                         FilterChip(
                             selected = uiState.options.mode == mode,
                             onClick = { onUpdateOptions { it.copy(mode = mode) } },
-                            label = { Text(gameModeLabel(mode)) },
-                            modifier = Modifier.padding(end = 8.dp)
+                            label = { Text(gameModeLabel(mode)) }
                         )
                     }
                 }
@@ -311,106 +306,122 @@ fun WuwaConfigScreen(
 
             Spacer(modifier = Modifier.height(12.dp))
 
-            // Engine/driver/thermal levers and the visual-effect toggles answer different
-            // questions ("how does the renderer behave" vs "what is drawn"), so they live in
-            // separate cards; the per-control captions carry the detail.
-            SectionCard {
-                Text(stringResource(R.string.gf_wuwa_engine_section), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary, letterSpacing = 1.sp)
-                Spacer(modifier = Modifier.height(8.dp))
-                WuwaSwitchRow(stringResource(R.string.gf_fx_hzb_t), stringResource(R.string.gf_fx_hzb_c), uiState.options.hzb) { v ->
-                    onUpdateOptions { it.copy(hzb = v) }
-                }
-                WuwaSwitchRow(stringResource(R.string.gf_fx_cool_t), stringResource(R.string.gf_fx_cool_c), uiState.options.cool) { v ->
-                    onUpdateOptions { it.copy(cool = v) }
-                }
-                WuwaSwitchRow(
-                    stringResource(R.string.gf_fx_vulkan_t),
-                    stringResource(R.string.gf_fx_vulkan_c),
-                    uiState.options.vulkan
-                ) { v -> onUpdateOptions { it.copy(vulkan = v) } }
-                WuwaSwitchRow(
-                    stringResource(R.string.gf_fx_noauto_t),
-                    stringResource(R.string.gf_fx_noauto_c),
-                    uiState.options.disableAutoAdjust
-                ) { v -> onUpdateOptions { it.copy(disableAutoAdjust = v) } }
-            }
-
-            Spacer(modifier = Modifier.height(12.dp))
-
-            SectionCard {
-                Text(stringResource(R.string.gf_files_section), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary, letterSpacing = 1.sp)
-                Spacer(modifier = Modifier.height(8.dp))
-                WuwaSwitchRow(
-                    stringResource(R.string.gf_files_scal_t),
-                    stringResource(R.string.gf_files_scal_c),
-                    uiState.options.generateScalability
-                ) { v -> onUpdateOptions { it.copy(generateScalability = v) } }
-                WuwaSwitchRow(
-                    stringResource(R.string.gf_files_hw_t),
-                    stringResource(R.string.gf_files_hw_c),
-                    uiState.options.generateHardware
-                ) { v -> onUpdateOptions { it.copy(generateHardware = v) } }
-                Spacer(modifier = Modifier.height(8.dp))
+            TextButton(
+                onClick = { showAdvanced = !showAdvanced },
+                modifier = Modifier.fillMaxWidth()
+            ) {
                 Text(
-                    stringResource(R.string.gf_files_always),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    stringResource(
+                        if (showAdvanced) R.string.gf_fewer_options
+                        else R.string.gf_more_options
+                    )
                 )
             }
 
-            Spacer(modifier = Modifier.height(12.dp))
+            if (showAdvanced) {
+                Spacer(modifier = Modifier.height(4.dp))
 
-            SectionCard {
-                Text(stringResource(R.string.gf_advanced), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary, letterSpacing = 1.sp)
-                Spacer(modifier = Modifier.height(8.dp))
-                WuwaSwitchRow(
-                    stringResource(R.string.gf_adv_restricted_t),
-                    stringResource(R.string.gf_adv_restricted_c),
-                    uiState.options.allowRestrictedCvars
-                ) { v -> onUpdateOptions { it.copy(allowRestrictedCvars = v) } }
-                WuwaSwitchRow(
-                    stringResource(R.string.gf_adv_exp_t),
-                    stringResource(R.string.gf_adv_exp_c),
-                    uiState.options.experimentalCvars
-                ) { v -> onUpdateOptions { it.copy(experimentalCvars = v) } }
-                WuwaSwitchRow(
-                    stringResource(R.string.gf_adv_gsr_t),
-                    stringResource(R.string.gf_adv_gsr_c),
-                    uiState.options.enableGSR
-                ) { v -> onUpdateOptions { it.copy(enableGSR = v) } }
-                WuwaSwitchRow(
-                    stringResource(R.string.gf_adv_cvardb_t),
-                    stringResource(R.string.gf_adv_cvardb_c),
-                    uiState.options.optimizeWithCvarDb,
-                    // The tables load once at startup; the VM-level gate
-                    // (WuwaCvarDbGate, tested) covers the enable path itself.
-                    enabled = uiState.cvarDbLoaded
-                ) { v -> onOptimizeWithCvarDb(v) }
-                Spacer(modifier = Modifier.height(8.dp))
-                Text(
-                    stringResource(R.string.gf_fx_override_t),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurface
-                )
-                Text(
-                    stringResource(R.string.gf_fx_override_c),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-                Spacer(modifier = Modifier.height(8.dp))
-                OutlinedTextField(
-                    value = uiState.cvarOverrideText,
-                    onValueChange = onCvarOverrideTextChange,
-                    label = { Text(stringResource(R.string.gf_fx_override_hint)) },
-                    singleLine = false,
-                    minLines = 3,
-                    modifier = Modifier.fillMaxWidth()
-                )
-                Text(
-                    stringResource(R.string.gf_fx_override_applied, uiState.options.cvarOverrides.size),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
+                // Engine/driver/thermal levers and the visual-effect toggles answer different
+                // questions ("how does the renderer behave" vs "what is drawn"), so they live in
+                // separate cards; the per-control captions carry the detail.
+                SectionCard {
+                    Text(stringResource(R.string.gf_wuwa_engine_section), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary, letterSpacing = 1.sp)
+                    Spacer(modifier = Modifier.height(8.dp))
+                    WuwaSwitchRow(stringResource(R.string.gf_fx_hzb_t), stringResource(R.string.gf_fx_hzb_c), uiState.options.hzb) { v ->
+                        onUpdateOptions { it.copy(hzb = v) }
+                    }
+                    WuwaSwitchRow(stringResource(R.string.gf_fx_cool_t), stringResource(R.string.gf_fx_cool_c), uiState.options.cool) { v ->
+                        onUpdateOptions { it.copy(cool = v) }
+                    }
+                    WuwaSwitchRow(
+                        stringResource(R.string.gf_fx_vulkan_t),
+                        stringResource(R.string.gf_fx_vulkan_c),
+                        uiState.options.vulkan
+                    ) { v -> onUpdateOptions { it.copy(vulkan = v) } }
+                    WuwaSwitchRow(
+                        stringResource(R.string.gf_fx_noauto_t),
+                        stringResource(R.string.gf_fx_noauto_c),
+                        uiState.options.disableAutoAdjust
+                    ) { v -> onUpdateOptions { it.copy(disableAutoAdjust = v) } }
+                }
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                SectionCard {
+                    Text(stringResource(R.string.gf_files_section), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary, letterSpacing = 1.sp)
+                    Spacer(modifier = Modifier.height(8.dp))
+                    WuwaSwitchRow(
+                        stringResource(R.string.gf_files_scal_t),
+                        stringResource(R.string.gf_files_scal_c),
+                        uiState.options.generateScalability
+                    ) { v -> onUpdateOptions { it.copy(generateScalability = v) } }
+                    WuwaSwitchRow(
+                        stringResource(R.string.gf_files_hw_t),
+                        stringResource(R.string.gf_files_hw_c),
+                        uiState.options.generateHardware
+                    ) { v -> onUpdateOptions { it.copy(generateHardware = v) } }
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        stringResource(R.string.gf_files_always),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                SectionCard {
+                    Text(stringResource(R.string.gf_advanced), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary, letterSpacing = 1.sp)
+                    Spacer(modifier = Modifier.height(8.dp))
+                    WuwaSwitchRow(
+                        stringResource(R.string.gf_adv_restricted_t),
+                        stringResource(R.string.gf_adv_restricted_c),
+                        uiState.options.allowRestrictedCvars
+                    ) { v -> onUpdateOptions { it.copy(allowRestrictedCvars = v) } }
+                    WuwaSwitchRow(
+                        stringResource(R.string.gf_adv_exp_t),
+                        stringResource(R.string.gf_adv_exp_c),
+                        uiState.options.experimentalCvars
+                    ) { v -> onUpdateOptions { it.copy(experimentalCvars = v) } }
+                    WuwaSwitchRow(
+                        stringResource(R.string.gf_adv_gsr_t),
+                        stringResource(R.string.gf_adv_gsr_c),
+                        uiState.options.enableGSR
+                    ) { v -> onUpdateOptions { it.copy(enableGSR = v) } }
+                    WuwaSwitchRow(
+                        stringResource(R.string.gf_adv_cvardb_t),
+                        stringResource(R.string.gf_adv_cvardb_c),
+                        uiState.options.optimizeWithCvarDb,
+                        // The tables load once at startup; the VM-level gate
+                        // (WuwaCvarDbGate, tested) covers the enable path itself.
+                        enabled = uiState.cvarDbLoaded
+                    ) { v -> onOptimizeWithCvarDb(v) }
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        stringResource(R.string.gf_fx_override_t),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                    Text(
+                        stringResource(R.string.gf_fx_override_c),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    OutlinedTextField(
+                        value = uiState.cvarOverrideText,
+                        onValueChange = onCvarOverrideTextChange,
+                        label = { Text(stringResource(R.string.gf_fx_override_hint)) },
+                        singleLine = false,
+                        minLines = 3,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    Text(
+                        stringResource(R.string.gf_fx_override_applied, uiState.options.cvarOverrides.size),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
             }
 
             Spacer(modifier = Modifier.height(12.dp))

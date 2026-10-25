@@ -12,9 +12,10 @@ package com.catsmoker.app.features.editgamefiles.pubg
  *   rewrites the prefix, so on a file that already carried a tuple it would leave the old one
  *   dangling behind the new one; this port replaces the whole line instead (deliberate
  *   divergence — same result on a file whose line was empty, a sane file on one whose was not).
- * - `FrameRateLimit=` — the reference maps 30 and 60 to `90.000000`. This port raises any value
- *   below 90 and leaves everything at or above 90 alone: identical results for the reference's
- *   two inputs, and it never lowers a cap the device already offers (no-cap rule).
+ * - `FrameRateLimit=` — the reference maps 30 and 60 to `90.000000`. This port raises positive
+ *   values below 90 and leaves everything else alone: identical results for the reference's two
+ *   inputs, `0.000000` keeps its UE4 "unlimited" meaning, and it never lowers a cap the device
+ *   already offers (no-cap rule).
  * - `AudioQualityLevel=` / `LastConfirmedAudioQualityLevel=` — the reference maps 1 and 2 to 0;
  *   this port zeroes any non-zero value (same intent, one rule).
  *
@@ -79,7 +80,8 @@ object NewStateIniTransform {
                     matched = true
                     val valueText = line.removePrefix(KEY_FPS).trim()
                     val value = valueText.toDoubleOrNull()
-                    if (value != null && value < TARGET_FPS) {
+                    // UE4 treats 0 as "unlimited", not as 0 FPS; raising it would impose a cap.
+                    if (value != null && value > 0.0 && value < TARGET_FPS) {
                         newLine = KEY_FPS + TARGET_FPS_TEXT
                         changes += "FrameRateLimit: $valueText -> $TARGET_FPS_TEXT"
                     }

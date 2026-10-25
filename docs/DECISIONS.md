@@ -18,6 +18,12 @@ not silently rewrite history.
   Removed on sight: the per-game frame-cap picker, a generated module's
   `fps-targets.conf` + WebUI, PUBG 60/90 tier profiles. `FpsTargetsTest.kt`
   stays as an empty placeholder so the removal stays visible.
+- **Game-editor FPS controls follow the no-cap rule** (2026-10-20): the
+  PUBG 60/90 save tiers and the GRID/HSR/WuWa 30/60/90 pickers were removed.
+  Each editor now offers only the game's highest value (PUBG 120, GRID 144,
+  HSR/WuWa 120), and New State leaves `FrameRateLimit=0` (UE4 unlimited)
+  untouched instead of rewriting it to 90. `SettingValue.matchesAfterRestore`
+  also reads every snapshot setting back before reporting a clean revert.
 - **FPS layers are separate problems** (2026-09-25): game FPS vs engine limit
   vs display refresh vs compositor vs frame pacing vs GPU/CPU/thermal vs
   game/vendor limits. Investigate the actual bottleneck, remove artificial
@@ -44,6 +50,28 @@ not silently rewrite history.
   library's own `AGENT.md` (developer machine, not part of this repository).
 
 ## Spoofing & device identity
+
+- **Root provider is named from privileged evidence** (2026-10-25).
+  `RootProviderDetector` names a provider when its `-V` command answers (PATH
+  and private path); otherwise the manager package counts only together with
+  that provider's own private directory. A leftover manager APK or a bare
+  directory cannot claim root, an unreadable probe stays unknown (never
+  "none"), and Magisk/KernelSU/APatch are reported by name. Rejected:
+  inferring the provider from the manager package or a single file.
+- **Both spoof methods are options; only one may be active** (2026-10-25).
+  `SpoofMethodConflict` keeps the Xposed and Catsmoker-module mechanisms
+  mutually exclusive and keys on Vector's manager row (`moduleEnabled`), not a
+  stale heartbeat or loaded proof, so a refresh cannot re-disable an
+  already-disabled module. Automatic resolution only runs when the Catsmoker
+  module is reliably `INSTALLED` **and** the row is enabled; it disables only
+  our own row via `vector-cli modules disable <pkg>`, verifies by re-reading
+  `modules ls`, and never disables the framework, force-stops a game, or edits
+  another module. A manager row that cannot be read never fabricates a
+  conflict: the banner needs an observed load, and a failed automatic disable
+  keeps the banner with Retry. Status keeps root provider, exposed module,
+  Catsmoker module and active state as distinct facts; the per-app "spoof
+  verified" list was removed because a heartbeat does not prove a target
+  process was spoofed.
 
 - **Presets are author-curated** (2026-09-20). `SpoofRepository.getPresets()`
   changes only when the author names a model. Substituting reference-module
@@ -263,6 +291,41 @@ not silently rewrite history.
   device does not carry are skipped, never reported as success — the lab POCO
   has `schedutil` + KGSL but no `msm_performance`, `core_ctl`, `cpu_boost` or
   `adreno_idler`.
+- **SmartPack's kernel levers ship as five device-derived, raise-only families**
+  (2026-10-25, SmartPack Kernel Manager cross-check). The reference is a general
+  kernel manager with a free-form field for every knob; only the five with a
+  performance direction that can be derived from the device itself were ported,
+  each as a pure rule object (`CpuInputBoostNodes`, `CpuGovernorMode`,
+  `SpectrumProfile`, `StorageTuning`, `MemoryTuning`) plus the same
+  capture → apply → read-back → restore contract as the Snapdragon families:
+  `cpu_input_boost` + `/dev/stune` (switch enable-only; per-CPU `ib_freqs` raised
+  to each policy's hardware max only behind a positive declared window; dynamic
+  stune raised toward the device's own static top-app boost), the `performance`
+  governor when a policy lists it, Spectrum's profile 3 (accepting a kernel clamp
+  to 2), the `/data` queue's read-ahead raised to its own `max_sectors_kb`, and
+  the VM watermarks (`min_free_kbytes` toward 1 % of `MemTotal`,
+  `extra_free_kbytes` toward the device's own base reserve). Deliberate
+  non-writes, each with its reason in the class KDoc: boost/wake durations (an
+  invented constant), the static top-app boost (it is the reference, not a
+  knob), vendor governor names (`performance` is the one universal contract),
+  the I/O scheduler and queue-shape toggles (device/workload-specific, no raise
+  direction), `swappiness` (its gaming direction is *down*, inexpressible here),
+  `watermark_scale_factor`/`dirty_*` (no declared target), and the legacy
+  `lowmemorykiller/minfree` (modern Android's `lmkd` owns process killing).
+  Spectrum is written only when `spectrum.support`/`vendor.spectrum.support` is
+  `1` **and the profile property already exists** — `setprop` cannot delete a
+  `persist.*` property, so creating one would be a permanent change no revert
+  could undo. Spectrum runs before the governor on activation (the immediate CPU
+  state must end at `performance`); on revert the profile is restored first, the
+  recorded governor next, and only then the Snapdragon schedutil priors — a
+  policy's `schedutil` directory and tunables exist only while schedutil is the
+  active governor, so restoring them before the governor silently left the rate
+  limiter and hispeed jump at their gaming values (found on the lab POCO X3, fixed
+  the same day). Every restored node is now read back and a refused write appears
+  in the deactivation report instead of being dropped. The lab POCO X3 exercises
+  governor (`schedutil` → `performance`), read-ahead (128 → 512 KB) and memory
+  (9515 → 56915 KB); it has no input-boost module and no Spectrum property, so
+  those two paths are rule-tested but not device-verified on that hardware.
 - **The vivo display-mode lock writes only a mode the panel reported**
   (2026-10-20, booster cross-check). The reference locks vivo/iQOO panels by
   writing a hardcoded `user_preferred_display_mode_id 4` — its author's id for
@@ -341,6 +404,28 @@ not silently rewrite history.
   picker's initial view — the grant is exactly what the user confirms.
   `LaunchSafPicker` deliberately remains a `data object` with no starting URI,
   so the push picker's scope cannot widen by accident.
+- **Custom import is typed and verified** (2026-10-25). PUBG accepts exactly
+  two imported files — `Active.sav` (GVAS magic) and `UserCustom.ini`
+  (`[UserCustom DeviceProfile]` header) — through `GameUploadTarget` +
+  `PubgUploadPlan`; the destination resolves from the selected package. The
+  old untyped picker wrote whatever was chosen into `Active.sav`, so importing
+  `UserCustom.ini` replaced the save with text and a bad pick was copied
+  verbatim. The INI import merges (device `[BackUp DeviceProfile]` tail wins),
+  the previous file is backed up, and the destination is read back and
+  byte-compared before success is reported. Profile push and import share one
+  card because both change the same file.
+- **Editors show only controls the file can answer** (2026-10-25). The PUBG
+  save editor initializes chips from the parsed save (`PubgSaveSelection`);
+  selecting the saved value creates no pending edit; a field the save does not
+  carry shows an explanation instead of dead chips; the camera presets always
+  write `TpViewValue` and `FpViewValue` together (the two-button "Phone" /
+  "Tablet Wide" split had shipped one field). Apply is disabled while the
+  working copy is clean, restore asks before discarding pending edits, and HSR
+  restore backs the live file up first and verifies by parsing the result —
+  a restore is reversible and never reports success from a copy exit code.
+  WuWa/GRID/HSR advanced-only controls collapse behind MORE OPTIONS instead of
+  being removed. The fifth HSR "mystery" control was the 4K resolution chip
+  clipped by a non-wrapping `Row`; chip groups use `ChipFlowRow`.
 
 ## Infrastructure & UI
 

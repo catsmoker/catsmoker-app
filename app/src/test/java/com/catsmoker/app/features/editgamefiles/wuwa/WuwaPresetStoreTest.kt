@@ -1,6 +1,7 @@
 package com.catsmoker.app.features.editgamefiles.wuwa
 
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Test
 
@@ -46,7 +47,16 @@ class WuwaPresetStoreTest {
         assertNull(WuwaPresetStore.decodeOptions(null))
         assertNull(WuwaPresetStore.decodeOptions(""))
         assertNull(WuwaPresetStore.decodeOptions("{not json"))
-        assertNull(WuwaPresetStore.decodeOptions("""{"fps":"sixty"}"""))
+        assertNull(WuwaPresetStore.decodeOptions("""{"mode":"Bogus"}"""))
+    }
+
+    @Test
+    fun legacyFpsOptionIsIgnored() {
+        // Options.fps was removed under the no-cap rule. Old blobs still carry it; Gson must
+        // ignore the unknown key and restore everything else, not fail the whole decode.
+        val decoded = WuwaPresetStore.decodeOptions("""{"fps":30,"unlock120":true}""")
+        assertNotNull(decoded)
+        assertEquals(true, decoded?.unlock120)
     }
 
     @Test

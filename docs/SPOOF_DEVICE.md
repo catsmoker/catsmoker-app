@@ -27,6 +27,34 @@ Profiles are persisted as JSON (Gson).
 
 Plus **SAF / export mode** for manually granting access to game data folders.
 
+## Root provider and method conflict (2026-10-25)
+
+`RootProviderDetector` names the provider that currently grants root from
+privileged evidence, never from a lone APK. A provider is named when its `-V`
+command answers (tried at the PATH name and at its private data-dir path);
+otherwise its manager package counts only together with that provider's own
+private directory — a leftover manager install is not a provider, and neither
+is a directory on its own. Supported: Magisk, KernelSU, APatch. Unrooted,
+unidentified and multiple providers are reported distinctly, and an unreadable
+signal is never promoted to "absent".
+
+The Xposed framework and the generated Catsmoker Magisk module stay separately
+selectable options, but they must never be active together: both rewrite
+identity, and a half-spoofed state is a stronger signal than either. The
+conflict policy (`SpoofMethodConflict`) keys on Vector's manager row
+(`moduleEnabled` parsed from `vector-cli modules ls`), not the stale heartbeat
+or loaded proof — an already-disabled row must not be re-disabled on every
+refresh. Automatic resolution runs only when the Catsmoker module is reliably
+`INSTALLED` *and* the manager row says enabled. It calls
+`vector-cli modules disable <our package>`, re-reads `modules ls` to verify the
+row, refreshes the screen, and reports success or failure. It never disables
+the framework, force-stops a game, or touches another module; a process already
+injected keeps the injected code until it restarts, which the UI states as the
+manager outcome rather than pretending otherwise. A manager row that cannot be
+read never fabricates a conflict: the banner appears only when a module load was
+actually observed, and a failed automatic disable keeps the banner with a Retry
+action.
+
 ## Xposed module (LSPosed / Vector)
 
 - `src/full/…/features/spoofdevice/root/LSPosedModule.kt` — declares the module scope
@@ -341,7 +369,7 @@ Routes in `system/navigation/Routes.kt`:
 - `spoof_device` — main hub
 - `spoof_profiles` / `spoof_editor/{profileId}` — list & edit profiles
 - `spoof_apps` — choose which games a profile applies to
-- `spoof_diagnostics` — verify spoof state
+- `spoof_diagnostics` — app-process identity report (copyable)
 - `spoof_safe_mode` — revert to safe state (see below)
 
 ## Safe mode
@@ -371,5 +399,9 @@ applied a spoof that broke something.
 ## A note on scope
 
 Spoof identity is per-game and per-profile. Toggling, editing, or deleting a
-profile never touches other games' scopes, and the diagnostics screen reads
-back actual `getprop` output rather than showing the intended values.
+profile never touches other games' scopes. The diagnostics screen reports the
+identity this app's own process actually reads (`Build` plus the native bridge
+version), not a profile's intended values, and copies it as a plain-text report.
+It is deliberately not a `getprop` dump: a target process's hooked reads cannot
+be observed from this process, so verification of a spoofed target comes from
+the target's own output, not from this screen.

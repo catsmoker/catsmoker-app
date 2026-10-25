@@ -8,7 +8,7 @@ import java.io.File
 
 /**
  * The System Logs screen is a live viewer for ordinary users: a log list plus
- * one three-dot menu (Copy / Share / Clear), nothing else.
+ * one three-dot menu (Copy / Share / Export report / Clear), nothing else.
  *
  * This test bans the removed dashboard pieces from the Logs sources so they
  * cannot creep back: refresh buttons, filters, recording, exit history, source
@@ -43,14 +43,15 @@ class LogsScreenSimplicityTest {
     }
 
     @Test
-    fun menuHasExactlyCopyShareClear() {
+    fun menuHasExactlyCopyShareExportClear() {
         val screen = source("LogsScreen.kt")
         assertTrue(screen.contains("R.string.logs_copy"))
         assertTrue(screen.contains("R.string.logs_share"))
+        assertTrue(screen.contains("R.string.logs_export_report"))
         assertTrue(screen.contains("R.string.logs_clear"))
         assertEquals(
-            "the overflow menu must hold exactly Copy/Share/Clear",
-            3,
+            "the overflow menu must hold exactly Copy/Share/Export report/Clear",
+            4,
             "DropdownMenuItem".toRegex().findAll(screen).count()
         )
     }

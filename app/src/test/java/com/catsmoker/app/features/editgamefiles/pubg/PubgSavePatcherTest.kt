@@ -112,7 +112,7 @@ class PubgSavePatcherTest {
         val readBack = PubgSavePatcher.read(patched)
         assertEquals(8, (readBack.fields["BattleFPS"] as PubgSavePatcher.FieldOutcome.Value).value)
         assertEquals(8, (readBack.fields["LobbyFPS"] as PubgSavePatcher.FieldOutcome.Value).value)
-        assertEquals(7, (readBack.fields["FPSLevel"] as PubgSavePatcher.FieldOutcome.Value).value)
+        assertEquals(8, (readBack.fields["FPSLevel"] as PubgSavePatcher.FieldOutcome.Value).value)
         assertEquals(1, (readBack.fields["BattleRenderQuality"] as PubgSavePatcher.FieldOutcome.Value).value)
         assertEquals(1, (readBack.fields["LobbyRenderQuality"] as PubgSavePatcher.FieldOutcome.Value).value)
     }
@@ -136,18 +136,21 @@ class PubgSavePatcherTest {
     fun patchRefusesTheWholeEditWhenAnyFieldIsAbsent() {
         // The fixture has no "ResolutionQuality" — the all-or-nothing rule means the FPS edits
         // land nowhere rather than half-landing.
-        val result = PubgSavePatcher.patch(fixture(), PubgSavePatcher.fpsEdits(90) + mapOf("ResolutionQuality" to 2))
+        val result = PubgSavePatcher.patch(fixture(), PubgSavePatcher.fpsEdits(120) + mapOf("ResolutionQuality" to 2))
         assertTrue(result is PubgSavePatcher.PatchResult.Refused)
         val reasons = (result as PubgSavePatcher.PatchResult.Refused).reasons
         assertTrue("ResolutionQuality" in reasons)
     }
 
     @Test
-    fun tiersCarryTheReferencePinnedValues() {
-        // Pinned by BattleGrounds_GFX's own tier assets (60 → 6/6/6, 90 → 7/7/6, 120 → 8/8/7);
-        // if these numbers ever change, the evidence that changed them belongs in the KDoc first.
-        assertEquals(listOf(6 to 6 to 6, 7 to 7 to 6, 8 to 8 to 7),
+    fun onlyTheMaxFpsTierRemains() {
+        // The no-cap rule removed the 60/90 tiers; only the 120 unlock is offered, and it uses
+        // the bundled MaxFPS save's 8/8/8 so applying it cannot lower a field.
+        assertEquals(listOf(120), PubgSavePatcher.FPS_TIERS.map { it.fps })
+        assertEquals(listOf(8 to 8 to 8),
             PubgSavePatcher.FPS_TIERS.map { it.battleFps to it.lobbyFps to it.fpsLevel })
+        assertTrue("60 FPS must not be offered", PubgSavePatcher.fpsEdits(60).isEmpty())
+        assertTrue("90 FPS must not be offered", PubgSavePatcher.fpsEdits(90).isEmpty())
         assertEquals(listOf(1, 2, 3, 4, 5, 6), PubgSavePatcher.RENDER_TIERS.map { it.value })
     }
 
@@ -239,23 +242,21 @@ class PubgSavePatcherTest {
     }
 
     @Test
-    fun patchingTheBundledSaveDownAndBackIsLossless() {
+    fun theMaxTierDoesNotLowerTheBundledSave() {
         val original = bundledMaxFps()
-        val down = PubgSavePatcher.patch(original, PubgSavePatcher.fpsEdits(60)) as PubgSavePatcher.PatchResult.Ok
-        val downRead = PubgSavePatcher.read(down.data)
-        assertEquals(6, (downRead.fields[PubgSavePatcher.FIELD_BATTLE_FPS] as PubgSavePatcher.FieldOutcome.Value).value)
+        // A lower tier is not a valid edit: it would be an FPS cap, not an unlock.
+        assertTrue(PubgSavePatcher.fpsEdits(60).isEmpty())
 
-        // 60 → 120 restores BattleFPS/LobbyFPS/FPSLevel to tq's own 8/8/8, so the save
-        // round-trips byte-exact against the bundled blob.
-        val back = PubgSavePatcher.patch(down.data, PubgSavePatcher.fpsEdits(120)) as PubgSavePatcher.PatchResult.Ok
-        val backRead = PubgSavePatcher.read(back.data)
-        assertEquals(8, (backRead.fields[PubgSavePatcher.FIELD_BATTLE_FPS] as PubgSavePatcher.FieldOutcome.Value).value)
-        assertEquals(8, (backRead.fields[PubgSavePatcher.FIELD_LOBBY_FPS] as PubgSavePatcher.FieldOutcome.Value).value)
-        // GFX's 120 tier pins FPSLevel 7; tq's own save carries 8 (the stated divergence), so
-        // this byte does not return to its original value under GFX edits.
-        assertEquals(7, (backRead.fields[PubgSavePatcher.FIELD_FPS_LEVEL] as PubgSavePatcher.FieldOutcome.Value).value)
-        // Untouched fields survive every round-trip.
-        assertEquals(6, (backRead.fields[PubgSavePatcher.FIELD_BATTLE_RENDER] as PubgSavePatcher.FieldOutcome.Value).value)
-        assertEquals(2, (backRead.fields[PubgSavePatcher.FIELD_LOBBY_RENDER] as PubgSavePatcher.FieldOutcome.Value).value)
+        // The 120 tier writes the bundled save's own 8/8/8, so this is a no-op on the blob.
+        val patched = PubgSavePatcher.patch(original, PubgSavePatcher.fpsEdits(120))
+        assertTrue(patched is PubgSavePatcher.PatchResult.Ok)
+        assertTrue("120 must not lower the max save", (patched as PubgSavePatcher.PatchResult.Ok).data.contentEquals(original))
+        val readBack = PubgSavePatcher.read(patched.data)
+        assertEquals(8, (readBack.fields[PubgSavePatcher.FIELD_BATTLE_FPS] as PubgSavePatcher.FieldOutcome.Value).value)
+        assertEquals(8, (readBack.fields[PubgSavePatcher.FIELD_LOBBY_FPS] as PubgSavePatcher.FieldOutcome.Value).value)
+        assertEquals(8, (readBack.fields[PubgSavePatcher.FIELD_FPS_LEVEL] as PubgSavePatcher.FieldOutcome.Value).value)
+        // Untouched fields survive the patch.
+        assertEquals(6, (readBack.fields[PubgSavePatcher.FIELD_BATTLE_RENDER] as PubgSavePatcher.FieldOutcome.Value).value)
+        assertEquals(2, (readBack.fields[PubgSavePatcher.FIELD_LOBBY_RENDER] as PubgSavePatcher.FieldOutcome.Value).value)
     }
 }

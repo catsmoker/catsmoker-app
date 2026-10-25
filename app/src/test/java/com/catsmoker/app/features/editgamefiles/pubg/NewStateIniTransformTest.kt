@@ -48,6 +48,16 @@ class NewStateIniTransformTest {
     }
 
     @Test
+    fun leavesUnlimitedFrameRateAlone() {
+        // UE4's FrameRateLimit=0 means no limit. Rewriting it to 90 would create a cap.
+        val input = file("FrameRateLimit=0.000000")
+        val result = NewStateIniTransform.apply(input)
+        assertTrue(result.matched)
+        assertFalse(result.changed)
+        assertTrue(result.bytes.contentEquals(input))
+    }
+
+    @Test
     fun zeroesBothAudioKeys() {
         val result = NewStateIniTransform.apply(
             file("AudioQualityLevel=2", "LastConfirmedAudioQualityLevel=1")

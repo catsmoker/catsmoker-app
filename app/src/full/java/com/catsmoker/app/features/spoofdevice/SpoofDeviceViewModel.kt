@@ -64,6 +64,12 @@ class SpoofDeviceViewModel @Inject constructor(
     data class UiState(
         val isRooted: Boolean = false,
         /**
+         * Active root provider(s), named from a privileged probe. Empty while unrooted and
+         * also when root answered but no known provider could be identified — the UI keeps
+         * those two cases distinct.
+         */
+        val rootProviders: Set<RootProvider> = emptySet(),
+        /**
          * Whether the Xposed module is proven loaded: own-process heartbeat fresh OR the
          * Vector daemon log shows our load (which survives the reinstall that wipes the
          * heartbeat). False still covers "framework absent", "module disabled" and "never
@@ -82,6 +88,12 @@ class SpoofDeviceViewModel @Inject constructor(
          */
         val magiskModuleStatus: SpoofMethodConflict.MagiskModuleStatus =
             SpoofMethodConflict.MagiskModuleStatus.UNKNOWN,
+        /**
+         * True only when the automatic Vector deactivation was attempted and did not verify.
+         * The banner then stays visible with a retry action instead of pretending the
+         * conflict went away.
+         */
+        val conflictResolutionFailed: Boolean = false,
         val isRefreshing: Boolean = false,
         /** True while the Magisk ZIP is being built + written, so the card can show busy. */
         val isGeneratingMagisk: Boolean = false,
@@ -234,6 +246,7 @@ class SpoofDeviceViewModel @Inject constructor(
         _uiState.update { it.copy(isRefreshing = true) }
         viewModelScope.launch(Dispatchers.IO) {
             val rooted = shellRunner.isRootAvailable(force = true)
+            val rootProviders = if (rooted) probeRootProviders() else emptySet()
             // Own prefs file, own UID on both sides: the module writes it from inside
             // our process, we read it here. Absent/stale reads as not loaded — unless the
             // daemon log proves the load (a reinstall wipes our prefs but not Vector's log).
@@ -241,26 +254,128 @@ class SpoofDeviceViewModel @Inject constructor(
                 openLsposedPrefs(context).getLong(LSPosedConfig.KEY_MODULE_HEARTBEAT_ELAPSED, 0L),
                 SystemClock.elapsedRealtime()
             )
-            val evidence = probeVectorEvidence(rooted, heartbeatFresh)
+            var evidence = probeVectorEvidence(rooted, heartbeatFresh)
             val magiskStatus = probeMagiskModuleStatus(rooted)
+
+            // The two mechanisms are both supported choices, never simultaneous ones. When
+            // the Catsmoker module is installed and Vector's manager row for our package is
+            // enabled, deactivate only that row through Vector's own CLI, then re-read the
+            // row. The manager row — not the old heartbeat — is the gate, so a successful
+            // disable cannot be retried forever by a still-running hooked process.
+            var conflictResolutionFailed = false
+            var disabledVector = false
+            if (SpoofMethodConflict.shouldDisableVector(evidence.moduleEnabled, magiskStatus)) {
+                disabledVector = disableVectorIntegration()
+                if (disabledVector) {
+                    evidence = probeVectorEvidence(rooted, heartbeatFresh)
+                    conflictResolutionFailed = evidence.moduleEnabled != false
+                } else {
+                    conflictResolutionFailed = true
+                }
+            }
             withContext(Dispatchers.Main) {
                 _uiState.update {
                     it.copy(
                         isRooted = rooted,
+                        rootProviders = rootProviders,
                         moduleActive = evidence.loadedProof,
                         xposedEvidence = evidence,
                         magiskModuleStatus = magiskStatus,
+                        conflictResolutionFailed = conflictResolutionFailed,
                         isRefreshing = false
                     )
                 }
                 // Naming the verdict is the point of the refresh: "Status Refreshed" alone left a
                 // user staring at a hidden root-only button with no idea the probe said no.
                 _toasts.tryEmit(
-                    if (rooted) context.getString(R.string.spoof_root_available)
-                    else context.getString(R.string.spoof_root_unavailable)
+                    when {
+                        disabledVector && !conflictResolutionFailed ->
+                            context.getString(R.string.spoof_method_conflict_disabled)
+                        conflictResolutionFailed ->
+                            context.getString(R.string.spoof_method_conflict_disable_failed)
+                        rooted -> context.getString(R.string.spoof_root_available)
+                        else -> context.getString(R.string.spoof_root_unavailable)
+                    }
                 )
             }
         }
+    }
+
+    /**
+     * Reads provider signals and lets [RootProviderDetector] name the active root.
+     *
+     * Version commands are tried first at their PATH name and then at the private data-dir
+     * path because Magisk's binary is not always exported to a `su` shell; manager packages
+     * are used only together with the provider's own directory, so a leftover manager APK
+     * cannot be mistaken for the provider that currently grants root.
+     */
+    private suspend fun probeRootProviders(): Set<RootProvider> {
+        val pm = context.packageManager
+        fun installed(pkg: String): Boolean = try {
+            pm.getPackageInfo(pkg, 0) != null
+        } catch (_: Exception) {
+            false
+        }
+        suspend fun version(commands: List<List<String>>): Boolean = commands.any { command ->
+            val result = shellRunner.execSafeResult(*command.toTypedArray())
+            result.isSuccess && result.stdout.isNotBlank()
+        }
+        suspend fun exists(path: String): Boolean =
+            shellRunner.execSafeResult("test", "-d", path).isSuccess
+
+        return RootProviderDetector.detect(
+            RootProviderSignals(
+                magiskVersion = version(
+                    listOf(
+                        listOf("magisk", "-V"),
+                        listOf("/data/adb/magisk/magisk", "-V")
+                    )
+                ),
+                magiskDir = exists("/data/adb/magisk"),
+                magiskManager = installed("com.topjohnwu.magisk"),
+                kernelsuVersion = version(
+                    listOf(
+                        listOf("ksud", "-V"),
+                        listOf("/data/adb/ksud", "-V")
+                    )
+                ),
+                kernelsuDir = exists("/data/adb/ksu") || exists("/data/adb/ksud"),
+                kernelsuManager = installed("me.weishu.kernelsu"),
+                apatchVersion = version(
+                    listOf(
+                        listOf("apd", "-V"),
+                        listOf("/data/adb/apd", "-V")
+                    )
+                ),
+                apatchDir = exists("/data/adb/ap") || exists("/data/adb/apd"),
+                apatchManager = installed("me.bmax.apatch")
+            )
+        )
+    }
+
+    /**
+     * Turns off only Catsmoker's own row in Vector, through Vector's supported CLI command.
+     *
+     * `modules disable <pkg>` changes the manager state for this package; it does not stop
+     * the daemon, disable the framework, or touch another module. The caller verifies with
+     * a fresh `modules ls` rather than treating the command's exit code as proof. A process
+     * already injected at the moment of the disable keeps the injected code until it is
+     * restarted, which is why the UI reports the manager row and does not force-stop games.
+     */
+    private suspend fun disableVectorIntegration(): Boolean {
+        val own = context.packageName
+        val result = shellRunner.execSafeResult(
+            VectorActivation.CLI_PATH,
+            "modules",
+            "disable",
+            own
+        )
+        if (!result.isSuccess) return false
+        val enabled = VectorActivation.parseModulesLs(
+            shellRunner.execSafeResult(VectorActivation.CLI_PATH, "modules", "ls").stdout,
+            own
+        )
+        return enabled == false
     }
 
     /**

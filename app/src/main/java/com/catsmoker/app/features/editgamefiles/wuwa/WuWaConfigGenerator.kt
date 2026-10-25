@@ -32,6 +32,12 @@ package com.catsmoker.app.features.editgamefiles.wuwa
  */
 object WuWaConfigGenerator {
 
+    /**
+     * The game's highest frame-rate option. Every generated file writes this value; the
+     * former 30/60/90 picker was removed under the no-cap rule (2026-09-23).
+     */
+    const val MAX_FPS = 120
+
     /** Ordered preset ids, lowest to highest tier. */
     val PRESET_ORDER = listOf(
         "potato", "endurance", "performance", "competitive", "balanced", "high", "ultra", "cinematic"
@@ -116,7 +122,6 @@ object WuWaConfigGenerator {
     /** The options the generator branches on — the reference's `GeneratorOptions`, minus the
      *  options belonging to subsystems not ported (log import, per-device retune). */
     data class Options(
-        val fps: Int = 60,
         val unlock120: Boolean = false,
         val unlockUltra: Boolean = true,
         val vsync: Boolean = true,
@@ -692,7 +697,7 @@ object WuWaConfigGenerator {
             lines.add("r.Kuro.AutoCoolEnable=0")
             lines.add("r.Kuro.AutoCoolUIEnable=0")
             lines.add("r.Kuro.AutoExposure=0")
-            lines.add("t.MaxFPS=${opts.fps}")
+            lines.add("t.MaxFPS=$MAX_FPS")
         } else {
             lines.add("r.Kuro.AutoCoolEnable=${if (opts.cool) 1 else 0}")
             lines.add("r.Kuro.AutoCoolUIEnable=${if (opts.cool) 1 else 0}")
@@ -1040,8 +1045,8 @@ object WuWaConfigGenerator {
             "Version=5",
             "AudioQualityLevel=0",
             "LastConfirmedAudioQualityLevel=0",
-            "FrameRateLimit=${opts.fps}.000000",
-            "FramePace=${opts.fps}",
+            "FrameRateLimit=$MAX_FPS.000000",
+            "FramePace=$MAX_FPS",
             "DesiredScreenWidth=$resW",
             "bUseDesiredScreenHeight=False",
             "DesiredScreenHeight=$resH",
@@ -1229,8 +1234,8 @@ object WuWaConfigGenerator {
             "DeviceProfileName=Android_$presetLabel",
             "DeviceType=Android",
             "",
-            "; FPS cap based on preset",
-            "FramePace=${opts.fps}",
+            "; Frame pace at the game's highest option",
+            "FramePace=$MAX_FPS",
             "",
             "; Anisotropic filtering",
             "+CVars=r.MaxAnisotropy=${dt.maxAniso}",

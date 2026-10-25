@@ -20,8 +20,9 @@ import java.util.Locale
 object LocaleHelper {
 
     /**
-     * Normalizes a stored tag to one of the shipped locales (`en`, `ar`, `es`, `zh-CN`)
-     * or `""` (system). Region variants (`ar-SA`, `zh-TW`) fold to their shipped base;
+     * Normalizes a stored tag to one of the shipped locales (`en`, `ar`, `es`, `zh-CN`,
+     * `pt-BR`) or `""` (system). Region variants (`ar-SA`, `zh-TW`, `pt-PT`) fold to their
+     * shipped base;
      * unknown tags pass through and fall back to English resources at runtime.
      * Pure — covered by `LocaleHelperTest`.
      */
@@ -33,6 +34,7 @@ object LocaleHelper {
             "es" -> AppearanceStore.LANGUAGE_SPANISH
             "en" -> AppearanceStore.LANGUAGE_ENGLISH
             "zh" -> AppearanceStore.LANGUAGE_CHINESE
+            "pt" -> AppearanceStore.LANGUAGE_PORTUGUESE
             else -> tag
         }
     }

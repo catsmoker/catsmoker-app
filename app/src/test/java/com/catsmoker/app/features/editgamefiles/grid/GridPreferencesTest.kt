@@ -138,14 +138,14 @@ class GridPreferencesTest {
     }
 
     @Test
-    fun fpsEditsBothCapsAndNothingElse() {
+    fun maxFpsEditWritesBothCapsAndNothingElse() {
         val applied = GridPreferences.apply(
             referenceShapedXml(),
-            GridPreferences.Edits(fps = 90)
+            GridPreferences.Edits(fps = GridPreferences.MAX_FPS)
         )
         val read = GridPreferences.parse(applied.xml)
-        assertEquals(90, read.maxFps)
-        assertEquals(90, read.highMaxFps)
+        assertEquals(GridPreferences.MAX_FPS, read.maxFps)
+        assertEquals(GridPreferences.MAX_FPS, read.highMaxFps)
         // Powersaver and the Direct3D scope's MaxFramesPerSecond are the game's own; the
         // README's editable list does not name them. The fixture holds TWO MaxFramesPerSecond
         // entries (Setup: 0, IndirectX\Direct3D\Config: 60) — neither moves.
@@ -184,7 +184,7 @@ class GridPreferencesTest {
     @Test
     fun untouchedBytesSurviveIncludingBinaryBlobsAndVersionStrings() {
         val source = referenceShapedXml()
-        val applied = GridPreferences.apply(source, GridPreferences.Edits(fps = 120))
+        val applied = GridPreferences.apply(source, GridPreferences.Edits(fps = GridPreferences.MAX_FPS))
         val changedLines = applied.xml.lines().filter { it != source.lines().find { l -> l.contains("gfxconfig_max_fps") || l.contains("gfxconfig_high_max_fps") } }
         val sourceLines = source.lines()
         // Every line that is not one of the two edited values is byte-identical, in order.

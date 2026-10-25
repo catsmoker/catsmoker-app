@@ -44,6 +44,7 @@ object AppearanceStore {
     const val LANGUAGE_ARABIC = "ar"
     const val LANGUAGE_SPANISH = "es"
     const val LANGUAGE_CHINESE = "zh-CN"
+    const val LANGUAGE_PORTUGUESE = "pt-BR"
 
     private const val PREFS = "appearance_prefs"
     private const val KEY_THEME = "theme_mode"

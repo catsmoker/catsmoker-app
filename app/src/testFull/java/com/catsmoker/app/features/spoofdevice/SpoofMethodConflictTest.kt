@@ -7,34 +7,55 @@ import org.junit.Test
 
 /**
  * Pins the device-spoofing method-exclusivity decision: the Xposed framework
- * path (LSPosed or Vector) and the generated Magisk module rewrite the same
+ * path (LSPosed or Vector) and the generated Catsmoker module rewrite the same
  * device identity through different channels, so both being armed at once is
- * a conflict the UI must surface and each switch must confirm explicitly.
- *
- * Nothing here touches the device: detection feeds these pure verdicts
- * (heartbeat for Xposed, `/data/adb/modules` presence for Magisk), and the
- * workflows never auto-remove anything — confirmation only gates the tap.
+ * a conflict. The app resolves the readable case automatically through
+ * Vector's own supported CLI, and the tests here pin exactly when that is
+ * allowed: only a positively enabled Vector manager row plus an installed
+ * Catsmoker module.
  */
 class SpoofMethodConflictTest {
 
     @Test
-    fun conflictNeedsHeartbeatAndInstalledModule() {
+    fun conflictNeedsInstalledModuleAndEnabledVectorRow() {
         assertTrue(
             SpoofMethodConflict.isConflict(
-                xposedActive = true,
+                vectorModuleEnabled = true,
+                xposedLoaded = false,
                 magisk = SpoofMethodConflict.MagiskModuleStatus.INSTALLED
             )
         )
     }
 
     @Test
-    fun conflictIsFalseWithoutHeartbeat() {
-        for (magisk in SpoofMethodConflict.MagiskModuleStatus.entries) {
-            assertFalse(
-                "$magisk without heartbeat must not conflict",
-                SpoofMethodConflict.isConflict(xposedActive = false, magisk = magisk)
+    fun disabledVectorRowWinsOverAStaleObservedLoad() {
+        // The loaded proof can outlive a successful disable (the target process is still
+        // alive). Keying the banner on that proof would disable the module forever.
+        assertFalse(
+            SpoofMethodConflict.isConflict(
+                vectorModuleEnabled = false,
+                xposedLoaded = true,
+                magisk = SpoofMethodConflict.MagiskModuleStatus.INSTALLED
             )
-        }
+        )
+    }
+
+    @Test
+    fun unknownVectorRowStillWarnsWhenALoadWasObserved() {
+        assertTrue(
+            SpoofMethodConflict.isConflict(
+                vectorModuleEnabled = null,
+                xposedLoaded = true,
+                magisk = SpoofMethodConflict.MagiskModuleStatus.INSTALLED
+            )
+        )
+        assertFalse(
+            SpoofMethodConflict.isConflict(
+                vectorModuleEnabled = null,
+                xposedLoaded = false,
+                magisk = SpoofMethodConflict.MagiskModuleStatus.INSTALLED
+            )
+        )
     }
 
     @Test
@@ -43,8 +64,45 @@ class SpoofMethodConflictTest {
             SpoofMethodConflict.MagiskModuleStatus.INSTALLED
         for (magisk in notInstalled) {
             assertFalse(
-                "$magisk with heartbeat must not conflict",
-                SpoofMethodConflict.isConflict(xposedActive = true, magisk = magisk)
+                "$magisk with an enabled Vector row must not conflict",
+                SpoofMethodConflict.isConflict(
+                    vectorModuleEnabled = true,
+                    xposedLoaded = true,
+                    magisk = magisk
+                )
+            )
+        }
+    }
+
+    @Test
+    fun onlyAPositivelyEnabledVectorRowMayBeDisabledAutomatically() {
+        assertTrue(
+            SpoofMethodConflict.shouldDisableVector(
+                vectorModuleEnabled = true,
+                magisk = SpoofMethodConflict.MagiskModuleStatus.INSTALLED
+            )
+        )
+        assertFalse(
+            SpoofMethodConflict.shouldDisableVector(
+                vectorModuleEnabled = null,
+                magisk = SpoofMethodConflict.MagiskModuleStatus.INSTALLED
+            )
+        )
+        assertFalse(
+            SpoofMethodConflict.shouldDisableVector(
+                vectorModuleEnabled = false,
+                magisk = SpoofMethodConflict.MagiskModuleStatus.INSTALLED
+            )
+        )
+        for (magisk in SpoofMethodConflict.MagiskModuleStatus.entries -
+            SpoofMethodConflict.MagiskModuleStatus.INSTALLED
+        ) {
+            assertFalse(
+                "$magisk must never cause a Vector change",
+                SpoofMethodConflict.shouldDisableVector(
+                    vectorModuleEnabled = true,
+                    magisk = magisk
+                )
             )
         }
     }

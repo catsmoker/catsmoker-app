@@ -42,7 +42,12 @@ fun GamingModeCard(
     isActive: Boolean,
     isBusy: Boolean,
     onActivate: () -> Unit,
-    onDeactivate: () -> Unit
+    onDeactivate: () -> Unit,
+    // Automatic Gaming Mode lives inside this card: it arms the same engine, so a separate
+    // row above the library made the relationship look like two unrelated features.
+    sessionActive: Boolean,
+    sessionEnabled: Boolean,
+    onToggleSession: (Boolean) -> Unit
 ) {
     SectionCard(
         modifier = Modifier.fillMaxWidth()
@@ -131,6 +136,37 @@ fun GamingModeCard(
                         stringResource(R.string.gt_gm_what_2),
                         stringResource(R.string.gt_gm_what_3)
                     )
+                )
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+            HorizontalDivider(color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.12f))
+            Spacer(modifier = Modifier.height(12.dp))
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = stringResource(R.string.gt_session_title),
+                        style = MaterialTheme.typography.bodyLarge,
+                        fontWeight = FontWeight.Medium,
+                        color = if (sessionEnabled) MaterialTheme.colorScheme.onSurface
+                        else MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Text(
+                        text = stringResource(
+                            if (sessionEnabled) R.string.gt_session_sub
+                            else R.string.gt_session_need_games
+                        ),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+                Switch(
+                    checked = sessionActive,
+                    onCheckedChange = onToggleSession,
+                    enabled = sessionEnabled
                 )
             }
 
@@ -229,6 +265,62 @@ fun GamingModeCard(
                             reason = stringResource(R.string.gt_gm_na_snapdragon)
                         )
                     }
+                    // The five SmartPack-derived kernel levers. Same nullable contract: a kernel
+                    // without the interface gets a grayed row with the reason, a refused write
+                    // reads "Not applied" (with the refusal also in the unavailable list), and an
+                    // applied lever reports the value the device read back — never the request.
+                    GamingModeResultRow(
+                        label = stringResource(R.string.gt_gm_label_input_boost),
+                        value = when (report.cpuInputBoost) {
+                            true -> stringResource(R.string.gt_gm_touch_boost)
+                            false -> stringResource(R.string.gt_gm_not_applied)
+                            null -> stringResource(R.string.gt_gm_na_value)
+                        },
+                        applied = report.cpuInputBoost == true,
+                        reason = if (report.cpuInputBoost == null) stringResource(R.string.gt_gm_na_kernel) else null
+                    )
+                    GamingModeResultRow(
+                        label = stringResource(R.string.gt_gm_label_governor),
+                        value = when (report.cpuGovernor) {
+                            true -> stringResource(R.string.gt_gm_governor_perf)
+                            false -> stringResource(R.string.gt_gm_not_applied)
+                            null -> stringResource(R.string.gt_gm_na_value)
+                        },
+                        applied = report.cpuGovernor == true,
+                        reason = if (report.cpuGovernor == null) stringResource(R.string.gt_gm_na_kernel) else null
+                    )
+                    GamingModeResultRow(
+                        label = stringResource(R.string.gt_gm_label_spectrum),
+                        value = when (report.spectrumProfile) {
+                            3 -> stringResource(R.string.gt_gm_spectrum_gaming)
+                            2 -> stringResource(R.string.gt_gm_spectrum_perf)
+                            else -> stringResource(R.string.gt_gm_na_value)
+                        },
+                        applied = report.spectrumProfile != null,
+                        reason = if (report.spectrumProfile == null) stringResource(R.string.gt_gm_na_kernel) else null
+                    )
+                    GamingModeResultRow(
+                        label = stringResource(R.string.gt_gm_label_readahead),
+                        value = when {
+                            report.storageTuning == true && report.storageReadAheadKb != null ->
+                                stringResource(R.string.gt_gm_kb, report.storageReadAheadKb!!)
+                            report.storageTuning == false -> stringResource(R.string.gt_gm_not_applied)
+                            else -> stringResource(R.string.gt_gm_na_value)
+                        },
+                        applied = report.storageTuning == true,
+                        reason = if (report.storageTuning == null) stringResource(R.string.gt_gm_na_kernel) else null
+                    )
+                    GamingModeResultRow(
+                        label = stringResource(R.string.gt_gm_label_mem),
+                        value = when {
+                            report.memoryTuning == true && report.memoryMinFreeKb != null ->
+                                stringResource(R.string.gt_gm_kb, report.memoryMinFreeKb!!)
+                            report.memoryTuning == false -> stringResource(R.string.gt_gm_not_applied)
+                            else -> stringResource(R.string.gt_gm_na_value)
+                        },
+                        applied = report.memoryTuning == true,
+                        reason = if (report.memoryTuning == null) stringResource(R.string.gt_gm_na_kernel) else null
+                    )
                     GamingModeResultRow(
                         label = stringResource(R.string.gt_gm_label_display),
                         value = report.lockedRefreshHz?.let { stringResource(R.string.gt_gm_locked_hz, it) } ?: stringResource(R.string.gt_gm_rate_unlocked),

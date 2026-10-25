@@ -25,7 +25,10 @@
     <string name="gt_library_launch">启动</string>
     <string name="gt_library_remove">移除</string>
     <string name="gt_library_optimize">优化</string>
-    <string name="gt_library_edit_files">编辑游戏文件</string>
+    <string name="gt_library_search">搜索游戏</string>
+    <string name="gt_library_no_match">没有匹配该搜索的游戏。</string>
+    <string name="gt_library_show_all">全部显示（%1$d）</string>
+    <string name="gt_library_show_less">收起列表</string>
     <!-- Pre-launch single-game compile outcomes (%1$s = package, %2$s = device detail). -->
     <string name="gt_game_opt_done">%1$s 已编译</string>
     <string name="gt_game_opt_done_detail">%1$s 已编译：%2$s</string>
@@ -429,7 +432,6 @@
     <string name="gt_booster_scope_hint_single">预编译单个游戏（speed-profile）。</string>
     <string name="gt_booster_scope_hint_all">预编译全部应用（speed），需要几分钟。</string>
     <string name="gt_booster_precompile">预编译</string>
-    <string name="gt_booster_pick_game">选择游戏</string>
     <string name="gt_booster_no_games_scope">先将游戏添加到库中，才能只预编译一个。</string>
     <string name="gt_managed_by_gaming_mode">游戏模式启用期间由其控制。</string>
     <string name="gt_graphics_layers">三个叠加的层级：系统分辨率（本卡）改变 Android 显示；游戏渲染比例（游戏模式卡）改变每个游戏的渲染；图形驱动（开发者选项）改变渲染路径。每一层都独立——降低某一层是你自己的选择，绝不是自动上限。</string>
@@ -494,6 +496,16 @@
     <string name="gt_gm_na_qualcomm">仅适用于高通设备。</string>
     <string name="gt_gm_na_mediatek">仅适用于联发科设备。</string>
     <string name="gt_gm_na_snapdragon">仅适用于骁龙设备。</string>
+    <string name="gt_gm_na_kernel">你的内核未提供此控制项。</string>
+    <string name="gt_gm_label_input_boost">输入加速</string>
+    <string name="gt_gm_label_governor">CPU 调度器</string>
+    <string name="gt_gm_governor_perf">性能</string>
+    <string name="gt_gm_label_spectrum">Spectrum 配置</string>
+    <string name="gt_gm_spectrum_gaming">游戏</string>
+    <string name="gt_gm_spectrum_perf">性能</string>
+    <string name="gt_gm_label_readahead">存储预读</string>
+    <string name="gt_gm_kb">%1$d KB</string>
+    <string name="gt_gm_label_mem">内存保留</string>
     <string name="gt_gm_na_intervention">需要在 Android 12 或更高版本上选择游戏。</string>
     <string name="gt_gm_na_notif">需要通知访问权限。</string>
     <string name="gt_gm_na_nogame">未选择游戏。</string>
@@ -632,6 +644,11 @@
     <string name="gt_eng_un_qti">高通游戏 FPS 提示 — 手机拒绝切换</string>
     <string name="gt_eng_un_mtk">联发科游戏模式 — 手机拒绝切换</string>
     <string name="gt_eng_un_snap">骁龙CPU模式 — 手机拒绝切换</string>
+    <string name="gt_eng_un_input_boost">输入加速 — 手机拒绝切换</string>
+    <string name="gt_eng_un_governor">性能调度器 — 手机拒绝切换</string>
+    <string name="gt_eng_un_spectrum">Spectrum 配置 — 手机拒绝该配置</string>
+    <string name="gt_eng_un_storage">存储预读 — 手机拒绝更改</string>
+    <string name="gt_eng_un_memory">内存保留 — 手机拒绝更改</string>
     <string name="gt_eng_un_vivo">vivo 显示模式 — 手机拒绝切换</string>
     <string name="gt_eng_un_discard">离开即关闭应用 — 设置未能保持</string>
     <string name="gt_eng_un_limit">限制后台应用 — 设置未能保持</string>
@@ -647,6 +664,7 @@
     <string name="gt_eng_un_appops">%1$d 个应用未能限制后台运行</string>
     <string name="gt_eng_thermal">清除温控覆盖 — 手机拒绝</string>
     <string name="gt_eng_revert_fail">未能完成还原：%1$s</string>
+    <string name="gt_eng_restore_refused">无法恢复 %1$s，手机仍保留游戏值</string>
     <string name="gt_eng_fp_old">手机太旧，不支持此项。需要 Android 11，你的是 Android %1$s。</string>
     <string name="gt_eng_fp_ok">手机已接受。</string>
     <string name="gt_eng_fp_off">已关闭。</string>
@@ -723,16 +741,6 @@
     <string name="gt_angle_no">无法设置驱动：%1$s</string>
     <string name="gt_angle_no_reason">设备拒绝</string>
     <!-- Panel refresh readout: what the display reports about itself. -->
-    <string name="gt_panel_title">面板刷新率</string>
-    <string name="gt_panel_rates">档位：%1$s Hz</string>
-    <string name="gt_panel_seamless">当前可无缝切换：%1$s Hz</string>
-    <string name="gt_panel_seamless_none">未报告无缝切换</string>
-    <string name="gt_panel_seamless_unknown">此 Android 版本未知无缝切换</string>
-    <string name="gt_panel_arr">自适应刷新：%1$s</string>
-    <string name="gt_panel_yes">是</string>
-    <string name="gt_panel_no">否</string>
-    <string name="gt_panel_unknown">未知</string>
-    <string name="gt_panel_unreadable">面板模式不可读</string>
     <!-- Filesystem trim: free blocks reported back to flash so writes stay fast. -->
     <string name="gt_trim_title">整理存储</string>
     <string name="gt_trim_need">需要 Root — shell 无法整理存储</string>
@@ -760,11 +768,8 @@
     <string name="gt_keep_remove">移除</string>
     <!-- Auto game session: watch the foreground app, start Gaming Mode for library games. -->
     <string name="gt_session_title">自动游戏模式</string>
-    <string name="gt_session_sub">打开游戏时启动游戏模式</string>
-    <string name="gt_session_what_1">监视前台应用，打开游戏库中的游戏时立即启动游戏模式，离开游戏时关闭。</string>
-    <string name="gt_session_what_2">需要使用情况访问权限（查看前台应用）以及 Root 或 Shizuku。手动启动的游戏模式永远优先：监视不会覆盖它，也不会撤销它。</string>
-    <string name="gt_session_watching">监视中 — 前台无游戏</string>
-    <string name="gt_session_active">开 — 自动：%1$s</string>
+    <string name="gt_session_sub">当游戏库中的游戏打开时启动游戏模式。</string>
+    <string name="gt_session_need_games">在下方添加游戏即可启用自动模式。</string>
     <string name="gt_svc_session_title">自动游戏会话</string>
     <string name="gt_svc_session_channel">自动游戏会话</string>
     <string name="gt_svc_session_off">监视已解除 — 未监视任何内容</string>

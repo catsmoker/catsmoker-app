@@ -27,9 +27,11 @@ import com.catsmoker.app.shared.ui.theme.logLineColor
  *
  * Collection runs at the process level ([AppLogCollector], started from the
  * Application): this screen only observes the buffer. Exactly one action menu
- * (Copy / Share / Clear) — no refresh button (new lines arrive on their own),
- * no filter, no recording, no diagnostics. Clearing empties the displayed
- * buffer after confirmation; collection continues.
+ * (Copy / Share / Export report / Clear) — no refresh button (new lines arrive
+ * on their own), no filter, no recording, no source/status/advanced sections.
+ * Export report is the on-demand diagnostics ZIP (M228), not a recorder.
+ * Clearing empties the displayed buffer after confirmation; collection
+ * continues.
  */
 @Composable
 fun LogsRoute(onBack: () -> Unit) {

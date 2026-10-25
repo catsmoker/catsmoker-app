@@ -15,6 +15,8 @@
     <string name="sys_section_updates">Updates</string>
     <string name="sys_updating">Downloading update…</string>
     <string name="sys_check_updates">Check for Updates</string>
+    <string name="sys_prerelease">Include pre-releases</string>
+    <string name="sys_prerelease_sub">Also offer beta GitHub releases. Stable releases are always included.</string>
     <string name="sys_auto_check">Auto Check Updates</string>
     <string name="sys_update_available">Update Available: %1$s</string>
     <string name="sys_update_prompt">A new version is available. Download and install now?</string>

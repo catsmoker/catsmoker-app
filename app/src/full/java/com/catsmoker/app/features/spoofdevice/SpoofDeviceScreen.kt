@@ -26,6 +26,7 @@ import com.catsmoker.app.R
 import com.catsmoker.app.shared.ui.components.QuickActionButton
 import com.catsmoker.app.shared.ui.components.ScreenScaffold
 import com.catsmoker.app.shared.ui.components.SectionCard
+import com.catsmoker.app.system.navigation.Routes
 
 @Composable
 fun SpoofRoute(
@@ -82,6 +83,15 @@ fun SpoofDeviceScreen(
                             StatusIndicator(active = uiState.isRooted)
                             Text(stringResource(R.string.spoof_home_root), color = MaterialTheme.colorScheme.onSurface, fontSize = 14.sp)
                         }
+                        // "Root" alone does not say which manager granted it. The subtitle names
+                        // the provider from a privileged probe, or says honestly that root
+                        // answered without a recognizable provider.
+                        Text(
+                            text = rootProviderSubtitle(uiState),
+                            modifier = Modifier.padding(start = 16.dp, top = 2.dp),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
                         Spacer(modifier = Modifier.height(6.dp))
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             val headline = VectorActivation.headline(uiState.xposedEvidence)
@@ -136,6 +146,23 @@ fun SpoofDeviceScreen(
                                 color = MaterialTheme.colorScheme.onSurface, fontSize = 14.sp
                             )
                         }
+                        Text(
+                            text = stringResource(
+                                when (uiState.magiskModuleStatus) {
+                                    SpoofMethodConflict.MagiskModuleStatus.INSTALLED ->
+                                        R.string.spoof_method_magisk_installed_sub
+                                    SpoofMethodConflict.MagiskModuleStatus.DISABLED ->
+                                        R.string.spoof_method_magisk_disabled_sub
+                                    SpoofMethodConflict.MagiskModuleStatus.ABSENT ->
+                                        R.string.spoof_method_magisk_absent_sub
+                                    SpoofMethodConflict.MagiskModuleStatus.UNKNOWN ->
+                                        R.string.spoof_method_magisk_unknown_sub
+                                }
+                            ),
+                            modifier = Modifier.padding(start = 16.dp, top = 2.dp),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
                     }
                     if (uiState.isRefreshing) {
                         CircularProgressIndicator(
@@ -158,12 +185,14 @@ fun SpoofDeviceScreen(
             }
             }
             // Both methods armed at once rewrite the same identity through
-            // different channels — the banner names the conflict instead of
-            // letting the two disagree silently. Nothing here removes or
-            // disables anything; picking one method is the user's tap.
+            // different channels. The app deactivates only its own Vector row
+            // automatically when the manager-enabled state is readable; this
+            // banner remains while a conflict is visible, including the case
+            // where that supported change could not be verified.
             if (
                 SpoofMethodConflict.isConflict(
-                    xposedActive = uiState.moduleActive,
+                    vectorModuleEnabled = uiState.xposedEvidence.moduleEnabled,
+                    xposedLoaded = uiState.moduleActive,
                     magisk = uiState.magiskModuleStatus
                 )
             ) {
@@ -180,6 +209,18 @@ fun SpoofDeviceScreen(
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
+                    if (uiState.conflictResolutionFailed) {
+                        Spacer(modifier = Modifier.height(6.dp))
+                        Text(
+                            stringResource(R.string.spoof_method_conflict_failed),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.error
+                        )
+                        Spacer(modifier = Modifier.height(4.dp))
+                        TextButton(onClick = onRefresh, enabled = !uiState.isRefreshing) {
+                            Text(stringResource(R.string.spoof_method_conflict_retry))
+                        }
+                    }
                 }
             }
 
@@ -192,7 +233,7 @@ fun SpoofDeviceScreen(
                     subtitle = stringResource(R.string.spoof_menu_identities, uiState.profiles.size),
                     icon = Icons.Default.AccountBox,
                     modifier = Modifier.weight(1f),
-                    onClick = { onNavigate("spoof_profiles") }
+                    onClick = { onNavigate(Routes.SPOOF_PROFILES) }
                 )
                 SpoofMenuCard(
                     title = stringResource(R.string.spoof_menu_apps),
@@ -201,7 +242,7 @@ fun SpoofDeviceScreen(
                     subtitle = stringResource(R.string.spoof_menu_hooked, (uiState.assignments.keys + uiState.rateAssignments.keys).size),
                     icon = Icons.Default.Apps,
                     modifier = Modifier.weight(1f),
-                    onClick = { onNavigate("spoof_apps") }
+                    onClick = { onNavigate(Routes.SPOOF_APPS) }
                 )
             }
 
@@ -218,14 +259,14 @@ fun SpoofDeviceScreen(
                     ),
                     icon = Icons.Default.Security,
                     modifier = Modifier.weight(1f),
-                    onClick = { onNavigate("spoof_safe_mode") }
+                    onClick = { onNavigate(Routes.SPOOF_SAFE_MODE) }
                 )
                 SpoofMenuCard(
                     title = stringResource(R.string.spoof_menu_diag),
                     subtitle = stringResource(R.string.spoof_menu_verify),
                     icon = Icons.Default.Troubleshoot,
                     modifier = Modifier.weight(1f),
-                    onClick = { onNavigate("spoof_diagnostics") }
+                    onClick = { onNavigate(Routes.SPOOF_DIAGNOSTICS) }
                 )
             }
 
@@ -339,15 +380,11 @@ private fun XposedEvidenceLine(evidence: VectorActivation.Evidence) {
             stringResource(R.string.spoof_home_xposed_nofw)
         VectorActivation.Framework.VECTOR -> {
             val framework = evidence.frameworkVersion?.let { "Vector $it" } ?: "Vector"
-            val enabled = when (evidence.moduleEnabled) {
-                true -> stringResource(R.string.spoof_home_xposed_enabled)
-                false -> stringResource(R.string.spoof_home_xposed_disabled)
-                null -> stringResource(R.string.spoof_home_xposed_unknown)
+            when (evidence.moduleEnabled) {
+                true -> stringResource(R.string.spoof_home_xposed_active_detail, framework)
+                false -> stringResource(R.string.spoof_home_xposed_disabled_detail, framework)
+                null -> stringResource(R.string.spoof_home_xposed_unknown_detail, framework)
             }
-            val scope = evidence.scopePackages?.size?.let {
-                stringResource(R.string.spoof_home_xposed_scope, it)
-            } ?: stringResource(R.string.spoof_home_xposed_unknown)
-            stringResource(R.string.spoof_home_xposed_detail, framework, enabled, scope)
         }
     }
     Text(
@@ -355,20 +392,11 @@ private fun XposedEvidenceLine(evidence: VectorActivation.Evidence) {
         color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 11.sp,
         modifier = Modifier.padding(start = 16.dp, top = 2.dp)
     )
-    // Second line: what execution was actually observed. Spoof proof names the
-    // target and the model it received; plain loads name the target packages;
-    // enabled-without-any-load says exactly that instead of claiming success.
-    // Map to strings before joining (no @Composable inside joinToString).
+    // Second line: whether execution was observed at all. Individual target
+    // package names and models stay on Diagnostics; this card answers status,
+    // not per-app attribution.
     val observed: String? = when {
-        evidence.logSpoofTargets.isNotEmpty() -> {
-            val pairs = evidence.logSpoofTargets.map { (pkg, model) -> "$pkg → $model" }
-            stringResource(R.string.spoof_home_xposed_spoofed, pairs.joinToString(", "))
-        }
-        evidence.loadedTargets.isNotEmpty() ->
-            stringResource(
-                R.string.spoof_home_xposed_loaded,
-                evidence.loadedTargets.sorted().joinToString(", ")
-            )
+        evidence.loadedProof -> stringResource(R.string.spoof_home_xposed_loads_seen)
         evidence.framework == VectorActivation.Framework.VECTOR &&
             evidence.moduleEnabled == true ->
             stringResource(R.string.spoof_home_xposed_load_pending)
@@ -382,6 +410,38 @@ private fun XposedEvidenceLine(evidence: VectorActivation.Evidence) {
         )
     }
 }
+
+/**
+ * Names the active root provider without turning a package presence into a claim.
+ * Unrooted, rooted-without-a-known-provider, and multiple providers are three distinct
+ * answers; none of them is silently replaced by "Magisk".
+ */
+@Composable
+private fun rootProviderSubtitle(uiState: SpoofDeviceViewModel.UiState): String {
+    if (!uiState.isRooted) return stringResource(R.string.spoof_root_provider_none)
+    val providers = uiState.rootProviders
+    return when {
+        providers.isEmpty() -> stringResource(R.string.spoof_root_provider_unknown)
+        providers.size > 1 -> stringResource(
+            R.string.spoof_root_provider_multiple,
+            providers.map { providerName(it) }.sorted().joinToString(", ")
+        )
+        else -> when (providers.first()) {
+            RootProvider.MAGISK -> stringResource(R.string.spoof_root_provider_magisk)
+            RootProvider.KERNELSU -> stringResource(R.string.spoof_root_provider_kernelsu)
+            RootProvider.APATCH -> stringResource(R.string.spoof_root_provider_apatch)
+        }
+    }
+}
+
+@Composable
+private fun providerName(provider: RootProvider): String = stringResource(
+    when (provider) {
+        RootProvider.MAGISK -> R.string.spoof_root_name_magisk
+        RootProvider.KERNELSU -> R.string.spoof_root_name_kernelsu
+        RootProvider.APATCH -> R.string.spoof_root_name_apatch
+    }
+)
 
 @Composable
 fun StatusIndicator(active: Boolean, unknown: Boolean = false, warn: Boolean = false) {

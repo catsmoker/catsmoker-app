@@ -27,8 +27,8 @@ android {
         // Only locales the app actually ships (see res/xml/locales_config.xml): strips the
         // dozens of transitive locales dragged in by material/ads/splashscreen/work.
         // Shrinking alone cannot do this. Qualifiers match res/values-* dirs exactly;
-        // in-app tags are en/ar/es/zh-CN (AppearanceStore), en-GB is a mirror.
-        resConfigs("en", "en-rGB", "ar", "es", "zh-rCN")
+        // in-app tags are en/ar/es/zh-CN/pt-BR (AppearanceStore), en-GB is a mirror.
+        resConfigs("en", "en-rGB", "ar", "es", "zh-rCN", "pt-rBR")
 
         vectorDrawables {
             useSupportLibrary = true

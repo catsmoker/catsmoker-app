@@ -140,7 +140,51 @@ data class GamingOptimizationSnapshot(
      * uses `.orEmpty()`, so old snapshots behave as "no Snapdragon nodes" and
      * the whole restore still parses rather than failing.
      */
-    val snapdragonCpuNodes: Map<String, String>? = null
+    val snapdragonCpuNodes: Map<String, String>? = null,
+    /**
+     * `cpu_input_boost` and `/dev/stune` priors: boost-parent node path → prior raw value, for the
+     * nodes [CpuInputBoostNodes] would write (the master switch, the per-CPU `ib_freqs` body and
+     * the dynamic stune boost). Empty/null is the normal case on kernels without the interface —
+     * the activation-side gate then skips the family entirely. The static top-app boost is never
+     * recorded because it is never written (it is the target's reference, not a knob).
+     *
+     * Nullable for the same Gson reason as [snapdragonCpuNodes]: an old snapshot carries null, and
+     * every reader uses `.orEmpty()` so it behaves as "no input-boost nodes".
+     */
+    val cpuInputBoostNodes: Map<String, String>? = null,
+    /**
+     * Per-policy governor priors: `<policyDir>/scaling_governor` → the governor the policy ran
+     * before Gaming Mode switched it to `performance`. Recorded only for policies that list
+     * `performance` in their own `scaling_available_governors`, so the revert writes back a
+     * governor the kernel declared it can run. Null/empty on devices without cpufreq policies.
+     */
+    val cpuGovernorNodes: Map<String, String>? = null,
+    /**
+     * The Spectrum profile property this session wrote ([SpectrumProfile.PROFILE_PROP] or its
+     * vendor twin), or null when the device declares no usable Spectrum interface.
+     *
+     * The property itself carries the prior value in [spectrumProfile]; it is stored only when
+     * the support property confirmed the interface *and* the profile property already existed.
+     * That second gate matters: `setprop` cannot delete a `persist.*` property, so writing one
+     * that did not exist would be a permanent, reboot-surviving device change no revert could
+     * undo. A kernel that advertises support without shipping a profile property is left alone.
+     */
+    val spectrumProfileProperty: String? = null,
+    /** The profile property's prior value, restored verbatim on deactivation. */
+    val spectrumProfile: String? = null,
+    /**
+     * The `/data` block device's queue priors: `read_ahead_kb` node → prior KB text. The device is
+     * resolved from `/proc/mounts` at capture time ([StorageTuning.dataBlockDeviceName]) and the
+     * map is empty when nothing has headroom, so a device already at its queue maximum is never
+     * written and old snapshots restore nothing.
+     */
+    val storageTuningNodes: Map<String, String>? = null,
+    /**
+     * VM watermark priors: `min_free_kbytes` / `extra_free_kbytes` node → prior KB text, recorded
+     * only where [MemoryTuning] would raise the value. Empty/null means "no headroom" or an
+     * unreadable device fact — the revert then touches nothing.
+     */
+    val memoryTuningNodes: Map<String, String>? = null
 ) {
     fun toJson(): String = gson.toJson(this)
 

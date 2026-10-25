@@ -47,7 +47,6 @@ import com.catsmoker.app.features.gamingtools.tools.overlay.PerformanceOverlayPo
 import com.catsmoker.app.features.gamingtools.tools.overlay.PerformanceOverlayService
 import com.catsmoker.app.system.shell.ShellRunner
 import com.catsmoker.app.shared.util.DisplayMetricsProvider
-import com.catsmoker.app.features.gamingtools.engine.DisplayRefreshRateProvider
 import com.catsmoker.app.shared.util.formatBytes
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -247,13 +246,6 @@ class GamingToolsViewModel @Inject constructor(
         val nativeResolution: DisplayMetricsProvider.Snapshot? = null,
         /** Which API or command produced [nativeResolution], so the numbers stay attributable. */
         val resolutionSource: String = "",
-        /**
-         * What the panel can do, read fresh on sync (modes can change with foldables,
-         * external displays, or driver updates). Null before the first sync; an empty
-         * [DisplayRefreshRateProvider.PanelInfo.ratesHz] means unreadable, never a
-         * stand-in 60 the panel never claimed.
-         */
-        val panelInfo: DisplayRefreshRateProvider.PanelInfo? = null,
         /** The `wm size` / `wm density` override in force, or null when the panel runs natively. */
         val activeOverride: DisplayMetricsProvider.Snapshot? = null,
         val resolutionOptions: List<ResolutionOption> = emptyList(),
@@ -613,10 +605,6 @@ class GamingToolsViewModel @Inject constructor(
         // Developer Options edits the same three settings, so re-read them rather than trusting the
         // value cached when this screen was last open.
         gamingEngine.refreshAnimationScales()
-        // The panel's modes can change under us (foldables, external displays, driver
-        // updates), so the readout is re-read like the resolution snapshot rather than
-        // cached from last time. Plain display queries, no privilege needed.
-        _uiState.update { it.copy(panelInfo = gamingEngine.panelRefreshInfo()) }
         // Data Saver can equally be changed from Settings, so the switch is driven by a fresh read of
         // the policy rather than by whatever this app last did.
         refreshBackgroundDataStatus()

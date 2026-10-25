@@ -34,14 +34,13 @@ object EngineModule {
     fun provideGamingEngine(
         @ApplicationContext context: Context,
         shellRunner: ShellRunner,
-        refreshRates: DisplayRefreshRateProvider,
         backgroundDataRestrictor: BackgroundDataRestrictor,
         gameInterventions: GameInterventions,
         suspendListStore: SuspendListStore,
         suspendExemptStore: SuspendExemptStore,
         refreshController: RefreshRateController
     ): GamingEngine = GamingEngine(
-        context, shellRunner, refreshRates, backgroundDataRestrictor, gameInterventions,
+        context, shellRunner, backgroundDataRestrictor, gameInterventions,
         suspendListStore, suspendExemptStore, refreshController
     )
 }

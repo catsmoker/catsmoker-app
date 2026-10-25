@@ -32,7 +32,7 @@ import java.net.URLEncoder
  */
 data class HsrGraphicsSettings(
     // JSON blob members.
-    var fps: Int = 60,
+    var fps: Int = MAX_FPS,
     var enableVSync: Boolean = true,
     var renderScale: Double = 1.0,
     var resolutionQuality: Int = 3,
@@ -65,6 +65,12 @@ data class HsrGraphicsSettings(
         const val PREFS_KEY = "GraphicsSettings_Model"
 
         /**
+         * The game's highest frame-rate option. The editor offers only this value; the
+         * 30/60 choices were removed under the no-cap rule (2026-09-23).
+         */
+        const val MAX_FPS = 120
+
+        /**
          * The reference's five one-tap tiers, in its order. Names stay code-English like the
          * `qualityName()` family — the sliders already name every step in English in all
          * locales, so translated preset names would be the inconsistent ones.
@@ -74,7 +80,7 @@ data class HsrGraphicsSettings(
         fun fromEncoded(encoded: String): HsrGraphicsSettings? = try {
             val json = JSONObject(URLDecoder.decode(encoded, "UTF-8"))
             HsrGraphicsSettings(
-                fps = json.optInt("FPS", 60),
+                fps = json.optInt("FPS", MAX_FPS),
                 enableVSync = json.optBoolean("EnableVSync", true),
                 renderScale = json.optDouble("RenderScale", 1.0),
                 resolutionQuality = json.optInt("ResolutionQuality", 3),
@@ -272,8 +278,9 @@ data class HsrGraphicsSettings(
 
     /**
      * A copy with one of the reference's five one-tap tiers applied (see
-     * `GraphicsViewModel.applyPreset`, ported field-for-field): all tiers raise, none caps —
-     * Ultra and Max both allow 120 FPS — and `graphicsQuality` drops to 0 (Custom) so the
+     * `GraphicsViewModel.applyPreset`, ported field-for-field): the graphics levers follow the
+     * tier, while the frame-rate field always moves to [MAX_FPS] - no tier caps it - and
+     * `graphicsQuality` drops to 0 (Custom) so the
      * per-slider values survive the game's own preset system. Resolution siblings, the PSO
      * warmup flag and fields the reference leaves alone at a tier ride through untouched;
      * an unknown level returns the copy unchanged rather than inventing a tier.
@@ -282,7 +289,7 @@ data class HsrGraphicsSettings(
         val out = copy(graphicsQuality = 0)
         when (level) {
             0 -> { // Low
-                out.fps = 30
+                out.fps = MAX_FPS
                 out.enableVSync = true
                 out.renderScale = 0.6
                 out.resolutionQuality = 0
@@ -301,7 +308,7 @@ data class HsrGraphicsSettings(
                 out.enableHalfResTransparent = false
             }
             1 -> { // Medium
-                out.fps = 60
+                out.fps = MAX_FPS
                 out.enableVSync = true
                 out.renderScale = 0.8
                 out.resolutionQuality = 1
@@ -318,7 +325,7 @@ data class HsrGraphicsSettings(
                 out.particleTrailSmoothness = 1
             }
             2 -> { // High
-                out.fps = 60
+                out.fps = MAX_FPS
                 out.enableVSync = true
                 out.renderScale = 1.0
                 out.resolutionQuality = 2
@@ -335,7 +342,7 @@ data class HsrGraphicsSettings(
                 out.particleTrailSmoothness = 2
             }
             3 -> { // Ultra
-                out.fps = 120
+                out.fps = MAX_FPS
                 out.enableVSync = false
                 out.renderScale = 1.2
                 out.resolutionQuality = 3
@@ -352,7 +359,7 @@ data class HsrGraphicsSettings(
                 out.particleTrailSmoothness = 3
             }
             4 -> { // Max
-                out.fps = 120
+                out.fps = MAX_FPS
                 out.enableVSync = false
                 out.renderScale = 2.0
                 out.resolutionQuality = 5

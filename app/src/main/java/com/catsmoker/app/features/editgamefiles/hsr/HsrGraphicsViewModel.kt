@@ -422,7 +422,13 @@ class HsrGraphicsViewModel @Inject constructor(
                 null -> _events.emit(HsrEvent.Toast(context.getString(R.string.gf_no_backup_yet), false))
                 is HsrWriteResult.Success -> {
                     _events.emit(HsrEvent.Toast(context.getString(R.string.gf_backup_restored), false))
-                    (gameManager.readCurrentSettings() as? HsrReadResult.Success)?.let { fresh ->
+                    val fresh = gameManager.readCurrentSettings() as? HsrReadResult.Success
+                    if (fresh == null) {
+                        // The restore itself is verified, but the editor could not re-read the
+                        // restored file. Reload from the device rather than leaving pre-restore
+                        // values in the working copy pretending to be what the file holds.
+                        refresh()
+                    } else {
                         settingsHistory.setBaseline(fresh.settings)
                         prefsHistory.setBaseline(fresh.gamePrefs)
                         _uiState.update {

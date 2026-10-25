@@ -15,6 +15,8 @@
     <string name="sys_section_updates">更新</string>
     <string name="sys_updating">正在下载更新…</string>
     <string name="sys_check_updates">检查更新</string>
+    <string name="sys_prerelease">包含预发布版本</string>
+    <string name="sys_prerelease_sub">同时提供 GitHub 测试版。稳定版始终包含在内。</string>
     <string name="sys_auto_check">自动检查更新</string>
     <string name="sys_update_available">有可用更新：%1$s</string>
     <string name="sys_update_prompt">有新版本可用。现在下载并安装吗？</string>

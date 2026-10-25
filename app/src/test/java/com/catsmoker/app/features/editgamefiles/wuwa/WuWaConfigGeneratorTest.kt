@@ -98,7 +98,7 @@ class WuWaConfigGeneratorTest {
     @Test
     fun gameUserSettingsMatchesTheReferenceFormat() {
         val out = WuWaConfigGenerator.generate(
-            "balanced", WuWaConfigGenerator.Options(fps = 90), WuWaConfigGenerator.DeviceInfo(resolution = "1440x3200")
+            "balanced", WuWaConfigGenerator.Options(), WuWaConfigGenerator.DeviceInfo(resolution = "1440x3200")
         )
         val gus = out.gameUserSettings
         assertTrue(gus.contains("[ScalabilityGroups]"))
@@ -107,8 +107,8 @@ class WuWaConfigGeneratorTest {
         assertTrue(gus.contains("[/Script/Engine.GameUserSettings]"))
         assertTrue(gus.contains("ResolutionSizeX=1440"))
         assertTrue(gus.contains("ResolutionSizeY=3200"))
-        assertTrue(gus.contains("FrameRateLimit=90.000000"))
-        assertTrue(gus.contains("FramePace=90"))
+        assertTrue(gus.contains("FrameRateLimit=${WuWaConfigGenerator.MAX_FPS}.000000"))
+        assertTrue(gus.contains("FramePace=${WuWaConfigGenerator.MAX_FPS}"))
         assertTrue(gus.contains("bUseVSync=True"))
     }
 
@@ -165,7 +165,7 @@ class WuWaConfigGeneratorTest {
         assertTrue(on.scalability.contains("[KuroRenderQuality@3]"))
         assertTrue(on.scalability.contains("KuroRenderQuality.LevelName=画质优先"))
         assertTrue(on.hardware.contains("DeviceProfileName=Android_Mid"))
-        assertTrue(on.hardware.contains("FramePace=60"))
+        assertTrue(on.hardware.contains("FramePace=${WuWaConfigGenerator.MAX_FPS}"))
     }
 
     @Test
@@ -284,7 +284,7 @@ class WuWaConfigGeneratorTest {
     @Test
     fun thermalSectionPinsMaxFpsWhenAutoAdjustIsOff() {
         val out = WuWaConfigGenerator.generate(
-            "balanced", WuWaConfigGenerator.Options(disableAutoAdjust = true, fps = 120), noDevice
+            "balanced", WuWaConfigGenerator.Options(disableAutoAdjust = true), noDevice
         )
         assertTrue(out.engine.contains("t.MaxFPS=120"))
         assertTrue(out.engine.contains("r.Kuro.AutoCoolEnable=0"))

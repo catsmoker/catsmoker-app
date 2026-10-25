@@ -21,6 +21,7 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.catsmoker.app.R
 import com.catsmoker.app.features.gamingtools.ui.CollapsibleExplainer
+import com.catsmoker.app.shared.ui.components.ChipFlowRow
 import com.catsmoker.app.shared.ui.components.ScreenScaffold
 import com.catsmoker.app.shared.ui.components.SectionCard
 import com.catsmoker.app.shared.ui.theme.CatsmokerTheme
@@ -97,6 +98,10 @@ fun HsrGraphicsScreen(
     onShowAnyway: () -> Unit = {},
     onBack: (() -> Unit)? = null
 ) {
+    // Restoring replaces the live file with the newest backup, which discards any unsaved edits
+    // in either working copy. Ask first instead of letting a mis-tap throw them away silently.
+    var showRestoreConfirm by remember { mutableStateOf(false) }
+
     // One body, two hosts: standalone (own ScreenScaffold header + scroll) or embedded in File
     // Engineering's selector, where the host already scrolled and padded the page — a second
     // header would double it, and a nested verticalScroll measured under the host's infinite
@@ -148,14 +153,18 @@ fun HsrGraphicsScreen(
                     SectionCard {
                         Text(stringResource(R.string.gf_frame_rate), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary, letterSpacing = 1.sp)
                         Spacer(modifier = Modifier.height(8.dp))
-                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                            listOf(30, 60, 120).forEach { fps ->
-                                FilterChip(
-                                    selected = settings.fps == fps,
-                                    onClick = { onUpdate { it.copy(fps = fps, graphicsQuality = 0) } },
-                                    label = { Text("$fps FPS") }
-                                )
-                            }
+                        ChipFlowRow {
+                            // One option only: the game's highest. Lower choices would write a
+                            // new FPS ceiling, which the no-cap rule forbids.
+                            FilterChip(
+                                selected = settings.fps == HsrGraphicsSettings.MAX_FPS,
+                                onClick = {
+                                    onUpdate {
+                                        it.copy(fps = HsrGraphicsSettings.MAX_FPS, graphicsQuality = 0)
+                                    }
+                                },
+                                label = { Text("${HsrGraphicsSettings.MAX_FPS} FPS") }
+                            )
                         }
                         Spacer(modifier = Modifier.height(8.dp))
                         Text(
@@ -260,7 +269,7 @@ fun HsrGraphicsScreen(
                     SectionCard {
                         Text(stringResource(R.string.gf_hsr_preset_title), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary, letterSpacing = 1.sp)
                         Spacer(modifier = Modifier.height(8.dp))
-                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        ChipFlowRow {
                             HsrGraphicsSettings.GRAPHICS_PRESET_NAMES.forEachIndexed { level, name ->
                                 FilterChip(
                                     selected = false,
@@ -365,7 +374,7 @@ fun HsrGraphicsScreen(
                     SectionCard {
                         Text(stringResource(R.string.gf_anti_aliasing), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary, letterSpacing = 1.sp)
                         Spacer(modifier = Modifier.height(8.dp))
-                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        ChipFlowRow {
                             listOf(0 to stringResource(R.string.gf_off), 1 to "TAA", 2 to "FXAA").forEach { (mode, name) ->
                                 FilterChip(
                                     selected = settings.aaMode == mode,
@@ -382,7 +391,9 @@ fun HsrGraphicsScreen(
                     SectionCard {
                         Text(stringResource(R.string.gf_res_decoupling), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary, letterSpacing = 1.sp)
                         Spacer(modifier = Modifier.height(8.dp))
-                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        // Five presets in a fixed Row used to clip the last one on narrow
+                        // screens, which read as an unexplained mystery control. Wrap instead.
+                        ChipFlowRow {
                             listOf("360p", "720p", "1080p", "1440p", "4K").forEach { preset ->
                                 FilterChip(
                                     selected = settings.resolutionPreset() == preset,
@@ -396,6 +407,12 @@ fun HsrGraphicsScreen(
                                 )
                             }
                         }
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(
+                            stringResource(R.string.gf_hsr_res_presets_note),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
                         Spacer(modifier = Modifier.height(4.dp))
                         Text(
                             stringResource(R.string.gf_hsr_current_res, settings.screenWidth, settings.screenHeight),
@@ -419,7 +436,9 @@ fun HsrGraphicsScreen(
                     CatsmokerButton(
                         onClick = onApply,
                         modifier = Modifier.fillMaxWidth(),
-                        enabled = !uiState.applying
+                        // Nothing pending means the only effect of Apply would be force-stopping
+                        // the game to rewrite identical bytes. Say that instead of doing it.
+                        enabled = !uiState.applying && uiState.settingsDirty
                     ) {
                         if (uiState.applying) {
                             CircularProgressIndicator(modifier = Modifier.size(18.dp), strokeWidth = 2.dp, color = Color.Black)
@@ -428,6 +447,14 @@ fun HsrGraphicsScreen(
                         } else {
                             Text(stringResource(R.string.gf_apply_to_game))
                         }
+                    }
+                    if (!uiState.settingsDirty && !uiState.applying) {
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(
+                            stringResource(R.string.gf_no_pending_changes),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
                     }
                     // Undo/redo for the graphics working copy above. No-ops when empty, so the
                     // buttons disable instead of running an edit that edits nothing; the dirty
@@ -444,9 +471,25 @@ fun HsrGraphicsScreen(
                     )
                     if (uiState.hasBackup) {
                         Spacer(modifier = Modifier.height(8.dp))
-                        CatsmokerOutlinedButton(onClick = onRestoreBackup, modifier = Modifier.fillMaxWidth(), enabled = !uiState.applying) {
+                        CatsmokerOutlinedButton(
+                            onClick = {
+                                if (uiState.settingsDirty || uiState.prefsDirty) {
+                                    showRestoreConfirm = true
+                                } else {
+                                    onRestoreBackup()
+                                }
+                            },
+                            modifier = Modifier.fillMaxWidth(),
+                            enabled = !uiState.applying
+                        ) {
                             Text(stringResource(R.string.gf_restore_last_backup))
                         }
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(
+                            stringResource(R.string.gf_restore_backup_note),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
                     }
 
                     // QoL preferences live in keys this flat file never had — writing them
@@ -549,7 +592,7 @@ fun HsrGraphicsScreen(
                         CatsmokerButton(
                             onClick = onApplyPrefs,
                             modifier = Modifier.fillMaxWidth(),
-                            enabled = !uiState.applyingPrefs
+                            enabled = !uiState.applyingPrefs && uiState.prefsDirty
                         ) {
                             if (uiState.applyingPrefs) {
                                 CircularProgressIndicator(modifier = Modifier.size(18.dp), strokeWidth = 2.dp, color = Color.Black)
@@ -558,6 +601,14 @@ fun HsrGraphicsScreen(
                             } else {
                                 Text(stringResource(R.string.gf_apply_prefs))
                             }
+                        }
+                        if (!uiState.prefsDirty && !uiState.applyingPrefs) {
+                            Spacer(modifier = Modifier.height(4.dp))
+                            Text(
+                                stringResource(R.string.gf_no_pending_changes),
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
                         }
                     }
                     }
@@ -569,6 +620,27 @@ fun HsrGraphicsScreen(
                     HsrLoadFailureCard(uiState.loadFailure, onRefresh, onShowAnyway = null)
             }
         }
+    }
+
+    if (showRestoreConfirm) {
+        AlertDialog(
+            onDismissRequest = { showRestoreConfirm = false },
+            title = { Text(stringResource(R.string.gf_restore_confirm_title)) },
+            text = { Text(stringResource(R.string.gf_restore_confirm_body)) },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        showRestoreConfirm = false
+                        onRestoreBackup()
+                    }
+                ) { Text(stringResource(R.string.gf_restore_last_backup)) }
+            },
+            dismissButton = {
+                TextButton(onClick = { showRestoreConfirm = false }) {
+                    Text(stringResource(R.string.gf_cancel))
+                }
+            }
+        )
     }
 
     if (onBack == null) {

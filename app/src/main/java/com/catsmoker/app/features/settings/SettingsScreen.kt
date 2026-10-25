@@ -85,6 +85,7 @@ fun SettingsRoute(
         removeAdsPrice = uiState.removeAdsPrice,
         isBillingWorking = uiState.isBillingWorking,
         autoCheck = uiState.autoCheck,
+        isPreRelease = uiState.isPreRelease,
         isUpdating = uiState.isUpdating,
         updateProgress = uiState.updateProgress,
         themeMode = uiState.themeMode,
@@ -92,6 +93,7 @@ fun SettingsRoute(
         onAdsToggled = viewModel::onAdsToggled,
         onRemoveAdsClicked = { activity?.let(viewModel::onRemoveAdsClicked) },
         onAutoCheckToggled = viewModel::onAutoCheckToggled,
+        onPreReleaseToggled = viewModel::onPreReleaseToggled,
         onThemeModeChanged = viewModel::onThemeModeChanged,
         onLanguageChanged = viewModel::onLanguageChanged,
         onOpenPermissions = onOpenPermissions,
@@ -131,6 +133,7 @@ fun SettingsScreen(
     removeAdsPrice: String?,
     isBillingWorking: Boolean,
     autoCheck: Boolean,
+    isPreRelease: Boolean,
     isUpdating: Boolean,
     updateProgress: Float,
     themeMode: AppearanceStore.ThemeMode,
@@ -138,6 +141,7 @@ fun SettingsScreen(
     onAdsToggled: (Boolean) -> Unit,
     onRemoveAdsClicked: () -> Unit,
     onAutoCheckToggled: (Boolean) -> Unit,
+    onPreReleaseToggled: (Boolean) -> Unit,
     onThemeModeChanged: (AppearanceStore.ThemeMode) -> Unit,
     onLanguageChanged: (String) -> Unit,
     onOpenPermissions: () -> Unit,
@@ -232,6 +236,14 @@ fun SettingsScreen(
                     }
                     HorizontalDivider(modifier = Modifier.padding(vertical = 12.dp), thickness = 0.5.dp, color = MaterialTheme.colorScheme.outlineVariant)
                     SettingsToggle(stringResource(R.string.sys_auto_check), autoCheck, onAutoCheckToggled)
+                    HorizontalDivider(modifier = Modifier.padding(vertical = 12.dp), thickness = 0.5.dp, color = MaterialTheme.colorScheme.outlineVariant)
+                    SettingsToggle(stringResource(R.string.sys_prerelease), isPreRelease, onPreReleaseToggled)
+                    Text(
+                        stringResource(R.string.sys_prerelease_sub),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.padding(top = 4.dp)
+                    )
                 }
             }
 
@@ -407,6 +419,7 @@ fun SettingsPreview() {
             removeAdsPrice = null,
             isBillingWorking = false,
             autoCheck = false,
+            isPreRelease = false,
             isUpdating = false,
             updateProgress = 0f,
             themeMode = AppearanceStore.ThemeMode.SYSTEM,
@@ -414,6 +427,7 @@ fun SettingsPreview() {
             onAdsToggled = {},
             onRemoveAdsClicked = {},
             onAutoCheckToggled = {},
+            onPreReleaseToggled = {},
             onThemeModeChanged = {},
             onLanguageChanged = {},
             onOpenPermissions = {},

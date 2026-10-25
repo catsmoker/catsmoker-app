@@ -41,6 +41,33 @@ data class GameProfile(
     val preserveDeviceProfileBackup: Boolean = false
 )
 
+/**
+ * One genuinely supported custom-file destination for a game.
+ *
+ * The file type is selected first; [directory] and [fileName] then resolve the destination
+ * automatically for the selected game variant. That keeps the upload UI from asking a beginner
+ * to know the package-specific `Android/data/<package>/...` tree, while still naming the path
+ * in the confirmation copy.
+ */
+enum class GameUploadFormat {
+    /** UE4 GVAS save, starting with the `GVAS` magic. */
+    GVAS_SAVE,
+
+    /** PUBG `UserCustom.ini`; imported active section, destination's backup tail preserved. */
+    USER_CUSTOM_INI
+}
+
+data class GameUploadTarget(
+    @StringRes val labelRes: Int,
+    val fileName: String,
+    /** Directory below external storage, with leading and trailing slash. */
+    val directory: String,
+    val format: GameUploadFormat
+) {
+    fun destination(externalStoragePath: String): String =
+        externalStoragePath + directory + fileName
+}
+
 data class GameConfig(
     val packageName: String,
     val saveDir: String,
@@ -85,6 +112,12 @@ data class GameConfig(
      * and the section is hidden for it.
      */
     val allowCustomUpload: Boolean = false,
+    /**
+     * The supported custom-file types for this game, in display order. Empty for configs
+     * that do not accept a dropped-in file. PUBG-family entries carry both `Active.sav` and
+     * `UserCustom.ini`; each target resolves its own package-specific destination.
+     */
+    val uploadTargets: List<GameUploadTarget> = emptyList(),
     /**
      * Whether the screen shows the inline save editor for this game — read-modify-write of the
      * fields the save already carries, rather than pushing a bundled file over it.

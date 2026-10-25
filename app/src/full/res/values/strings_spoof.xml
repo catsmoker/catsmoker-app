@@ -4,20 +4,26 @@
     <string name="spoof_home_subtitle">Device identity and root masking suite.</string>
     <string name="spoof_home_status">Environment Status</string>
     <string name="spoof_home_root">Root Access</string>
+    <string name="spoof_root_provider_none">No root access detected.</string>
+    <string name="spoof_root_provider_unknown">Root access available, provider not identified.</string>
+    <string name="spoof_root_provider_magisk">Magisk root detected.</string>
+    <string name="spoof_root_provider_kernelsu">KernelSU root detected.</string>
+    <string name="spoof_root_provider_apatch">APatch root detected.</string>
+    <string name="spoof_root_provider_multiple">Multiple root providers detected: %1$s.</string>
+    <string name="spoof_root_name_magisk">Magisk</string>
+    <string name="spoof_root_name_kernelsu">KernelSU</string>
+    <string name="spoof_root_name_apatch">APatch</string>
     <string name="spoof_home_lsposed_on">Xposed Module Active</string>
     <string name="spoof_home_lsposed_off">Xposed Module Not Loaded</string>
-    <!-- Vector activation evidence (framework · manager state · scope). -->
-    <string name="spoof_home_xposed_detail">%1$s · %2$s · %3$s</string>
-    <string name="spoof_home_xposed_enabled">enabled</string>
-    <string name="spoof_home_xposed_disabled">disabled</string>
-    <string name="spoof_home_xposed_unknown">state unknown</string>
-    <string name="spoof_home_xposed_scope">%1$d apps in scope</string>
+    <!-- Vector activation evidence (framework, manager state, observed load). -->
+    <string name="spoof_home_xposed_active_detail">%1$s enabled for apps in scope</string>
+    <string name="spoof_home_xposed_disabled_detail">%1$s disabled</string>
+    <string name="spoof_home_xposed_unknown_detail">%1$s manager state unknown</string>
     <string name="spoof_home_xposed_nopriv">Framework check needs root — nothing below was verified</string>
     <string name="spoof_home_xposed_nofw">No Xposed framework found</string>
     <string name="spoof_home_lsposed_unverified">Enabled — load not verified</string>
-    <string name="spoof_home_xposed_loaded">Loaded into: %1$s</string>
+    <string name="spoof_home_xposed_loads_seen">Target loads observed</string>
     <string name="spoof_home_xposed_load_pending">No target load observed yet</string>
-    <string name="spoof_home_xposed_spoofed">Spoof verified: %1$s</string>
     <string name="spoof_home_management">Management</string>
     <string name="spoof_home_advanced">Advanced Tools</string>
     <string name="spoof_menu_profiles">Profiles</string>
@@ -34,17 +40,25 @@
     <string name="spoof_root_manager_title">Open Root Manager</string>
     <string name="spoof_root_manager_desc">Access Magisk/KernelSU/APatch.</string>
     <string name="spoof_root_manager_need">Needs root access.</string>
-    <!-- Method exclusivity: Xposed hooks vs generated Magisk module -->
-    <string name="spoof_method_magisk_installed">Magisk module installed</string>
-    <string name="spoof_method_magisk_disabled">Magisk module disabled</string>
-    <string name="spoof_method_magisk_absent">No Magisk module</string>
-    <string name="spoof_method_magisk_unknown">Magisk module state unknown (needs root to check)</string>
+    <!-- Method exclusivity: Xposed hooks vs generated Catsmoker module -->
+    <string name="spoof_method_magisk_installed">Catsmoker module installed</string>
+    <string name="spoof_method_magisk_installed_sub">Installed and enabled in your root manager; it applies identity at boot.</string>
+    <string name="spoof_method_magisk_disabled">Catsmoker module disabled</string>
+    <string name="spoof_method_magisk_disabled_sub">Installed but disabled in your root manager, so it changes nothing.</string>
+    <string name="spoof_method_magisk_absent">No module installed</string>
+    <string name="spoof_method_magisk_absent_sub">No separately installed Catsmoker module was found on this device.</string>
+    <string name="spoof_method_magisk_unknown">Module state unknown (needs root to check)</string>
+    <string name="spoof_method_magisk_unknown_sub">Grant root to check whether a separately installed Catsmoker module exists.</string>
     <string name="spoof_method_conflict_title">Two spoofing methods at once</string>
-    <string name="spoof_method_conflict_body">The Xposed module is loaded and a Magisk spoof module is installed. Both rewrite device identity — use only one method so games never see conflicting values.</string>
-    <string name="spoof_method_confirm_assign_title">Assign with Magisk module installed?</string>
-    <string name="spoof_method_confirm_assign_body">A Magisk spoof module is installed and applies device-wide. Assigning an Xposed profile too means two methods rewrite identity. Continue anyway?</string>
+    <string name="spoof_method_conflict_body">The Catsmoker module is installed and Vector has our integration enabled. Both rewrite device identity, so Catsmoker disables only its own Vector integration through Vector\'s CLI and then verifies the manager row. Games already running keep the old injection until they restart.</string>
+    <string name="spoof_method_conflict_failed">The Vector manager still reports our integration enabled. Nothing else was changed.</string>
+    <string name="spoof_method_conflict_retry">RETRY DISABLE</string>
+    <string name="spoof_method_conflict_disabled">Catsmoker module installed — Vector integration disabled and verified.</string>
+    <string name="spoof_method_conflict_disable_failed">Could not verify the Vector integration was disabled. Open Vector and disable Catsmoker\'s module there, then refresh.</string>
+    <string name="spoof_method_confirm_assign_title">Assign with Catsmoker module installed?</string>
+    <string name="spoof_method_confirm_assign_body">The separately installed Catsmoker module applies identity device-wide. Assigning an Xposed profile too means two methods rewrite identity. Catsmoker will disable its Vector integration after the module is installed and verified; continue?</string>
     <string name="spoof_method_confirm_generate_title">Generate while Xposed is in use?</string>
-    <string name="spoof_method_confirm_generate_body">Xposed profiles are assigned or the module is loaded. A Magisk module would apply a second identity device-wide. Continue anyway?</string>
+    <string name="spoof_method_confirm_generate_body">Xposed profiles are assigned or the module is loaded. The generated module only takes effect after you flash it and reboot; once it is installed, Catsmoker will disable only its own Vector integration so the two never stay active together. Continue?</string>
     <string name="spoof_method_use_anyway">Use anyway</string>
     <!-- Profiles list -->
     <string name="spoof_profiles_title">Spoof Profiles</string>
@@ -141,6 +155,8 @@
     <string name="spoof_safe_version">Keep Android version real</string>
     <!-- Diagnostics -->
     <string name="spoof_diag_subtitle">Current device identity (spoofed or real).</string>
+    <string name="spoof_diag_copy">Copy diagnostics</string>
+    <string name="spoof_diag_copied">Diagnostics copied</string>
     <string name="spoof_diag_hardware">Hardware</string>
     <string name="spoof_diag_software">Software</string>
     <string name="spoof_diag_system">System</string>

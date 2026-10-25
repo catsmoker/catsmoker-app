@@ -26,7 +26,7 @@ class HsrGraphicsPresetTest {
     fun lowPresetMatchesTheReference() {
         val out = HsrGraphicsSettings().withGraphicsPreset(0)
         assertEquals(0, out.graphicsQuality)
-        assertEquals(30, out.fps)
+        assertEquals(HsrGraphicsSettings.MAX_FPS, out.fps)
         assertEquals(true, out.enableVSync)
         assertEquals(0.6, out.renderScale, 1e-9)
         assertEquals(0, out.resolutionQuality)
@@ -65,7 +65,7 @@ class HsrGraphicsPresetTest {
     @Test
     fun middlePresetsMatchTheReference() {
         val medium = HsrGraphicsSettings().withGraphicsPreset(1)
-        assertEquals(60, medium.fps)
+        assertEquals(HsrGraphicsSettings.MAX_FPS, medium.fps)
         assertEquals(0.8, medium.renderScale, 1e-9)
         assertEquals(1, medium.resolutionQuality)
         assertEquals(2, medium.sfxQuality)
@@ -73,7 +73,7 @@ class HsrGraphicsPresetTest {
         assertEquals(1, medium.particleTrailSmoothness)
 
         val high = HsrGraphicsSettings().withGraphicsPreset(2)
-        assertEquals(60, high.fps)
+        assertEquals(HsrGraphicsSettings.MAX_FPS, high.fps)
         assertEquals(1.0, high.renderScale, 1e-9)
         assertEquals(2, high.resolutionQuality)
         assertEquals(1, high.enableSelfShadow)
@@ -111,7 +111,7 @@ class HsrGraphicsPresetTest {
     fun pendingGraphicsFieldsListsOnlyWhatChanged() {
         val base = HsrGraphicsSettings()
         assertTrue(pendingGraphicsFields(base, base.copy()).isEmpty())
-        val changed = base.copy(fps = 120, shadowQuality = 5)
+        val changed = base.copy(fps = 30, shadowQuality = 5)
         assertEquals(setOf("fps", "shadowQuality"), pendingGraphicsFields(base, changed).toSet())
     }
 

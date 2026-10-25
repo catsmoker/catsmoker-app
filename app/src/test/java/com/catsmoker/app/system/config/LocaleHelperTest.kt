@@ -25,6 +25,8 @@ class LocaleHelperTest {
         assertEquals("es", LocaleHelper.normalizeTag("es-ES"))
         assertEquals("zh-CN", LocaleHelper.normalizeTag("zh-TW"))
         assertEquals("zh-CN", LocaleHelper.normalizeTag("zh-CN"))
+        assertEquals("pt-BR", LocaleHelper.normalizeTag("pt-PT"))
+        assertEquals("pt-BR", LocaleHelper.normalizeTag("pt"))
     }
 
     @Test
@@ -33,6 +35,7 @@ class LocaleHelperTest {
         assertEquals("en", LocaleHelper.normalizeTag("en"))
         assertEquals("es", LocaleHelper.normalizeTag("es"))
         assertEquals("zh-CN", LocaleHelper.normalizeTag("zh-CN"))
+        assertEquals("pt-BR", LocaleHelper.normalizeTag("pt-BR"))
     }
 
     @Test

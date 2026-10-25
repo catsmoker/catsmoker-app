@@ -62,6 +62,12 @@ import com.catsmoker.app.shared.util.DisplayMetricsProvider
 import com.catsmoker.app.shared.util.formatBytes
 import com.catsmoker.app.shared.ui.theme.CatsmokerTheme
 
+/** How many library rows a collapsed "Your Games" list shows. */
+private const val GAME_LIBRARY_PREVIEW = 6
+
+/** Below this many games, search would be clutter rather than help. */
+private const val GAME_SEARCH_THRESHOLD = 8
+
 @Composable
 fun GamingToolsRoute(onBack: () -> Unit) {
     val viewModel: GamingToolsViewModel = hiltViewModel()
@@ -265,6 +271,11 @@ fun GamingToolsRoute(onBack: () -> Unit) {
         onResOptionSelected = viewModel::onResOptionSelected,
         onApplyResolution = viewModel::applyResolutionChanges,
         onResetResolution = viewModel::resetResolutionChanges,
+        onWidthPresetNameChange = viewModel::onWidthPresetNameChange,
+        onWidthPresetDpChange = viewModel::onWidthPresetDpChange,
+        onSaveWidthPreset = viewModel::saveWidthPreset,
+        onApplyWidthPreset = viewModel::applyWidthPreset,
+        onDeleteWidthPreset = viewModel::deleteWidthPreset,
 
         onBack = onBack,
         onSync = {
@@ -445,6 +456,11 @@ fun GamingToolsScreen(
     onResOptionSelected: (String) -> Unit,
     onApplyResolution: () -> Unit,
     onResetResolution: () -> Unit,
+    onWidthPresetNameChange: (String) -> Unit,
+    onWidthPresetDpChange: (String) -> Unit,
+    onSaveWidthPreset: () -> Unit,
+    onApplyWidthPreset: (WidthPresetStore.WidthPreset) -> Unit,
+    onDeleteWidthPreset: (String) -> Unit,
 
     onBack: () -> Unit,
     onSync: () -> Unit,
@@ -460,6 +476,8 @@ fun GamingToolsScreen(
     LaunchedEffect(Unit) { onSync() }
 
     val hasPrivilege = uiState.isRooted || uiState.isShizukuActive
+    var gameQuery by remember { mutableStateOf("") }
+    var showAllGames by remember { mutableStateOf(false) }
 
     ScreenScaffold(
         title = stringResource(R.string.Gaming_tools_title),
@@ -469,19 +487,12 @@ fun GamingToolsScreen(
         Column(
             modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(bottom = 32.dp)
         ) {
-            // Compact automatic-gaming-mode row directly above the library, so the
-            // relationship reads top-down: Automatic Gaming Mode -> Your Games.
-            AutoGameSessionRow(
-                active = uiState.isGameSessionActive,
-                enabled = uiState.games.isNotEmpty(),
-                onToggle = onToggleGameSession
-            )
-            Spacer(modifier = Modifier.height(16.dp))
             // Library: vertical full-width cards. A LazyRow clipped the first/last card
             // edges (no content padding, fixed 140dp widths, horizontal scroll bounds),
             // so every card now fills the available width with its shape drawn by the
             // Surface itself — fully visible on phones, tablets, portrait and landscape
-            // with no horizontal scrolling.
+            // with no horizontal scrolling. With many installed games the list is capped and
+            // searchable; both only use data the library actually has (name/package).
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
                 Text(stringResource(R.string.gt_section_your_library), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 IconButton(onClick = onAddGameClicked, modifier = Modifier.size(24.dp)) {
@@ -499,18 +510,61 @@ fun GamingToolsScreen(
                     Text(stringResource(R.string.gt_no_games_detected), color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 13.sp)
                 }
             } else {
-                Column(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    uiState.games.forEach { game ->
-                        GameLibraryCard(
-                            game,
-                            onLaunchGame,
-                            onRemoveGame,
-                            onOptimizeGame,
-                            isOptimizing = uiState.optimizingGamePkg == game.packageName
-                        )
+                if (uiState.games.size >= GAME_SEARCH_THRESHOLD) {
+                    OutlinedTextField(
+                        value = gameQuery,
+                        onValueChange = {
+                            gameQuery = it
+                            showAllGames = false
+                        },
+                        label = { Text(stringResource(R.string.gt_library_search)) },
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                }
+                val matchingGames = remember(uiState.games, gameQuery) {
+                    val sorted = uiState.games.sortedBy { it.appName.lowercase() }
+                    if (gameQuery.isBlank()) sorted
+                    else sorted.filter {
+                        it.appName.contains(gameQuery, ignoreCase = true) ||
+                            it.packageName.contains(gameQuery, ignoreCase = true)
+                    }
+                }
+                if (matchingGames.isEmpty()) {
+                    Box(modifier = Modifier.fillMaxWidth().height(60.dp), contentAlignment = Alignment.Center) {
+                        Text(stringResource(R.string.gt_library_no_match), color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 13.sp)
+                    }
+                } else {
+                    val visibleGames =
+                        if (showAllGames) matchingGames else matchingGames.take(GAME_LIBRARY_PREVIEW)
+                    Column(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        visibleGames.forEach { game ->
+                            GameLibraryCard(
+                                game,
+                                onLaunchGame,
+                                onRemoveGame,
+                                onOptimizeGame,
+                                isOptimizing = uiState.optimizingGamePkg == game.packageName
+                            )
+                        }
+                    }
+                    if (matchingGames.size > GAME_LIBRARY_PREVIEW) {
+                        TextButton(
+                            onClick = { showAllGames = !showAllGames },
+                            modifier = Modifier.align(Alignment.CenterHorizontally)
+                        ) {
+                            Text(
+                                stringResource(
+                                    if (showAllGames) R.string.gt_library_show_less
+                                    else R.string.gt_library_show_all,
+                                    matchingGames.size
+                                )
+                            )
+                        }
                     }
                 }
             }
@@ -530,7 +584,10 @@ fun GamingToolsScreen(
                 isActive = isActive,
                 isBusy = isBusy,
                 onActivate = onActivateGamingMode,
-                onDeactivate = onDeactivateGamingMode
+                onDeactivate = onDeactivateGamingMode,
+                sessionActive = uiState.isGameSessionActive,
+                sessionEnabled = uiState.games.isNotEmpty(),
+                onToggleSession = onToggleGameSession
             )
             Spacer(modifier = Modifier.height(12.dp))
             FixedPerformanceModeCard(
@@ -631,6 +688,14 @@ fun GamingToolsScreen(
                         onOptionSelected = onResOptionSelected,
                         onWidthChange = onResWidthChange, onHeightChange = onResHeightChange, onDpiChange = onResDpiChange,
                         onApply = onApplyResolution, onReset = onResetResolution,
+                        widthPresets = uiState.widthPresets,
+                        widthPresetName = uiState.widthPresetName,
+                        widthPresetDp = uiState.widthPresetDp,
+                        onWidthPresetNameChange = onWidthPresetNameChange,
+                        onWidthPresetDpChange = onWidthPresetDpChange,
+                        onSaveWidthPreset = onSaveWidthPreset,
+                        onApplyWidthPreset = onApplyWidthPreset,
+                        onDeleteWidthPreset = onDeleteWidthPreset,
                         downscale = interventionDownscale,
                         onDownscaleChange = onSetInterventionDownscale,
                         pointerSpeed = pointerSpeedChoice,
@@ -878,36 +943,6 @@ fun GameLibraryCard(
     }
 }
 
-/**
- * Compact automatic-gaming-mode row shown directly above Your Games.
- *
- * No card background and no description: the name plus the existing toggle only.
- * The text takes the available width ([weight]) so the switch is never pushed
- * off-screen or clipped on narrow phones; no fixed widths are used.
- */
-@Composable
-private fun AutoGameSessionRow(
-    active: Boolean,
-    enabled: Boolean,
-    onToggle: (Boolean) -> Unit
-) {
-    Row(
-        modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Text(
-            text = stringResource(R.string.gt_session_title),
-            style = MaterialTheme.typography.bodyLarge,
-            fontWeight = FontWeight.Medium,
-            color = if (enabled) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.weight(1f).padding(end = 8.dp),
-            maxLines = 2,
-            overflow = TextOverflow.Ellipsis
-        )
-        Switch(checked = active, onCheckedChange = onToggle, enabled = enabled)
-    }
-}
-
 @Composable
 fun FeatureToggleCard(title: String, subtitle: String, icon: ImageVector, checked: Boolean, enabled: Boolean = true, onCheckedChange: (Boolean) -> Unit) {
     SectionCard(enabled = enabled) {
@@ -1002,6 +1037,17 @@ fun ResolutionChangerContent(
     onOptionSelected: (String) -> Unit,
     onWidthChange: (String) -> Unit, onHeightChange: (String) -> Unit, onDpiChange: (String) -> Unit,
     onApply: () -> Unit, onReset: () -> Unit,
+    /** Named smallest-width presets, in save order. */
+    widthPresets: List<WidthPresetStore.WidthPreset>,
+    /** Name typed for the next width preset. */
+    widthPresetName: String,
+    /** Width in dp typed for the next width preset. */
+    widthPresetDp: String,
+    onWidthPresetNameChange: (String) -> Unit,
+    onWidthPresetDpChange: (String) -> Unit,
+    onSaveWidthPreset: () -> Unit,
+    onApplyWidthPreset: (WidthPresetStore.WidthPreset) -> Unit,
+    onDeleteWidthPreset: (String) -> Unit,
     /** Render scale for the next Gaming Mode activation, or null for full resolution. */
     downscale: Float?,
     /** Chooses the render scale; takes effect on the next activation, never mid-session. */
@@ -1163,10 +1209,24 @@ fun ResolutionChangerContent(
                 modifier = Modifier.weight(0.6f)
             ) { Text(stringResource(R.string.gt_res_reset)) }
         }
-        // Width presets and the panel-refresh readout used to live here. They were
-        // removed from this card; the preset store, the refresh-rate provider and
-        // their tests are untouched for any other use.
-        //
+        // Width presets: a named width in dp, applied through the same confirmed
+        // density-only path as a typed change. The panel keeps its native pixel
+        // size, so the aspect ratio cannot drift; the store refuses values outside
+        // the `wm density` clamp.
+        Spacer(modifier = Modifier.height(8.dp))
+        HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+        Spacer(modifier = Modifier.height(16.dp))
+        WidthPresetLibrary(
+            presets = widthPresets,
+            name = widthPresetName,
+            widthDp = widthPresetDp,
+            canWrite = channel != null && !isApplying,
+            onNameChange = onWidthPresetNameChange,
+            onWidthDpChange = onWidthPresetDpChange,
+            onSave = onSaveWidthPreset,
+            onApply = onApplyWidthPreset,
+            onDelete = onDeleteWidthPreset
+        )
         // Next-activation tuning, kept with the resolution controls it relates to.
         // Render scale lowers the game's internal render resolution (the display
         // override above is untouched); touch speed only changes the pointer speed.
@@ -1200,6 +1260,91 @@ fun ResolutionChangerContent(
                             color = logLineColor(line)
                         )
                     }
+                }
+            }
+        }
+    }
+}
+
+/**
+ * Named smallest-width preset library (M67).
+ *
+ * A preset stores a width in dp, never a resolution: applying it keeps the panel's
+ * native pixel size and moves only the density, so the aspect ratio cannot drift.
+ * The save button is always available (the store refuses blank names and values
+ * outside the `wm density` clamp); Apply is gated on a write channel, the same
+ * rule the resolution buttons use.
+ */
+@Composable
+private fun WidthPresetLibrary(
+    presets: List<WidthPresetStore.WidthPreset>,
+    name: String,
+    widthDp: String,
+    canWrite: Boolean,
+    onNameChange: (String) -> Unit,
+    onWidthDpChange: (String) -> Unit,
+    onSave: () -> Unit,
+    onApply: (WidthPresetStore.WidthPreset) -> Unit,
+    onDelete: (String) -> Unit
+) {
+    Column(modifier = Modifier.fillMaxWidth()) {
+        Text(
+            stringResource(R.string.gt_preset_width_title),
+            fontSize = 13.sp,
+            fontWeight = FontWeight.Bold,
+            color = MaterialTheme.colorScheme.onSurface
+        )
+        Spacer(modifier = Modifier.height(8.dp))
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            OutlinedTextField(
+                value = name,
+                onValueChange = onNameChange,
+                label = { Text(stringResource(R.string.gt_preset_name)) },
+                singleLine = true,
+                modifier = Modifier.weight(1f)
+            )
+            OutlinedTextField(
+                value = widthDp,
+                onValueChange = onWidthDpChange,
+                label = { Text(stringResource(R.string.gt_preset_width_dp)) },
+                singleLine = true,
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                modifier = Modifier.weight(0.6f)
+            )
+        }
+        Spacer(modifier = Modifier.height(8.dp))
+        CatsmokerOutlinedButton(onClick = onSave, modifier = Modifier.fillMaxWidth()) {
+            Text(stringResource(R.string.gt_preset_width_save))
+        }
+        if (presets.isEmpty()) {
+            Text(
+                stringResource(R.string.gt_preset_empty),
+                fontSize = 11.sp,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(vertical = 4.dp)
+            )
+        }
+        presets.forEach { preset ->
+            Row(
+                modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(preset.name, color = MaterialTheme.colorScheme.onSurface, fontSize = 13.sp)
+                    Text(
+                        "${preset.widthDp} dp",
+                        fontSize = 10.sp,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+                TextButton(onClick = { onApply(preset) }, enabled = canWrite) {
+                    Text(stringResource(R.string.gt_preset_apply))
+                }
+                TextButton(onClick = { onDelete(preset.id) }) {
+                    Text(stringResource(R.string.gt_preset_delete))
                 }
             }
         }
@@ -3646,6 +3791,11 @@ fun GamingToolsPreview() {
             onResOptionSelected = {},
             onApplyResolution = {},
             onResetResolution = {},
+            onWidthPresetNameChange = {},
+            onWidthPresetDpChange = {},
+            onSaveWidthPreset = {},
+            onApplyWidthPreset = {},
+            onDeleteWidthPreset = {},
             onBack = {},
             onSync = {}
         )

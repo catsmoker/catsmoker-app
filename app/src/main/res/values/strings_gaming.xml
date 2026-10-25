@@ -26,7 +26,10 @@
     <string name="gt_library_launch">LAUNCH</string>
     <string name="gt_library_remove">Remove</string>
     <string name="gt_library_optimize">PRE-COMPILE</string>
-    <string name="gt_library_edit_files">Edit game files</string>
+    <string name="gt_library_search">Search games</string>
+    <string name="gt_library_no_match">No game matches that search.</string>
+    <string name="gt_library_show_all">Show all (%1$d)</string>
+    <string name="gt_library_show_less">Show fewer</string>
     <!-- Pre-launch single-game compile outcomes (%1$s = package, %2$s = device detail). -->
     <string name="gt_game_opt_done">%1$s compiled</string>
     <string name="gt_game_opt_done_detail">%1$s compiled: %2$s</string>
@@ -430,7 +433,6 @@
     <string name="gt_booster_scope_hint_single">Pre-compiles one game (speed-profile).</string>
     <string name="gt_booster_scope_hint_all">Pre-compiles all apps (speed). Takes minutes.</string>
     <string name="gt_booster_precompile">Pre-compile</string>
-    <string name="gt_booster_pick_game">Pick a game</string>
     <string name="gt_booster_no_games_scope">Add a game to your library first to pre-compile just one.</string>
     <string name="gt_managed_by_gaming_mode">Controlled by Gaming Mode while active.</string>
     <string name="gt_graphics_layers">Three layers that stack: System Resolution (this card) changes Android\'s display; Game Render Scale (Gaming Mode card) changes per-game rendering; Graphics Driver (Developer Options) changes the rendering path. Each is independent — lowering one is your choice, never an automatic cap.</string>
@@ -495,6 +497,16 @@
     <string name="gt_gm_na_qualcomm">Only on Qualcomm devices.</string>
     <string name="gt_gm_na_mediatek">Only on MediaTek devices.</string>
     <string name="gt_gm_na_snapdragon">Only on Snapdragon devices.</string>
+    <string name="gt_gm_na_kernel">Your kernel does not expose this control.</string>
+    <string name="gt_gm_label_input_boost">Input boost</string>
+    <string name="gt_gm_label_governor">CPU governor</string>
+    <string name="gt_gm_governor_perf">Performance</string>
+    <string name="gt_gm_label_spectrum">Spectrum profile</string>
+    <string name="gt_gm_spectrum_gaming">Gaming</string>
+    <string name="gt_gm_spectrum_perf">Performance</string>
+    <string name="gt_gm_label_readahead">Storage read-ahead</string>
+    <string name="gt_gm_kb">%1$d KB</string>
+    <string name="gt_gm_label_mem">Memory reserve</string>
     <string name="gt_gm_na_intervention">Needs a selected game on Android 12 or newer.</string>
     <string name="gt_gm_na_notif">Needs notification access.</string>
     <string name="gt_gm_na_nogame">No game selected.</string>
@@ -633,6 +645,11 @@
     <string name="gt_eng_un_qti">Qualcomm game FPS hint — your phone refused the switch</string>
     <string name="gt_eng_un_mtk">MediaTek game mode — your phone refused the switch</string>
     <string name="gt_eng_un_snap">Snapdragon CPU mode - your phone refused the switch</string>
+    <string name="gt_eng_un_input_boost">Input boost - your phone refused the switch</string>
+    <string name="gt_eng_un_governor">Performance governor - your phone refused the switch</string>
+    <string name="gt_eng_un_spectrum">Spectrum profile - your phone refused the profile</string>
+    <string name="gt_eng_un_storage">Storage read-ahead - your phone refused the change</string>
+    <string name="gt_eng_un_memory">Memory reserve - your phone refused the change</string>
     <string name="gt_eng_un_vivo">vivo display mode - your phone refused the switch</string>
     <string name="gt_eng_un_discard">Closing apps as soon as you leave them — the setting would not stay</string>
     <string name="gt_eng_un_limit">Limiting background apps — the setting would not stay</string>
@@ -649,6 +666,7 @@
     <string name="gt_eng_un_appops">%1$d apps could not be background-restricted</string>
     <string name="gt_eng_thermal">Clearing the thermal override — your phone said no</string>
     <string name="gt_eng_revert_fail">Could not finish reverting: %1$s</string>
+    <string name="gt_eng_restore_refused">Could not restore %1$s - the phone kept the gaming value</string>
     <string name="gt_eng_fp_old">Your phone is too old for this. It needs Android 11 and yours is Android %1$s.</string>
     <string name="gt_eng_fp_ok">Your phone accepted it.</string>
     <string name="gt_eng_fp_off">Turned off.</string>
@@ -724,16 +742,6 @@
     <string name="gt_angle_no">Could not set driver: %1$s</string>
     <string name="gt_angle_no_reason">the device refused</string>
     <!-- Panel refresh readout: what the display reports about itself. -->
-    <string name="gt_panel_title">Panel refresh</string>
-    <string name="gt_panel_rates">Rates: %1$s Hz</string>
-    <string name="gt_panel_seamless">Seamless from current: %1$s Hz</string>
-    <string name="gt_panel_seamless_none">No seamless switches reported</string>
-    <string name="gt_panel_seamless_unknown">Seamless switches unknown on this Android version</string>
-    <string name="gt_panel_arr">Adaptive refresh: %1$s</string>
-    <string name="gt_panel_yes">yes</string>
-    <string name="gt_panel_no">no</string>
-    <string name="gt_panel_unknown">unknown</string>
-    <string name="gt_panel_unreadable">Panel modes unreadable</string>
     <!-- Filesystem trim: free blocks reported back to flash so writes stay fast. -->
     <string name="gt_trim_title">Trim storage</string>
     <string name="gt_trim_need">Needs root — the shell cannot trim storage</string>
@@ -761,11 +769,8 @@
     <string name="gt_keep_remove">Remove</string>
     <!-- Auto game session: watch the foreground app, start Gaming Mode for library games. -->
     <string name="gt_session_title">Automatic Gaming Mode</string>
-    <string name="gt_session_sub">Starts Gaming Mode when a game opens</string>
-    <string name="gt_session_what_1">Watches which app is in front and starts Gaming Mode the moment one of your library games opens, stopping it when you leave the game.</string>
-    <string name="gt_session_what_2">Needs usage access (to see the front app) and root or Shizuku. A Gaming Mode you start by hand always wins: the watch never records over it and never reverts it.</string>
-    <string name="gt_session_watching">Watching — no game in front</string>
-    <string name="gt_session_active">ON — automatic: %1$s</string>
+    <string name="gt_session_sub">Starts Gaming Mode when a game in your library opens.</string>
+    <string name="gt_session_need_games">Add a game below to arm automatic mode.</string>
     <string name="gt_svc_session_title">Auto game session</string>
     <string name="gt_svc_session_channel">Auto game session</string>
     <string name="gt_svc_session_off">Monitor disarmed — nothing is watched</string>

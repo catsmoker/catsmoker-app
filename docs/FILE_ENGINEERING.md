@@ -21,6 +21,25 @@ bundled template over an embedded editor's screen.
 3. **Read back and verify.** `md5sum` on device for byte exactness — never
    `cat` for bytes. A write is not done until the device has confirmed it.
 
+## Editor UI contract (2026-10-25)
+
+The editors had three recurring honesty bugs: dead controls for fields the
+file does not carry, Apply buttons that force-stopped a game to rewrite
+identical bytes, and restore buttons that silently discarded unsaved edits.
+The rules now:
+
+- Every control shows the file's real value or an explanation of why the file
+  cannot answer; never a control that cannot do anything.
+- A pending-edit line (`gf_unsaved`) appears whenever edits differ from the
+  parsed file. Apply is disabled when the working copy is clean, with
+  `gf_no_pending_changes` explaining why instead of a live no-op button.
+- Restore asks for confirmation when edits are pending and states that the
+  current file is backed up first (so the restore itself is reversible).
+- Advanced-only controls stay reachable but collapse behind
+  `gf_more_options` / `gf_fewer_options` (GRID's FXAA + window scale, WuWa's
+  engine/files/advanced cards, HSR's QoL preferences); collapsing is
+  presentation only and never removes a performance control.
+
 ## Per-game rules
 
 - **Genshin** (`genshin/GenshinConfigTemplate`): `hardware_model_config.json`
@@ -32,23 +51,50 @@ bundled template over an embedded editor's screen.
   blobs and hidden fields). The editable set is the README's keys plus the
   shipped file's `FeralUseFXAA` and `gfxconfig_high_window_scale` (exact name,
   the file's own integer type); the `Feral*FPSCap` binary doubles stay
-  game-managed — every one is a ceiling and this editor only raises.
+  game-managed — every one is a ceiling and this editor only raises. The
+  frame-rate control offers only the game's top 144 Hz, never a lower ceiling.
 - **PUBG** (`pubg/`): `Active.sav` GVAS **byte-patch** (`PubgSavePatcher`,
   `IntProperty` only, all-or-nothing — any unrecognized field refuses the
   whole edit). Three profile pushes: Max FPS, tablet view, and the eu GFX
   tool's own `UserCustom.ini` template (`PubgUserCustom`) — the last merges,
   so the device's `[BackUp DeviceProfile]` tail survives and the previous file
-  always goes to `ConfigBackupStore` first. Shipped saves under `assets/PUBG/`
+  always goes to `ConfigBackupStore` first. The save editor offers only the
+  120 FPS tier; the former 60/90 tiers were removed under the no-cap rule. Shipped saves under `assets/PUBG/`
   double as test fixtures. **PUBG: New State is a separate registry entry**:
   root-only, because its `GameUserSettings.ini` lives in the game's private
   data directory; APPLY runs `NewStateIniTransform` in place (reference tuple
-  verbatim, frame rate raise-only, `chmod 0440` lock, read-back) with no
+  verbatim, frame rate raise-only (0 = UE4 unlimited stays 0), `chmod 0440` lock, read-back) with no
   method chooser. The folder picker gets a version-branched
   `Android/data/<package>` starting point (`PubgSafAccess`) where the platform
   accepts one — selection and grant stay the user's.
+  - **Custom import is typed, not a free-form file push** (2026-10-25).
+    `GameUploadTarget` (`shared/data/model`) names the only two supported
+    files — `Active.sav` (`GameUploadFormat.GVAS_SAVE`) and
+    `UserCustom.ini` (`USER_CUSTOM_INI`) — and `PubgUploadPlan` resolves each
+    destination from the selected package. The old untyped picker always wrote
+    `Active.sav`, so importing `UserCustom.ini` replaced the save with text.
+    Format is validated before any write (GVAS magic; the
+    `[UserCustom DeviceProfile]` header, and a file whose only section is
+    another device's `[BackUp DeviceProfile]` is refused because it carries no
+    active profile to import), the INI merge keeps the device's
+    `[BackUp DeviceProfile]` tail, the previous file is backed up, and the
+    destination is read back and byte-compared before success is reported.
+    Profile and import share one card: both are ways to change the same file.
+  - The save editor's chips initialize from the **parsed saved values**
+    (`PubgSaveSelection`), and selecting the value already in the file creates
+    no pending edit. Fields the save does not carry hide their chips behind an
+    explanatory line instead of rendering dead controls; the camera presets
+    always move `TpViewValue` and `FpViewValue` together. A pending-edit line
+    names unsaved changes, and APPLY stays disabled without them.
 - **HSR** (`hsr/`): `HsrGraphicsSettings` (URL-encoded JSON codec),
   `HsrPlayerPrefsXml`, `HsrGameManager` (path templates; backup → cp → chmod →
-  read-back), `HsrGamePreferences`.
+  read-back), `HsrGamePreferences`. Every graphics preset writes 120 FPS and
+  the frame-rate control offers only that top value. Restore backs the live
+  file up before replacing it — a restore is therefore reversible — and parses
+  the result back, comparing values with the backup's before reporting
+  Success. The fifth resolution chip was the 4K preset clipped by a
+  non-wrapping `Row`; all chip groups use `ChipFlowRow`, and a caption keeps
+  the width/height presets distinct from the resolution-quality slider.
 - **WuWa** (`wuwa/`): `WuWaConfigGenerator` + `WuwaForbiddenCvars` (verbatim
   key list) + `WuwaSmartBrain`/`WuwaBenchmarkTuner` (measured-evidence axes
   only; unmeasured axes are named in `logOnlyAxes`, never scored neutral) +
@@ -59,7 +105,8 @@ bundled template over an embedded editor's screen.
   reference's Protocol A cache delete (`files/UE4Game/ProgramBinaryCache` and
   `VulkanProgramBinaryCache`): force-stop first, `rm -rf`, read-back with
   `test ! -e`, deleted/absent/refused kept distinct, root/Shizuku only —
-  surfaced by the deploy card's Clear-shader-cache button.
+  surfaced by the deploy card's Clear-shader-cache button. The generator always
+  writes 120 FPS (`MAX_FPS`); the lower 30/60/90 picker was removed.
 
 ## WuWa product exclusions (permanent)
 

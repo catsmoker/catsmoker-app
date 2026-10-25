@@ -15,6 +15,8 @@
     <string name="sys_section_updates">التحديثات</string>
     <string name="sys_updating">جارٍ تنزيل التحديث…</string>
     <string name="sys_check_updates">التحقق من وجود تحديثات</string>
+    <string name="sys_prerelease">تضمين الإصدارات الأولية</string>
+    <string name="sys_prerelease_sub">اعرض أيضًا إصدارات GitHub التجريبية. تُضمَّن الإصدارات المستقرة دائمًا.</string>
     <string name="sys_auto_check">التحقق التلقائي من التحديثات</string>
     <string name="sys_update_available">يتوفر تحديث: %1$s</string>
     <string name="sys_update_prompt">يتوفر إصدار جديد. هل تريد تنزيله وتثبيته الآن؟</string>

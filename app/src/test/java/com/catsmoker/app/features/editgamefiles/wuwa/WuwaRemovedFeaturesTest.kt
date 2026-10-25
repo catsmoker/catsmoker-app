@@ -140,7 +140,7 @@ class WuwaRemovedFeaturesTest {
             "gf_wuwa_cached",
             "gf_gacha_"
         )
-        listOf("values", "values-en-rGB", "values-ar", "values-es", "values-zh-rCN").forEach { dir ->
+        listOf("values", "values-en-rGB", "values-ar", "values-es", "values-zh-rCN", "values-pt-rBR").forEach { dir ->
             val strings = File("src/main/res/$dir/strings_gamefiles.xml")
             assertTrue("expected strings file missing: $dir", strings.isFile)
             val text = strings.readText()

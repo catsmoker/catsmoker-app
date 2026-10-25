@@ -101,6 +101,11 @@ fun GridScreen(
     onShowAnyway: () -> Unit = {},
     onBack: (() -> Unit)? = null
 ) {
+    // Advanced keys (FXAA, window scale) stay available but out of the beginner's way.
+    var showAdvanced by remember { mutableStateOf(false) }
+    // Restore replaces the live file and clears the working copy; ask before discarding edits.
+    var showRestoreConfirm by remember { mutableStateOf(false) }
+
     // One body, two hosts: standalone (own ScreenScaffold header + scroll) or embedded in File
     // Engineering's selector, where the host already scrolled and padded the page — a second
     // header would double it, and a nested verticalScroll measured under the host's infinite
@@ -146,15 +151,14 @@ fun GridScreen(
                     SectionCard {
                         Text(stringResource(R.string.gf_frame_rate), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary, letterSpacing = 1.sp)
                         Spacer(modifier = Modifier.height(8.dp))
-                        // All five FPS options visible at once — a wrapping flow, never sideways scroll.
+                        // Only the game's highest tier: a 30/60/90/120 choice would write a
+                        // lower ceiling, which the no-cap rule forbids.
                         ChipFlowRow {
-                            listOf(30, 60, 90, 120, 144).forEach { fps ->
-                                FilterChip(
-                                    selected = uiState.edits.fps == fps,
-                                    onClick = { onSetFps(fps) },
-                                    label = { Text("$fps") }
-                                )
-                            }
+                            FilterChip(
+                                selected = uiState.edits.fps == GridPreferences.MAX_FPS,
+                                onClick = { onSetFps(GridPreferences.MAX_FPS) },
+                                label = { Text("${GridPreferences.MAX_FPS}") }
+                            )
                         }
                         if (read.maxFps != null && uiState.edits.fps == null) {
                             Text(
@@ -254,70 +258,85 @@ fun GridScreen(
                             Spacer(modifier = Modifier.height(4.dp))
                         }
 
-                        // The shipped reference file's two non-gfxconfig_* keys, absent from
-                        // its README list: FXAA and the high-preset window scale. FXAA is an
-                        // integer 0/1 switch; the scale is the file's own 0-100 integer
-                        // (verified file ships 80).
-                        val fxaaCurrent = read.fxaa
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Column(modifier = Modifier.weight(1f)) {
-                                Text(switchLabel("fxaa"), color = if (fxaaCurrent == null) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f))
-                                Text(
-                                    when {
-                                        fxaaCurrent == null -> stringResource(R.string.gf_grid_not_in_file)
-                                        else -> stringResource(R.string.gf_grid_device_holds, if (fxaaCurrent) "on" else "off")
-                                    },
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                                )
-                            }
-                            Switch(
-                                checked = uiState.edits.fxaa ?: fxaaCurrent ?: false,
-                                enabled = fxaaCurrent != null,
-                                onCheckedChange = { checked -> onSetFxaa(checked) }
-                            )
-                        }
-                        Spacer(modifier = Modifier.height(4.dp))
-                        Text(
-                            stringResource(R.string.gf_grid_window_scale),
-                            color = if (read.windowScale == null) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f)
-                        )
-                        ChipFlowRow {
-                            listOf(50, 60, 70, 80, 90, 100).forEach { scale ->
-                                FilterChip(
-                                    selected = uiState.edits.windowScale == scale,
-                                    enabled = read.windowScale != null,
-                                    onClick = { onSetWindowScale(scale) },
-                                    label = { Text("$scale%") }
-                                )
-                            }
-                        }
-                        Text(
-                            when {
-                                read.windowScale == null -> stringResource(R.string.gf_grid_not_in_file)
-                                else -> stringResource(R.string.gf_grid_device_holds, "${read.windowScale}%")
-                            },
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                        Text(
-                            stringResource(R.string.gf_grid_window_scale_caption),
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
+                        // The shipped reference file's two non-gfxconfig_* keys, absent from its
+                        // README list: FXAA and the high-preset window scale. FXAA is an integer
+                        // 0/1 switch; the scale is the file's own 0-100 integer (the verified
+                        // file ships 80). Both stay available, collapsed behind MORE OPTIONS so
+                        // the first screen is the switches a beginner recognizes.
                         Spacer(modifier = Modifier.height(4.dp))
                         Text(
                             stringResource(R.string.gf_grid_switch_caption),
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
+                        TextButton(
+                            onClick = { showAdvanced = !showAdvanced },
+                            modifier = Modifier.align(Alignment.CenterHorizontally)
+                        ) {
+                            Text(
+                                stringResource(
+                                    if (showAdvanced) R.string.gf_fewer_options
+                                    else R.string.gf_more_options
+                                )
+                            )
+                        }
+                        if (showAdvanced) {
+                            val fxaaCurrent = read.fxaa
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Text(switchLabel("fxaa"), color = if (fxaaCurrent == null) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f))
+                                    Text(
+                                        when {
+                                            fxaaCurrent == null -> stringResource(R.string.gf_grid_not_in_file)
+                                            else -> stringResource(R.string.gf_grid_device_holds, if (fxaaCurrent) "on" else "off")
+                                        },
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                }
+                                Switch(
+                                    checked = uiState.edits.fxaa ?: fxaaCurrent ?: false,
+                                    enabled = fxaaCurrent != null,
+                                    onCheckedChange = { checked -> onSetFxaa(checked) }
+                                )
+                            }
+                            Spacer(modifier = Modifier.height(4.dp))
+                            Text(
+                                stringResource(R.string.gf_grid_window_scale),
+                                color = if (read.windowScale == null) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f)
+                            )
+                            ChipFlowRow {
+                                listOf(50, 60, 70, 80, 90, 100).forEach { scale ->
+                                    FilterChip(
+                                        selected = uiState.edits.windowScale == scale,
+                                        enabled = read.windowScale != null,
+                                        onClick = { onSetWindowScale(scale) },
+                                        label = { Text("$scale%") }
+                                    )
+                                }
+                            }
+                            Text(
+                                when {
+                                    read.windowScale == null -> stringResource(R.string.gf_grid_not_in_file)
+                                    else -> stringResource(R.string.gf_grid_device_holds, "${read.windowScale}%")
+                                },
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                            Text(
+                                stringResource(R.string.gf_grid_window_scale_caption),
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
                     }
 
                     Spacer(modifier = Modifier.height(12.dp))
+                    val hasPendingEdits = uiState.edits != GridPreferences.Edits()
                     CatsmokerButton(
                         onClick = onApply,
                         modifier = Modifier.fillMaxWidth(),
-                        enabled = !uiState.applying
+                        enabled = !uiState.applying && hasPendingEdits
                     ) {
                         if (uiState.applying) {
                             CircularProgressIndicator(modifier = Modifier.size(18.dp), strokeWidth = 2.dp, color = Color.Black)
@@ -327,11 +346,31 @@ fun GridScreen(
                             Text(stringResource(R.string.gf_apply_to_game))
                         }
                     }
+                    if (!hasPendingEdits && !uiState.applying) {
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(
+                            stringResource(R.string.gf_no_pending_changes),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
                     if (uiState.hasBackup) {
                         Spacer(modifier = Modifier.height(8.dp))
-                        CatsmokerOutlinedButton(onClick = onRestoreBackup, modifier = Modifier.fillMaxWidth(), enabled = !uiState.applying) {
+                        CatsmokerOutlinedButton(
+                            onClick = {
+                                if (hasPendingEdits) showRestoreConfirm = true else onRestoreBackup()
+                            },
+                            modifier = Modifier.fillMaxWidth(),
+                            enabled = !uiState.applying
+                        ) {
                             Text(stringResource(R.string.gf_restore_last_backup))
                         }
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(
+                            stringResource(R.string.gf_restore_backup_note),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
                     }
                     uiState.lastApply?.let { report ->
                         Spacer(modifier = Modifier.height(8.dp))
@@ -346,6 +385,27 @@ fun GridScreen(
                     GridLoadFailureCard(uiState.loadFailure, onPickFolder, onRefresh, onShowAnyway = null)
             }
         }
+    }
+
+    if (showRestoreConfirm) {
+        AlertDialog(
+            onDismissRequest = { showRestoreConfirm = false },
+            title = { Text(stringResource(R.string.gf_restore_confirm_title)) },
+            text = { Text(stringResource(R.string.gf_restore_confirm_body)) },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        showRestoreConfirm = false
+                        onRestoreBackup()
+                    }
+                ) { Text(stringResource(R.string.gf_restore_last_backup)) }
+            },
+            dismissButton = {
+                TextButton(onClick = { showRestoreConfirm = false }) {
+                    Text(stringResource(R.string.gf_cancel))
+                }
+            }
+        )
     }
 
     if (onBack == null) {

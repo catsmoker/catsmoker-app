@@ -134,10 +134,10 @@ class WuwaBenchmarkTunerTest {
             round = 3,
             preset = "high",
             options = WuWaConfigGenerator.Options(
-                fps = 90, disableBloom = true, generateScalability = true,
+                disableBloom = true, generateScalability = true,
                 mode = WuWaConfigGenerator.GameMode.ToA
             ),
-            targetFps = 90,
+            targetFps = WuWaConfigGenerator.MAX_FPS,
             results = listOf(
                 WuwaBenchmarkTuner.RoundResult(1, "ultra", 55f, 40f, 80f),
                 WuwaBenchmarkTuner.RoundResult(2, "high", 61f, 50f, 92f)

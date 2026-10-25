@@ -22,11 +22,15 @@ import com.catsmoker.app.features.editgamefiles.hsr.HsrGameManager
 import com.catsmoker.app.features.editgamefiles.pubg.NewStateIniTransform
 import com.catsmoker.app.features.editgamefiles.pubg.PubgSafAccess
 import com.catsmoker.app.features.editgamefiles.pubg.PubgSavePatcher
+import com.catsmoker.app.features.editgamefiles.pubg.PubgSaveSelection
+import com.catsmoker.app.features.editgamefiles.pubg.PubgUploadPlan
 import com.catsmoker.app.features.editgamefiles.pubg.PubgUserCustom
 import com.catsmoker.app.features.editgamefiles.wuwa.WuwaConfigManager
 import com.catsmoker.app.shared.data.model.GameConfig
 import com.catsmoker.app.shared.data.model.GameProfile
 import com.catsmoker.app.shared.data.model.GameType
+import com.catsmoker.app.shared.data.model.GameUploadFormat
+import com.catsmoker.app.shared.data.model.GameUploadTarget
 import com.catsmoker.app.system.shell.ShellRunner
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -42,7 +46,6 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import rikka.shizuku.Shizuku
 import java.io.File
-import java.io.FileOutputStream
 import java.io.IOException
 import java.util.EnumMap
 import javax.inject.Inject
@@ -119,6 +122,12 @@ class EditGameFilesViewModel @Inject constructor(
         val canReset: Boolean = false,
         /** Custom upload is a PUBG `Active.sav` affordance — hidden for games with templated configs. */
         val canUploadCustom: Boolean = false,
+        /** Supported custom-file types for the selected game, in display order. */
+        val uploadTargets: List<GameUploadTarget> = emptyList(),
+        /** Index into [uploadTargets]; changing it clears the picked file. */
+        val selectedUploadTarget: Int = 0,
+        /** Resolved destination of the selected type, shown before the user commits. */
+        val uploadDestination: String? = null,
         /** The inline save editor exists for this game — PUBG's verified GVAS layout only. */
         val canPatchSave: Boolean = false,
         /**
@@ -141,7 +150,8 @@ class EditGameFilesViewModel @Inject constructor(
         val savePatchReport: String? = null,
         /** The save editor's pending edits, keyed by property name — chip selections before APPLY. */
         val saveEdits: Map<String, Int> = emptyMap(),
-        val selectedItemText: String = "",
+        /** Display name of the picked import file; null until one is chosen. */
+        val selectedFileName: String? = null,
         val showMethodChooser: Boolean = false,
         val showResetChooser: Boolean = false,
         /** Saved backups of the selected game's config, newest first — populated when the dialog opens. */
@@ -179,9 +189,6 @@ class EditGameFilesViewModel @Inject constructor(
 
     init {
         initializeGameConfigs()
-        _uiState.update {
-            it.copy(selectedItemText = context.getString(R.string.selected_item_placeholder))
-        }
         probeInstallStates()
         Shizuku.addRequestPermissionResultListener(this)
     }
@@ -225,7 +232,7 @@ class EditGameFilesViewModel @Inject constructor(
     private fun buildPubgConfig(packageName: String): GameConfig {
         return GameConfig(
             packageName = packageName,
-            saveDir = "/Android/data/$packageName/files/UE4Game/ShadowTrackerExtra/ShadowTrackerExtra/Saved/SaveGames/",
+            saveDir = PubgUploadPlan.saveDir(packageName),
             saveFile = "Active.sav",
             profiles = listOf(
                 GameProfile(R.string.gf_profile_unlock_120, "PUBG/MaxFPS/Active.sav"),
@@ -237,17 +244,16 @@ class EditGameFilesViewModel @Inject constructor(
                 GameProfile(
                     R.string.gf_profile_user_custom,
                     "PUBG/UserCustom/DeviceProfile.ini",
-                    targetDir = "/Android/data/$packageName/files/UE4Game/ShadowTrackerExtra/" +
-                        "ShadowTrackerExtra/Saved/Config/Android/",
+                    targetDir = PubgUploadPlan.userCustomDir(packageName),
                     targetFile = "UserCustom.ini",
                     preserveDeviceProfileBackup = true
                 )
             ),
-            resetFilePath = "/storage/emulated/0/Android/data/$packageName" +
-                "/files/UE4Game/ShadowTrackerExtra/ShadowTrackerExtra/Saved/SaveGames/Active.sav",
-            // The custom-upload slot exists for this file: an opaque save blob the user may
-            // have obtained elsewhere. Templated configs (Genshin) don't get the section.
+            resetFilePath = "/storage/emulated/0" + PubgUploadPlan.saveDir(packageName) + "Active.sav",
+            // Custom upload accepts the two files this editor really understands; the chosen
+            // type resolves its own package-specific destination.
             allowCustomUpload = true,
+            uploadTargets = PubgUploadPlan.targets(packageName),
             // The save is a verified GVAS layout, so the inline read-modify-write editor is
             // available too — the closed-source references' core mechanism (their savedit.sh
             // sed-rewrites these same ints inside the user's own save).
@@ -371,6 +377,8 @@ class EditGameFilesViewModel @Inject constructor(
      */
     fun onGameSelected(game: GameType) {
         val config = gameConfigs[game]
+        val uploadTargets = config?.uploadTargets.orEmpty()
+        selectedFileUri = null
         _uiState.update {
             it.copy(
                 selectedGame = game,
@@ -383,6 +391,11 @@ class EditGameFilesViewModel @Inject constructor(
                 gamePackageName = config?.packageName,
                 canReset = config?.resetFilePath != null,
                 canUploadCustom = config?.allowCustomUpload == true,
+                uploadTargets = uploadTargets,
+                selectedUploadTarget = 0,
+                uploadDestination = uploadTargets.firstOrNull()
+                    ?.destination(Environment.getExternalStorageDirectory().path),
+                selectedFileName = null,
                 canPatchSave = config?.supportsSavePatching == true,
                 rootOnlyIni = config?.rootOnlyIniPath != null,
                 // A fresh selection starts the editor from "read the file first" — a stale
@@ -458,30 +471,23 @@ class EditGameFilesViewModel @Inject constructor(
     /** Selects or clears one tier's edit set from the editor's chips. */
     fun onSaveEditSelected(name: String, value: Int?) {
         _uiState.update { state ->
-            val edits = state.saveEdits.toMutableMap()
-            if (value == null) {
-                // Render quality and the camera pair are edited as sets — clearing the anchor
-                // field clears its partner too, so no half-set ever survives a deselect.
-                edits.keys.removeAll { key ->
-                    key == name ||
-                        (name == PubgSavePatcher.FIELD_BATTLE_RENDER && key == PubgSavePatcher.FIELD_LOBBY_RENDER) ||
-                        (name == PubgSavePatcher.FIELD_TP_VIEW && key == PubgSavePatcher.FIELD_FP_VIEW)
-                }
-            } else {
-                edits.putAll(
-                    when (name) {
-                        PubgSavePatcher.FIELD_BATTLE_FPS -> PubgSavePatcher.fpsEdits(value)
-                        PubgSavePatcher.FIELD_BATTLE_RENDER -> PubgSavePatcher.renderEdits(value)
-                        // Both camera fields move together — a lone TpViewValue beside the file's
-                        // own FpViewValue would be a half-identity the references never ship.
-                        PubgSavePatcher.FIELD_TP_VIEW -> PubgSavePatcher.viewEdits(
-                            tpView = value,
-                            fpView = PubgSavePatcher.VIEW_PRESETS
-                                .firstOrNull { it.tpView == value }?.fpView ?: value
-                        )
-                        else -> mapOf(name to value)
+            val edits = when {
+                value == null -> PubgSaveSelection.clear(state.saveEdits, name)
+                name == PubgSavePatcher.FIELD_BATTLE_FPS ->
+                    PubgSaveSelection.toggleFps(state.saveRead, state.saveEdits, value)
+                name == PubgSavePatcher.FIELD_BATTLE_RENDER ->
+                    PubgSaveSelection.toggleRender(state.saveRead, state.saveEdits, value)
+                name == PubgSavePatcher.FIELD_TP_VIEW -> {
+                    // Both camera fields move together — a lone TpViewValue beside the file's
+                    // own FpViewValue would be a half-identity the references never ship.
+                    val preset = PubgSavePatcher.VIEW_PRESETS.firstOrNull { it.tpView == value }
+                    if (preset != null) {
+                        PubgSaveSelection.toggleView(state.saveRead, state.saveEdits, preset)
+                    } else {
+                        state.saveEdits
                     }
-                )
+                }
+                else -> state.saveEdits + (name to value)
             }
             state.copy(saveEdits = edits)
         }
@@ -1166,13 +1172,36 @@ class EditGameFilesViewModel @Inject constructor(
         setCustomSelection(uri)
     }
 
+    /**
+     * Switches the file type before a pick. The old selection is cleared because a file chosen
+     * for `Active.sav` must never be written to `UserCustom.ini` (or vice versa) by accident.
+     */
+    fun onUploadTargetSelected(index: Int) {
+        val config = gameConfigs[_uiState.value.selectedGame] ?: return
+        val target = config.uploadTargets.getOrNull(index) ?: return
+        setCustomSelection(null)
+        _uiState.update {
+            it.copy(
+                selectedUploadTarget = index,
+                uploadDestination = target.destination(
+                    Environment.getExternalStorageDirectory().path
+                )
+            )
+        }
+    }
+
     fun onUploadFile() {
+        val config = gameConfigs[_uiState.value.selectedGame] ?: return
+        val target = config.uploadTargets
+            .getOrNull(_uiState.value.selectedUploadTarget)
+            ?: return showSnackbar(context.getString(R.string.gf_upload_type_unsupported))
         uploadCustomContent(
             selectedFileUri,
             context.getString(R.string.gf_select_file_first),
             context.getString(R.string.custom_upload_success_file),
-            shAction = { uri, pkg -> uploadCustomFileWithShizuku(uri, pkg) },
-            safAction = { uri, pkg -> uploadCustomFileWithSaf(uri, pkg) }
+            target = target,
+            shAction = { uri, cfg, t -> uploadCustomFileWithShizuku(uri, cfg, t) },
+            safAction = { uri, cfg, t -> uploadCustomFileWithSaf(uri, cfg, t) }
         )
     }
 
@@ -1235,6 +1264,16 @@ class EditGameFilesViewModel @Inject constructor(
             }
             val file = existingFile ?: pickedDir.createFile(MIME_BINARY, targetName) ?: throw IOException("Cannot create file")
             context.contentResolver.openOutputStream(file.uri, "w")?.use { it.write(inputBytes) }
+                ?: throw IOException("Cannot open $targetName for writing")
+            // The write call is not the verdict: read the provider's own bytes back and compare
+            // them with what was meant to be written. A null stream used to fall through to
+            // `true` and report a success that never happened.
+            val readBack = runCatching {
+                context.contentResolver.openInputStream(file.uri)?.use { it.readBytes() }
+            }.getOrNull()
+            if (readBack == null || !readBack.contentEquals(inputBytes)) {
+                throw IOException("read-back at $targetName does not match the written bytes")
+            }
             true
         }
     }
@@ -1304,10 +1343,10 @@ class EditGameFilesViewModel @Inject constructor(
         selectedFileUri = fileUri
         _uiState.update {
             it.copy(
-                selectedItemText = if (fileUri != null) {
-                    context.getString(R.string.selected_item, getDisplayName(fileUri) ?: fileUri.toString())
-                } else {
-                    context.getString(R.string.selected_item_placeholder)
+                // The raw name, not a formatted sentence: the screen resolves the localized
+                // "Selected: …" at composition so a language switch cannot leave stale copy.
+                selectedFileName = fileUri?.let { uri ->
+                    getDisplayName(uri) ?: uri.toString()
                 }
             )
         }
@@ -1317,8 +1356,9 @@ class EditGameFilesViewModel @Inject constructor(
         uri: Uri?,
         msg: String,
         success: String,
-        shAction: suspend (Uri, GameConfig) -> Boolean,
-        safAction: (Uri, GameConfig) -> Boolean
+        target: GameUploadTarget,
+        shAction: suspend (ByteArray, GameConfig, GameUploadTarget) -> Boolean,
+        safAction: (ByteArray, GameConfig, GameUploadTarget) -> Boolean
     ) {
         val config = gameConfigs[_uiState.value.selectedGame] ?: return
         if (uri == null) {
@@ -1326,8 +1366,32 @@ class EditGameFilesViewModel @Inject constructor(
             return
         }
         launchIoWithLoading(BusyArea.CUSTOM_UPLOAD, successMessage = success) {
-            if (canUseShizukuForCustom()) shAction(uri, config)
-            else safAction(uri, config)
+            val imported = runCatching {
+                context.contentResolver.openInputStream(uri)?.use { it.readBytes() }
+            }.getOrNull()
+            if (imported == null || imported.isEmpty()) {
+                withContext(Dispatchers.Main) {
+                    showSnackbar(context.getString(R.string.gf_upload_empty))
+                }
+                return@launchIoWithLoading false
+            }
+            val invalid = PubgUploadPlan.validate(imported, target.format)
+            if (invalid != null) {
+                withContext(Dispatchers.Main) {
+                    showSnackbar(
+                        context.getString(
+                            when (invalid) {
+                                PubgUploadPlan.Invalid.EMPTY -> R.string.gf_upload_empty
+                                PubgUploadPlan.Invalid.NOT_GVAS -> R.string.gf_upload_not_gvas
+                                PubgUploadPlan.Invalid.NOT_USER_CUSTOM_INI -> R.string.gf_upload_not_usercustom
+                            }
+                        )
+                    )
+                }
+                return@launchIoWithLoading false
+            }
+            if (canUseShizukuForCustom()) shAction(imported, config, target)
+            else safAction(imported, config, target)
         }
     }
 
@@ -1340,68 +1404,124 @@ class EditGameFilesViewModel @Inject constructor(
         return true
     }
 
-    private suspend fun uploadCustomFileWithShizuku(fileUri: Uri, config: GameConfig): Boolean {
-        // The game's own save directory and file, straight from the config — this path used to
-        // hardcode PUBG's UE4Game tree, which sent a Genshin upload to a directory the game never
-        // reads.
-        val saveDir = "/storage/emulated/0" + config.saveDir.trimEnd('/')
-        val targetPath = "$saveDir/${config.saveFile}"
-        val tempFile = File(context.externalCacheDir ?: context.cacheDir, "Custom_${config.saveFile}")
+    private suspend fun uploadCustomFileWithShizuku(
+        imported: ByteArray,
+        config: GameConfig,
+        target: GameUploadTarget
+    ): Boolean {
+        val root = Environment.getExternalStorageDirectory().path
+        val destDir = root + target.directory.trimEnd('/')
+        val targetPath = "$destDir/${target.fileName}"
+        val tempFile = File(
+            context.externalCacheDir ?: context.cacheDir,
+            "Custom_${target.fileName}"
+        )
         return try {
-            context.contentResolver.openInputStream(fileUri)?.use { input ->
-                FileOutputStream(tempFile).use { output -> input.copyTo(output) }
-            } ?: return false
-            // Existence probe before the overwrite: a custom file dropped onto a save the game
-            // has never written would sit in a directory tree the game may not even have
-            // created, and the push would report success for a file nothing reads. Same gate
-            // as the profile push and the save editor.
+            // A null answer is "no channel"; an empty answer is "the game has not written this
+            // file yet". Both used to collapse into one refusal, which left a user unable to
+            // seed a file even though the directory existed.
             val existingBytes = shellRunner.readFileDirect(targetPath, forceBind = true)
-            if (existingBytes == null || existingBytes.isEmpty()) {
+            if (existingBytes == null) {
                 withContext(Dispatchers.Main) {
                     showSnackbar(
-                        context.getString(R.string.gf_custom_target_missing, config.saveFile, saveDir)
+                        if (Shizuku.pingBinder()) context.getString(R.string.gf_shizuku_channel_unavailable_short)
+                        else context.getString(R.string.gf_no_privileged_channel)
                     )
                 }
                 return false
             }
-            // Safety backup before the overwrite: the bytes the device actually held, fetched by
-            // the same probe — no second pull, and only a real file is ever backed up
-            // (null/empty was excluded above).
-            backupStore.save(config.packageName, config.saveFile, existingBytes)
-            shellRunner.execSafe("mkdir", "-p", saveDir)
-            shellRunner.execSafe("cp", "-f", tempFile.absolutePath, targetPath)
+            val existing = existingBytes.takeIf { it.isNotEmpty() }
+            val payload = PubgUploadPlan.payload(imported, existing, target.format)
+            existing?.let { bytes ->
+                backupStore.save(config.packageName, target.fileName, bytes)
+            }
+            shellRunner.execSafe("mkdir", "-p", destDir)
+            tempFile.writeBytes(payload)
+            val copy = shellRunner.execSafeResult("cp", "-f", tempFile.absolutePath, targetPath)
+            if (!copy.isSuccess) {
+                withContext(Dispatchers.Main) {
+                    showSnackbar(
+                        context.getString(
+                            R.string.gf_cp_failed,
+                            copy.exitCode,
+                            copy.stderr.ifBlank { context.getString(R.string.gf_no_output) }
+                        )
+                    )
+                }
+                return false
+            }
+            // The copy's exit code is not the report: read the destination back and compare
+            // the actual bytes before claiming success.
+            val readBack = shellRunner.readFileDirect(targetPath, forceBind = true)
+            if (readBack == null || !readBack.contentEquals(payload)) {
+                withContext(Dispatchers.Main) {
+                    showSnackbar(context.getString(R.string.gf_upload_verify_failed, targetPath))
+                }
+                return false
+            }
             true
-        } catch (_: Exception) {
+        } catch (e: Exception) {
+            withContext(Dispatchers.Main) {
+                showSnackbar(
+                    context.getString(
+                        R.string.custom_upload_failed,
+                        e.message ?: e.javaClass.simpleName
+                    )
+                )
+            }
             false
         } finally {
             tempFile.delete()
         }
     }
 
-    private fun uploadCustomFileWithSaf(fileUri: Uri, config: GameConfig): Boolean {
+    private fun uploadCustomFileWithSaf(
+        imported: ByteArray,
+        config: GameConfig,
+        target: GameUploadTarget
+    ): Boolean {
         val treeUri = getCustomGameTreeUri(config.packageName)
             ?: run {
                 requestCustomGameFolderAccess(config.packageName)
                 return false
             }
         return try {
-            val saveGamesDir = getOrCreateTargetDir(treeUri, config) ?: return false
+            val targetDir = getOrCreateTargetDir(treeUri, config, target.directory) ?: return false
+            val existing = targetDir.findFile(target.fileName)?.takeIf { it.length() > 0L }?.let { file ->
+                runCatching {
+                    context.contentResolver.openInputStream(file.uri)?.use { it.readBytes() }
+                }.getOrNull()
+            }
+            val payload = PubgUploadPlan.payload(imported, existing, target.format)
             // Safety backup before the delete-and-recreate below, which would otherwise leave
             // the old generation unreachable through the provider.
-            saveGamesDir.findFile(config.saveFile)?.takeIf { it.length() > 0L }?.let { existing ->
-                runCatching {
-                    context.contentResolver.openInputStream(existing.uri)?.use { it.readBytes() }
-                }.getOrNull()?.let { bytes ->
-                    backupStore.save(config.packageName, config.saveFile, bytes)
-                }
+            existing?.let { bytes ->
+                backupStore.save(config.packageName, target.fileName, bytes)
             }
-            saveGamesDir.findFile(config.saveFile)?.delete()
-            val target = saveGamesDir.createFile(MIME_BINARY, config.saveFile) ?: return false
-            context.contentResolver.openInputStream(fileUri)?.use { input ->
-                context.contentResolver.openOutputStream(target.uri, "w")?.use { output -> input.copyTo(output) }
+            targetDir.findFile(target.fileName)?.delete()
+            val file = targetDir.createFile(MIME_BINARY, target.fileName) ?: return false
+            context.contentResolver.openOutputStream(file.uri, "w")?.use { output ->
+                output.write(payload)
+            } ?: return false
+            // Verify by reading the provider's own bytes back, not by the write call returning.
+            val readBack = runCatching {
+                context.contentResolver.openInputStream(file.uri)?.use { it.readBytes() }
+            }.getOrNull()
+            if (readBack == null || !readBack.contentEquals(payload)) {
+                showSnackbar(
+                    context.getString(R.string.gf_upload_verify_failed, target.fileName)
+                )
+                false
+            } else {
+                true
             }
-            true
-        } catch (_: Exception) {
+        } catch (e: Exception) {
+            showSnackbar(
+                context.getString(
+                    R.string.custom_upload_failed,
+                    e.message ?: e.javaClass.simpleName
+                )
+            )
             false
         }
     }

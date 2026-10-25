@@ -23,7 +23,7 @@ import javax.inject.Inject
  *
  * Collection itself lives in [AppLogCollector] (started once from the Application,
  * not from this screen): this ViewModel only forwards the live tail plus the
- * copy/share/clear actions, all operating on the in-memory buffer. Clearing
+ * copy/share/export/clear actions, all operating on the in-memory buffer. Clearing
  * empties the buffer — collection continues, new lines keep arriving.
  */
 @HiltViewModel

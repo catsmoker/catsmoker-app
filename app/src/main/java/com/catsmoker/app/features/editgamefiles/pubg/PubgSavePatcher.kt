@@ -189,24 +189,23 @@ object PubgSavePatcher {
     }
 
     /**
-     * FPS tiers, pinned by the open reference `reference/gamingtools/BattleGrounds_GFX-main`'s
-     * own tier assets — `app/src/main/assets/Active_60.sav` etc., each named for its tier and
-     * carrying exactly these values for BattleFPS/LobbyFPS/FPSLevel:
-     * 60 → 6/6/6, 90 → 7/7/6, 120 → 8/8/7.
+     * The one remaining FPS tier: the 120 unlock. The 60 and 90 tiers were removed under the
+     * maximum-performance rule (2026-09-23) — this editor never offers a lower ceiling.
      *
-     * tq.tech.Fps's unlock (closed reference) writes 8/8/8 instead — its `FPSLevel` 8 disagrees
-     * with GFX's 7 at 120 FPS. GFX is followed because it is the established cross-check for
-     * this screen; the divergence is stated, not averaged away.
+     * Values are 8/8/8, the bundled `PUBG/MaxFPS/Active.sav` (tq.tech.Fps's own 120 unlock),
+     * not GFX's 8/8/7: GFX's `FPSLevel` 7 would lower a save that already carries 8, while the
+     * bundled save's 8 is the highest observed value.
      */
     data class FpsTier(val fps: Int, val battleFps: Int, val lobbyFps: Int, val fpsLevel: Int)
 
     val FPS_TIERS = listOf(
-        FpsTier(60, battleFps = 6, lobbyFps = 6, fpsLevel = 6),
-        FpsTier(90, battleFps = 7, lobbyFps = 7, fpsLevel = 6),
-        FpsTier(120, battleFps = 8, lobbyFps = 8, fpsLevel = 7)
+        FpsTier(120, battleFps = 8, lobbyFps = 8, fpsLevel = 8)
     )
 
-    /** The three FPS fields one tier writes, as a [patch] edit set. */
+    /**
+     * The three FPS fields the max tier writes, as a [patch] edit set. A lower `fps` is not
+     * offered and returns an empty set rather than capping the save.
+     */
     fun fpsEdits(fps: Int): Map<String, Int> =
         FPS_TIERS.firstOrNull { it.fps == fps }?.let {
             mapOf(FIELD_BATTLE_FPS to it.battleFps, FIELD_LOBBY_FPS to it.lobbyFps, FIELD_FPS_LEVEL to it.fpsLevel)

@@ -814,8 +814,7 @@ class WuwaConfigViewModel @Inject constructor(
 
     /**
      * Starts the loop from what the screen already shows: the selected preset and the
-     * frame-rate target are the first round's deployment, the same fields the reference's
-     * `startTuner` took from its own generator options.
+     * generator's [WuWaConfigGenerator.MAX_FPS] target are the first round's deployment.
      */
     fun startAutoTune() {
         if (_uiState.value.tunerBusy) return
@@ -825,7 +824,7 @@ class WuwaConfigViewModel @Inject constructor(
             round = 1,
             preset = s.preset,
             options = s.options,
-            targetFps = s.options.fps
+            targetFps = WuWaConfigGenerator.MAX_FPS
         )
         viewModelScope.launch {
             _uiState.update { it.copy(tuner = state, tunerBusy = true) }

@@ -81,7 +81,7 @@ object WuwaBenchmarkTuner {
         val round: Int = 1,
         val preset: String = "balanced",
         val options: WuWaConfigGenerator.Options = WuWaConfigGenerator.Options(),
-        val targetFps: Int = 60,
+        val targetFps: Int = WuWaConfigGenerator.MAX_FPS,
         val results: List<RoundResult> = emptyList(),
         val finalPreset: String? = null,
         val error: String? = null

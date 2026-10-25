@@ -35,6 +35,7 @@ import com.catsmoker.app.R
 import com.catsmoker.app.features.editgamefiles.grid.GridRoute
 import com.catsmoker.app.features.editgamefiles.hsr.HsrGraphicsRoute
 import com.catsmoker.app.features.editgamefiles.pubg.PubgSavePatcher
+import com.catsmoker.app.features.editgamefiles.pubg.PubgSaveSelection
 import com.catsmoker.app.features.editgamefiles.wuwa.WuwaConfigRoute
 import com.catsmoker.app.shared.data.model.GameType
 import com.catsmoker.app.shared.ui.components.ScreenScaffold
@@ -135,6 +136,7 @@ fun EditGameFilesRoute(onBack: () -> Unit) {
         onDeleteBackup = viewModel::onDeleteBackup,
         onSelectFile = viewModel::onSelectFile,
         onUploadFile = viewModel::onUploadFile,
+        onUploadTargetSelected = viewModel::onUploadTargetSelected,
         onClearSelection = viewModel::onClearSelection,
         onReadSave = viewModel::onReadSave,
         onSaveEditSelected = viewModel::onSaveEditSelected,
@@ -182,15 +184,13 @@ fun GameSelector(
                 readOnly = true,
                 label = { Text(stringResource(R.string.gf_game_label)) },
                 placeholder = { Text(stringResource(R.string.gf_tap_to_choose_game)) },
-                trailingIcon = { Icon(Icons.Default.KeyboardArrowDown, contentDescription = null) },
                 enabled = false,
                 colors = OutlinedTextFieldDefaults.colors(
                     disabledTextColor = MaterialTheme.colorScheme.onSurface,
                     disabledBorderColor = MaterialTheme.colorScheme.outline,
                     disabledLabelColor = MaterialTheme.colorScheme.onSurfaceVariant,
                     disabledPlaceholderColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                    disabledLeadingIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                    disabledTrailingIconColor = MaterialTheme.colorScheme.onSurfaceVariant
+                    disabledLeadingIconColor = MaterialTheme.colorScheme.onSurfaceVariant
                 ),
                 leadingIcon = if (selectedGame != GameType.NONE) {
                     // The selected game's own dot, so the field itself carries the install
@@ -368,6 +368,7 @@ fun EditGameFilesScreen(
     onDeleteBackup: (ConfigBackupStore.Entry) -> Unit,
     onSelectFile: () -> Unit,
     onUploadFile: () -> Unit,
+    onUploadTargetSelected: (Int) -> Unit = {},
     onClearSelection: () -> Unit,
     onReadSave: () -> Unit = {},
     onSaveEditSelected: (String, Int?) -> Unit = { _, _ -> },
@@ -486,6 +487,7 @@ fun EditGameFilesScreen(
                         onRestoreBackup = onRestoreBackup,
                         onSelectFile = onSelectFile,
                         onUploadFile = onUploadFile,
+                        onUploadTargetSelected = onUploadTargetSelected,
                         onClearSelection = onClearSelection,
                         onReadSave = onReadSave,
                         onSaveEditSelected = onSaveEditSelected,
@@ -619,6 +621,7 @@ private fun ProfileGameEditor(
     onRestoreBackup: () -> Unit,
     onSelectFile: () -> Unit,
     onUploadFile: () -> Unit,
+    onUploadTargetSelected: (Int) -> Unit = {},
     onClearSelection: () -> Unit,
     onReadSave: () -> Unit,
     onSaveEditSelected: (String, Int?) -> Unit,
@@ -713,28 +716,64 @@ private fun ProfileGameEditor(
                         Text(stringResource(R.string.gf_restore_backup))
                     }
                 }
-            }
-        }
 
-        // Custom upload only exists for games whose config is an opaque save blob the
-        // user might bring from elsewhere (PUBG's Active.sav) — hidden for templated
-        // configs like Genshin, where a dropped-in file would break the model lookup.
-        if (uiState.canUploadCustom) {
-            Spacer(modifier = Modifier.height(12.dp))
-
-            SectionCard {
-                Column {
+                // One card now owns both ways to change a file: choose a bundled profile,
+                // or import a file this editor actually understands. The separate upload card
+                // made the two look unrelated and hid the selected destination.
+                if (uiState.canUploadCustom) {
+                    Spacer(modifier = Modifier.height(16.dp))
+                    HorizontalDivider(color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.12f))
+                    Spacer(modifier = Modifier.height(14.dp))
                     Text(stringResource(R.string.gf_custom_upload), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary)
                     if (uiState.busyArea == EditGameFilesViewModel.BusyArea.CUSTOM_UPLOAD) {
                         Spacer(modifier = Modifier.height(8.dp))
                         SquigglyProgressBar(progress = null, animate = true, modifier = Modifier.fillMaxWidth())
                     }
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        stringResource(R.string.gf_custom_file_type),
+                        fontSize = 12.sp,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Spacer(modifier = Modifier.height(4.dp))
+                    ChipFlowRow {
+                        uiState.uploadTargets.forEachIndexed { index, target ->
+                            FilterChip(
+                                selected = uiState.selectedUploadTarget == index,
+                                onClick = { onUploadTargetSelected(index) },
+                                enabled = !uiState.isLoading,
+                                label = { Text(stringResource(target.labelRes)) }
+                            )
+                        }
+                    }
+                    uiState.uploadDestination?.let { destination ->
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(
+                            stringResource(R.string.gf_custom_destination, destination),
+                            fontSize = 11.sp,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
                     Spacer(modifier = Modifier.height(10.dp))
-                    Text(uiState.selectedItemText, fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f))
-                    Spacer(modifier = Modifier.height(12.dp))
+                    Text(
+                        uiState.selectedFileName?.let { name ->
+                            stringResource(R.string.selected_item, name)
+                        } ?: stringResource(R.string.selected_item_placeholder),
+                        fontSize = 13.sp,
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f)
+                    )
+                    Spacer(modifier = Modifier.height(10.dp))
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        CatsmokerOutlinedButton(onClick = onSelectFile, modifier = Modifier.weight(1f), enabled = !uiState.isLoading) { Text(stringResource(R.string.gf_select)) }
-                        CatsmokerButton(onClick = onUploadFile, modifier = Modifier.weight(1f), enabled = !uiState.isLoading) {
+                        CatsmokerOutlinedButton(
+                            onClick = onSelectFile,
+                            modifier = Modifier.weight(1f),
+                            enabled = !uiState.isLoading
+                        ) { Text(stringResource(R.string.gf_select)) }
+                        CatsmokerButton(
+                            onClick = onUploadFile,
+                            modifier = Modifier.weight(1f),
+                            enabled = !uiState.isLoading
+                        ) {
                             if (uiState.busyArea == EditGameFilesViewModel.BusyArea.CUSTOM_UPLOAD) {
                                 CircularProgressIndicator(modifier = Modifier.size(18.dp), strokeWidth = 2.dp)
                             } else {
@@ -742,10 +781,16 @@ private fun ProfileGameEditor(
                             }
                         }
                     }
-                    if (uiState.selectedItemText != stringResource(R.string.selected_item_placeholder)) {
+                    if (uiState.selectedFileName != null) {
                         Spacer(modifier = Modifier.height(4.dp))
-                        TextButton(onClick = onClearSelection, modifier = Modifier.align(Alignment.CenterHorizontally)) {
-                            Text(stringResource(R.string.gf_clear_selection), color = Color.Red.copy(alpha = 0.7f))
+                        TextButton(
+                            onClick = onClearSelection,
+                            modifier = Modifier.align(Alignment.CenterHorizontally)
+                        ) {
+                            Text(
+                                stringResource(R.string.gf_clear_selection),
+                                color = Color.Red.copy(alpha = 0.7f)
+                            )
                         }
                     }
                 }
@@ -890,54 +935,85 @@ private fun PubgSaveEditorSection(
             Spacer(modifier = Modifier.height(12.dp))
             Text(stringResource(R.string.gf_frame_rate), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary)
             Spacer(modifier = Modifier.height(6.dp))
-            ChipFlowRow {
-                PubgSavePatcher.FPS_TIERS.forEach { tier ->
-                    val selected = uiState.saveEdits[PubgSavePatcher.FIELD_BATTLE_FPS] == tier.battleFps &&
-                        uiState.saveEdits[PubgSavePatcher.FIELD_LOBBY_FPS] == tier.lobbyFps &&
-                        uiState.saveEdits[PubgSavePatcher.FIELD_FPS_LEVEL] == tier.fpsLevel
-                    FilterChip(
-                        selected = selected,
-                        enabled = read != null && !uiState.isLoading,
-                        onClick = { onSaveEditSelected(PubgSavePatcher.FIELD_BATTLE_FPS, tier.fps) },
-                        label = { Text("${tier.fps} FPS") }
-                    )
+            val fpsEditable = PubgSaveSelection.fpsEditable(read)
+            if (fpsEditable) {
+                ChipFlowRow {
+                    PubgSavePatcher.FPS_TIERS.forEach { tier ->
+                        val selected = PubgSaveSelection.selectedFps(read, uiState.saveEdits) == tier.fps
+                        FilterChip(
+                            selected = selected,
+                            enabled = !uiState.isLoading,
+                            onClick = { onSaveEditSelected(PubgSavePatcher.FIELD_BATTLE_FPS, tier.fps) },
+                            label = { Text("${tier.fps} FPS") }
+                        )
+                    }
                 }
+            } else if (read != null) {
+                Text(
+                    stringResource(R.string.gf_save_field_unsupported),
+                    fontSize = 12.sp,
+                    color = MaterialTheme.colorScheme.error.copy(alpha = 0.85f)
+                )
             }
 
             Spacer(modifier = Modifier.height(12.dp))
             Text(stringResource(R.string.gf_render_quality), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary)
             Spacer(modifier = Modifier.height(6.dp))
-            ChipFlowRow {
-                PubgSavePatcher.RENDER_TIERS.forEach { tier ->
-                    val selected = uiState.saveEdits[PubgSavePatcher.FIELD_BATTLE_RENDER] == tier.value &&
-                        uiState.saveEdits[PubgSavePatcher.FIELD_LOBBY_RENDER] == tier.value
-                    FilterChip(
-                        selected = selected,
-                        enabled = read != null && !uiState.isLoading,
-                        onClick = { onSaveEditSelected(PubgSavePatcher.FIELD_BATTLE_RENDER, tier.value) },
-                        label = { Text(tier.label) }
-                    )
+            val renderEditable = PubgSaveSelection.renderEditable(read)
+            if (renderEditable) {
+                ChipFlowRow {
+                    PubgSavePatcher.RENDER_TIERS.forEach { tier ->
+                        val selected =
+                            PubgSaveSelection.selectedRender(read, uiState.saveEdits) == tier.value
+                        FilterChip(
+                            selected = selected,
+                            enabled = !uiState.isLoading,
+                            onClick = { onSaveEditSelected(PubgSavePatcher.FIELD_BATTLE_RENDER, tier.value) },
+                            label = { Text(tier.label) }
+                        )
+                    }
                 }
+            } else if (read != null) {
+                Text(
+                    stringResource(R.string.gf_save_field_unsupported),
+                    fontSize = 12.sp,
+                    color = MaterialTheme.colorScheme.error.copy(alpha = 0.85f)
+                )
             }
 
             Spacer(modifier = Modifier.height(12.dp))
             Text(stringResource(R.string.gf_camera_view), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary)
             Spacer(modifier = Modifier.height(6.dp))
-            ChipFlowRow {
-                PubgSavePatcher.VIEW_PRESETS.forEach { preset ->
-                    val selected = uiState.saveEdits[PubgSavePatcher.FIELD_TP_VIEW] == preset.tpView &&
-                        uiState.saveEdits[PubgSavePatcher.FIELD_FP_VIEW] == preset.fpView
-                    FilterChip(
-                        selected = selected,
-                        enabled = read != null && !uiState.isLoading &&
-                            // A preset can only be offered when the file carries both camera fields —
-                            // a save without them has nothing to patch.
-                            read.fields[PubgSavePatcher.FIELD_TP_VIEW] is PubgSavePatcher.FieldOutcome.Value &&
-                            read.fields[PubgSavePatcher.FIELD_FP_VIEW] is PubgSavePatcher.FieldOutcome.Value,
-                        onClick = { onSaveEditSelected(PubgSavePatcher.FIELD_TP_VIEW, preset.tpView) },
-                        label = { Text(preset.label) }
-                    )
+            // The old group rendered two chips that could never be clicked on saves lacking
+            // one of the pair. Explain the omission instead of showing dead controls.
+            if (PubgSaveSelection.viewEditable(read)) {
+                ChipFlowRow {
+                    PubgSavePatcher.VIEW_PRESETS.forEach { preset ->
+                        val selected =
+                            PubgSaveSelection.selectedView(read, uiState.saveEdits) == preset
+                        FilterChip(
+                            selected = selected,
+                            enabled = !uiState.isLoading,
+                            onClick = { onSaveEditSelected(PubgSavePatcher.FIELD_TP_VIEW, preset.tpView) },
+                            label = { Text(preset.label) }
+                        )
+                    }
                 }
+            } else if (read != null) {
+                Text(
+                    stringResource(R.string.gf_save_field_unsupported),
+                    fontSize = 12.sp,
+                    color = MaterialTheme.colorScheme.error.copy(alpha = 0.85f)
+                )
+            }
+
+            if (uiState.saveEdits.isNotEmpty()) {
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(
+                    stringResource(R.string.gf_unsaved),
+                    fontSize = 12.sp,
+                    color = MaterialTheme.colorScheme.primary
+                )
             }
 
             Spacer(modifier = Modifier.height(12.dp))
@@ -982,7 +1058,7 @@ fun EditGameFilesPreview() {
                 profileLabelResIds = listOf(R.string.gf_profile_unlock_120, R.string.gf_profile_tablet),
                 configFileLabel = "Active.sav",
                 canReset = true,
-                selectedItemText = "Active.sav selected",
+                selectedFileName = "Active.sav",
                 canUploadCustom = true,
                 canPatchSave = true,
                 saveRead = PubgSavePatcher.ReadResult(

@@ -64,6 +64,13 @@ object GridPreferences {
     /** The quality ladder the game's own preset table ships (its powersaver block holds `ultralow`). */
     val QUALITY_TIERS = listOf("ultralow", "low", "medium", "high", "ultrahigh")
 
+    /**
+     * The highest frame rate the game exposes. The editor offers only this tier: the no-cap
+     * rule (2026-09-23) removed the lower 30/60/90/120 choices rather than letting a user
+     * write a new ceiling.
+     */
+    const val MAX_FPS = 144
+
     /** Anisotropic filtering's ladder allows `off` (the game's powersaver preset holds it). */
     const val ANISOTROPIC_KEY = "anisotropic_filtering"
 

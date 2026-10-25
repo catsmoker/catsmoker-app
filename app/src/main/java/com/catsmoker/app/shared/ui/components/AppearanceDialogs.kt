@@ -78,6 +78,7 @@ fun languageEndonym(tag: String): String = when (tag) {
     AppearanceStore.LANGUAGE_ARABIC -> "العربية"
     AppearanceStore.LANGUAGE_SPANISH -> "Español"
     AppearanceStore.LANGUAGE_CHINESE -> "中文 (简体)"
+    AppearanceStore.LANGUAGE_PORTUGUESE -> "Português (Brasil)"
     AppearanceStore.LANGUAGE_ENGLISH -> "English"
     else -> ""
 }
@@ -95,7 +96,8 @@ fun LanguageOptions(selectedTag: String, onSelect: (String) -> Unit) {
         AppearanceStore.LANGUAGE_ENGLISH,
         AppearanceStore.LANGUAGE_ARABIC,
         AppearanceStore.LANGUAGE_SPANISH,
-        AppearanceStore.LANGUAGE_CHINESE
+        AppearanceStore.LANGUAGE_CHINESE,
+        AppearanceStore.LANGUAGE_PORTUGUESE
     )
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         options.forEach { tag ->

@@ -85,6 +85,7 @@ class SettingsViewModel @Inject constructor(
         private var autoCheckedThisProcess = false
 
         private const val PREF_AUTO_CHECK = "auto_check_update"
+        private const val PREF_PRERELEASE = "use_prerelease"
         private const val PREF_DISMISSED_TAG = "update_dismissed_tag"
         private const val PREF_PENDING_TAG = "update_pending_tag"
     }
@@ -100,7 +101,7 @@ class SettingsViewModel @Inject constructor(
                 // Full variant: no purchase exists, never ad-free via billing.
                 isAdFree = !VariantCapabilities.HAS_FREE_ADS_TOGGLE && !adsOn,
                 autoCheck = autoOn,
-                isPreRelease = prefs.getBoolean("use_prerelease", false),
+                isPreRelease = prefs.getBoolean(PREF_PRERELEASE, false),
                 themeMode = AppearanceStore.themeModeSync(context),
                 languageTag = AppearanceStore.languageTag(context)
             )
@@ -178,6 +179,17 @@ class SettingsViewModel @Inject constructor(
     fun onAutoCheckToggled(enabled: Boolean) {
         prefs.edit { putBoolean(PREF_AUTO_CHECK, enabled) }
         _uiState.update { it.copy(autoCheck = enabled) }
+    }
+
+    /**
+     * Opts the manual/automatic update check into GitHub pre-releases. Off by
+     * default: a beta is never offered unless the user asked for one. The flag
+     * is read by the next check, not retroactively applied to a download already
+     * in flight.
+     */
+    fun onPreReleaseToggled(enabled: Boolean) {
+        prefs.edit { putBoolean(PREF_PRERELEASE, enabled) }
+        _uiState.update { it.copy(isPreRelease = enabled) }
     }
 
     /**

@@ -146,6 +146,52 @@ data class GamingModeReport(
      * one family's refusal never blocks the nodes that did land.
      */
     val snapdragonCpuMode: Boolean? = null,
+    /**
+     * Whether the `cpu_input_boost` + `/dev/stune` family was confirmed by read-back: the boost
+     * master switch (enable-only), the per-CPU `ib_freqs` body (raised toward each policy's
+     * hardware max, gated on a declared boost window) and the dynamic stune boost (raised toward
+     * the device's own static top-app boost).
+     *
+     * null when the kernel carries no such node or nothing had headroom — not applicable, so the
+     * row is omitted rather than shown refused. See [CpuInputBoostNodes] for the rules and the
+     * deliberate non-writes.
+     */
+    val cpuInputBoost: Boolean? = null,
+    /**
+     * Whether every cpufreq policy that declared `performance` in its own
+     * `scaling_available_governors` was confirmed running it by read-back.
+     *
+     * null when no policy needed the switch (or this kernel does not offer `performance`) — not
+     * applicable. The governor is the one universal maximum-frequency governor; vendor names like
+     * `turbo` are never guessed at (see [CpuGovernorMode]).
+     */
+    val cpuGovernor: Boolean? = null,
+    /**
+     * The Spectrum profile confirmed by read-back: 3 = gaming, or 2 when the kernel clamped the
+     * gaming request to performance. null when the device declares no usable Spectrum interface
+     * or the write was refused (the refusal is in [unavailable]).
+     */
+    val spectrumProfile: Int? = null,
+    /**
+     * Whether raising the `/data` block device's `read_ahead_kb` to its queue's own
+     * `max_sectors_kb` was confirmed by read-back.
+     *
+     * null when nothing had headroom or the `/data` device could not be resolved — not
+     * applicable, so the row is omitted. See [StorageTuning] for why the scheduler is not touched.
+     */
+    val storageTuning: Boolean? = null,
+    /** The read-ahead the device reported after the write, in KB, or null when not applied. */
+    val storageReadAheadKb: Int? = null,
+    /**
+     * Whether raising the VM watermarks (`min_free_kbytes` toward 1 % of `MemTotal`,
+     * `extra_free_kbytes` toward the device's own base reserve) was confirmed by read-back.
+     *
+     * null when the device already reserved at or above both targets, or either fact was
+     * unreadable — not applicable. See [MemoryTuning] for the excluded knobs.
+     */
+    val memoryTuning: Boolean? = null,
+    /** The `min_free_kbytes` the device reported after the write, in KB, or null when not applied. */
+    val memoryMinFreeKb: Int? = null,
     /** Refresh rate the panel was actually pinned to, or null when the ROM ignored the keys. */
     val lockedRefreshHz: Int? = null,
     val touchResponseBoost: Boolean = false,
@@ -303,7 +349,6 @@ fun shouldCompilePackage(currentStatus: String?, mode: String, force: Boolean): 
 class GamingEngine(
     private val context: Context,
     private val shellRunner: ShellRunner,
-    val refreshRates: DisplayRefreshRateProvider,
     private val backgroundDataRestrictor: BackgroundDataRestrictor,
     private val gameInterventions: GameInterventions,
     private val suspendListStore: SuspendListStore,
@@ -804,6 +849,31 @@ class GamingEngine(
                 unavailable += GamingModeNotice.Res(R.string.gt_eng_un_snap)
             }
 
+            // The five SmartPack-derived kernel levers. All snapshot-gated (an empty prior map is
+            // "not applicable", never a write), root-only and read-back verified. Spectrum runs
+            // before the governor so the immediate CPU state ends at `performance` even when a
+            // kernel's Spectrum gaming profile is its own schedutil tuning.
+            val spectrum = applySpectrumProfile(readLastSnapshot()?.spectrumProfileProperty)
+            if (spectrum.refused) {
+                unavailable += GamingModeNotice.Res(R.string.gt_eng_un_spectrum)
+            }
+            val governorOk = applyCpuGovernorMode(readLastSnapshot()?.cpuGovernorNodes.orEmpty())
+            if (governorOk == false) {
+                unavailable += GamingModeNotice.Res(R.string.gt_eng_un_governor)
+            }
+            val inputBoostOk = applyCpuInputBoostNodes(readLastSnapshot()?.cpuInputBoostNodes.orEmpty())
+            if (inputBoostOk == false) {
+                unavailable += GamingModeNotice.Res(R.string.gt_eng_un_input_boost)
+            }
+            val storage = applyStorageTuning(readLastSnapshot()?.storageTuningNodes.orEmpty())
+            if (storage.applied == false) {
+                unavailable += GamingModeNotice.Res(R.string.gt_eng_un_storage)
+            }
+            val memory = applyMemoryTuning(readLastSnapshot()?.memoryTuningNodes.orEmpty())
+            if (memory.applied == false) {
+                unavailable += GamingModeNotice.Res(R.string.gt_eng_un_memory)
+            }
+
             // The two developer options, applied through the same verified helpers the Developer
             // Options card uses — so the switches there and the state here can never disagree.
             _state.value = GamingModeState.Enabling(0.92f, context.getString(R.string.gt_eng_dev))
@@ -889,6 +959,13 @@ class GamingEngine(
                 qtiGameFps = qtiFpsOk,
                 mediaTekGameMode = mtkOk,
                 snapdragonCpuMode = snapOk,
+                cpuInputBoost = inputBoostOk,
+                cpuGovernor = governorOk,
+                spectrumProfile = spectrum.profile,
+                storageTuning = storage.applied,
+                storageReadAheadKb = storage.valueKb,
+                memoryTuning = memory.applied,
+                memoryMinFreeKb = memory.valueKb,
                 lockedRefreshHz = lockedHz,
                 touchResponseBoost = touchOk,
                 pointerSpeed = pointerSpeedApplied,
@@ -1232,9 +1309,6 @@ class GamingEngine(
         _pointerSpeedChoice.value = stored
         return stored
     }
-
-    /** What the panel can do (rates, seamless switches, adaptive support) — no privilege needed. */
-    fun panelRefreshInfo(): DisplayRefreshRateProvider.PanelInfo = refreshRates.panelInfo()
 
     /** @return true when the setting actually holds the requested value afterwards. */
     suspend fun toggleAlwaysFinishActivities(enabled: Boolean): Boolean {
@@ -2021,6 +2095,15 @@ class GamingEngine(
         // nothing to do.
         val snapdragonCpuNodes = captureSnapdragonCpuNodes()
 
+        // The five SmartPack-derived families. Each capture records only nodes a rule would
+        // actually change, so an empty map is the gate that keeps apply and revert out of a kernel
+        // that has nothing to offer (and out of a value that is already at its target).
+        val cpuInputBoostNodes = captureCpuInputBoostNodes()
+        val cpuGovernorNodes = captureCpuGovernorNodes()
+        val spectrumProfile = captureSpectrumProfile()
+        val storageTuningNodes = captureStorageTuningNodes()
+        val memoryTuningNodes = captureMemoryTuningNodes()
+
         val snapshot = GamingOptimizationSnapshot(
             activeGamePackage = packageName,
             activeGameUid = uid,
@@ -2049,7 +2132,13 @@ class GamingEngine(
             vendorGfxLowQuality = vendorGfxLowQuality,
             debugVendorQtiGameFps = debugVendorQtiGameFps,
             mediatekGameNodes = mediatekGameNodes,
-            snapdragonCpuNodes = snapdragonCpuNodes.takeIf { it.isNotEmpty() }
+            snapdragonCpuNodes = snapdragonCpuNodes.takeIf { it.isNotEmpty() },
+            cpuInputBoostNodes = cpuInputBoostNodes.takeIf { it.isNotEmpty() },
+            cpuGovernorNodes = cpuGovernorNodes.takeIf { it.isNotEmpty() },
+            spectrumProfileProperty = spectrumProfile?.first,
+            spectrumProfile = spectrumProfile?.second,
+            storageTuningNodes = storageTuningNodes.takeIf { it.isNotEmpty() },
+            memoryTuningNodes = memoryTuningNodes.takeIf { it.isNotEmpty() }
         )
         prefs.edit { putString("last_snapshot", snapshot.toJson()) }
         return true
@@ -2100,10 +2189,8 @@ class GamingEngine(
     // namespace parameter to warn about.
     private suspend fun putSettingVerified(key: String, value: String): Boolean {
         shellRunner.execSafeResult("settings", "put", "system", key, value)
-        val readBack = readSettingOrNull("system", key)?.takeIf { it.existed }?.value ?: return false
-        val actual = readBack.toFloatOrNull()
-        val wanted = value.toFloatOrNull()
-        return if (actual != null && wanted != null) actual == wanted else readBack == value
+        val readBack = readSettingOrNull("system", key) ?: return false
+        return SettingValue(value, existed = true).matchesAfterRestore(readBack)
     }
 
     /** @return true when the game's uid was actually added to the background-data whitelist. */
@@ -2263,19 +2350,19 @@ class GamingEngine(
             snapshot.originalRotation?.let { Settings.System.putInt(cr, Settings.System.ACCELEROMETER_ROTATION, it) }
         }
 
-        restoreSetting("system", "min_refresh_rate", snapshot.minRefreshRate)
-        restoreSetting("system", "peak_refresh_rate", snapshot.peakRefreshRate)
-        restoreSetting("system", "touch_response_speed", snapshot.touchResponseSpeed)
-        restoreSetting("system", "pointer_speed", snapshot.pointerSpeed)
-        restoreSetting("secure", "user_preferred_display_mode_id", snapshot.userPreferredDisplayModeId)
+        restoreSetting("system", "min_refresh_rate", snapshot.minRefreshRate)?.let { problems += it }
+        restoreSetting("system", "peak_refresh_rate", snapshot.peakRefreshRate)?.let { problems += it }
+        restoreSetting("system", "touch_response_speed", snapshot.touchResponseSpeed)?.let { problems += it }
+        restoreSetting("system", "pointer_speed", snapshot.pointerSpeed)?.let { problems += it }
+        restoreSetting("secure", "user_preferred_display_mode_id", snapshot.userPreferredDisplayModeId)?.let { problems += it }
         // The vivo display-mode lock's vendor switch, back to the recorded value (or deleted
-        // when it was not set). Null — every non-vivo device, and old snapshots — writes nothing.
-        restoreSetting("global", VivoDisplayMode.KEY_SCREEN_REFRESH_RATE_MODE, snapshot.vivoScreenRefreshRateMode)
+        // when it was not set). Null - every non-vivo device, and old snapshots - writes nothing.
+        restoreSetting("global", VivoDisplayMode.KEY_SCREEN_REFRESH_RATE_MODE, snapshot.vivoScreenRefreshRateMode)?.let { problems += it }
 
-        // The two developer options, back to whatever they were — including "was not set at all",
+        // The two developer options, back to whatever they were - including "was not set at all",
         // which restoreSetting turns into a delete rather than a write of some assumed default.
-        restoreSetting("global", Settings.Global.ALWAYS_FINISH_ACTIVITIES, snapshot.alwaysFinishActivities)
-        restoreSetting("global", "activity_manager_constants", snapshot.activityManagerConstants)
+        restoreSetting("global", Settings.Global.ALWAYS_FINISH_ACTIVITIES, snapshot.alwaysFinishActivities)?.let { problems += it }
+        restoreSetting("global", "activity_manager_constants", snapshot.activityManagerConstants)?.let { problems += it }
         _alwaysFinishActivities.value =
             getAlwaysFinishActivities() == 1
         _backgroundProcessLimit.value =
@@ -2333,9 +2420,31 @@ class GamingEngine(
         // MediaTek game-mode nodes, back to the snapshot values. Only nodes the snapshot
         // recorded are touched — an empty map means there was never anything to restore.
         restoreMediaTekGameNodes(snapshot.mediatekGameNodes)
-        // Snapdragon CPU nodes, back to the snapshot priors. Null (or empty) means the
-        // capture found nothing widenable, so there is nothing to restore.
-        restoreSnapdragonCpuNodes(snapshot.snapdragonCpuNodes.orEmpty())
+        // Spectrum first: restoring the profile can make the kernel re-derive its own governor.
+        restoreSpectrumProfile(snapshot.spectrumProfileProperty, snapshot.spectrumProfile)
+        // Then the recorded governor. This has to precede the Snapdragon prior map: a policy's
+        // `schedutil/*` tunables only accept writes while schedutil is the active governor, so
+        // restoring the tuning first (as this used to) silently refused every rate-limit and
+        // hispeed write whenever Gaming Mode had switched the policy to `performance`.
+        restoreKernelNodeMap(snapshot.cpuGovernorNodes.orEmpty()).forEach { node ->
+            problems += GamingModeNotice.Res(R.string.gt_eng_restore_refused, listOf(node))
+        }
+        // Snapdragon CPU nodes, back to the snapshot priors. Empty means the capture found
+        // nothing widenable, so there is nothing to restore.
+        restoreKernelNodeMap(snapshot.snapdragonCpuNodes.orEmpty()).forEach { node ->
+            problems += GamingModeNotice.Res(R.string.gt_eng_restore_refused, listOf(node))
+        }
+        // The rest of the SmartPack-derived families, same measured-priors contract. Empty maps
+        // are old snapshots or kernels that never carried the interface: nothing to restore.
+        restoreKernelNodeMap(snapshot.cpuInputBoostNodes.orEmpty()).forEach { node ->
+            problems += GamingModeNotice.Res(R.string.gt_eng_restore_refused, listOf(node))
+        }
+        restoreKernelNodeMap(snapshot.storageTuningNodes.orEmpty()).forEach { node ->
+            problems += GamingModeNotice.Res(R.string.gt_eng_restore_refused, listOf(node))
+        }
+        restoreKernelNodeMap(snapshot.memoryTuningNodes.orEmpty()).forEach { node ->
+            problems += GamingModeNotice.Res(R.string.gt_eng_restore_refused, listOf(node))
+        }
         prefs.edit { remove("last_snapshot") }
         return problems
     }
@@ -2384,13 +2493,33 @@ class GamingEngine(
         return SuspendVerdict.isUnsuspendConfirmed(result.exitCode, result.stdout)
     }
 
-    private suspend fun restoreSetting(namespace: String, key: String, sv: SettingValue?) {        if (sv == null) return
+    /**
+     * Restores one snapshot setting and verifies that the device accepted it.
+     *
+     * `settings put`/`delete` can exit 0 without changing anything, so the read-back is the only
+     * honest success signal (see [SettingValue.matchesAfterRestore]). A null [sv] means the
+     * snapshot did not record the key: do not touch it. A refused restore is returned as a
+     * notice for the deactivation report; it is not silently swallowed.
+     */
+    private suspend fun restoreSetting(
+        namespace: String,
+        key: String,
+        sv: SettingValue?
+    ): GamingModeNotice? {
+        if (sv == null) return null
         val cmd = if (sv.existed && sv.value.isNotBlank()) {
             "settings put $namespace $key ${sv.value}"
         } else {
             "settings delete $namespace $key"
         }
         execute(cmd)
+        val readBack = readSettingOrNull(namespace, key)
+            ?: return GamingModeNotice.Res(R.string.gt_eng_restore_refused, listOf("$namespace/$key"))
+        return if (sv.matchesAfterRestore(readBack)) {
+            null
+        } else {
+            GamingModeNotice.Res(R.string.gt_eng_restore_refused, listOf("$namespace/$key"))
+        }
     }
 
     /**
@@ -2666,6 +2795,139 @@ class GamingEngine(
     }
 
     /**
+     * `cpu_input_boost` + `/dev/stune` priors, for the nodes [CpuInputBoostNodes] would write: the
+     * master switch, the per-CPU `ib_freqs` body (only with a positive declared boost window and
+     * only where a frequency has headroom) and the dynamic stune boost (only where the device's own
+     * static top-app boost is higher). The static boost itself is never recorded because it is
+     * never written — it is the target's reference. Empty when the kernel has no such interface,
+     * which both gates apply and makes the revert a no-op.
+     */
+    private suspend fun captureCpuInputBoostNodes(): Map<String, String> {
+        val priors = linkedMapOf<String, String>()
+        val parent = CpuInputBoostNodes.PARENT_CANDIDATES.firstOrNull {
+            readSysfsNode("$it/${CpuInputBoostNodes.ENABLED}") != null
+        } ?: return priors
+        val enabledNode = "$parent/${CpuInputBoostNodes.ENABLED}"
+        readSysfsNode(enabledNode)?.let { now ->
+            if (SnapdragonKernelNodes.enableIfZero(now) != null) priors[enabledNode] = now
+        }
+        val durations = CpuInputBoostNodes.DURATION_NAMES
+            .mapNotNull { name -> readSysfsNode("$parent/$name")?.let { name to it } }
+            .toMap()
+        if (CpuInputBoostNodes.boostWindowMs(durations) != null) {
+            val freqNode = "$parent/${CpuInputBoostNodes.IB_FREQS}"
+            val hardwareMaxKhz = hardwareMaxByCpu(readSnapdragonPolicyStates(), readPolicyCpuSets())
+            readSysfsNode(freqNode)?.let { now ->
+                if (SnapdragonKernelNodes.raiseBoostPairs(now, hardwareMaxKhz).isNotEmpty()) {
+                    priors[freqNode] = now
+                }
+            }
+        }
+        val stuneParent = CpuInputBoostNodes.STUNE_BOOST_PARENTS.firstOrNull {
+            readSysfsNode("$it/${CpuInputBoostNodes.DYNAMIC_STUNE_BOOST}") != null
+        }
+        if (stuneParent != null) {
+            val node = "$stuneParent/${CpuInputBoostNodes.DYNAMIC_STUNE_BOOST}"
+            readSysfsNode(node)?.let { now ->
+                val topApp = readSysfsNode(CpuInputBoostNodes.TOP_APP_STUNE_BOOST)
+                if (CpuInputBoostNodes.stuneBoostTarget(now, topApp) != null) priors[node] = now
+            }
+        }
+        // `prefer_idle` is a pure enable-only latency hint. `sched_boost_enabled` is recorded only
+        // when the device also declares a positive static top-app boost — enabling it over a zero
+        // boost would be a switch with no magnitude behind it.
+        readSysfsNode(CpuInputBoostNodes.TOP_APP_PREFER_IDLE)?.let { now ->
+            if (SnapdragonKernelNodes.enableIfZero(now) != null) {
+                priors[CpuInputBoostNodes.TOP_APP_PREFER_IDLE] = now
+            }
+        }
+        val topAppBoost = readSysfsNode(CpuInputBoostNodes.TOP_APP_STUNE_BOOST)?.toLongOrNull()
+        if (topAppBoost != null && topAppBoost > 0L) {
+            readSysfsNode(CpuInputBoostNodes.TOP_APP_SCHED_BOOST_ENABLED)?.let { now ->
+                if (SnapdragonKernelNodes.enableIfZero(now) != null) {
+                    priors[CpuInputBoostNodes.TOP_APP_SCHED_BOOST_ENABLED] = now
+                }
+            }
+        }
+        return priors
+    }
+
+    /**
+     * Governor priors: every policy that currently runs something other than `performance` while
+     * declaring it in its own `scaling_available_governors`. A policy that does not list it
+     * contributes nothing, so the apply can never write a governor the kernel did not declare.
+     */
+    private suspend fun captureCpuGovernorNodes(): Map<String, String> {
+        val priors = linkedMapOf<String, String>()
+        for (dir in readSnapdragonPolicyStates().keys) {
+            val node = "$dir/${CpuGovernorMode.SCALING_GOVERNOR}"
+            val current = readSysfsNode(node) ?: continue
+            val available = readSysfsNode("$dir/${CpuGovernorMode.AVAILABLE_GOVERNORS}")
+            if (CpuGovernorMode.performanceTarget(current, available) != null) priors[node] = current
+        }
+        return priors
+    }
+
+    /**
+     * The Spectrum profile property and its prior value, or null when the interface is missing,
+     * unsupported, already at gaming, or the property does not exist.
+     *
+     * The existence gate is the important one: `setprop` cannot delete a `persist.*` property, so
+     * creating one would be a permanent device change no revert could undo. A kernel that
+     * advertises support without shipping a profile property is left entirely alone.
+     */
+    private suspend fun captureSpectrumProfile(): Pair<String, String>? {
+        val support = readProp(SpectrumProfile.SUPPORT_PROP)
+        val vendorSupport = readProp(SpectrumProfile.VENDOR_SUPPORT_PROP)
+        if (!SpectrumProfile.supported(support, vendorSupport)) return null
+        val property = SpectrumProfile.profileProperty(vendorSupport.trim() == "1")
+        val prior = readProp(property).trim()
+        if (prior.isEmpty()) return null
+        if (SpectrumProfile.requestedProfile(prior) == null) return null
+        return property to prior
+    }
+
+    /**
+     * `/data` read-ahead priors: the queue node of the block device the kernel's own mount table
+     * names, recorded only when the queue declares a maximum above the current window. An
+     * unresolvable mount, a non-storage source (tmpfs, loop, zram) or an unreadable queue records
+     * nothing, which makes the apply a no-op rather than a guess.
+     */
+    private suspend fun captureStorageTuningNodes(): Map<String, String> {
+        val priors = linkedMapOf<String, String>()
+        val mounts = readSysfsNode("/proc/mounts") ?: return priors
+        val disk = StorageTuning.dataBlockDeviceName(StorageTuning.dataMountSource(mounts))
+            ?: return priors
+        val queue = StorageTuning.queueDir(disk)
+        val current = readSysfsNode("$queue/${StorageTuning.READ_AHEAD_KB}") ?: return priors
+        val maxSectors = readSysfsNode("$queue/${StorageTuning.MAX_SECTORS_KB}") ?: return priors
+        if (StorageTuning.readAheadTarget(current, maxSectors) != null) {
+            priors["$queue/${StorageTuning.READ_AHEAD_KB}"] = current
+        }
+        return priors
+    }
+
+    /**
+     * VM watermark priors: `min_free_kbytes` when 1 % of the device's own `MemTotal` is above it,
+     * and `extra_free_kbytes` when the device's own base reserve is above it. A device already at
+     * or above either target records nothing and is never lowered.
+     */
+    private suspend fun captureMemoryTuningNodes(): Map<String, String> {
+        val priors = linkedMapOf<String, String>()
+        val memTotal = MemoryTuning.memTotalKb(readSysfsNode(MemoryTuning.MEM_INFO))
+        val minFree = readSysfsNode(MemoryTuning.MIN_FREE_KBYTES) ?: return priors
+        if (MemoryTuning.minFreeTarget(minFree, memTotal) != null) {
+            priors[MemoryTuning.MIN_FREE_KBYTES] = minFree
+        }
+        readSysfsNode(MemoryTuning.EXTRA_FREE_KBYTES)?.let { extra ->
+            if (MemoryTuning.extraFreeTarget(extra, minFree) != null) {
+                priors[MemoryTuning.EXTRA_FREE_KBYTES] = extra
+            }
+        }
+        return priors
+    }
+
+    /**
      * Applies the Snapdragon widen-only channel and confirms every write by read-back. The channel
      * is [SnapdragonCpuWiden] (policy ceilings raised to each policy's own hardware max;
      * game-visible cpusets unioned toward the full set) plus [SnapdragonKernelNodes] (the schedutil
@@ -2829,6 +3091,161 @@ class GamingEngine(
     }
 
     /**
+     * Applies the `cpu_input_boost` + `/dev/stune` family. Every write is recomputed from a live
+     * read and limited to nodes the snapshot recorded: the master switch and the enable-only
+     * top-app flags go to `1` (never off), the per-CPU `ib_freqs` body is raised only while the
+     * device still declares a positive window, and the dynamic stune boost is raised toward the
+     * device's own static top-app boost.
+     *
+     * @return null when nothing was attempted (interface gone, no headroom, or recovery found
+     *   everything already at its target), false when root is unavailable or a write was refused,
+     *   true only when every attempted write read back at its target.
+     */
+    private suspend fun applyCpuInputBoostNodes(priors: Map<String, String>): Boolean? {
+        if (priors.isEmpty()) return null
+        if (!shellRunner.isRootAvailable()) return false
+        val plan = linkedMapOf<String, String>()
+        var freqResult: Boolean? = null
+        for (node in priors.keys) {
+            when (node.substringAfterLast('/')) {
+                CpuInputBoostNodes.ENABLED,
+                "schedtune.prefer_idle" ->
+                    CpuInputBoostNodes.desiredFlag(readSysfsNode(node))?.let { plan[node] = it }
+                "schedtune.sched_boost_enabled" -> {
+                    // Same magnitude gate as capture: never enable a static boost over a zero.
+                    val topApp = readSysfsNode(CpuInputBoostNodes.TOP_APP_STUNE_BOOST)?.toLongOrNull()
+                    if (topApp != null && topApp > 0L) {
+                        CpuInputBoostNodes.desiredFlag(readSysfsNode(node))?.let { plan[node] = it }
+                    }
+                }
+                CpuInputBoostNodes.IB_FREQS -> {
+                    val base = node.substringBeforeLast('/')
+                    val durations = CpuInputBoostNodes.DURATION_NAMES
+                        .mapNotNull { name -> readSysfsNode("$base/$name")?.let { name to it } }
+                        .toMap()
+                    if (CpuInputBoostNodes.boostWindowMs(durations) != null) {
+                        val hardwareMaxKhz = hardwareMaxByCpu(
+                            readSnapdragonPolicyStates(),
+                            readPolicyCpuSets()
+                        )
+                        val targets = SnapdragonKernelNodes.raiseBoostPairs(
+                            readSysfsNode(node),
+                            hardwareMaxKhz
+                        )
+                        if (targets.isNotEmpty()) freqResult = writeSysfsPairsVerified(node, targets)
+                    }
+                }
+                CpuInputBoostNodes.DYNAMIC_STUNE_BOOST ->
+                    CpuInputBoostNodes.desiredStuneBoost(
+                        readSysfsNode(node),
+                        readSysfsNode(CpuInputBoostNodes.TOP_APP_STUNE_BOOST)
+                    )?.let { plan[node] = it }
+            }
+        }
+        val outcomes = listOfNotNull(applyNodePlan(plan), freqResult)
+        if (outcomes.isEmpty()) return null
+        return outcomes.all { it }
+    }
+
+    /**
+     * Switches every recorded policy to `performance` when it still declares that governor. The
+     * target is re-read live, so a policy whose available table changed since capture is skipped
+     * rather than written a name it no longer supports.
+     *
+     * @return null when no recorded policy needed/permits the switch, false when root is
+     *   unavailable or a write was refused, true when every attempt read back `performance`.
+     */
+    private suspend fun applyCpuGovernorMode(priors: Map<String, String>): Boolean? {
+        if (priors.isEmpty()) return null
+        if (!shellRunner.isRootAvailable()) return false
+        val plan = linkedMapOf<String, String>()
+        for (node in priors.keys) {
+            val current = readSysfsNode(node) ?: continue
+            val available = readSysfsNode(
+                "${node.substringBeforeLast('/')}/${CpuGovernorMode.AVAILABLE_GOVERNORS}"
+            )
+            CpuGovernorMode.desiredGovernor(current, available)?.let { plan[node] = it }
+        }
+        return applyNodePlan(plan)
+    }
+
+    /**
+     * Applies the Spectrum gaming profile, accepting the kernel's own clamp to performance (2) as
+     * a confirmed result. The prior value is in the snapshot; this writes only the recorded
+     * property, never a guessed one.
+     */
+    private suspend fun applySpectrumProfile(property: String?): SpectrumOutcome {
+        if (property == null) return SpectrumOutcome()
+        if (!shellRunner.isRootAvailable()) return SpectrumOutcome(refused = true)
+        val current = readProp(property).trim()
+        val requested = SpectrumProfile.requestedProfile(current)
+            ?: return if (current == SpectrumProfile.GAMING_PROFILE.toString()) {
+                SpectrumOutcome(profile = SpectrumProfile.GAMING_PROFILE)
+            } else {
+                SpectrumOutcome()
+            }
+        shellRunner.execSafeResult("setprop", property, requested.toString())
+        val accepted = SpectrumProfile.acceptedProfile(requested, readProp(property).trim())
+            ?: return SpectrumOutcome(refused = true)
+        return SpectrumOutcome(profile = accepted)
+    }
+
+    /**
+     * Raises the `/data` device's read-ahead to its queue's declared maximum request size, then
+     * reports the value the device read back. Only the queue the snapshot recorded is touched;
+     * the device is re-resolved so a changed mount table cannot redirect the write to another
+     * disk. The I/O scheduler is deliberately not changed (see [StorageTuning]).
+     */
+    private suspend fun applyStorageTuning(priors: Map<String, String>): NodeRaiseOutcome {
+        if (priors.isEmpty()) return NodeRaiseOutcome()
+        if (!shellRunner.isRootAvailable()) return NodeRaiseOutcome(applied = false)
+        val node = priors.keys.firstOrNull { it.endsWith("/${StorageTuning.READ_AHEAD_KB}") }
+            ?: return NodeRaiseOutcome()
+        val queue = node.substringBeforeLast('/')
+        val target = StorageTuning.desiredReadAhead(
+            readSysfsNode(node),
+            readSysfsNode("$queue/${StorageTuning.MAX_SECTORS_KB}")
+        ) ?: return NodeRaiseOutcome()
+        if (!writeSysfsVerified(node, target)) return NodeRaiseOutcome(applied = false)
+        return NodeRaiseOutcome(
+            applied = true,
+            valueKb = readSysfsNode(node)?.toIntOrNull()
+        )
+    }
+
+    /**
+     * Raises the VM watermarks from the device's own facts: `min_free_kbytes` toward 1 % of
+     * `MemTotal`, `extra_free_kbytes` toward the device's own base reserve. Both targets are
+     * computed from live reads before either write, so the extra reserve can never chase our own
+     * raised minimum. Values already above their target are left alone, never lowered.
+     */
+    private suspend fun applyMemoryTuning(priors: Map<String, String>): NodeRaiseOutcome {
+        if (priors.isEmpty()) return NodeRaiseOutcome()
+        if (!shellRunner.isRootAvailable()) return NodeRaiseOutcome(applied = false)
+        val memTotal = MemoryTuning.memTotalKb(readSysfsNode(MemoryTuning.MEM_INFO))
+            ?: return NodeRaiseOutcome()
+        val plan = linkedMapOf<String, String>()
+        if (priors.containsKey(MemoryTuning.MIN_FREE_KBYTES)) {
+            MemoryTuning.desiredMinFree(
+                readSysfsNode(MemoryTuning.MIN_FREE_KBYTES),
+                memTotal
+            )?.let { plan[MemoryTuning.MIN_FREE_KBYTES] = it }
+        }
+        if (priors.containsKey(MemoryTuning.EXTRA_FREE_KBYTES)) {
+            MemoryTuning.desiredExtraFree(
+                readSysfsNode(MemoryTuning.EXTRA_FREE_KBYTES),
+                readSysfsNode(MemoryTuning.MIN_FREE_KBYTES)
+            )?.let { plan[MemoryTuning.EXTRA_FREE_KBYTES] = it }
+        }
+        if (plan.isEmpty()) return NodeRaiseOutcome()
+        if (applyNodePlan(plan) != true) return NodeRaiseOutcome(applied = false)
+        return NodeRaiseOutcome(
+            applied = true,
+            valueKb = readSysfsNode(MemoryTuning.MIN_FREE_KBYTES)?.toIntOrNull()
+        )
+    }
+
+    /**
      * Writes one plain node→value plan and counts the read-back. Null when the plan is empty —
      * "nothing to write", which callers merge as not applicable rather than as success or refusal.
      */
@@ -2844,23 +3261,44 @@ class GamingEngine(
     }
 
     /**
-     * Puts the Snapdragon nodes back to their snapshot priors — policy ceilings, cpusets, schedutil
-     * rate limits and jumps, `msm_performance` switches and ceilings, `core_ctl` floors/ceilings and
-     * `cpu_boost` switches and frequencies alike. Only nodes the snapshot recorded are touched;
-     * root-gated like the apply — without it there is nothing that could have changed them through
-     * this path. Best-effort like [restoreMediaTekGameNodes]: a refused restore is left as-is and
-     * surfaces in the deactivation report rather than retried blindly.
+     * Puts a recorded kernel-node map back (policy ceilings, cpusets, schedutil rate limits and
+     * jumps, `msm_performance` switches and ceilings, `core_ctl` floors/ceilings, `cpu_boost`
+     * switches and frequencies, governors, boost frequencies, read-ahead and VM watermarks), root-
+     * gated like every apply.
+     *
+     * Each write is read back, because a sysfs write can be refused by the kernel or by SELinux and
+     * still leave the node holding the gaming value — a policy's `schedutil` tunables, for one,
+     * only accept writes while schedutil is the active governor. A prior that fails the safe-value
+     * gate is not written at all.
+     *
+     * @return the node paths that did not read back as their recorded prior, for the deactivation
+     *   report. Empty means everything landed (or there was nothing to restore).
      */
-    private suspend fun restoreSnapdragonCpuNodes(priors: Map<String, String>) {
-        if (priors.isEmpty() || !shellRunner.isRootAvailable()) return
+    private suspend fun restoreKernelNodeMap(priors: Map<String, String>): List<String> {
+        if (priors.isEmpty() || !shellRunner.isRootAvailable()) return emptyList()
+        val refused = mutableListOf<String>()
         for ((node, prior) in priors) {
             // Comma- and colon-aware gate (not the shared one: cpuset priors like `0-5,7` need
-            // commas and per-CPU boost priors like `0:0 4:1804800` need colons) — a refused prior is
-            // left as-is and surfaces in the deactivation report rather than retried blindly.
-            if (SnapdragonCpuWiden.isSafeNodeValue(prior)) {
-                shellRunner.execSafeResult("sh", "-c", "echo $prior > $node")
+            // commas and per-CPU boost priors like `0:0 4:1804800` need colons).
+            if (!SnapdragonCpuWiden.isSafeNodeValue(prior)) {
+                refused += node
+                continue
             }
+            shellRunner.execSafeResult("sh", "-c", "echo $prior > $node")
+            if (readSysfsNode(node)?.trim() != prior.trim()) refused += node
         }
+        return refused
+    }
+
+    /**
+     * Puts the Spectrum profile property back to the recorded prior. Only a property the snapshot
+     * actually recorded is touched — capture refuses interfaces whose property did not exist,
+     * because a `persist.*` property cannot be deleted again.
+     */
+    private suspend fun restoreSpectrumProfile(property: String?, prior: String?) {
+        if (property == null || prior.isNullOrBlank()) return
+        if (!shellRunner.isRootAvailable()) return
+        shellRunner.execSafeResult("setprop", property, prior)
     }
 
     /** Re-reads the PPM status dump and checks it describes exactly [expected] states. */
@@ -3100,6 +3538,29 @@ class GamingEngine(
             if (snapOk == false) {
                 unavailable += GamingModeNotice.Res(R.string.gt_eng_un_snap)
             }
+            // The five SmartPack-derived levers with the same re-assert rule. Their targets are
+            // recomputed from live device facts, so a reboot's stock values are raised again and a
+            // process restart's already-raised values are re-confirmed rather than forgotten.
+            val spectrum = applySpectrumProfile(readLastSnapshot()?.spectrumProfileProperty)
+            if (spectrum.refused) {
+                unavailable += GamingModeNotice.Res(R.string.gt_eng_un_spectrum)
+            }
+            val governorOk = applyCpuGovernorMode(readLastSnapshot()?.cpuGovernorNodes.orEmpty())
+            if (governorOk == false) {
+                unavailable += GamingModeNotice.Res(R.string.gt_eng_un_governor)
+            }
+            val inputBoostOk = applyCpuInputBoostNodes(readLastSnapshot()?.cpuInputBoostNodes.orEmpty())
+            if (inputBoostOk == false) {
+                unavailable += GamingModeNotice.Res(R.string.gt_eng_un_input_boost)
+            }
+            val storage = applyStorageTuning(readLastSnapshot()?.storageTuningNodes.orEmpty())
+            if (storage.applied == false) {
+                unavailable += GamingModeNotice.Res(R.string.gt_eng_un_storage)
+            }
+            val memory = applyMemoryTuning(readLastSnapshot()?.memoryTuningNodes.orEmpty())
+            if (memory.applied == false) {
+                unavailable += GamingModeNotice.Res(R.string.gt_eng_un_memory)
+            }
             execute(PrivilegeCommands.DEVICE_IDLE_FORCE)
 
             // OEM specific recovery
@@ -3150,6 +3611,13 @@ class GamingEngine(
                 qtiGameFps = qtiFpsOk,
                 mediaTekGameMode = mtkOk,
                 snapdragonCpuMode = snapOk,
+                cpuInputBoost = inputBoostOk,
+                cpuGovernor = governorOk,
+                spectrumProfile = spectrum.profile,
+                storageTuning = storage.applied,
+                storageReadAheadKb = storage.valueKb,
+                memoryTuning = memory.applied,
+                memoryMinFreeKb = memory.valueKb,
                 lockedRefreshHz = lockedHz,
                 touchResponseBoost = touchOk,
                 pointerSpeed = pointerSpeedApplied,
@@ -3173,8 +3641,23 @@ class GamingEngine(
         _isFixedPerformanceMode.value = applied
     }
 
-    private companion object {
-        val WHITESPACE = Regex("\\s+")
+    /**
+     * The verified outcome of a single-value node raise: null [applied] means "not applicable"
+     * (nothing to do, or an unreadable device fact), false means the device refused, true means
+     * the read-back confirmed it. [valueKb] is the number the device reported after the write.
+     */
+    private data class NodeRaiseOutcome(
+        val applied: Boolean? = null,
+        val valueKb: Int? = null
+    )
+
+    /** The verified outcome of a Spectrum write: refused, or the profile the kernel confirmed. */
+    private data class SpectrumOutcome(
+        val refused: Boolean = false,
+        val profile: Int? = null
+    )
+
+    private companion object {        val WHITESPACE = Regex("\\s+")
 
         /** Packages per `pm unsuspend` fork in the deactivation sweep; mirrors UID_BATCH_SIZE. */
         private const val UNSUSPEND_BATCH_SIZE = 25

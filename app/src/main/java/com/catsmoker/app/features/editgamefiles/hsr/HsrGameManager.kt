@@ -291,6 +291,11 @@ class HsrGameManager @Inject constructor(
     /**
      * Restore the newest backup for the detected package, through the same copy path as a
      * normal write. Returns null when no backup exists, with failures carried for the UI.
+     *
+     * The live file is backed up before being replaced, so a restore is itself reversible —
+     * the next restore returns the state this one replaced. The copy's exit code is not the
+     * verdict: the file is parsed back and its values compared with the backup's own before
+     * Success is reported.
      */
     suspend fun restoreLatestBackup(): HsrWriteResult? = withContext(Dispatchers.IO) {
         if (!isRootAvailable()) return@withContext HsrWriteResult.Failure(HsrWriteResult.Stage.NO_ROOT, "root shell unavailable")
@@ -300,6 +305,12 @@ class HsrGameManager @Inject constructor(
             ?: return@withContext HsrWriteResult.Failure(HsrWriteResult.Stage.PREFS_NOT_FOUND, "playerprefs.xml not found in any known location")
         val bytes = backupStore.list(pkg).firstOrNull()?.let { backupStore.readBytes(it) }
             ?: return@withContext null
+
+        // Keep the state being replaced. Without this, "restore" had no inverse and a mis-tap
+        // permanently discarded the live file.
+        readPrefsBytes(path)?.takeIf { it.isNotEmpty() }?.let { live ->
+            backupStore.save(pkg, File(path).name, live)
+        }
 
         val tempFile = File.createTempFile("hsr_restore_", ".xml", context.cacheDir)
         val copyResult = try {
@@ -311,7 +322,22 @@ class HsrGameManager @Inject constructor(
             tempFile.delete()
         }
         if (copyResult.isSuccess) {
-            HsrWriteResult.Success(backup = null, verified = true, verificationDetail = "backup restored")
+            val expected = runCatching {
+                HsrPlayerPrefsXml.parse(String(bytes, Charsets.UTF_8))
+            }.getOrNull()
+                ?: return@withContext HsrWriteResult.Failure(
+                    HsrWriteResult.Stage.READ_FAILED,
+                    "the backup could not be parsed, so the restore could not be verified"
+                )
+            val restored = readPrefsMap(path)
+            if (restored == expected) {
+                HsrWriteResult.Success(backup = null, verified = true, verificationDetail = "backup restored and verified")
+            } else {
+                HsrWriteResult.Failure(
+                    HsrWriteResult.Stage.READ_FAILED,
+                    "restored file does not match the backup's values"
+                )
+            }
         } else {
             HsrWriteResult.Failure(
                 HsrWriteResult.Stage.COPY_FAILED,

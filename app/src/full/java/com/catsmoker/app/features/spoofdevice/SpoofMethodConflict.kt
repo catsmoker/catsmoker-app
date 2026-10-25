@@ -6,10 +6,12 @@ package com.catsmoker.app.features.spoofdevice
  * `system.prop` at boot) rewrite the same device identity through different
  * channels, so both being armed at once is a conflict.
  *
- * Pure decisions only — detection feeds them (heartbeat freshness for Xposed,
- * `/data/adb/modules` presence for Magisk), and no verdict here removes,
- * disables, or otherwise touches anything on the device: confirmation only
- * gates the user's tap, and an unconfirmed tap simply does nothing.
+ * Pure decisions only — detection feeds them (Vector's manager row plus load
+ * evidence for Xposed, `/data/adb/modules` presence for Magisk). This file never
+ * touches the device; [SpoofDeviceViewModel] performs the one supported change
+ * when [shouldDisableVector] is true, through Vector's own
+ * `vector-cli modules disable <pkg>` command, and re-reads the manager row to
+ * verify it. Confirmation still gates user-initiated assignments.
  *
  * Status honesty: a Magisk state that cannot be read (no privilege) reports
  * [MagiskModuleStatus.UNKNOWN], never Absent — absence is only reported after
@@ -31,12 +33,36 @@ object SpoofMethodConflict {
     }
 
     /**
-     * Whether both methods may rewrite identity right now: a live Xposed
-     * heartbeat plus an installed Magisk module. Either side alone, a
-     * disabled module, or an unreadable state is not a conflict.
+     * Whether both methods may rewrite identity right now: an installed Magisk module plus a
+     * Vector integration that is enabled in the manager.
+     *
+     * The manager row ([vectorModuleEnabled]) decides, not the heartbeat/loaded proof. A
+     * disabled Vector row must not keep raising the conflict banner just because the target
+     * process that was hooked before the disable is still alive; keying on that old heartbeat
+     * made every refresh disable an already-disabled module forever. A null row is unknown,
+     * so a genuinely observed load still raises the banner — but [shouldDisableVector] stays
+     * false until the manager state can be read.
      */
-    fun isConflict(xposedActive: Boolean, magisk: MagiskModuleStatus): Boolean =
-        xposedActive && magisk == MagiskModuleStatus.INSTALLED
+    fun isConflict(
+        vectorModuleEnabled: Boolean?,
+        xposedLoaded: Boolean,
+        magisk: MagiskModuleStatus
+    ): Boolean = magisk == MagiskModuleStatus.INSTALLED &&
+        (vectorModuleEnabled == true || (vectorModuleEnabled == null && xposedLoaded))
+
+    /**
+     * Whether the app may deactivate only its own Vector integration automatically.
+     *
+     * This is intentionally narrower than [isConflict]: the supported
+     * `vector-cli modules disable <pkg>` path needs a positive manager row to target, and
+     * disabling on an unknown row would be an unverified change to the user's framework.
+     * The generated Magisk module must be installed; a disabled or absent Catsmoker module
+     * never causes a change to Vector.
+     */
+    fun shouldDisableVector(
+        vectorModuleEnabled: Boolean?,
+        magisk: MagiskModuleStatus
+    ): Boolean = magisk == MagiskModuleStatus.INSTALLED && vectorModuleEnabled == true
 
     /**
      * Whether assigning a profile needs explicit confirmation first: only a

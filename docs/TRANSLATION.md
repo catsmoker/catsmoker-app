@@ -3,14 +3,15 @@
 Current state of internationalization (i18n) in CatSmoker and how to move
 strings into resources.
 
-## TL;DR (verified 2026-09-28 — the pre-2026 "English-only" description below is obsolete)
+## TL;DR (verified 2026-10-25 — the pre-2026 "English-only" description below is obsolete)
 
 - The project uses Android resources for user-visible copy, split by area:
   `values/strings.xml` (core) + `strings_core/gamefiles/gaming/legal/sys.xml`
   in `src/main`, plus `strings_spoof.xml` in `src/full` (Full flavor only),
   each mirrored key-for-key in `values-en-rGB/`, `values-ar/`, `values-es/`,
-  `values-zh-rCN/` (`en en-rGB ar es zh-CN`, declared in `resConfigs` +
-  `res/xml/locales_config.xml`; in-app tags are `en/ar/es/zh-CN`).
+  `values-zh-rCN/`, `values-pt-rBR/` (`en en-rGB ar es zh-CN pt-rBR`, declared
+  in `resConfigs` + `res/xml/locales_config.xml`; in-app tags are
+  `en/ar/es/zh-CN/pt-BR`).
   A key missing from a mirror falls back to the wrong language at runtime, so
   `LocaleParityTest` pins parity for user-visible copy — extend it when adding
   user-facing strings.
@@ -84,7 +85,7 @@ against regressions. When adding a screen, verify the same holds:
 Create a locale folder next to `values/` and mirror the keys:
 
 ```
-app/src/main/res/values-xx-rYY/strings.xml   # e.g. values-es, values-zh-rCN, values-in
+app/src/main/res/values-xx-rYY/strings.xml   # e.g. values-es, values-zh-rCN, values-pt-rBR
 ```
 
 Update `resConfigs` (`app/build.gradle.kts`), `res/xml/locales_config.xml`,

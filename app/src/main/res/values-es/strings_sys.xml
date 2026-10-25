@@ -15,6 +15,8 @@
     <string name="sys_section_updates">Actualizaciones</string>
     <string name="sys_updating">Descargando actualización…</string>
     <string name="sys_check_updates">Buscar actualizaciones</string>
+    <string name="sys_prerelease">Incluir versiones preliminares</string>
+    <string name="sys_prerelease_sub">Ofrece también versiones beta de GitHub. Las versiones estables siempre se incluyen.</string>
     <string name="sys_auto_check">Buscar actualizaciones automáticamente</string>
     <string name="sys_update_available">Actualización disponible: %1$s</string>
     <string name="sys_update_prompt">Hay una nueva versión disponible. ¿Descargarla e instalarla ahora?</string>

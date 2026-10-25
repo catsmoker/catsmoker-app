@@ -30,7 +30,7 @@ class HsrFlatFormatTest {
         assertEquals(-1, settings.fullscreenMode)
         assertEquals(10, settings.version)
         // JSON-backed fields are unread here — defaults, never zeros-for-unknown.
-        assertEquals(60, settings.fps)
+        assertEquals(HsrGraphicsSettings.MAX_FPS, settings.fps)
         assertEquals(3, settings.shadowQuality)
     }
 

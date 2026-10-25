@@ -1,5 +1,6 @@
 package com.catsmoker.app.features.spoofdevice.root
 
+import android.annotation.SuppressLint
 import android.content.BroadcastReceiver
 import android.content.ContentResolver
 import android.content.Context
@@ -249,6 +250,11 @@ class LSPosedModule : IXposedHookLoadPackage {
         null
     }
 
+    // The three-argument overload needs API 33; the two-argument one is the only call that
+    // exists below it. Lint cannot see through `realSdkInt`, so the legacy branch is
+    // deliberately suppressed rather than replacing it with an AndroidX dependency that a
+    // hooked game process may not have loaded.
+    @SuppressLint("UnspecifiedRegisterReceiverFlag")
     private fun registerReceiver(context: Context, lpparam: XC_LoadPackage.LoadPackageParam) {
         if (receiverRegistered) return
         receiverRegistered = true

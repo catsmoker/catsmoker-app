@@ -155,6 +155,65 @@ A device without the `msm_performance`, `core_ctl` or `cpu_boost` modules simply
 skips those families (the lab POCO X3 has `schedutil` and KGSL only), and the
 Gaming Mode report names what was written with its read-back value.
 
+## SmartPack-derived levers
+
+Five more families come from SmartPack Kernel Manager
+(`../reference/gamingtools/SmartPack-KernelManager`; it ships no licence file,
+so it is copyable). The reference exposes every knob as a free-form field; here
+each family is narrowed to a raise-only rule whose target the device itself
+declares, with the same presence gates, snapshot priors, read-back and restore as
+the families above.
+
+| Lever | Node(s) | Rule |
+| --- | --- | --- |
+| Input boost | `cpu_input_boost/enabled` | `1` when the node declares `0` |
+| Input boost | `cpu_input_boost/ib_freqs` | each CPU's boost frequency raised to its policy max, only with a positive declared window (`ib_duration_ms`, `input_boost_duration`, `input_boost_duration_ms`) |
+| Input boost | `dynamic_stune_boost` | raised toward the device's own static `/dev/stune/top-app/schedtune.boost`, never higher |
+| Input boost | `top-app/schedtune.prefer_idle`, `schedtune.sched_boost_enabled` | `1` when the node declares `0`; the second only with a positive static top-app boost |
+| CPU governor | `<policy>/scaling_governor` | `performance` when the policy lists it in `scaling_available_governors` |
+| Spectrum | `persist.spectrum.profile` / `persist.vendor.spectrum.profile` | profile `3` (gaming), accepting a kernel clamp to `2` (performance); only when the support property is `1` **and the profile property already exists** |
+| Storage | `/data` queue `read_ahead_kb` | raised to that queue's own `max_sectors_kb`; the device is resolved from `/proc/mounts` |
+| Memory | `min_free_kbytes` | raised to 1 % of `MemTotal` |
+| Memory | `extra_free_kbytes` | raised only toward the device's own `min_free_kbytes` |
+
+Deliberately never written, with the reason:
+
+- **Durations** (`ib_duration_ms`, `wake_boost_duration`) — a "gaming" duration
+  is an invented constant; a positive declared window is only a gate.
+- **The static top-app boost** — it is the device's own value and the only
+  same-unit reference for the dynamic half.
+- **Vendor governor names** (`turbo`, `gaming`, …) — their semantics differ per
+  vendor; `performance` is the one governor with a universal contract.
+- **The I/O scheduler and queue-shape toggles** (`nr_requests`, `iostats`,
+  `rq_affinity`, `nomerges`, `add_random`, `rotational`) — device/workload
+  specific, with no declared performance direction.
+- **`swappiness` / `vfs_cache_pressure` / `dirty_*` / `watermark_scale_factor`**
+  — swappiness' gaming direction is *down*, which this raise-only family cannot
+  express; the rest have no device-declared target.
+- **Legacy LMK `lowmemorykiller/minfree`** — modern Android runs `lmkd`, which
+  owns process killing; raising the legacy table would kill background apps
+  earlier without a declared target.
+- **A Spectrum profile property that does not exist** — `setprop` cannot delete
+  a `persist.*` property, so creating one would be a permanent,
+  reboot-surviving change no revert could undo.
+
+On the POCO X3 lab device the applicable levers are the governor (`schedutil` →
+`performance`), read-ahead (128 → 512 KB, the queue's own maximum) and memory
+(`min_free_kbytes` 9515 → 56915 KB; `extra_free_kbytes` 30375 is already above
+the base reserve and stays). There is no `cpu_input_boost`/`cpu_boost` module
+and no Spectrum property, so those rows are absent. The static boost
+(`schedtune.boost=10`, `prefer_idle=1`) is already at its own values.
+
+Order matters in both directions: activation applies Spectrum before the
+governor so the immediate CPU state ends at `performance`, and deactivation
+restores Spectrum, then the recorded governor, and only then the Snapdragon
+priors. The reason is a kernel fact observed on that POCO: a policy's
+`schedutil` directory and its tunables exist only while schedutil is the active
+governor, so a rate-limit or hispeed restore attempted under `performance` is
+refused and the node keeps its gaming value. Every restored node is read back;
+a refused write now appears in the deactivation report ("Could not restore
+&lt;node&gt;") instead of disappearing.
+
 ## Read-only evidence probes
 
 Gaming Mode logs, without writing anything, the OEM refresh keys the device
@@ -222,11 +281,16 @@ the user set on purpose. Copy these cases when adding a field:
 - `gameOverlay` reuses `SettingValue` so three states stay distinct: an
   intervention existed (put back verbatim), none (delete ours), unreadable
   (`null` → touch nothing).
-- The kernel-node priors (`snapdragonCpuNodes`) are captured **only for nodes
-  the raise-only rules would actually write** — a node already at its target, a
-  family the device does not carry, or a rule gated away by an ambiguous
-  neighbour (`hispeed_load`, `input_boost_ms`) contributes no snapshot entry, so
-  the restore walks exactly the nodes that were changed and nothing else.
+- The kernel-node priors (`snapdragonCpuNodes`, `cpuInputBoostNodes`,
+  `cpuGovernorNodes`, `storageTuningNodes`, `memoryTuningNodes`) are captured
+  **only for nodes the raise-only rules would actually write** — a node already
+  at its target, a family the device does not carry, or a rule gated away by an
+  ambiguous neighbour (`hispeed_load`, `input_boost_ms`) contributes no snapshot
+  entry, so the restore walks exactly the nodes that were changed and nothing
+  else.
+- `spectrumProfileProperty` and `spectrumProfile` are recorded as a pair, only
+  when the interface is supported *and* the property already exists; the
+  existence gate is what keeps a `persist.*` write reversible.
 
 Network blocking is two switches over one app set (user-installed apps holding
 `INTERNET`, minus CatSmoker and the game library), never a per-app matrix:

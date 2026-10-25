@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Core dashboard / navigation strings (feature: main, about, logs, permissions, startup). -->
+    <!-- Back-press exit toast (%1$d = remaining taps). -->
+    <string name="core_exit_tap">Toque mais %1$d vezes para sair</string>
+
+    <!-- Dashboard metric abbreviations (kept short in every locale). -->
+    <string name="core_metric_cpu">CPU</string>
+    <string name="core_metric_ram">RAM</string>
+    <string name="core_metric_soc">SOC</string>
+    <string name="core_metric_temp">TEMP</string>
+    <string name="core_metric_ping">PING</string>
+
+    <!-- Compact fallback labels shown in place of a missing dashboard reading. -->
+    <string name="core_compact_loading">…</string>
+    <string name="core_compact_privilege">root?</string>
+    <string name="core_compact_unsupported">n/s</string>
+    <string name="core_compact_na">N/D</string>
+
+    <!-- Dashboard Settings tile (only tile without a shared entry). -->
+    <string name="core_settings_title">Configurações</string>
+    <string name="core_settings_subtitle">Configuração e preferências</string>
+
+    <!-- About screen. -->
+    <string name="core_about_subtitle">Informações do app e comunidade.</string>
+    <string name="core_about_description">O CatSmoker é um utilitário de desempenho de código aberto para Android. Nossa missão é oferecer aos jogadores a melhor experiência possível, otimizando os recursos do sistema e desbloqueando o potencial oculto.</string>
+    <string name="core_about_dev_title">Ainda em desenvolvimento</string>
+    <string name="core_about_dev_body">Alguns recursos ainda estão em desenvolvimento e podem não funcionar. Se algo falhar, salve os logs e reporte no GitHub.</string>
+    <string name="core_about_dev_logs">Ver logs</string>
+    <string name="core_about_dev_report">Reportar no GitHub</string>
+
+    <!-- About screen community-button titles (brand names stay verbatim). -->
+    <string name="about_social_github">GitHub</string>
+    <string name="about_social_website">Site</string>
+    <string name="about_social_discord">Discord</string>
+    <string name="about_social_telegram">Telegram</string>
+
+    <!-- Logs screen ViewModel messages (%1$s = detail). -->
+    <string name="core_logs_fetch_error">Erro ao buscar logs: %1$s</string>
+    <string name="core_logs_share_title">Compartilhar logs</string>
+
+    <!-- Shared scaffold back button (talkback). -->
+    <string name="core_back">Voltar</string>
+
+    <!-- Onboarding terms step. Prefix/suffix carry their edge space via \u0020.
+         The link opens the CC license text (not the app Terms — those open as dialogs below). -->
+    <string name="core_terms_prefix">Leia nossa\u0020</string>
+    <string name="core_terms_link">licença CC BY-NC-SA 4.0</string>
+    <string name="core_terms_suffix">\u0020antes de usar o app.</string>
+    <string name="core_terms_title">Termos de Serviço</string>
+    <string name="core_terms_agree">Concordo com os termos.</string>
+    <string name="core_continue">CONTINUAR</string>
+
+    <!-- Permissions screen. -->
+    <string name="core_permissions_title">Permissões</string>
+    <string name="core_permissions_subtitle">Conceda permissões para ativar todos os recursos.</string>
+    <string name="core_perm_root_title">Acesso root</string>
+    <string name="core_perm_root_sub">Necessário para otimizações avançadas.</string>
+    <string name="core_perm_shizuku_title">Acesso Shizuku</string>
+    <string name="core_perm_shizuku_sub">Alternativa ao root para ajustes do sistema.</string>
+    <string name="core_perm_storage_title">Acesso ao armazenamento</string>
+    <string name="core_perm_storage_sub">Para ler e modificar arquivos de configuração de jogos.</string>
+    <string name="core_perm_battery_title">Otimização de bateria</string>
+    <string name="core_perm_battery_sub">Permite que o app funcione bem em segundo plano.</string>
+    <string name="core_perm_notif_title">Notificações</string>
+    <string name="core_perm_notif_sub">Para mostrar o status do serviço.</string>
+    <string name="core_perm_overlay_title">Sobreposição</string>
+    <string name="core_perm_overlay_sub">Para mostrar monitores de desempenho.</string>
+    <string name="core_perm_usage_title">Estatísticas de uso</string>
+    <string name="core_perm_usage_sub">Para registrar o tempo de jogo.</string>
+    <string name="core_perm_mic_title">Microfone</string>
+    <string name="core_perm_mic_sub">Necessário para os recursos de reforço de áudio.</string>
+    <string name="core_perm_bt_title">Bluetooth</string>
+    <string name="core_perm_bt_sub">Necessário para otimizações de controle e fone de ouvido.</string>
+    <string name="core_done">CONCLUÍDO</string>
+    <string name="core_grant">CONCEDER</string>
+    <!-- Permission rows gated on Android version: shown disabled with a reason, never hidden. -->
+    <string name="core_perm_need_13">Requer Android 13 ou mais recente.</string>
+    <string name="core_perm_need_12">Requer Android 12 ou mais recente.</string>
+    <!-- MetricReadStatus full labels: the reason shown in place of a value on the dashboard
+         and in the performance overlay, when the device never reported a number. -->
+    <string name="core_read_loading">lendo…</string>
+    <string name="core_read_ok">ok</string>
+    <string name="core_read_empty">sem dados</string>
+    <string name="core_read_parse">ilegível</string>
+    <string name="core_read_privilege">precisa de root/Shizuku</string>
+    <string name="core_read_unsupported">não compatível</string>
+</resources>
