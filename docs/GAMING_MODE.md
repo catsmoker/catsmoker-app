@@ -26,7 +26,11 @@ In order:
    never gets the AppOps restriction below, and is spared by RAM Reclaim's
    force-stop pass. The **extra suspended apps** list adds packages; if a
    package ever appears on both lists, `SuspendSweep.resolveTargets` lets the
-   keep list win. Every package this sweep attempts additionally gets
+   keep list win. That list lives inside the Gaming Mode card (the same sweep's
+   second input, not a separate Background Apps feature) and marks each pick
+   **selected** or **frozen now** from this session's verified `pm suspend`
+   results, so a configured app is never presented as an already-frozen one.
+   Every package this sweep attempts additionally gets
    `cmd appops set <pkg> RUN_IN_BACKGROUND ignore`, its prior mode recorded
    first and restored by deactivation.
 4. **Focus Mode / DND** — silences notifications *only if* notification
@@ -262,6 +266,37 @@ of packages it suspended. Deactivation can therefore:
 - Only touch background-data restriction if **we** engaged it (never turn off
   a restriction the user set themselves).
 
+## Interrupted sessions, reconciliation and Restore Apps
+
+`is_active` is written at the **start** of activation (`beginSession()`), not at
+the end: a crash or a refused step can leave suspended apps and half-applied
+settings with no record otherwise. Activation also appends each confirmed
+package to `affected_pkgs` and each changed app-op to `appops_prior` as it goes,
+so the record describes what the device accepted, not what the code intended.
+
+On startup `GamingEngine` enters `Checking`, reads the record plus the package
+manager's own per-user `suspended=true` state (one `dumpsys package` call,
+parsed by `SuspendVerdict.parseDumpsysSuspended`), and asks
+`GamingModeSession.reconcile` what the evidence means:
+
+- a live session keeps its record and is shown as **Interrupted** rather than
+  **Active** — the settings may still be applied, so the power button must
+  revert rather than start a second session;
+- after a reboot the settings are already stock, but suspensions survive, so
+  only the app record is pending;
+- an unreadable package-manager answer is *unknown*, not empty: the record is
+  kept and labelled unverified;
+- a clean record with no leftovers closes the session and returns to `Idle`.
+
+**Restore apps** is the second, narrower action: it wakes only the packages the
+session recorded (`pm unsuspend` each, verified against the package manager)
+and restores their recorded `RUN_IN_BACKGROUND` modes, without writing the
+settings snapshot over values the system may have changed since a reboot. It is
+hidden and refused while Gaming Mode is `Active`/`Enabling`/`Disabling`/
+`Checking`; its result is reported as restored / still-suspended / app-op
+counts, never as a bare success. A session whose settings still need reverting
+stays Interrupted until the power button runs the full revert.
+
 ## Engineering contract (adding a lever)
 
 `GamingOptimizationSnapshot` is captured *before* anything is written and
@@ -302,14 +337,20 @@ background; the first `VpnService` blackholed the *game's* traffic while
 reporting success without calling `VpnService.prepare()`); read it before
 touching either switch.
 
-Auto Force Stop **keeps; it does not kill**: `KeepAliveStore` holds the apps
-it must leave alone, and the prefs key was renamed with the meaning
-(`keep_alive_packages`) so old installs start from an empty keep list. Don't
-"fix" that migration gap — reinterpreting the old set as protected was the bug.
+Auto Force Stop has **no user exceptions** (2026-10-28): it closes every app
+you leave. The old `KeepAliveStore` keep list is deleted; only code-owned
+protections — this app, the launcher, the current keyboard and system packages
+— are exempt. Gaming Mode's "Apps kept running" list is a different feature
+(`SuspendExemptStore`) and still wins over the suspend sweep.
 
 ## Key state types
 
-- `GamingModeState` — `Idle` / `Enabling(progress)` / `Active` / `Disabling` / `Error`.
+- `GamingModeState` — `Idle` / `Checking` / `Enabling(progress)` / `Active` /
+  `Disabling` / `Interrupted(pending count)` / `Error`.
+- `GamingModeRecovery` — what a previous session left behind (pending packages,
+  pending app-ops, verified flag) and therefore whether Restore apps is shown.
+- `GamingModeRestoreResult` — verified counts for one Restore apps attempt,
+  including a refusal while a session is active.
 - `GamingModeReport` — verified outcomes + a human-readable `unavailable` list.
 - `BoosterState` / `BoosterOutcome` — live progress and a terminal, never-rewritten outcome.
 

@@ -74,6 +74,10 @@ class CatsmokerApp : Application(), Configuration.Provider {
             } catch (_: Exception) {}
         }
 
+        // Auto Force Stop no longer has a user keep list (2026-10-28). Delete the preference
+        // file that stored it, so removed exceptions cannot survive an app update.
+        deleteSharedPreferences("AutoForceStopPrefs")
+
         // Firebase Analytics is bundled in both flavours and its provider starts collecting
         // before this method runs. Apply the user's persisted choice immediately so a switch
         // flipped in a previous session is honoured for this one too (see AnalyticsConsent).

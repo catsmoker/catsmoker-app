@@ -23,6 +23,7 @@
 
     <!-- Game library -->
     <string name="gt_library_launch">INICIAR</string>
+    <string name="gt_library_actions">Acciones para %1$s</string>
     <string name="gt_library_remove">Quitar</string>
     <string name="gt_library_optimize">PRECOMPILAR</string>
     <string name="gt_library_search">Buscar juegos</string>
@@ -56,10 +57,10 @@
     <string name="gt_tool_dns_title">DNS privado</string>
     <string name="gt_tool_dns_sub">Elige el proveedor de DNS privado.</string>
     <string name="gt_tool_afs_title">Cierre forzoso automático</string>
-    <string name="gt_tool_afs_sub">Fuerza la detención de las apps que dejas (terminadas del todo), salvo tu lista.</string>
+    <string name="gt_tool_afs_sub">Fuerza la detención de cada app que dejas (terminada del todo), sin lista que gestionar.</string>
     <string name="gt_tool_afs_need">Necesita root o Shizuku. Android no permite que una app normal cierre otras apps. Shizuku es una app auxiliar gratuita que le presta a esta app ese poder sin root.</string>
     <string name="gt_tool_cleaner_title">Limpieza de almacenamiento</string>
-    <string name="gt_tool_cleaner_sub">Libera espacio borrando restos.</string>
+    <string name="gt_tool_cleaner_sub">Analiza archivos innecesarios, libera RAM y optimiza el almacenamiento.</string>
 
     <!-- Shared explainer titles -->
     <string name="gt_explainer_what">¿Qué es esto?</string>
@@ -115,22 +116,19 @@
 
     <!-- Auto Force Stop -->
     <string name="gt_afs_what_1">Cuando sales de una app, esto la cierra por ti. Cerrar una app libera memoria y evita que ralentice tu juego.</string>
-    <string name="gt_afs_what_2">Marca una app abajo para mantenerla abierta. Todo lo que no marques se cierra cuando lo dejas.</string>
-    <string name="gt_afs_what_3">Tu pantalla de inicio, tu teclado, esta app y las apps integradas de tu teléfono nunca se cierran, aunque no las marques.</string>
+    <string name="gt_afs_what_2">Se cierra cada app que dejas — no hay lista que gestionar. La app a la que cambias sigue abierta.</string>
+    <string name="gt_afs_what_3">Tu pantalla de inicio, tu teclado, esta app y las apps integradas de tu teléfono nunca se cierran.</string>
     <string name="gt_afs_perm_title">¿Qué permiso necesita?</string>
     <string name="gt_afs_perm_1">Dos cosas. Primero, \"Acceso a uso\" — eso deja que esta app vea qué app estás mirando. Lo activas tú en los ajustes de Android; hay un botón abajo si falta.</string>
     <string name="gt_afs_perm_2">Segundo, root o Shizuku. Android no permite que una app normal cierre otra app, así que sin uno de ellos no se cerrará nada. Shizuku es una app auxiliar que le presta a esta app poderes extra sin root.</string>
     <string name="gt_afs_perm_3">Si falta alguno, el interruptor queda encendido pero la notificación te dirá que no se está cerrando nada. No fingirá que funciona.</string>
     <string name="gt_afs_should_title">¿Debería usarlo?</string>
     <string name="gt_afs_should_1">Ayuda más si dejas abiertas apps pesadas — un navegador con muchas pestañas, una app de video, una app social.</string>
-    <string name="gt_afs_should_2">El costo: una app cerrada tarda más en abrir la próxima vez, y una app de chat cerrada no te mostrará mensajes nuevos hasta que la abras de nuevo. Marca tus apps de chat para mantenerlas.</string>
+    <string name="gt_afs_should_2">El costo: una app cerrada tarda más en abrir la próxima vez, y una app de chat cerrada no te mostrará mensajes nuevos hasta que la abras de nuevo. Esto se aplica a todas las apps — no hay lista de excepciones.</string>
     <string name="gt_afs_should_3">El modo de juego ya pausa las demás apps mientras juegas, así que no necesitas ambos.</string>
     <string name="gt_afs_usage_off_title">El acceso a uso está desactivado</string>
     <string name="gt_afs_usage_off_text">Esto necesita ver qué app estás usando. Hasta que lo actives, no se cerrará nada.</string>
     <string name="gt_afs_usage_btn">Activar acceso a uso</string>
-    <string name="gt_afs_keep_none">Manteniendo 0 apps abiertas — cada app que dejes se cerrará</string>
-    <string name="gt_afs_keep_some">Manteniendo %1$d app(s) abierta(s)</string>
-    <string name="gt_afs_tick_hint">Marca una app para mantenerla abierta</string>
 
     <!-- Cleaner -->
     <string name="gt_cleaner_reach">Puede alcanzar: %1$s</string>
@@ -174,30 +172,6 @@
     <string name="cleaner_scheduled_done">%1$s liberados en %2$d elementos</string>
     <string name="cleaner_scheduled_unreadable">Almacenamiento ilegible — no se limpió nada.</string>
     <string name="cleaner_scheduled_nothing_safe">Nada seguro que eliminar — registros y restos siguen manuales.</string>
-    <string name="gt_perm_title">Interruptor de permisos</string>
-    <string name="gt_perm_sub">Revoca u otorga permisos peligrosos de una app, a mano.</string>
-    <string name="gt_perm_what_title">¿Qué hace esto?</string>
-    <string name="gt_perm_what_1">Lista los permisos peligrosos que pidió la app, con su estado real. Revocar surte efecto al instante y puede romper la función detrás — cámara, inicio de sesión, mapas y notificaciones son las víctimas habituales.</string>
-    <string name="gt_perm_what_2">Solo se listan permisos peligrosos. Todo lo revocado queda registrado, y Restaurar devuelve exactamente lo quitado.</string>
-    <string name="gt_perm_pick">Elegir app…</string>
-    <string name="gt_perm_pick_title">Cambiar permisos de…</string>
-    <string name="gt_perm_revoke">Revocar</string>
-    <string name="gt_perm_grant">Otorgar</string>
-    <string name="gt_perm_restore_all">Restaurar todo lo quitado</string>
-    <string name="gt_perm_granted_state">Otorgado</string>
-    <string name="gt_perm_revoked_state">Revocado</string>
-    <string name="gt_perm_needs_priv">Cambiar permisos necesita root o Shizuku.</string>
-    <string name="gt_perm_no_self">Los permisos de esta app están fuera de límites.</string>
-    <string name="gt_perm_none_toggleable">%1$s no pide nada conmutable.</string>
-    <string name="gt_perm_confirm_title">¿Revocar este permiso?</string>
-    <string name="gt_perm_confirm_body">¿Quitar %2$s a %1$s? La función detrás puede dejar de funcionar hasta otorgarlo de nuevo.</string>
-    <string name="gt_perm_confirm_revoke">Revocarlo</string>
-    <string name="gt_perm_revoked">%2$s quitado a %1$s.</string>
-    <string name="gt_perm_revoke_failed">No se pudo quitar %2$s a %1$s: %3$s</string>
-    <string name="gt_perm_granted">%2$s devuelto a %1$s.</string>
-    <string name="gt_perm_grant_failed">No se pudo devolver %2$s a %1$s: %3$s</string>
-    <string name="gt_perm_restored">%2$d permiso(s) restaurados para %1$s.</string>
-    <string name="gt_perm_restore_partial">%2$d restaurados para %1$s — estos se negaron: %3$s</string>
     <string name="gt_cleaner_rules_help">Conservar: una ruta completa o un nombre de archivo que nunca debe limpiarse. Limpiar: un patrón como .*oldgame.* comparado con la ruta completa.</string>
     <string name="gt_cleaner_keep_hint">Conservar: nombre o /ruta/completa</string>
     <string name="gt_cleaner_pattern_hint">Limpiar: .*oldgame.*</string>
@@ -309,23 +283,6 @@
     <string name="gt_dev_anim_transition">Cambios de pantalla</string>
     <string name="gt_dev_anim_animator">Todo lo demás</string>
     <string name="gt_dev_anim_off">Desactivado</string>
-    <string name="gt_preset_anim_title">Preajustes de animación</string>
-    <string name="gt_preset_name">Nombre del preajuste</string>
-    <string name="gt_preset_anim_save">Guardar actual</string>
-    <string name="gt_preset_apply">Aplicar</string>
-    <string name="gt_preset_delete">Eliminar</string>
-    <string name="gt_preset_empty">Aún no hay preajustes.</string>
-    <string name="gt_preset_width_title">Preajustes de ancho</string>
-    <string name="gt_preset_width_dp">Ancho (dp)</string>
-    <string name="gt_preset_width_save">Guardar ancho</string>
-    <string name="gt_preset_save_fail">No se guardó el preajuste: ponle un nombre y revisa los números.</string>
-    <string name="gt_preset_deleted">Preajuste eliminado: %1$s</string>
-    <string name="gt_preset_anim_saved">Preajuste de animación guardado: %1$s</string>
-    <string name="gt_preset_anim_applied">Preajuste de animación aplicado: %1$s</string>
-    <string name="gt_preset_anim_partial">Preajuste %1$s: solo se aplicaron %2$d de 3 escalas.</string>
-    <string name="gt_preset_width_saved">Preajuste de ancho guardado: %1$s (%2$d dp)</string>
-    <string name="gt_preset_width_unknown">Tamaño de pantalla desconocido: los preajustes de ancho necesitan un panel legible.</string>
-    <string name="gt_preset_width_no_density">El preajuste %1$s no corresponde a ninguna densidad en este panel.</string>
     <string name="gt_dev_keep_title">Mantener menos apps en memoria</string>
     <string name="gt_dev_keep_1">Normalmente tu teléfono mantiene muchas apps en memoria para reabrirlas rápido. Esto le pide que mantenga solo una, dejando más memoria libre para tu juego.</string>
     <string name="gt_dev_keep_2">El costo: las demás apps tienen que empezar de cero cuando vuelves a ellas.</string>
@@ -725,7 +682,6 @@
     <string name="gt_svc_afs_no_usage">Necesita acceso a uso — toca para darlo, no se cierra nada</string>
     <string name="gt_svc_afs_no_priv">Necesita root o Shizuku — Android se niega a cerrar otras apps, no se cierra nada</string>
     <string name="gt_svc_afs_close_all">Cerrando cada app que dejas</string>
-    <string name="gt_svc_afs_keep_some">Manteniendo %1$d app(s) abierta(s)</string>
     <string name="gt_svc_afs_none_yet">%1$s — nada cerrado aún</string>
     <string name="gt_svc_afs_closed">%1$s — %2$d cerradas</string>
     <string name="gt_svc_afs_channel">Cierre forzoso automático</string>
@@ -753,6 +709,7 @@
     <string name="gt_trim_some">Recortado %1$s — %2$d punto(s) se negaron</string>
     <string name="gt_trim_no">El recorte no reportó nada: %1$s</string>
     <string name="gt_trim_no_reason">el dispositivo no dijo nada</string>
+    <string name="gt_trim_done_unmeasured">Recorte terminado — este teléfono no informa cuánto espacio se liberó.</string>
     <!-- Extra suspend list: user-picked packages frozen at Gaming Mode activation. -->
     <string name="gt_suspend_title">Apps extra en pausa</string>
     <string name="gt_suspend_sub">Tus elegidas, pausadas con el barrido automático</string>
@@ -786,4 +743,26 @@
     <string name="gt_svc_session_manual">Modo juego manual activo — vigilancia liberada</string>
     <string name="gt_svc_session_no_usage">Necesita acceso a uso — toca para darlo, nada se vigila</string>
     <string name="gt_svc_session_no_priv">Necesita root o Shizuku — Android rechaza cambios de juego, nada se vigila</string>
+    <string name="gt_gm_recovery_first">Deshaz primero la última sesión del Modo Gaming.</string>
+    <string name="gt_gm_checking">Comprobando la última sesión…</string>
+    <string name="gt_gm_interrupted">La última sesión se interrumpió</string>
+    <string name="gt_gm_recovery_title">Aplicaciones de la última sesión</string>
+    <string name="gt_gm_recovery_body">Puede que %1$d aplicación(es) sigan congeladas o con el acceso en segundo plano restringido.</string>
+    <string name="gt_gm_recovery_unverified">El teléfono no confirmó cuáles, así que esta es la lista que registró la app.</string>
+    <string name="gt_gm_restore">Restaurar aplicaciones</string>
+    <string name="gt_gm_restore_done">Restauradas %1$d aplicación(es) y %2$d restricción(es) en segundo plano.</string>
+    <string name="gt_gm_restore_partial">Restauradas %1$d aplicación(es) y %2$d restricción(es). %3$d siguen pendientes.</string>
+    <string name="gt_gm_restore_unverified">No se pudo confirmar el resultado. %1$d aplicación(es) siguen en el registro; inténtalo de nuevo.</string>
+    <string name="gt_gm_restore_active">El Modo Gaming está activo. Desactívalo antes de restaurar aplicaciones.</string>
+    <string name="gt_gm_revert_needed">Puede que los ajustes de la última sesión sigan aplicados. Desactiva el Modo Gaming para restaurarlos.</string>
+    <string name="gt_gm_error_session_open">Parte de esta sesión puede seguir aplicada. Usa el botón de encendido para deshacerlo.</string>
+    <string name="gt_suspend_count">%1$d seleccionadas · %2$d congeladas ahora</string>
+    <string name="gt_suspend_show">Mostrar aplicaciones</string>
+    <string name="gt_suspend_hide">Ocultar aplicaciones</string>
+    <string name="gt_suspend_badge_frozen">congelada</string>
+    <string name="gt_suspend_badge_selected">sin congelar</string>
+    <string name="gt_cleaner_review">Revisar y limpiar</string>
+    <string name="gt_cleaner_review_hide">Ocultar elementos</string>
+    <string name="gt_cleaner_advanced">Programación y reglas</string>
+    <string name="gt_cleaner_advanced_hide">Ocultar programación y reglas</string>
 </resources>

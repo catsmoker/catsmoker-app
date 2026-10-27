@@ -116,7 +116,7 @@
     <!-- Booster notification: the body is the real progress, so there is no fixed slogan here -->
     <string name="booster_notification_preparing">Reading the app list…</string>
     <string name="booster_notification_progress">%1$d of %2$d apps</string>
-    <string name="booster_notification_compiling">%1$d/%2$d Â· compiling %3$s</string>
+    <string name="booster_notification_compiling">%1$d/%2$d · compiling %3$s</string>
     <string name="booster_notification_stop">Stop</string>
     <!-- App Booster card. Plain words: the user never has to know what "compile" or "AOT" mean. -->
     <string name="booster_start">Start</string>

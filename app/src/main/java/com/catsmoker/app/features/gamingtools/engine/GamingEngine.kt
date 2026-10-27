@@ -38,10 +38,76 @@ import kotlin.time.Duration.Companion.milliseconds
 
 sealed class GamingModeState {
     object Idle : GamingModeState()
+
+    /** Startup reconciliation is still reading the persisted session and the device. */
+    object Checking : GamingModeState()
+
     data class Enabling(val progress: Float = 0f, val statusText: String = "Preparing…") : GamingModeState()
     object Active : GamingModeState()
     object Disabling : GamingModeState()
+
+    /**
+     * A session was started but its process is gone: the levers may still be applied and some
+     * apps may still be suspended.
+     *
+     * This is deliberately not [Active]. After process death or a reboot the app cannot verify
+     * that every setting is still applied, and claiming "active" from a persisted Boolean is how
+     * the UI ended up lying while frozen apps were left behind. It is not [Idle] either: the
+     * snapshot and the suspension record still exist, so the power button must revert rather than
+     * start a second session, and the recovery control is offered until the record is clear.
+     *
+     * @param suspendedPackages packages the record still marks as possibly suspended.
+     */
+    data class Interrupted(val suspendedPackages: Int) : GamingModeState()
+
     data class Error(val message: String) : GamingModeState()
+}
+
+/**
+ * The recovery evidence shown next to the Gaming Mode switch.
+ *
+ * @param isChecking true while startup reconciliation is still reading the device.
+ * @param pendingPackages packages recorded as suspended whose wake-up is not confirmed. When
+ *   [verified] is false this is the record alone, because the device would not answer — it is
+ *   then evidence of what *we did*, not of what is still frozen.
+ * @param pendingAppOps packages whose background app-op is still set to `ignore` by a session.
+ * @param verified whether the package manager answered with a per-package suspension list.
+ */
+data class GamingModeRecovery(
+    val isChecking: Boolean = false,
+    val pendingPackages: List<String> = emptyList(),
+    val pendingAppOps: List<String> = emptyList(),
+    val verified: Boolean = true
+) {
+    /** True when a session left something behind that the user should be able to restore. */
+    val isNeeded: Boolean get() = pendingPackages.isNotEmpty() || pendingAppOps.isNotEmpty()
+
+    /** Distinct apps needing attention, for the card's one-line caption. */
+    val pendingCount: Int get() = (pendingPackages + pendingAppOps).distinct().size
+}
+
+/**
+ * What one Restore Apps attempt actually achieved.
+ *
+ * Counts, not just a Boolean, because this action exists for the case where the device refused
+ * something: reporting "restored" after half the apps woke is the same lie the old deactivation
+ * told. [verified] is false when the package manager would not answer, and the caller must then
+ * present the untouched record as unverified rather than as a confirmed failure.
+ */
+data class GamingModeRestoreResult(
+    val restoredPackages: Int = 0,
+    val stillSuspended: Int = 0,
+    val restoredAppOps: Int = 0,
+    val failedAppOps: Int = 0,
+    val verified: Boolean = true,
+    /** True when Gaming Mode is running; nothing was touched. */
+    val refusedWhileActive: Boolean = false
+) {
+    /** Some device work was attempted (not refused, and something was pending). */
+    val attempted: Boolean get() = !refusedWhileActive
+
+    /** Everything the record held is confirmed restored. */
+    val isComplete: Boolean get() = attempted && stillSuspended == 0 && failedAppOps == 0
 }
 
 /**
@@ -358,6 +424,39 @@ class GamingEngine(
     private val _state = MutableStateFlow<GamingModeState>(GamingModeState.Idle)
     val state: StateFlow<GamingModeState> = _state.asStateFlow()
 
+    /**
+     * What a previous, unfinished session left behind.
+     *
+     * Separate from [state] because it answers a different question: the state says whether a
+     * gaming session is running, this says whether anything is waiting to be restored. The card
+     * shows its recovery control only from this flow, so an active session can never present a
+     * button that would wake the apps it is deliberately suspending.
+     */
+    private val _recovery = MutableStateFlow(GamingModeRecovery())
+    val recovery: StateFlow<GamingModeRecovery> = _recovery.asStateFlow()
+
+    /**
+     * Whether a Gaming Mode session record is still open.
+     *
+     * The power control cannot read this from [state] alone: an activation error after the session
+     * opened is an [GamingModeState.Error], not [GamingModeState.Active], yet starting another
+     * session would record the half-applied values as the user's own. This flow is written at the
+     * same points `is_active` is, so the button always offers the action the engine can actually
+     * perform. `prefs` is declared later in this class, so the persisted flag is read in `init`
+     * (which runs before any collector can observe this flow) rather than in this initializer.
+     */
+    private val _sessionOpen = MutableStateFlow(false)
+    val sessionOpen: StateFlow<Boolean> = _sessionOpen.asStateFlow()
+
+    /**
+     * Packages this app verified as suspended, kept for the suspension list's status badges.
+     *
+     * It is the session's own confirmed record — never a live "everything frozen on the device"
+     * list — so an app frozen by another tool is not claimed as ours.
+     */
+    private val _suspendedPackages = MutableStateFlow<Set<String>>(emptySet())
+    val suspendedPackages: StateFlow<Set<String>> = _suspendedPackages.asStateFlow()
+
     private val _report = MutableStateFlow(GamingModeReport())
     val report: StateFlow<GamingModeReport> = _report.asStateFlow()
 
@@ -485,19 +584,26 @@ class GamingEngine(
     private val prefs = context.getSharedPreferences("gaming_engine_prefs", Context.MODE_PRIVATE)
 
     init {
-        val isActive = prefs.getBoolean("is_active", false)
+        val sessionOpen = prefs.getBoolean("is_active", false)
+        val hasSessionRecord =
+            !prefs.getStringSet("affected_pkgs", emptySet()).isNullOrEmpty() ||
+                !prefs.getStringSet("appops_prior", emptySet()).isNullOrEmpty()
+        // A record without the flag is still an open session (older builds deleted the flag before
+        // verifying), so the power button must offer the revert for it too.
+        _sessionOpen.value = sessionOpen || hasSessionRecord
         val isFixedPerf = prefs.getBoolean("fixed_perf_manual", false)
         _interventionDownscale.value =
             GameInterventions.sanitizeDownscale(prefs.getFloat("intervention_downscale", 0f))
         _pointerSpeedChoice.value = PointerSpeed.sanitize(prefs.getInt("pointer_speed_choice", 0))
         
-        if (isActive) {
-            _state.value = GamingModeState.Active
-            _isFixedPerformanceMode.value = true
-            // A mode that survived process death keeps its suppression layer: the flag is what
-            // the listener reads, and it has no persisted state of its own to restore from.
-            _notificationSuppressionActive.value = isNotificationListenerEnabled()
-            scope.launch { recoverPersistedState() }
+        if (sessionOpen || hasSessionRecord) {
+            // Never claim Active from the flag alone: the process that wrote it is gone. Startup
+            // reconciliation reads the boot count and the package manager's own suspension state,
+            // then publishes either a clean Idle or an Interrupted session with recovery evidence.
+            _state.value = GamingModeState.Checking
+            _recovery.value = GamingModeRecovery(isChecking = true)
+            _isFixedPerformanceMode.value = sessionOpen && isFixedPerf
+            scope.launch { reconcilePersistedSession() }
         } else if (isFixedPerf) {
             _isFixedPerformanceMode.value = true
             scope.launch { reapplyFixedPerformanceMode() }
@@ -627,6 +733,141 @@ class GamingEngine(
         }
     }
 
+    /**
+     * Wakes the apps a previous session recorded as suspended and restores the background
+     * app-ops it changed — without touching the settings snapshot.
+     *
+     * Why this exists separately from the power button: after a reboot the settings levers are
+     * already back at stock, but the package manager keeps suspensions. Making the user run a
+     * full revert just to wake apps would re-write an old snapshot over settings the system has
+     * since changed. This action does only the app half, which is the part the device cannot fix
+     * by itself.
+     *
+     * It restores the record, never a blind sweep: `pm unsuspend` on every suspend target would
+     * wake apps this app never froze. Idempotent — a package already awake is skipped by the
+     * package manager's own state, and an empty record reports a clean result without writing.
+     *
+     * @return verified counts, never a bare success flag. When the package manager will not
+     *   answer, the untouched record is reported as unverified instead of as a confirmed failure.
+     */
+    suspend fun restoreSuspendedApps(): GamingModeRestoreResult = toggleMutex.withLock {
+        withContext(Dispatchers.IO) {
+            val state = _state.value
+            if (state is GamingModeState.Active ||
+                state is GamingModeState.Enabling ||
+                state is GamingModeState.Disabling ||
+                state is GamingModeState.Checking
+            ) {
+                // The same record the active session is still writing; restoring it now would
+                // race its suspend loop and could wake games the user just asked to freeze.
+                return@withContext GamingModeRestoreResult(refusedWhileActive = true)
+            }
+
+            val recorded = prefs.getStringSet("affected_pkgs", emptySet()).orEmpty()
+            val appOpsBefore = recordedAppOpsPackages()
+
+            val failedToWake = mutableSetOf<String>()
+            for (pkg in recorded.sorted()) {
+                if (!unsuspendOne(pkg)) failedToWake += pkg
+            }
+
+            // The command verdict is one source; the package manager's own per-user state is the
+            // other. Only recorded packages are considered, so an app frozen by another tool is
+            // never claimed or woken here.
+            val evidence = querySuspendedPackages()
+            val remaining = when {
+                evidence != null -> recorded.filterTo(mutableSetOf()) { it in evidence }
+                else -> failedToWake
+            }
+            if (remaining.isEmpty()) {
+                prefs.edit { remove("affected_pkgs") }
+            } else {
+                prefs.edit { putStringSet("affected_pkgs", remaining) }
+            }
+
+            restoreAppOpsRecord()
+            val appOpsLeft = recordedAppOpsPackages()
+
+            val settingsStillApplied = prefs.getBoolean("is_active", false) && !sessionRebooted()
+            val clean = remaining.isEmpty() && appOpsLeft.isEmpty() && !settingsStillApplied
+            if (clean) {
+                prefs.edit {
+                    putBoolean("is_active", false)
+                    putBoolean("fixed_perf_manual", false)
+                    remove("affected_pkgs")
+                    remove("appops_prior")
+                    remove("session_boot_count")
+                }
+                _isFixedPerformanceMode.value = false
+                _report.value = GamingModeReport()
+                _state.value = GamingModeState.Idle
+            } else {
+                // Something (usually the settings snapshot) still needs the power button; keep
+                // the interrupted state so the card does not claim a clean stop.
+                _state.value = GamingModeState.Interrupted(remaining.size)
+            }
+            _sessionOpen.value = !clean
+
+            _suspendedPackages.value = remaining
+            _recovery.value = GamingModeRecovery(
+                pendingPackages = remaining.sorted(),
+                pendingAppOps = appOpsLeft,
+                verified = evidence != null
+            )
+
+            GamingModeRestoreResult(
+                restoredPackages = (recorded - remaining).size,
+                stillSuspended = remaining.size,
+                restoredAppOps = (appOpsBefore - appOpsLeft.toSet()).size,
+                failedAppOps = appOpsLeft.size,
+                verified = evidence != null
+            )
+        }
+    }
+
+    /**
+     * Opens the persisted session before the first lever is written.
+     *
+     * The flag used to be written only after every step succeeded, so a crash halfway through
+     * activation left suspended apps with no session record at all — invisible to recovery and
+     * to every later deactivation. Clearing the per-session records here also guarantees a fresh
+     * activation cannot inherit a previous session's leftovers; the guard in [enableGamingMode]
+     * refuses to reach this point while a record is still outstanding.
+     */
+    private fun beginSession() {
+        prefs.edit {
+            putBoolean("is_active", true)
+            putInt("session_boot_count", currentBootCount())
+            putLong("session_started_at", System.currentTimeMillis())
+            remove("affected_pkgs")
+            remove("appops_prior")
+        }
+        _sessionOpen.value = true
+    }
+
+    /**
+     * This boot's `Settings.Global.BOOT_COUNT`, or 0 when the platform will not report it.
+     *
+     * 0 means "unknown" everywhere it is used, and both reconciliation and recovery treat two
+     * unknown counts as the same boot: reverting a snapshot that the reboot already reset is
+     * harmless, while skipping the revert on a live session leaves settings applied with no way
+     * back.
+     */
+    private fun currentBootCount(): Int = runCatching {
+        Settings.Global.getInt(context.contentResolver, Settings.Global.BOOT_COUNT)
+    }.getOrDefault(0)
+
+    /** Whether the persisted session began before the current boot. */
+    private fun sessionRebooted(): Boolean {
+        val atStart = prefs.getInt("session_boot_count", 0)
+        val now = currentBootCount()
+        return atStart > 0 && now > 0 && atStart != now
+    }
+
+    /** Packages whose background app-op a session changed and has not verified back yet. */
+    private fun recordedAppOpsPackages(): List<String> =
+        AppOpsRecord.decode(prefs.getStringSet("appops_prior", emptySet()) ?: emptySet()).keys.sorted()
+
     private suspend fun enableGamingMode(packageName: String?) {
         _state.value = GamingModeState.Enabling(0f, context.getString(R.string.gt_eng_init))
         shellRunner.refreshShizukuPermission()
@@ -634,6 +875,16 @@ class GamingEngine(
         val hasShizuku = shellRunner.shizukuHasPermission.value
         if (!isRoot && !hasShizuku) {
             _state.value = GamingModeState.Error(context.getString(R.string.gt_eng_no_priv))
+            return
+        }
+        // A previous session has not been closed: starting another one would capture its
+        // half-applied values as the user's "original" and could suspend apps twice. Recovery
+        // (or a full deactivation) has to come first.
+        if (_recovery.value.isNeeded ||
+            _state.value is GamingModeState.Interrupted ||
+            _sessionOpen.value
+        ) {
+            _state.value = GamingModeState.Error(context.getString(R.string.gt_gm_recovery_first))
             return
         }
         try {
@@ -652,6 +903,11 @@ class GamingEngine(
             // evidence instead of a copied script.
             logDeviceVendorEvidence(packageName)
             val unavailable = mutableListOf<GamingModeNotice>()
+
+            // From here on a crash must be detectable: record the session and the boot it belongs
+            // to before the first lever is written. Writing `is_active` only at the end is what
+            // let a mid-activation death leave suspended apps with no session record at all.
+            beginSession()
 
             _state.value = GamingModeState.Enabling(0.15f, context.getString(R.string.gt_eng_trim))
             execute(PrivilegeCommands.TRIM_CACHES)
@@ -674,11 +930,12 @@ class GamingEngine(
                 selfPkg = context.packageName
             )
             val currentlyAffected = prefs.getStringSet("affected_pkgs", emptySet())?.toMutableSet() ?: mutableSetOf()
-            // One `cmd package list packages -s` call before the loop: apps someone else already
-            // suspended are skipped, so this session never records them as its own and
-            // deactivation never unsuspends an app it never froze. An unreadable answer behaves
-            // as before (nothing known suspended) rather than skipping work on a guess.
-            val preSuspended = querySuspendedPackages()
+            // The package manager's own per-package suspension state, read once before the loop:
+            // apps someone else already suspended are skipped, so this session never records them
+            // as its own and deactivation never unsuspends an app it never froze. An unreadable
+            // answer behaves as before (nothing known suspended) rather than skipping work on a
+            // guess; a package we then suspend gets recorded and woken by us either way.
+            val preSuspended = querySuspendedPackages().orEmpty()
             val freshTargets = targets.filter { it !in preSuspended }
             var suspendedNow = 0
             var suspendFailures = 0
@@ -690,12 +947,16 @@ class GamingEngine(
                 val result = shellRunner.execSafeResult(*PrivilegeCommands.suspendArgs(pkg))
                 if (SuspendVerdict.isSuspendConfirmed(result.exitCode, result.stdout)) {
                     currentlyAffected.add(pkg)
+                    // Persist the moment it is confirmed, not after the whole loop: a crash halfway
+                    // through used to leave frozen packages with no record, which made them
+                    // unrecoverable and invisible to every later deactivation.
+                    prefs.edit { putStringSet("affected_pkgs", currentlyAffected) }
                     suspendedNow++
                 } else {
                     suspendFailures++
                 }
             }
-            prefs.edit { putStringSet("affected_pkgs", currentlyAffected) }
+            _suspendedPackages.value = currentlyAffected
             if (suspendFailures > 0) {
                 unavailable += GamingModeNotice.Res(R.string.gt_eng_un_suspend, listOf(suspendFailures))
             }
@@ -943,7 +1204,6 @@ class GamingEngine(
             execute(PrivilegeCommands.KILL_ALL)
 
             prefs.edit {
-                putBoolean("is_active", true)
                 // Fixed performance mode and `cmd game set` can leave the thermal service in an
                 // overridden state after the mode is off (some vendor HALs keep the override
                 // until it is explicitly cleared). Only those two paths set this flag, so the
@@ -952,6 +1212,9 @@ class GamingEngine(
                     putBoolean("thermal_recovery_needed", true)
                 }
             }
+            // The session is live and every lever that could be verified was; the recovery prompt
+            // belongs to interrupted sessions only.
+            _recovery.value = GamingModeRecovery()
             _isFixedPerformanceMode.value = fixedPerfOk
             _report.value = GamingModeReport(
                 fixedPerformance = fixedPerfOk,
@@ -987,6 +1250,16 @@ class GamingEngine(
             )
             _state.value = GamingModeState.Active
         } catch (e: Exception) {
+            // Whatever was written before the failure stays on record. Reporting only the error
+            // would hide the packages that may be frozen right now, so the recovery evidence is
+            // rebuilt from the persisted record and the card offers Restore Apps immediately.
+            val remaining = prefs.getStringSet("affected_pkgs", emptySet())?.sorted().orEmpty()
+            _suspendedPackages.value = remaining.toSet()
+            _recovery.value = GamingModeRecovery(
+                pendingPackages = remaining,
+                pendingAppOps = recordedAppOpsPackages(),
+                verified = false
+            )
             _state.value = GamingModeState.Error(e.message ?: context.getString(R.string.gt_eng_activation_fail))
         }
     }
@@ -1022,6 +1295,8 @@ class GamingEngine(
         // Anything gathered here survives into the report even when a later step throws, so a
         // half-finished revert still says what it did not get to.
         val revertProblems = mutableListOf<GamingModeNotice>()
+        var remainingSuspended: Set<String> = emptySet()
+        var verificationAvailable = false
         try {
             // Every unsuspend is verified by what the shell answered — the same standard
             // activation holds suspends to. A package that refused to wake stays in the record
@@ -1054,12 +1329,24 @@ class GamingEngine(
                     if (!unsuspendOne(pkg)) stillSuspended.add(pkg)
                 }
             }
-            if (stillSuspended.isEmpty()) {
+            // Command verdicts are one source; the package manager's own per-user state is the
+            // other. When it answers, it decides what remains suspended — a silent exit 0 that did
+            // not actually wake the app is exactly the case a bare exit code would miss. Only the
+            // session's record is carried forward: the blind sweep above can mention apps that
+            // were never ours, and those must not enter the recovery prompt.
+            val evidence = querySuspendedPackages()
+            verificationAvailable = evidence != null
+            remainingSuspended = if (evidence != null) {
+                affected.filterTo(mutableSetOf()) { it in evidence }
+            } else {
+                stillSuspended.filterTo(mutableSetOf()) { it in affected }
+            }
+            if (remainingSuspended.isEmpty()) {
                 prefs.edit { remove("affected_pkgs") }
             } else {
-                prefs.edit { putStringSet("affected_pkgs", stillSuspended) }
+                prefs.edit { putStringSet("affected_pkgs", remainingSuspended) }
                 revertProblems +=
-                    GamingModeNotice.Res(R.string.gt_eng_still_suspended, listOf(stillSuspended.size))
+                    GamingModeNotice.Res(R.string.gt_eng_still_suspended, listOf(remainingSuspended.size))
             }
             // M42: the background ops set on activation go back too, each restore verified by
             // reading the mode back; a package that refuses stays recorded for the next
@@ -1079,15 +1366,40 @@ class GamingEngine(
             // refusal text and belongs in front of the user rather than in a silent state change.
             _report.value = GamingModeReport(unavailable = revertProblems + listOfNotNull(thermalRefusal))
         } catch (e: Exception) {
+            // An interrupted revert keeps whatever record activation wrote; the recovery prompt is
+            // built from that record rather than from this process's partial local set.
+            remainingSuspended = prefs.getStringSet("affected_pkgs", emptySet()).orEmpty()
             revertProblems += GamingModeNotice.Res(
                 R.string.gt_eng_revert_fail,
                 listOf(e.message ?: e.javaClass.simpleName)
             )
             _report.value = GamingModeReport(unavailable = revertProblems)
         } finally {
-            prefs.edit { putBoolean("is_active", false); putBoolean("fixed_perf_manual", false) }
+            val appOpsLeft = recordedAppOpsPackages()
+            // The session is closed only when nothing it wrote is still outstanding. A refused
+            // wake-up, an unrestored app-op, or a settings revert that reported a problem keeps
+            // `is_active` on record, so the card shows Interrupted and offers recovery instead of
+            // claiming a clean stop.
+            val clean = remainingSuspended.isEmpty() && appOpsLeft.isEmpty() && revertProblems.isEmpty()
+            prefs.edit {
+                putBoolean("fixed_perf_manual", false)
+                if (clean) {
+                    putBoolean("is_active", false)
+                    remove("affected_pkgs")
+                    remove("session_boot_count")
+                } else {
+                    putBoolean("is_active", true)
+                }
+            }
             _isFixedPerformanceMode.value = false
-            _state.value = GamingModeState.Idle
+            _suspendedPackages.value = remainingSuspended
+            _sessionOpen.value = !clean
+            _recovery.value = GamingModeRecovery(
+                pendingPackages = remainingSuspended.sorted(),
+                pendingAppOps = appOpsLeft,
+                verified = verificationAvailable
+            )
+            _state.value = if (clean) GamingModeState.Idle else GamingModeState.Interrupted(remainingSuspended.size)
         }
     }
 
@@ -1720,19 +2032,21 @@ class GamingEngine(
     }.getOrNull()
 
     /**
-     * Packages the platform already reports as suspended (`cmd package list packages -s`).
-     * Unreadable output means "nothing known suspended" — the sweep then behaves as before
-     * rather than skipping work on a guess. An answer that fails [SuspendVerdict]'s
-     * trustworthiness check (a broken `-s` flag listing nearly everything, as observed on
-     * Android 10 MTK) is likewise discarded whole: excluding it would gut the sweep.
+     * The packages the package manager currently reports as suspended for user 0, or null when it
+     * would not answer usably.
+     *
+     * One `dumpsys package` call covers every package; the previous implementation ran
+     * `pm list packages -s`, where `-s` means *system* packages, so it returned hundreds of
+     * running system apps and the trustworthiness canary discarded the answer every time. Null is
+     * propagated rather than collapsed to an empty set: "nothing is suspended" and "could not
+     * read" must not lead to the same recovery decision.
      */
-    private suspend fun querySuspendedPackages(): Set<String> {
+    private suspend fun querySuspendedPackages(): Set<String>? {
         val result = runCatching {
-            shellRunner.execSafeResult("cmd", "package", "list", "packages", "-s")
-        }.getOrNull() ?: return emptySet()
-        if (result.exitCode != 0) return emptySet()
-        val parsed = SuspendVerdict.parseSuspendedPackages(result.stdout)
-        return if (SuspendVerdict.isSuspendListTrustworthy(parsed)) parsed else emptySet()
+            shellRunner.execSafeResult("dumpsys", "package")
+        }.getOrNull() ?: return null
+        if (result.exitCode != 0) return null
+        return SuspendVerdict.parseDumpsysSuspended(result.stdout)
     }
 
     /** What `cmd package compile` actually reported for one package. */
@@ -3469,169 +3783,84 @@ class GamingEngine(
     }
 
     /**
-     * Re-applies the gaming-mode writes after a process restart and rebuilds [report] from what
-     * actually landed.
+     * Reconciles a persisted session with the device after process death, a crash or a reboot.
      *
-     * The flags come from the verified results rather than from the persisted "it was on before"
-     * bit: a reboot, a ROM update or a settings reset between runs can silently undo any of them,
-     * and showing the old state would be reporting a change that is no longer in effect.
+     * The old path trusted `is_active`, re-applied every lever and called the result Active. That
+     * was a claim about the past, not evidence about the present: a reboot resets the settings
+     * while package suspensions survive in the package manager, and a crash before the flag was
+     * written produced the opposite state (apps frozen, UI idle). The decision table lives in
+     * [GamingModeSession]; this method supplies the device facts and publishes the outcome.
+     *
+     * Nothing is re-applied here. An interrupted session is reported as interrupted, its snapshot
+     * stays available for the power button to revert, and [restoreSuspendedApps] handles the
+     * suspension record on its own.
      */
-    private suspend fun recoverPersistedState() {
+    private suspend fun reconcilePersistedSession() {
         try {
-            val unavailable = mutableListOf<GamingModeNotice>()
-            // Same shared lock as activation (F3) — always the panel maximum.
-            val lock = refreshController.lockToPeak()
-            val maxHz = lock.lockedHz
-            val peakOk = lock.peakOk
-            val minOk = lock.minOk
-            val lockedHz = if (peakOk || minOk) maxHz else null
-            if (lockedHz == null) {
-                unavailable += GamingModeNotice.Res(R.string.gt_eng_un_refresh)
-            }
-            // The vivo display-mode half re-asserted under the same rule as everything else in
-            // this recovery: the snapshot still holds the device's originals, so the eventual
-            // deactivation puts them back either way.
-            val vivoLock = refreshController.lockVendorDisplayMode()
-            if (vivoLock.applicable && !vivoLock.ok) {
-                unavailable += GamingModeNotice.Res(R.string.gt_eng_un_vivo)
-            }
+            val recorded = prefs.getStringSet("affected_pkgs", emptySet()).orEmpty()
+            val appOps = recordedAppOpsPackages()
+            val suspendedNow = querySuspendedPackages()
+            val verdict = GamingModeSession.reconcile(
+                sessionOpen = prefs.getBoolean("is_active", false),
+                bootCountAtStart = prefs.getInt("session_boot_count", 0),
+                currentBootCount = currentBootCount(),
+                recorded = recorded,
+                suspendedNow = suspendedNow,
+                appOpsRecorded = appOps.toSet()
+            )
 
-            val touchOk = putSettingVerified("touch_response_speed", "2")
-            if (!touchOk) unavailable += GamingModeNotice.Res(R.string.gt_eng_un_touch)
-
-            // The touch-speed choice, re-asserted like everything else here — the snapshot still
-            // holds the user's original, so the eventual deactivation restores it either way.
-            var pointerSpeedApplied: Int? = null
-            PointerSpeed.sanitize(_pointerSpeedChoice.value)?.let { speed ->
-                if (putSettingVerified("pointer_speed", speed.toString())) {
-                    pointerSpeedApplied = speed
+            // Drop record entries the package manager says are awake. Keeping them would leave a
+            // permanent recovery prompt for apps that no longer need one.
+            if (suspendedNow != null && verdict.pendingPackages.size != recorded.size) {
+                if (verdict.pendingPackages.isEmpty()) {
+                    prefs.edit { remove("affected_pkgs") }
                 } else {
-                    unavailable += GamingModeNotice.Res(R.string.gt_eng_un_pointer, listOf(speed.toString()))
+                    prefs.edit { putStringSet("affected_pkgs", verdict.pendingPackages.toSet()) }
                 }
             }
 
-            val fixedPerfOk = shellRunner
-                .execSafeResult(*PrivilegeCommands.fixedPerformanceArgs(true))
-                .isSuccess
-            if (!fixedPerfOk) unavailable += GamingModeNotice.Res(R.string.gt_eng_un_fixed)
-            // The Qualcomm GPU switch too, under the same re-assert-everything rule as the rest
-            // of this recovery — the snapshot still holds the vendor's originals, so the eventual
-            // deactivation restores them either way.
-            val gpuPerfOk = applyVendorGpuPerformance()
-            if (gpuPerfOk == false) {
-                unavailable += GamingModeNotice.Res(R.string.gt_eng_un_gpu)
-            }
-            // The game FPS hint with the same rule; maxHz above is this run's measured peak.
-            val qtiFpsOk = applyQtiGameFpsHint(maxHz)
-            if (qtiFpsOk == false) {
-                unavailable += GamingModeNotice.Res(R.string.gt_eng_un_qti)
-            }
-            // MediaTek knobs with the same re-assert rule; the snapshot still holds the
-            // vendor's originals, so the eventual deactivation restores them either way.
-            val mtkOk = applyMediaTekGameMode(readLastSnapshot()?.mediatekGameNodes.orEmpty())
-            if (mtkOk == false) {
-                unavailable += GamingModeNotice.Res(R.string.gt_eng_un_mtk)
-            }
-            // Snapdragon widen-only channel with the same re-assert rule; the snapshot
-            // still holds the kernel's originals, so deactivation restores them either way.
-            val snapOk = applySnapdragonCpuMode(readLastSnapshot()?.snapdragonCpuNodes.orEmpty())
-            if (snapOk == false) {
-                unavailable += GamingModeNotice.Res(R.string.gt_eng_un_snap)
-            }
-            // The five SmartPack-derived levers with the same re-assert rule. Their targets are
-            // recomputed from live device facts, so a reboot's stock values are raised again and a
-            // process restart's already-raised values are re-confirmed rather than forgotten.
-            val spectrum = applySpectrumProfile(readLastSnapshot()?.spectrumProfileProperty)
-            if (spectrum.refused) {
-                unavailable += GamingModeNotice.Res(R.string.gt_eng_un_spectrum)
-            }
-            val governorOk = applyCpuGovernorMode(readLastSnapshot()?.cpuGovernorNodes.orEmpty())
-            if (governorOk == false) {
-                unavailable += GamingModeNotice.Res(R.string.gt_eng_un_governor)
-            }
-            val inputBoostOk = applyCpuInputBoostNodes(readLastSnapshot()?.cpuInputBoostNodes.orEmpty())
-            if (inputBoostOk == false) {
-                unavailable += GamingModeNotice.Res(R.string.gt_eng_un_input_boost)
-            }
-            val storage = applyStorageTuning(readLastSnapshot()?.storageTuningNodes.orEmpty())
-            if (storage.applied == false) {
-                unavailable += GamingModeNotice.Res(R.string.gt_eng_un_storage)
-            }
-            val memory = applyMemoryTuning(readLastSnapshot()?.memoryTuningNodes.orEmpty())
-            if (memory.applied == false) {
-                unavailable += GamingModeNotice.Res(R.string.gt_eng_un_memory)
-            }
-            execute(PrivilegeCommands.DEVICE_IDLE_FORCE)
-
-            // OEM specific recovery
-            if (isVivoOrIqoo()) {
-                execute("cmd thermalservice reset")
-            }
-
-            val nm = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-            val dndEngaged = nm.currentInterruptionFilter == NotificationManager.INTERRUPTION_FILTER_NONE
-
-            // Re-assert the two developer options and read them back. The snapshot still holds the
-            // user's originals from the previous process, so deactivation restores those either way.
-            val discardOk = toggleAlwaysFinishActivities(true)
-            if (!discardOk) {
-                unavailable += GamingModeNotice.Res(R.string.gt_eng_un_discard)
-            }
-            val processLimitOk = toggleBackgroundProcessLimit(true)
-            if (!processLimitOk) {
-                unavailable += GamingModeNotice.Res(R.string.gt_eng_un_limit)
-            }
-
-            val snapshot = prefs.getString("last_snapshot", null)
-                ?.let { GamingOptimizationSnapshot.fromJson(it) }
-
-            // Report the real netpolicy state rather than re-issuing the block: whatever this app set
-            // before the restart is still in the kernel's uid rules, since netpolicy survives a
-            // process death. Re-engaging would also overwrite the "was it already on" bookkeeping.
-            val backgroundDataRestricted: Boolean? = when {
-                snapshot?.backgroundDataRestrictedBefore == true -> null
-                else -> runCatching { backgroundDataRestrictor.status().restrictedUids.isNotEmpty() }
-                    .getOrDefault(false)
-            }
-
-            val pkg = snapshot?.activeGamePackage
-            var networkWhitelisted: Boolean? = null
-            if (pkg != null) {
-                execute("pm unsuspend --user 0 $pkg")
-                execute("cmd activity set-bg-restriction-level --user 0 $pkg unrestricted")
-                execute("am set-standby-bucket --user 0 $pkg active")
-                execute(PrivilegeCommands.deviceIdleWhitelistAdd(pkg))
-                networkWhitelisted = snapshot.activeGameUid?.let { isUidWhitelisted(it) } == true
-            }
-
-            _isFixedPerformanceMode.value = fixedPerfOk
-            _report.value = GamingModeReport(
-                fixedPerformance = fixedPerfOk,
-                gpuPerformanceMode = gpuPerfOk,
-                qtiGameFps = qtiFpsOk,
-                mediaTekGameMode = mtkOk,
-                snapdragonCpuMode = snapOk,
-                cpuInputBoost = inputBoostOk,
-                cpuGovernor = governorOk,
-                spectrumProfile = spectrum.profile,
-                storageTuning = storage.applied,
-                storageReadAheadKb = storage.valueKb,
-                memoryTuning = memory.applied,
-                memoryMinFreeKb = memory.valueKb,
-                lockedRefreshHz = lockedHz,
-                touchResponseBoost = touchOk,
-                pointerSpeed = pointerSpeedApplied,
-                // The suspends happened in the previous process; this set is the record of them and
-                // is exactly what disableGamingMode will unsuspend.
-                suspendedPackages = prefs.getStringSet("affected_pkgs", emptySet())?.size ?: 0,
-                dndEngaged = dndEngaged,
-                networkWhitelisted = networkWhitelisted,
-                discardActivities = discardOk,
-                processLimit = processLimitOk,
-                backgroundDataRestricted = backgroundDataRestricted,
-                unavailable = unavailable
+            _suspendedPackages.value = verdict.pendingPackages.toSet()
+            _recovery.value = GamingModeRecovery(
+                isChecking = false,
+                pendingPackages = verdict.pendingPackages,
+                pendingAppOps = verdict.pendingAppOps,
+                verified = verdict.verified
             )
-        } catch (_: Exception) {}
+
+            if (!verdict.keepSession) {
+                prefs.edit {
+                    putBoolean("is_active", false)
+                    remove("affected_pkgs")
+                    remove("session_boot_count")
+                }
+                _isFixedPerformanceMode.value = false
+                _report.value = GamingModeReport()
+                _sessionOpen.value = false
+                _state.value = GamingModeState.Idle
+                return
+            }
+
+            if (verdict.rebootedSinceStart) {
+                // The reboot already reset the settings levers; only the app record can survive.
+                prefs.edit { putBoolean("fixed_perf_manual", false) }
+                _isFixedPerformanceMode.value = false
+            }
+            _sessionOpen.value = true
+            _state.value = GamingModeState.Interrupted(verdict.pendingPackages.size)
+        } catch (_: Exception) {
+            // Reconciliation itself failed. Do not claim Active and do not erase the record: show
+            // it as unverified evidence and let the user restore it deliberately.
+            val recorded = prefs.getStringSet("affected_pkgs", emptySet()).orEmpty().sorted()
+            _suspendedPackages.value = recorded.toSet()
+            _recovery.value = GamingModeRecovery(
+                isChecking = false,
+                pendingPackages = recorded,
+                pendingAppOps = recordedAppOpsPackages(),
+                verified = false
+            )
+            _sessionOpen.value = true
+            _state.value = GamingModeState.Interrupted(recorded.size)
+        }
     }
 
     private suspend fun reapplyFixedPerformanceMode() {

@@ -26,14 +26,14 @@ import kotlin.time.Duration.Companion.milliseconds
 import javax.inject.Inject
 
 /**
- * Force-stops the app you just switched away from, unless you asked for it to be kept running.
+ * Force-stops the app you just switched away from.
  *
- * The list the user ticks is a *keep-alive* list. Anything not on it gets closed when you leave it —
- * which is what "Auto Force Stop" means, and the reverse of what this service used to do.
+ * There is no exception list: every app you leave is closed, which is what "Auto Force Stop"
+ * means. The old tick-list of kept apps was removed on 2026-10-28.
  *
- * Four kinds of package are never touched, regardless of the list, because closing them would break
- * the phone rather than free memory: this app, the home screen / launcher, the keyboard that is
- * currently selected, and anything preinstalled in the system image.
+ * Four kinds of package are never touched, whatever the user does, because closing them would
+ * break the phone rather than free memory: this app, the home screen / launcher, the keyboard
+ * that is currently selected, and anything preinstalled in the system image.
  *
  * Two things have to be true for any of it to work, and neither is granted by installing the app:
  * - **Usage access** (`PACKAGE_USAGE_STATS`), or `queryEvents` returns an empty iterator forever and
@@ -49,9 +49,6 @@ class AutoForceStopService : Service() {
 
     @Inject
     lateinit var shellRunner: ShellRunner
-
-    @Inject
-    lateinit var keepAliveStore: KeepAliveStore
 
     private val job = SupervisorJob()
     private val scope = CoroutineScope(Dispatchers.Default + job)
@@ -120,7 +117,6 @@ class AutoForceStopService : Service() {
 
         while (true) {
             delay(POLL_INTERVAL_MS.milliseconds)
-            val kept = keepAliveStore.getKeptPackages()
 
             // Re-checked every cycle rather than once at startup, so the service starts working the
             // moment the user grants what is missing — no restart, no toggling the switch again.
@@ -139,7 +135,7 @@ class AutoForceStopService : Service() {
 
             if (current != null && current != previousForegroundPackage) {
                 val left = previousForegroundPackage
-                if (left != null && !kept.contains(left) && !isProtected(left) &&
+                if (left != null && !isProtected(left) &&
                     KillCooldown.shouldKill(left, now, lastKills)
                 ) {
                     // Counted from the shell's exit code, so the notification's tally is of apps the
@@ -154,25 +150,22 @@ class AutoForceStopService : Service() {
                 previousForegroundPackage = current
             }
 
-            val keepNote = if (kept.isEmpty()) {
-                getString(R.string.gt_svc_afs_close_all)
-            } else {
-                getString(R.string.gt_svc_afs_keep_some, kept.size)
-            }
+            val closeAll = getString(R.string.gt_svc_afs_close_all)
             postStatus(
-                if (stoppedCount == 0) getString(R.string.gt_svc_afs_none_yet, keepNote)
-                else getString(R.string.gt_svc_afs_closed, keepNote, stoppedCount)
+                if (stoppedCount == 0) getString(R.string.gt_svc_afs_none_yet, closeAll)
+                else getString(R.string.gt_svc_afs_closed, closeAll, stoppedCount)
             )
         }
     }
 
     /**
-     * Whether [packageName] must never be force-stopped, whatever the keep list says.
+     * Whether [packageName] must never be force-stopped.
      *
-     * Closing any of these frees nothing worth having and visibly breaks the device: killing the
-     * launcher drops the user to a black screen, killing the active keyboard leaves them unable to
-     * type, and killing a system package can restart system_server. Our own package is excluded too,
-     * or the service would stop itself the moment the user left this screen.
+     * No user setting can override this. Closing any of these frees nothing worth having and
+     * visibly breaks the device: killing the launcher drops the user to a black screen, killing
+     * the active keyboard leaves them unable to type, and killing a system package can restart
+     * system_server. Our own package is excluded too, or the service would stop itself the moment
+     * the user left this screen.
      *
      * The launcher and keyboard are resolved live rather than hard-coded, so a third-party home screen
      * or keyboard is protected exactly like the stock one.

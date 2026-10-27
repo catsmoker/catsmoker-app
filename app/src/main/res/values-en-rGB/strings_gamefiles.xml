@@ -274,7 +274,7 @@
     <!-- WuWa screen -->
     <string name="gf_wuwa_not_installed_body">Wuthering Waves is not installed on this device — package %1$s was not found. Install the game and run it once so it writes its config files, then come back here.</string>
     <string name="gf_smart_recommend">SMART RECOMMEND</string>
-    <string name="gf_wuwa_score">score %1$d/100 ┬╖ %2$s GPU</string>
+    <string name="gf_wuwa_score">score %1$d/100 · %2$s GPU</string>
     <string name="gf_wuwa_already_selected">already selected</string>
     <string name="gf_wuwa_recommended">Recommended: %1$s</string>
     <string name="gf_wuwa_current_preset">Your preset: %1$s</string>
@@ -378,7 +378,7 @@
     <string name="gf_packs_body">Import a community config folder (the Mobile WuWa Config repo\'s pack shape: README plus one or more variant folders). Nothing is bundled — what you pick is what you get, and the author\'s README travels with it verbatim, claims and warnings included. Restricted cvars are a gate, not a flag: a variant carrying them cannot be deployed as-is and only deploys with those lines stripped out, exactly as the generator\'s own rule does.</string>
     <string name="gf_import_pack">IMPORT PACK FOLDER</string>
     <string name="gf_importing">IMPORTING…</string>
-    <string name="gf_pack_meta">Imported %1$s ┬╖ %2$d variant(s)</string>
+    <string name="gf_pack_meta">Imported %1$s · %2$d variant(s)</string>
     <string name="gf_pack_readme">Pack README, verbatim</string>
     <string name="gf_files_list">Files: %1$s</string>
     <string name="gf_pack_refused">Refused as-is — %1$d restricted cvar line(s) the game\'s integrity checks watch:</string>
@@ -405,7 +405,7 @@
     <string name="gf_apply_best">APPLY BEST PRESET</string>
     <string name="gf_dismiss">DISMISS</string>
     <string name="gf_measured_rounds">Measured rounds (%1$d)</string>
-    <string name="gf_tuner_round_line">R%1$d %2$s: avg %3$s ┬╖ min %4$s ┬╖ stability %5$s%%</string>
+    <string name="gf_tuner_round_line">R%1$d %2$s: avg %3$s · min %4$s · stability %5$s%%</string>
     <string name="gf_sl_round">Round</string>
     <string name="gf_tuner_round_of">%1$d of %2$d</string>
     <string name="gf_tuner_target_fps">%1$d FPS</string>

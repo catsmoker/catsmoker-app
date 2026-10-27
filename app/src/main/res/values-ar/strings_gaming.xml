@@ -23,6 +23,7 @@
 
     <!-- Game library -->
     <string name="gt_library_launch">تشغيل</string>
+    <string name="gt_library_actions">إجراءات %1$s</string>
     <string name="gt_library_remove">إزالة</string>
     <string name="gt_library_optimize">ترجمة مسبقة</string>
     <string name="gt_library_search">بحث عن الألعاب</string>
@@ -56,10 +57,10 @@
     <string name="gt_tool_dns_title">DNS خاص</string>
     <string name="gt_tool_dns_sub">اختر موفر DNS الخاص.</string>
     <string name="gt_tool_afs_title">إيقاف تلقائي قسري</string>
-    <string name="gt_tool_afs_sub">يوقف التطبيقات التي تغادرها قسرًا (إنهاء كامل)، باستثناء قائمتك.</string>
+    <string name="gt_tool_afs_sub">يوقف كل تطبيق تغادره قسرًا (إنهاء كامل)، دون أي قائمة لإدارتها.</string>
     <string name="gt_tool_afs_need">يتطلب روت أو Shizuku. لا يسمح أندرويد لتطبيق عادي بإغلاق التطبيقات الأخرى. Shizuku تطبيق مساعد مجاني يمنح هذا التطبيق تلك القدرة بدون روت.</string>
     <string name="gt_tool_cleaner_title">منظف التخزين</string>
-    <string name="gt_tool_cleaner_sub">وفّر مساحة بحذف البقايا.</string>
+    <string name="gt_tool_cleaner_sub">افحص الملفات غير المرغوبة، وحرّر الذاكرة، ونظّف التخزين.</string>
 
     <!-- Shared explainer titles -->
     <string name="gt_explainer_what">ما هذا؟</string>
@@ -115,22 +116,19 @@
 
     <!-- Auto Force Stop -->
     <string name="gt_afs_what_1">عند مغادرتك تطبيقاً، يغلقه هذا من أجلك. إغلاق التطبيق يحرر الذاكرة ويمنعه من إبطاء لعبتك.</string>
-    <string name="gt_afs_what_2">ضع علامة على تطبيق أدناه لإبقائه مفتوحاً. كل ما لا تضع عليه علامة يُغلق عند مغادرته.</string>
-    <string name="gt_afs_what_3">شاشتك الرئيسية ولوحة مفاتيحك وهذا التطبيق وتطبيقات هاتفك المدمجة لا تُغلق أبداً، حتى لو لم تضع عليها علامة.</string>
+    <string name="gt_afs_what_2">يُغلق كل تطبيق تغادره — لا توجد قائمة لإدارتها. التطبيق الذي تنتقل إليه يبقى مفتوحاً.</string>
+    <string name="gt_afs_what_3">شاشتك الرئيسية ولوحة مفاتيحك وهذا التطبيق وتطبيقات هاتفك المدمجة لا تُغلق أبداً.</string>
     <string name="gt_afs_perm_title">ما الأذونات التي يحتاجها؟</string>
     <string name="gt_afs_perm_1">شيئان. أولاً، \"الوصول إلى الاستخدام\" — وهو ما يتيح لهذا التطبيق رؤية التطبيق الذي تنظر إليه. تفعّله بنفسك في إعدادات أندرويد؛ يوجد زر أدناه إذا كان مفقوداً.</string>
     <string name="gt_afs_perm_2">ثانياً، روت أو Shizuku. لا يسمح أندرويد لتطبيق عادي بإغلاق تطبيق آخر، لذا بدون أحدهما لن يُغلق شيء. Shizuku تطبيق مساعد يمنح هذا التطبيق قدرات إضافية بدون روت.</string>
     <string name="gt_afs_perm_3">إذا كان أحدهما مفقوداً، يبقى المفتاح مشغلاً لكن الإشعار سيخبرك أنه لا يُغلق شيء. لن يدّعي أنه يعمل.</string>
     <string name="gt_afs_should_title">هل يجب أن أستخدمه؟</string>
     <string name="gt_afs_should_1">يفيد أكثر إذا تركت تطبيقات ثقيلة مفتوحة — متصفحاً فيه علامات تبويب كثيرة أو تطبيق فيديو أو تطبيق تواصل.</string>
-    <string name="gt_afs_should_2">الثمن: التطبيق المغلق يستغرق وقتاً أطول ليُفتح في المرة التالية، وتطبيق الدردشة المغلق لن يعرض لك الرسائل الجديدة حتى تفتحه مجدداً. ضع علامة على تطبيقات الدردشة لإبقائها تعمل.</string>
+    <string name="gt_afs_should_2">الثمن: التطبيق المغلق يستغرق وقتاً أطول ليُفتح في المرة التالية، وتطبيق الدردشة المغلق لن يعرض لك الرسائل الجديدة حتى تفتحه مجدداً. ينطبق هذا على كل تطبيق — لا توجد قائمة استثناءات.</string>
     <string name="gt_afs_should_3">وضع الألعاب يوقف التطبيقات الأخرى مؤقتاً أثناء اللعب، لذا لا تحتاج الاثنين معاً.</string>
     <string name="gt_afs_usage_off_title">الوصول إلى الاستخدام متوقف</string>
     <string name="gt_afs_usage_off_text">يحتاج هذا لرؤية التطبيق الذي تستخدمه. حتى تفعّله، لن يُغلق شيء.</string>
     <string name="gt_afs_usage_btn">فعّل الوصول إلى الاستخدام</string>
-    <string name="gt_afs_keep_none">إبقاء 0 تطبيقات مفتوحة — كل تطبيق تغادره سيُغلق</string>
-    <string name="gt_afs_keep_some">إبقاء %1$d من التطبيقات مفتوحة</string>
-    <string name="gt_afs_tick_hint">ضع علامة على تطبيق لإبقائه مفتوحاً</string>
 
     <!-- Cleaner -->
     <string name="gt_cleaner_reach">يمكن الوصول إلى: %1$s</string>
@@ -174,30 +172,6 @@
     <string name="cleaner_scheduled_done">حُرّر %1$s في %2$d عنصر</string>
     <string name="cleaner_scheduled_unreadable">تعذّرت قراءة التخزين — لم يُنظَّف شيء.</string>
     <string name="cleaner_scheduled_nothing_safe">لا شيء آمن للحذف — السجلات والمخلّفات تبقى يدوية.</string>
-    <string name="gt_perm_title">مبدّل الأذونات</string>
-    <string name="gt_perm_sub">سحب أو منح الأذونات الخطرة لتطبيق واحد، يدوياً.</string>
-    <string name="gt_perm_what_title">ماذا يفعل هذا؟</string>
-    <string name="gt_perm_what_1">يسرد الأذونات الخطرة التي طلبها التطبيق مع حالة كل منها الحية. السحب يسري فوراً وقد يعطّل الميزة خلفه — الكاميرا وتسجيل الدخول والخرائط والإشعارات هي الضحايا المعتادة.</string>
-    <string name="gt_perm_what_2">تُسرد الأذونات الخطرة فقط. كل ما يُسحب يُسجَّل، والاستعادة تعيد بالضبط ما أُخذ.</string>
-    <string name="gt_perm_pick">اختر التطبيق…</string>
-    <string name="gt_perm_pick_title">تبديل الأذونات لـ…</string>
-    <string name="gt_perm_revoke">سحب</string>
-    <string name="gt_perm_grant">منح</string>
-    <string name="gt_perm_restore_all">استعادة كل ما أُخذ</string>
-    <string name="gt_perm_granted_state">ممنوح</string>
-    <string name="gt_perm_revoked_state">مسحوب</string>
-    <string name="gt_perm_needs_priv">تغيير الأذونات يحتاج روت أو Shizuku.</string>
-    <string name="gt_perm_no_self">أذونات هذا التطبيق خارج الحدود.</string>
-    <string name="gt_perm_none_toggleable">%1$s لا يطلب شيئاً قابلاً للتبديل.</string>
-    <string name="gt_perm_confirm_title">سحب هذا الإذن؟</string>
-    <string name="gt_perm_confirm_body">سحب %2$s من %1$s؟ قد تتوقف الميزة خلفه حتى يُمنح مجدداً.</string>
-    <string name="gt_perm_confirm_revoke">اسحبه</string>
-    <string name="gt_perm_revoked">سُحب %2$s من %1$s.</string>
-    <string name="gt_perm_revoke_failed">تعذّر سحب %2$s من %1$s: %3$s</string>
-    <string name="gt_perm_granted">أُعيد %2$s إلى %1$s.</string>
-    <string name="gt_perm_grant_failed">تعذّرت إعادة %2$s إلى %1$s: %3$s</string>
-    <string name="gt_perm_restored">استُعيد %2$d إذن لـ %1$s.</string>
-    <string name="gt_perm_restore_partial">استُعيد %2$d لـ %1$s — هذه رفضت: %3$s</string>
     <string name="gt_cleaner_rules_help">إبقاء: مسار كامل أو اسم ملف يجب ألا يُنظف أبداً. تنظيف: نمط مثل .*oldgame.* يُطابق مع المسار الكامل.</string>
     <string name="gt_cleaner_keep_hint">إبقاء: اسم أو /مسار/كامل</string>
     <string name="gt_cleaner_pattern_hint">تنظيف: .*oldgame.*</string>
@@ -309,23 +283,6 @@
     <string name="gt_dev_anim_transition">تغييرات الشاشة</string>
     <string name="gt_dev_anim_animator">كل ما عداها</string>
     <string name="gt_dev_anim_off">إيقاف</string>
-    <string name="gt_preset_anim_title">إعدادات الرسوم المتحركة المسبقة</string>
-    <string name="gt_preset_name">اسم الإعداد المسبق</string>
-    <string name="gt_preset_anim_save">حفظ الحالي</string>
-    <string name="gt_preset_apply">تطبيق</string>
-    <string name="gt_preset_delete">حذف</string>
-    <string name="gt_preset_empty">لا توجد إعدادات مسبقة بعد.</string>
-    <string name="gt_preset_width_title">إعدادات العرض المسبقة</string>
-    <string name="gt_preset_width_dp">العرض (dp)</string>
-    <string name="gt_preset_width_save">حفظ العرض</string>
-    <string name="gt_preset_save_fail">تعذّر حفظ الإعداد المسبق — أدخل اسمًا وتحقق من الأرقام.</string>
-    <string name="gt_preset_deleted">تم حذف الإعداد المسبق: %1$s</string>
-    <string name="gt_preset_anim_saved">تم حفظ إعداد الرسوم المتحركة: %1$s</string>
-    <string name="gt_preset_anim_applied">تم تطبيق إعداد الرسوم المتحركة: %1$s</string>
-    <string name="gt_preset_anim_partial">الإعداد المسبق %1$s: تم تطبيق %2$d من 3 مقاييس فقط.</string>
-    <string name="gt_preset_width_saved">تم حفظ إعداد العرض: %1$s (%2$d dp)</string>
-    <string name="gt_preset_width_unknown">حجم الشاشة غير معروف — تحتاج إعدادات العرض المسبقة إلى شاشة قابلة للقراءة.</string>
-    <string name="gt_preset_width_no_density">الإعداد المسبق %1$s لا يقابل أي كثافة على هذه الشاشة.</string>
     <string name="gt_dev_keep_title">إبقاء تطبيقات أقل في الذاكرة</string>
     <string name="gt_dev_keep_1">عادة يُبقي هاتفك الكثير من التطبيقات في الذاكرة لتُفتح بسرعة. هذا يطلب منه إبقاء واحد فقط، فيترك ذاكرة أكبر للعبتك.</string>
     <string name="gt_dev_keep_2">الثمن: التطبيقات الأخرى يجب أن تبدأ من الصفر عند العودة إليها.</string>
@@ -725,7 +682,6 @@
     <string name="gt_svc_afs_no_usage">يتطلب الوصول إلى الاستخدام — انقر للمنح، لا يُغلق شيء</string>
     <string name="gt_svc_afs_no_priv">يتطلب روت أو Shizuku — يرفض أندرويد إغلاق التطبيقات الأخرى، لا يُغلق شيء</string>
     <string name="gt_svc_afs_close_all">إغلاق كل تطبيق تغادره</string>
-    <string name="gt_svc_afs_keep_some">إبقاء %1$d من التطبيقات مفتوحة</string>
     <string name="gt_svc_afs_none_yet">%1$s — لم يُغلق شيء بعد</string>
     <string name="gt_svc_afs_closed">%1$s — تم إغلاق %2$d</string>
     <string name="gt_svc_afs_channel">إيقاف تلقائي قسري</string>
@@ -753,6 +709,7 @@
     <string name="gt_trim_some">تم تقليم %1$s — رفض %2$d موضعًا</string>
     <string name="gt_trim_no">لم يبلغ التقليم عن شيء: %1$s</string>
     <string name="gt_trim_no_reason">الجهاز لم يقل شيئًا</string>
+    <string name="gt_trim_done_unmeasured">اكتمل التقليم — هذا الهاتف لا يبلغ عن مقدار المساحة التي تم تحريرها.</string>
     <!-- Extra suspend list: user-picked packages frozen at Gaming Mode activation. -->
     <string name="gt_suspend_title">تطبيقات مجمدة إضافية</string>
     <string name="gt_suspend_sub">اختياراتك، تُجمد مع المسح التلقائي</string>
@@ -786,4 +743,26 @@
     <string name="gt_svc_session_manual">وضع الألعاب اليدوي نشط — المراقبة متوقفة</string>
     <string name="gt_svc_session_no_usage">يتطلب إذن الوصول إلى الاستخدام — انقر للمنح، لا شيء يُراقب</string>
     <string name="gt_svc_session_no_priv">يتطلب روت أو Shizuku — أندرويد يرفض تغييرات الألعاب، لا شيء يُراقب</string>
+    <string name="gt_gm_recovery_first">تراجع عن جلسة وضع الألعاب الأخيرة أولًا.</string>
+    <string name="gt_gm_checking">جارٍ فحص الجلسة الأخيرة…</string>
+    <string name="gt_gm_interrupted">قُوطعت الجلسة الأخيرة</string>
+    <string name="gt_gm_recovery_title">تطبيقات من الجلسة الأخيرة</string>
+    <string name="gt_gm_recovery_body">قد يظل %1$d تطبيق مجمّدًا أو مقيّد الوصول في الخلفية.</string>
+    <string name="gt_gm_recovery_unverified">لم يؤكد الهاتف أي التطبيقات، لذا هذه هي القائمة التي سجّلها التطبيق.</string>
+    <string name="gt_gm_restore">استعادة التطبيقات</string>
+    <string name="gt_gm_restore_done">تمت استعادة %1$d تطبيق و%2$d قيد خلفية.</string>
+    <string name="gt_gm_restore_partial">تمت استعادة %1$d تطبيق و%2$d قيد. ما زال %3$d بحاجة إلى معالجة.</string>
+    <string name="gt_gm_restore_unverified">تعذّر تأكيد النتيجة. ما زال %1$d تطبيق في السجل — أعد المحاولة.</string>
+    <string name="gt_gm_restore_active">وضع الألعاب يعمل. أوقفه قبل استعادة التطبيقات.</string>
+    <string name="gt_gm_revert_needed">قد تظل إعدادات الجلسة الأخيرة مطبّقة. أوقف وضع الألعاب لاستعادتها.</string>
+    <string name="gt_gm_error_session_open">قد يكون جزء من هذه الجلسة مطبّقًا. استخدم زر الطاقة للتراجع.</string>
+    <string name="gt_suspend_count">%1$d محدد · %2$d مجمّد الآن</string>
+    <string name="gt_suspend_show">عرض التطبيقات</string>
+    <string name="gt_suspend_hide">إخفاء التطبيقات</string>
+    <string name="gt_suspend_badge_frozen">مجمّد</string>
+    <string name="gt_suspend_badge_selected">غير مجمّد</string>
+    <string name="gt_cleaner_review">مراجعة وتنظيف</string>
+    <string name="gt_cleaner_review_hide">إخفاء العناصر</string>
+    <string name="gt_cleaner_advanced">الجدولة والقواعد</string>
+    <string name="gt_cleaner_advanced_hide">إخفاء الجدولة والقواعد</string>
 </resources>

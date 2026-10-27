@@ -23,6 +23,7 @@
 
     <!-- Game library -->
     <string name="gt_library_launch">启动</string>
+    <string name="gt_library_actions">%1$s 的操作</string>
     <string name="gt_library_remove">移除</string>
     <string name="gt_library_optimize">优化</string>
     <string name="gt_library_search">搜索游戏</string>
@@ -56,10 +57,10 @@
     <string name="gt_tool_dns_title">私有 DNS</string>
     <string name="gt_tool_dns_sub">选择私有 DNS 提供商。</string>
     <string name="gt_tool_afs_title">自动强制停止</string>
-    <string name="gt_tool_afs_sub">强制停止你离开的应用（完全终止），保留列表中的应用除外。</string>
+    <string name="gt_tool_afs_sub">强制停止你离开的每个应用（完全终止），无需管理任何列表。</string>
     <string name="gt_tool_afs_need">需要 Root 或 Shizuku。Android 不允许普通应用关闭其他应用。Shizuku 是一款免费辅助应用，无需 Root 即可为此应用提供该能力。</string>
     <string name="gt_tool_cleaner_title">存储清理</string>
-    <string name="gt_tool_cleaner_sub">删除残留以释放空间。</string>
+    <string name="gt_tool_cleaner_sub">扫描垃圾、释放内存并优化存储。</string>
 
     <!-- Shared explainer titles -->
     <string name="gt_explainer_what">这是什么？</string>
@@ -115,22 +116,19 @@
 
     <!-- Auto Force Stop -->
     <string name="gt_afs_what_1">当你离开某个应用时，它会帮你关闭。关闭应用可释放内存，避免拖慢游戏。</string>
-    <string name="gt_afs_what_2">在下方勾选应用以保持运行。未勾选的应用将在你离开时被关闭。</string>
-    <string name="gt_afs_what_3">桌面、键盘、本应用及手机内置应用永远不会被关闭，即使你没有勾选。</string>
+    <string name="gt_afs_what_2">你离开的每个应用都会被关闭 — 没有列表需要管理。你切换到的应用会保持打开。</string>
+    <string name="gt_afs_what_3">你的主屏幕、键盘、此应用及手机内置应用永远不会被关闭。</string>
     <string name="gt_afs_perm_title">需要哪些权限？</string>
     <string name="gt_afs_perm_1">两项。第一，“使用情况访问权限”——它让此应用知道你在看哪个应用。你需要在 Android 设置中自行开启；若缺失，下方有按钮。</string>
     <string name="gt_afs_perm_2">第二，Root 或 Shizuku。Android 不允许普通应用关闭其他应用，没有它们就不会关闭任何内容。Shizuku 是一款辅助应用，无需 Root 即可提供额外能力。</string>
     <string name="gt_afs_perm_3">若缺少任一项，开关保持开启，但通知会告诉你没有关闭任何内容，绝不会假装工作。</string>
     <string name="gt_afs_should_title">应该用它吗？</string>
     <string name="gt_afs_should_1">如果你常开着重型应用最有用——标签页很多的浏览器、视频应用、社交应用。</string>
-    <string name="gt_afs_should_2">代价：关闭的应用下次打开更慢，关闭的聊天应用在你重新打开前收不到新消息。请勾选聊天应用以保持运行。</string>
+    <string name="gt_afs_should_2">代价：关闭的应用下次打开更慢，关闭的聊天应用在你重新打开前收不到新消息。这适用于所有应用 — 没有例外列表。</string>
     <string name="gt_afs_should_3">游戏模式在游玩时已暂停其他应用，因此无需两者都用。</string>
     <string name="gt_afs_usage_off_title">使用情况访问权限已关闭</string>
     <string name="gt_afs_usage_off_text">此功能需要知道你在用哪个应用。在你开启之前，不会关闭任何内容。</string>
     <string name="gt_afs_usage_btn">开启使用情况访问权限</string>
-    <string name="gt_afs_keep_none">保持 0 个应用运行 — 你离开的每个应用都会被关闭</string>
-    <string name="gt_afs_keep_some">保持 %1$d 个应用运行</string>
-    <string name="gt_afs_tick_hint">勾选应用以保持运行</string>
 
     <!-- Cleaner -->
     <string name="gt_cleaner_reach">可触及：%1$s</string>
@@ -174,30 +172,6 @@
     <string name="cleaner_scheduled_done">已释放 %1$s，共 %2$d 项</string>
     <string name="cleaner_scheduled_unreadable">存储不可读——未清理任何内容。</string>
     <string name="cleaner_scheduled_nothing_safe">没有可安全删除的内容——日志和残留仍需手动处理。</string>
-    <string name="gt_perm_title">权限开关</string>
-    <string name="gt_perm_sub">手动撤销或授予单个应用的危险权限。</string>
-    <string name="gt_perm_what_title">这是做什么的？</string>
-    <string name="gt_perm_what_1">列出应用申请的危险权限及其实时状态。撤销立即生效，可能破坏其背后功能——相机、登录、地图和通知是常见的受影响者。</string>
-    <string name="gt_perm_what_2">仅列出危险权限。所有撤销都会记录，“恢复”将精确带回所取走的内容。</string>
-    <string name="gt_perm_pick">选择应用…</string>
-    <string name="gt_perm_pick_title">切换以下权限…</string>
-    <string name="gt_perm_revoke">撤销</string>
-    <string name="gt_perm_grant">授予</string>
-    <string name="gt_perm_restore_all">恢复所有取走的内容</string>
-    <string name="gt_perm_granted_state">已授予</string>
-    <string name="gt_perm_revoked_state">已撤销</string>
-    <string name="gt_perm_needs_priv">更改权限需要 root 或 Shizuku。</string>
-    <string name="gt_perm_no_self">本应用自身的权限不在范围内。</string>
-    <string name="gt_perm_none_toggleable">%1$s 没有可切换的权限申请。</string>
-    <string name="gt_perm_confirm_title">撤销此权限？</string>
-    <string name="gt_perm_confirm_body">从 %1$s 收回 %2$s？其背后功能可能停止工作，直到重新授予。</string>
-    <string name="gt_perm_confirm_revoke">撤销</string>
-    <string name="gt_perm_revoked">已从 %1$s 收回 %2$s。</string>
-    <string name="gt_perm_revoke_failed">无法从 %1$s 收回 %2$s：%3$s</string>
-    <string name="gt_perm_granted">已将 %2$s 交还给 %1$s。</string>
-    <string name="gt_perm_grant_failed">无法将 %2$s 交还给 %1$s：%3$s</string>
-    <string name="gt_perm_restored">已为 %1$s 恢复 %2$d 项权限。</string>
-    <string name="gt_perm_restore_partial">已为 %1$s 恢复 %2$d 项——这些被拒绝：%3$s</string>
     <string name="gt_cleaner_rules_help">保留：绝不能清理的完整路径或文件名。清理：与完整路径匹配的模式，如 .*oldgame.*。</string>
     <string name="gt_cleaner_keep_hint">保留：名称或/完整/路径</string>
     <string name="gt_cleaner_pattern_hint">清理：.*oldgame.*</string>
@@ -309,23 +283,6 @@
     <string name="gt_dev_anim_transition">界面切换</string>
     <string name="gt_dev_anim_animator">其他全部</string>
     <string name="gt_dev_anim_off">关闭</string>
-    <string name="gt_preset_anim_title">动画预设</string>
-    <string name="gt_preset_name">预设名称</string>
-    <string name="gt_preset_anim_save">保存当前</string>
-    <string name="gt_preset_apply">应用</string>
-    <string name="gt_preset_delete">删除</string>
-    <string name="gt_preset_empty">暂无预设。</string>
-    <string name="gt_preset_width_title">宽度预设</string>
-    <string name="gt_preset_width_dp">宽度 (dp)</string>
-    <string name="gt_preset_width_save">保存宽度</string>
-    <string name="gt_preset_save_fail">预设保存失败——请填写名称并检查数值。</string>
-    <string name="gt_preset_deleted">已删除预设：%1$s</string>
-    <string name="gt_preset_anim_saved">已保存动画预设：%1$s</string>
-    <string name="gt_preset_anim_applied">已应用动画预设：%1$s</string>
-    <string name="gt_preset_anim_partial">预设%1$s：3 项中仅应用了 %2$d 项。</string>
-    <string name="gt_preset_width_saved">已保存宽度预设：%1$s（%2$d dp）</string>
-    <string name="gt_preset_width_unknown">屏幕尺寸未知——宽度预设需要可读取的屏幕。</string>
-    <string name="gt_preset_width_no_density">预设%1$s在此屏幕上没有对应的密度。</string>
     <string name="gt_dev_keep_title">在内存中保留更少应用</string>
     <string name="gt_dev_keep_1">通常手机会在内存中保留大量应用以便快速重新打开。这里要求只保留一个，为游戏留出更多内存。</string>
     <string name="gt_dev_keep_2">代价：返回其他应用时必须从头启动。</string>
@@ -725,7 +682,6 @@
     <string name="gt_svc_afs_no_usage">需要使用情况访问权限 — 点击授权，否则不关闭任何内容</string>
     <string name="gt_svc_afs_no_priv">需要 Root 或 Shizuku — Android 拒绝关闭其他应用，未关闭任何内容</string>
     <string name="gt_svc_afs_close_all">关闭你离开的每个应用</string>
-    <string name="gt_svc_afs_keep_some">保持 %1$d 个应用运行</string>
     <string name="gt_svc_afs_none_yet">%1$s — 尚未关闭</string>
     <string name="gt_svc_afs_closed">%1$s — 已关闭 %2$d 个</string>
     <string name="gt_svc_afs_channel">自动强制停止</string>
@@ -753,6 +709,7 @@
     <string name="gt_trim_some">已整理 %1$s — %2$d 个挂载点被拒绝</string>
     <string name="gt_trim_no">整理无报告：%1$s</string>
     <string name="gt_trim_no_reason">设备什么都没说</string>
+    <string name="gt_trim_done_unmeasured">整理完成 — 此手机不会报告释放了多少空间。</string>
     <!-- Extra suspend list: user-picked packages frozen at Gaming Mode activation. -->
     <string name="gt_suspend_title">额外挂起应用</string>
     <string name="gt_suspend_sub">你的选择，随自动扫描一起冻结</string>
@@ -786,4 +743,26 @@
     <string name="gt_svc_session_manual">手动游戏模式运行中 — 已释放监视</string>
     <string name="gt_svc_session_no_usage">需要使用情况访问权限 — 点击授权，否则不监视</string>
     <string name="gt_svc_session_no_priv">需要 Root 或 Shizuku — Android 拒绝游戏更改，不监视</string>
+    <string name="gt_gm_recovery_first">请先撤销上次游戏模式会话。</string>
+    <string name="gt_gm_checking">正在检查上次会话…</string>
+    <string name="gt_gm_interrupted">上次会话已中断</string>
+    <string name="gt_gm_recovery_title">上次会话中的应用</string>
+    <string name="gt_gm_recovery_body">可能有 %1$d 个应用仍被冻结或后台访问受限。</string>
+    <string name="gt_gm_recovery_unverified">手机未确认具体是哪些，以下为本应用记录的结果。</string>
+    <string name="gt_gm_restore">恢复应用</string>
+    <string name="gt_gm_restore_done">已恢复 %1$d 个应用和 %2$d 项后台限制。</string>
+    <string name="gt_gm_restore_partial">已恢复 %1$d 个应用和 %2$d 项限制，仍有 %3$d 项待处理。</string>
+    <string name="gt_gm_restore_unverified">无法确认结果。记录中仍有 %1$d 个应用，请重试。</string>
+    <string name="gt_gm_restore_active">游戏模式正在运行。请先关闭再恢复应用。</string>
+    <string name="gt_gm_revert_needed">上次会话的设置可能仍在生效。关闭游戏模式即可恢复。</string>
+    <string name="gt_gm_error_session_open">本次会话的部分设置可能仍在生效。请用电源按钮撤销。</string>
+    <string name="gt_suspend_count">%1$d 个已选择 · %2$d 个当前已冻结</string>
+    <string name="gt_suspend_show">显示应用</string>
+    <string name="gt_suspend_hide">隐藏应用</string>
+    <string name="gt_suspend_badge_frozen">已冻结</string>
+    <string name="gt_suspend_badge_selected">未冻结</string>
+    <string name="gt_cleaner_review">查看并清理</string>
+    <string name="gt_cleaner_review_hide">隐藏项目</string>
+    <string name="gt_cleaner_advanced">计划与规则</string>
+    <string name="gt_cleaner_advanced_hide">隐藏计划与规则</string>
 </resources>

@@ -19,6 +19,8 @@ class GamingModeUiPlacementTest {
     private val card = source("ui/GamingModeCard.kt")
     private val details = source("ui/GamingModeDetailsSection.kt")
     private val keep = source("ui/GamingModeKeepRunningSection.kt")
+    private val suspension = source("ui/GamingModeSuspensionSection.kt")
+    private val picker = source("ui/GamingModeAppPickerSection.kt")
     private val progress = source("ui/GamingModeProgress.kt")
     private val viewModel = source("GamingToolsViewModel.kt")
 
@@ -113,26 +115,155 @@ class GamingModeUiPlacementTest {
 
     @Test
     fun keepListIsCountedAndCollapsedByDefault() {
-        assertTrue(keep.contains("GamingModeKeepRunning.count(picked)"))
-        assertTrue(keep.contains("GamingModeKeepRunning.DEFAULT_EXPANDED"))
+        assertTrue(keep.contains("GamingModeAppPicker.count(picked)"))
+        assertTrue(keep.contains("GamingModeAppPicker.DEFAULT_EXPANDED"))
         assertTrue(keep.contains("rememberSaveable"))
-        assertTrue(keep.contains("GamingModeKeepRunning.toggle(expanded)"))
+        assertTrue(keep.contains("GamingModeAppPicker.toggle(expanded)"))
         assertTrue(keep.contains("R.string.gt_keep_show_list"))
         assertTrue(keep.contains("R.string.gt_keep_hide_list"))
-        assertTrue(keep.contains("R.string.gt_keep_summary_more"))
+        assertTrue(picker.contains("R.string.gt_keep_summary_more"))
         assertTrue(keep.contains("R.string.gt_keep_some"))
         // Folding is presentation-only: no store call, and the privilege gate stays on Add.
         assertFalse("folding must not touch the store", keep.contains("suspendExemptStore."))
-        assertTrue(keep.contains("enabled = canEdit"))
-        assertTrue(keep.contains("RequirementNotice("))
+        assertTrue(picker.contains("enabled = canEdit"))
+        assertTrue(picker.contains("RequirementNotice("))
     }
 
     @Test
-    fun expandedKeepListIsBoundedAndScrollable() {
-        assertTrue(keep.contains("LazyColumn"))
-        assertTrue(keep.contains("heightIn(max ="))
-        assertTrue(keep.contains("onRemove(row.packageName)"))
-        assertTrue(keep.contains("onClick = onAdd"))
+    fun bothAppPickersUseTheSameSectionLayout() {
+        // One app list is pointless twice: both sections render through the shared picker, so a
+        // future layout change cannot make one list look different from the other.
+        assertTrue(picker.contains("fun GamingModeAppPickerSection("))
+        assertTrue(keep.contains("GamingModeAppPickerSection("))
+        assertTrue(suspension.contains("GamingModeAppPickerSection("))
+        assertTrue(picker.contains("CatsmokerOutlinedButton("))
+        assertTrue(picker.contains("CollapsibleExplainer("))
+        assertTrue(picker.contains("R.string.gt_explainer_what"))
+        assertTrue(suspension.contains("GamingModeAppPicker.count(picked)"))
+        assertTrue(suspension.contains("GamingModeAppPicker.DEFAULT_EXPANDED"))
+        assertTrue(suspension.contains("R.string.gt_suspend_none"))
+        assertTrue(suspension.contains("R.string.gt_suspend_some"))
+        assertTrue(suspension.contains("R.string.gt_suspend_what_1"))
+        assertTrue(suspension.contains("R.string.gt_suspend_what_2"))
+    }
+
+    @Test
+    fun expandedAppListsAreBoundedAndScrollable() {
+        assertTrue(picker.contains("LazyColumn"))
+        assertTrue(picker.contains("heightIn(max ="))
+        assertTrue(picker.contains("onRemove(row.packageName)"))
+        assertTrue(picker.contains("onClick = onAdd"))
+    }
+
+    @Test
+    fun extraSuspendListMovedIntoGamingModeCard() {
+        // The extra freeze list is the suspend sweep's second input: it has to sit with the
+        // automatic sweep's exceptions, not under Background Apps where it read as a separate
+        // feature and became a second editor of the same store.
+        assertTrue(card.contains("GamingModeSuspensionSection("))
+        assertTrue(card.contains("picked = extraSuspendPackages"))
+        assertTrue(card.contains("suspended = suspendedPackages"))
+        assertTrue(card.contains("onAdd = onAddExtraSuspend"))
+        assertTrue(card.contains("onRemove = onRemoveExtraSuspend"))
+        assertFalse(
+            "GamingToolsScreen.kt still renders the old standalone freeze card",
+            screen.contains("R.string.gt_suspend_title")
+        )
+        assertFalse(
+            "GamingToolsScreen.kt still keeps the old freeze composable",
+            screen.contains("SuspendListContent")
+        )
+        // The feature is only moved: its picker, store and actions stay wired.
+        assertTrue(screen.contains("isPickingSuspendPackage"))
+        assertTrue(screen.contains("onShowSuspendPicker"))
+        assertTrue(screen.contains("onRemoveExtraSuspendPackage"))
+        assertTrue(viewModel.contains("suspendListStore"))
+    }
+
+    @Test
+    fun suspensionSectionDistinguishesConfiguredFromActuallyFrozen() {
+        // A pick only becomes "frozen" when this session's pm suspend was verified. The badge must
+        // read the confirmed set, not the configured one, or a configured app looks frozen while a
+        // device-level freeze looks like this app's doing.
+        assertTrue(suspension.contains("picked.count { it in suspended }"))
+        assertTrue(suspension.contains("R.string.gt_suspend_badge_frozen"))
+        assertTrue(suspension.contains("R.string.gt_suspend_badge_selected"))
+        assertTrue(suspension.contains("R.string.gt_suspend_count"))
+        assertFalse(
+            "the section must not read the configured list as the frozen truth",
+            suspension.contains("val frozenCount = remember(picked) { picked.size }")
+        )
+    }
+
+    @Test
+    fun restoreAppsLivesInTheCardAndOnlyWhenNoSessionRuns() {
+        assertTrue(card.contains("onClick = onRestoreApps"))
+        assertTrue(card.contains("R.string.gt_gm_restore"))
+        assertTrue(card.contains("R.string.gt_gm_restore_done"))
+        assertTrue(card.contains("R.string.gt_gm_restore_partial"))
+        assertTrue(card.contains("R.string.gt_gm_restore_unverified"))
+        // Recovery must never be offered while a session is active: that would undo the suspends
+        // the user just asked for.
+        assertTrue(
+            card.contains("if (!isActive && (gamingState is GamingModeState.Interrupted || recovery.isNeeded))")
+        )
+        assertTrue(card.contains("enabled = !isRestoringApps && !isBusy && !isActive"))
+        // The action is exposed by the ViewModel, not run from the screen.
+        assertTrue(viewModel.contains("fun restoreSuspendedApps()"))
+        assertTrue(screen.contains("onRestoreGamingApps = viewModel::restoreSuspendedApps"))
+    }
+
+    @Test
+    fun interruptedSessionIsNotReportedAsReadyOrActive() {
+        assertTrue(card.contains("GamingModeState.Checking"))
+        assertTrue(card.contains("GamingModeState.Interrupted"))
+        assertTrue(card.contains("R.string.gt_gm_checking"))
+        assertTrue(card.contains("R.string.gt_gm_interrupted"))
+        // The power button's action follows the session record, not just the state name: an error
+        // after the session opened still needs the revert.
+        assertTrue(card.contains("if (isSessionOpen) onDeactivate() else onActivate()"))
+        assertTrue(screen.contains("isSessionOpen = isGamingSessionOpen"))
+        assertTrue(viewModel.contains("val isGamingSessionOpen = gamingEngine.sessionOpen"))
+    }
+
+    @Test
+    fun cleanerCardOwnsTheRamAndTrimControls() {
+        // Three stacked cards (cleaner, RAM boost, trim) for one job made the memory section taller
+        // than a screen. The controls now live in the cleaner's own content.
+        assertTrue(screen.contains("fun CleaningContent("))
+        assertTrue(screen.contains("onBoostRam = onBoostRam"))
+        assertTrue(screen.contains("onTrimStorage = onTrimStorage"))
+        assertTrue(screen.contains("canTrim = hasPrivilege"))
+        // Both memory actions lead the card, above the scan they used to follow.
+        val cleaner = screen.substringAfter("fun CleaningContent(")
+        val scanIndex = cleaner.indexOf("onClick = onScan")
+        assertTrue(
+            "Reclaim RAM must sit above Scan",
+            cleaner.indexOf("onClick = onBoostRam") in 0 until scanIndex
+        )
+        assertTrue(
+            "Trim storage must sit above Scan",
+            cleaner.indexOf("onClick = onTrimStorage") in 0 until scanIndex
+        )
+        assertFalse("RamBoostCard must be deleted, not left as a second surface", screen.contains("RamBoostCard("))
+        val ramCard = File(
+            "src/main/java/com/catsmoker/app/features/gamingtools/ui",
+            "RamBoostCard.kt"
+        )
+        assertFalse("RamBoostCard.kt still exists", ramCard.exists())
+    }
+
+    @Test
+    fun removalOfThePermissionToggleIsComplete() {
+        assertFalse("GamingToolsScreen.kt still hosts the permission toggle", screen.contains("PermToggleContent"))
+        assertFalse("GamingToolsScreen.kt still routes the picker", screen.contains("onShowPermPicker"))
+        assertFalse(viewModel.contains("permToggleManager"))
+        assertFalse(viewModel.contains("PermToggleManager"))
+        val permDir = File(
+            "src/main/java/com/catsmoker/app/features/gamingtools/tools",
+            "permops"
+        )
+        assertFalse("permops sources still exist", permDir.exists())
     }
 
     @Test

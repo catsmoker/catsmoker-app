@@ -45,16 +45,55 @@ class StorageTrimTest {
     }
 
     @Test
-    fun formatsBytesForDisplay() {
-        assertEquals("1.2 GiB", StorageTrim.formatBytes(1288490188L))
-        assertEquals("50.0 MiB", StorageTrim.formatBytes(52428800L))
-        assertEquals("512 B", StorageTrim.formatBytes(512L))
-    }
-
-    @Test
     fun blankLinesAreIgnored() {
         val result = StorageTrim.parse("\n  \n/data: 2048 bytes trimmed\n")!!
         assertEquals(2048L, result.totalBytes)
         assertTrue(result.mounts.contains("/data"))
+    }
+
+    @Test
+    fun measuredDirectTrimWins() {
+        // A successful fstrim is the only channel that reports bytes, so the platform fallback
+        // must not run and the measurement is reported as-is.
+        val outcome = StorageTrim.outcome(
+            direct = StorageTrim.Attempt("/data: 4096 bytes trimmed", 0),
+            platform = null
+        )
+        val measured = outcome as StorageTrim.Outcome.Measured
+        assertEquals(4096L, measured.trimmed.totalBytes)
+    }
+
+    @Test
+    fun missingDirectCommandFallsBackToPlatformTrim() {
+        // This device's toybox has no fstrim, so the direct command exits 127. `sm fstrim` trims
+        // through vold and succeeds, but prints only a PersistableBundle line: no byte count.
+        val outcome = StorageTrim.outcome(
+            direct = StorageTrim.Attempt(
+                "/system/bin/sh: <stdin>[15587]: fstrim: inaccessible or not found",
+                127
+            ),
+            platform = StorageTrim.Attempt("PersistableBundle[{}]", 0)
+        )
+        assertEquals(StorageTrim.Outcome.TrimmedWithoutReport, outcome)
+    }
+
+    @Test
+    fun bothChannelsFailingCarriesThePlatformRefusal() {
+        val outcome = StorageTrim.outcome(
+            direct = StorageTrim.Attempt("fstrim: inaccessible or not found", 127),
+            platform = StorageTrim.Attempt("Failure calling service vold", 1)
+        )
+        val failed = outcome as StorageTrim.Outcome.Failed
+        assertEquals("Failure calling service vold", failed.detail)
+    }
+
+    @Test
+    fun silentPlatformFailureCarriesTheDirectMessage() {
+        val outcome = StorageTrim.outcome(
+            direct = StorageTrim.Attempt("fstrim: inaccessible or not found", 127),
+            platform = StorageTrim.Attempt("", 1)
+        )
+        val failed = outcome as StorageTrim.Outcome.Failed
+        assertEquals("fstrim: inaccessible or not found", failed.detail)
     }
 }

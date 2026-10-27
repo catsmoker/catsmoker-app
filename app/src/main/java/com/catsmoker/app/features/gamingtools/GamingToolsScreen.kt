@@ -8,6 +8,12 @@ import android.widget.Toast
 import androidx.annotation.StringRes
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.items
@@ -30,6 +36,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -42,12 +49,12 @@ import com.catsmoker.app.features.gamingtools.engine.AnimationScaleKind
 import com.catsmoker.app.features.gamingtools.engine.BoosterOutcome
 import com.catsmoker.app.features.gamingtools.engine.BoosterRun
 import com.catsmoker.app.features.gamingtools.engine.BoosterState
+import com.catsmoker.app.features.gamingtools.engine.GamingModeRecovery
 import com.catsmoker.app.features.gamingtools.engine.GamingModeReport
 import com.catsmoker.app.features.gamingtools.engine.GamingModeState
 import com.catsmoker.app.features.gamingtools.tools.cleaner.CleaningFeature
 import com.catsmoker.app.features.gamingtools.tools.booster.DexoptScheduleStore
 import com.catsmoker.app.features.gamingtools.tools.cleaner.CleanerScheduleStore
-import com.catsmoker.app.features.gamingtools.tools.permops.ToggleablePerm
 import com.catsmoker.app.features.gamingtools.tools.dns.DnsFeature
 import com.catsmoker.app.features.gamingtools.tools.firewall.BackgroundDataRestrictor
 import com.catsmoker.app.features.gamingtools.tools.firewall.VpnFirewall
@@ -63,8 +70,16 @@ import com.catsmoker.app.shared.util.formatBytes
 import com.catsmoker.app.shared.ui.theme.CatsmokerSpacing
 import com.catsmoker.app.shared.ui.theme.CatsmokerTheme
 
-/** How many library rows a collapsed "Your Games" list shows. */
-private const val GAME_LIBRARY_PREVIEW = 6
+/**
+ * Columns in "Your Games".
+ *
+ * Four is the launcher-grid density: on a 320 dp screen each cell still has a 56 dp icon and its
+ * label, and a normal phone shows seven games in two rows instead of seven stacked rows.
+ */
+private const val GAME_GRID_COLUMNS = 4
+
+/** How many games a collapsed "Your Games" grid shows — two full rows. */
+private const val GAME_LIBRARY_PREVIEW = GAME_GRID_COLUMNS * 2
 
 /** Below this many games, search would be clutter rather than help. */
 private const val GAME_SEARCH_THRESHOLD = 8
@@ -78,6 +93,9 @@ fun GamingToolsRoute(onBack: () -> Unit) {
 
     val gamingState by viewModel.gamingState.collectAsState()
     val gamingReport by viewModel.gamingReport.collectAsState()
+    val gamingRecovery by viewModel.gamingRecovery.collectAsState()
+    val isGamingSessionOpen by viewModel.isGamingSessionOpen.collectAsState()
+    val suspendedPackages by viewModel.suspendedPackages.collectAsState()
     val isFixedPerformanceMode by viewModel.isFixedPerformanceMode.collectAsState()
     val boosterLog by viewModel.boosterLog.collectAsState()
     val boosterState by viewModel.boosterState.collectAsState()
@@ -141,6 +159,9 @@ fun GamingToolsRoute(onBack: () -> Unit) {
         uiState = uiState,
         gamingState = gamingState,
         gamingReport = gamingReport,
+        gamingRecovery = gamingRecovery,
+        isGamingSessionOpen = isGamingSessionOpen,
+        suspendedPackages = suspendedPackages,
         isFixedPerformanceMode = isFixedPerformanceMode,
         boosterLog = boosterLog,
         boosterState = boosterState,
@@ -181,10 +202,6 @@ fun GamingToolsRoute(onBack: () -> Unit) {
         onScanJunk = viewModel::scanForJunk,
         onSetCleanSchedule = viewModel::setCleanSchedule,
         onSetCleanInterval = viewModel::setCleanInterval,
-        onShowPermPicker = viewModel::showPermPicker,
-        onRequestPermRevoke = viewModel::requestPermRevoke,
-        onRegrantPerm = viewModel::regrantPerm,
-        onRestorePerms = viewModel::restorePerms,
         onAddCleanerKeepEntry = viewModel::addCleanerKeepEntry,
         onRemoveCleanerKeepEntry = viewModel::removeCleanerKeepEntry,
         onAddCleanerCleanPattern = viewModel::addCleanerCleanPattern,
@@ -212,6 +229,7 @@ fun GamingToolsRoute(onBack: () -> Unit) {
         },
         onActivateGamingMode = viewModel::activateGamingMode,
         onDeactivateGamingMode = viewModel::deactivateGamingMode,
+        onRestoreGamingApps = viewModel::restoreSuspendedApps,
         onBoostRam = viewModel::boostRam,
         onTrimStorage = viewModel::trimStorage,
         onRunBooster = viewModel::runBooster,
@@ -223,10 +241,6 @@ fun GamingToolsRoute(onBack: () -> Unit) {
         onSetPointerSpeedChoice = viewModel::setPointerSpeedChoice,
         onBoostChange = viewModel::onBoostChange,
         onSetAnimationScale = viewModel::setAnimationScale,
-        onAnimPresetNameChange = viewModel::onAnimPresetNameChange,
-        onSaveAnimPreset = viewModel::saveAnimPreset,
-        onApplyAnimPreset = viewModel::applyAnimPreset,
-        onDeleteAnimPreset = viewModel::deleteAnimPreset,
         onToggleAlwaysFinish = viewModel::toggleAlwaysFinish,
         onToggleBackgroundLimit = viewModel::toggleBackgroundLimit,
         onSetForcePeakRefreshRate = viewModel::setForcePeakRefreshRate,
@@ -259,7 +273,6 @@ fun GamingToolsRoute(onBack: () -> Unit) {
         onAddGameClicked = viewModel::onAddGameClicked,
 
         onToggleAutoForceStop = viewModel::toggleAutoForceStop,
-        onToggleAutoForceStopKeepPackage = viewModel::toggleAutoForceStopKeepPackage,
         onShowSuspendPicker = viewModel::showSuspendPicker,
         onRemoveExtraSuspendPackage = viewModel::removeExtraSuspendPackage,
         onShowSuspendExemptPicker = viewModel::showSuspendExemptPicker,
@@ -272,11 +285,6 @@ fun GamingToolsRoute(onBack: () -> Unit) {
         onResOptionSelected = viewModel::onResOptionSelected,
         onApplyResolution = viewModel::applyResolutionChanges,
         onResetResolution = viewModel::resetResolutionChanges,
-        onWidthPresetNameChange = viewModel::onWidthPresetNameChange,
-        onWidthPresetDpChange = viewModel::onWidthPresetDpChange,
-        onSaveWidthPreset = viewModel::saveWidthPreset,
-        onApplyWidthPreset = viewModel::applyWidthPreset,
-        onDeleteWidthPreset = viewModel::deleteWidthPreset,
 
         onBack = onBack,
         onSync = {
@@ -316,27 +324,6 @@ fun GamingToolsRoute(onBack: () -> Unit) {
         )
     }
 
-    if (uiState.isPickingPermTarget) {
-        AppPickerDialog(
-            apps = uiState.allApps,
-            onDismiss = viewModel::dismissPermPicker,
-            onAppSelected = viewModel::selectPermTarget,
-            titleRes = R.string.gt_perm_pick_title
-        )
-    }
-
-    // Revoke names the app, the permission and the consequence up front; nothing is taken on
-    // dismiss — only the explicit confirm button runs it.
-    uiState.permConfirm?.let { confirm ->
-        AlertDialog(
-            onDismissRequest = viewModel::cancelPermRevoke,
-            title = { Text(stringResource(R.string.gt_perm_confirm_title)) },
-            text = { Text(stringResource(R.string.gt_perm_confirm_body, confirm.label, confirm.permission)) },
-            confirmButton = { TextButton(onClick = viewModel::confirmPermRevoke) { Text(stringResource(R.string.gt_perm_confirm_revoke)) } },
-            dismissButton = { TextButton(onClick = viewModel::cancelPermRevoke) { Text(stringResource(R.string.gt_dialog_cancel)) } }
-        )
-    }
-
     if (uiState.showAggressiveCleanWarning) {
         AlertDialog(
             onDismissRequest = viewModel::dismissAggressiveCleanWarning,
@@ -366,6 +353,9 @@ fun GamingToolsScreen(
     uiState: GamingToolsViewModel.UiState,
     gamingState: GamingModeState,
     gamingReport: GamingModeReport,
+    gamingRecovery: GamingModeRecovery,
+    isGamingSessionOpen: Boolean,
+    suspendedPackages: Set<String>,
     isFixedPerformanceMode: Boolean,
     boosterLog: List<String>,
     boosterState: BoosterState,
@@ -393,10 +383,6 @@ fun GamingToolsScreen(
     onSetCleanSchedule: (Boolean) -> Unit,
     /** Retunes the interval of the recurring sweep (hours, one of CleanerScheduleStore.INTERVAL_CHOICES). */
     onSetCleanInterval: (Int) -> Unit,
-    onShowPermPicker: () -> Unit,
-    onRequestPermRevoke: (String, String) -> Unit,
-    onRegrantPerm: (String, String) -> Unit,
-    onRestorePerms: (String) -> Unit,
     onAddCleanerKeepEntry: (String) -> Unit,
     onRemoveCleanerKeepEntry: (String) -> Unit,
     onAddCleanerCleanPattern: (String) -> Unit,
@@ -404,6 +390,7 @@ fun GamingToolsScreen(
     onGrantStorageAccess: () -> Unit,
     onActivateGamingMode: () -> Unit,
     onDeactivateGamingMode: () -> Unit,
+    onRestoreGamingApps: () -> Unit,
     onBoostRam: () -> Unit,
     onTrimStorage: () -> Unit,
     onRunBooster: (String, Boolean) -> Unit,
@@ -418,10 +405,6 @@ fun GamingToolsScreen(
     onToggleBackgroundLimit: (Boolean) -> Unit,
     onSetForcePeakRefreshRate: (Boolean) -> Unit,
     onSetGameDefaultFrameRateDisabled: (Boolean) -> Unit,
-    onAnimPresetNameChange: (String) -> Unit,
-    onSaveAnimPreset: () -> Unit,
-    onApplyAnimPreset: (AnimationPresetStore.AnimationPreset) -> Unit,
-    onDeleteAnimPreset: (String) -> Unit,
     onSelectAnglePackage: (String?) -> Unit,
     onSetAngleDriver: (AngleDriverOptions.Driver) -> Unit,
     /** Opens Android's Developer options screen for the switches this app cannot reach itself. */
@@ -444,7 +427,6 @@ fun GamingToolsScreen(
     onAddGameClicked: () -> Unit,
 
     onToggleAutoForceStop: (Boolean) -> Unit,
-    onToggleAutoForceStopKeepPackage: (String) -> Unit,
     onShowSuspendPicker: () -> Unit,
     onRemoveExtraSuspendPackage: (String) -> Unit,
     onShowSuspendExemptPicker: () -> Unit,
@@ -457,23 +439,24 @@ fun GamingToolsScreen(
     onResOptionSelected: (String) -> Unit,
     onApplyResolution: () -> Unit,
     onResetResolution: () -> Unit,
-    onWidthPresetNameChange: (String) -> Unit,
-    onWidthPresetDpChange: (String) -> Unit,
-    onSaveWidthPreset: () -> Unit,
-    onApplyWidthPreset: (WidthPresetStore.WidthPreset) -> Unit,
-    onDeleteWidthPreset: (String) -> Unit,
 
     onBack: () -> Unit,
     onSync: () -> Unit,
 ) {
     val isActive = gamingState is GamingModeState.Active
-    val isBusy = (gamingState is GamingModeState.Enabling) || (gamingState is GamingModeState.Disabling)
+    val isBusy = gamingState is GamingModeState.Enabling ||
+        gamingState is GamingModeState.Disabling ||
+        gamingState is GamingModeState.Checking
 
     LaunchedEffect(Unit) { onSync() }
 
     val hasPrivilege = uiState.isRooted || uiState.isShizukuActive
     var gameQuery by remember { mutableStateOf("") }
     var showAllGames by remember { mutableStateOf(false) }
+    // One open action popup at a time: the icon that opened it owns the menu, and tapping any
+    // other icon first dismisses this one. Without the hoisted package two tiles could both
+    // present actions for different games.
+    var openGameMenuPkg by rememberSaveable { mutableStateOf<String?>(null) }
 
     ScreenScaffold(
         title = stringResource(R.string.Gaming_tools_title),
@@ -483,12 +466,10 @@ fun GamingToolsScreen(
         Column(
             modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(bottom = 32.dp)
         ) {
-            // Library: vertical full-width cards. A LazyRow clipped the first/last card
-            // edges (no content padding, fixed 140dp widths, horizontal scroll bounds),
-            // so every card now fills the available width with its shape drawn by the
-            // Surface itself — fully visible on phones, tablets, portrait and landscape
-            // with no horizontal scrolling. With many installed games the list is capped and
-            // searchable; both only use data the library actually has (name/package).
+            // Library: a launcher-style grid of icons. The icon is the button; tapping it opens
+            // Launch, Pre-compile and Remove for that package only. Stored packages and Android's
+            // own game category both feed the list, while an explicit removal hides an entry
+            // regardless of which path found it.
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
                 Text(stringResource(R.string.gt_section_your_library), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 IconButton(onClick = onAddGameClicked, modifier = Modifier.size(24.dp)) {
@@ -534,18 +515,44 @@ fun GamingToolsScreen(
                 } else {
                     val visibleGames =
                         if (showAllGames) matchingGames else matchingGames.take(GAME_LIBRARY_PREVIEW)
+                    // A plain Column of chunked Rows, not LazyVerticalGrid: this section already
+                    // lives inside the screen's verticalScroll, and a lazy grid there would be
+                    // measured with infinite height. The list is bounded by the library size.
                     Column(
                         modifier = Modifier.fillMaxWidth(),
-                        verticalArrangement = Arrangement.spacedBy(CatsmokerSpacing.CardGap)
+                        verticalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
-                        visibleGames.forEach { game ->
-                            GameLibraryCard(
-                                game,
-                                onLaunchGame,
-                                onRemoveGame,
-                                onOptimizeGame,
-                                isOptimizing = uiState.optimizingGamePkg == game.packageName
-                            )
+                        visibleGames.chunked(GAME_GRID_COLUMNS).forEach { rowGames ->
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(4.dp),
+                                verticalAlignment = Alignment.Top
+                            ) {
+                                rowGames.forEach { game ->
+                                    GameLibraryTile(
+                                        game = game,
+                                        isMenuOpen = openGameMenuPkg == game.packageName,
+                                        onToggleMenu = {
+                                            openGameMenuPkg = if (openGameMenuPkg == game.packageName) {
+                                                null
+                                            } else {
+                                                game.packageName
+                                            }
+                                        },
+                                        onDismissMenu = { openGameMenuPkg = null },
+                                        onLaunch = onLaunchGame,
+                                        onRemove = onRemoveGame,
+                                        onOptimize = onOptimizeGame,
+                                        isOptimizing = uiState.optimizingGamePkg == game.packageName,
+                                        modifier = Modifier.weight(1f)
+                                    )
+                                }
+                                // Keep the last, incomplete row aligned to the same column
+                                // widths instead of stretching its tiles across the screen.
+                                repeat(GAME_GRID_COLUMNS - rowGames.size) {
+                                    Spacer(modifier = Modifier.weight(1f))
+                                }
+                            }
                         }
                     }
                     if (matchingGames.size > GAME_LIBRARY_PREVIEW) {
@@ -578,6 +585,11 @@ fun GamingToolsScreen(
                 canActivate = hasPrivilege,
                 isActive = isActive,
                 isBusy = isBusy,
+                isSessionOpen = isGamingSessionOpen,
+                recovery = gamingRecovery,
+                isRestoringApps = uiState.isRestoringApps,
+                restoreResult = uiState.restoreResult,
+                onRestoreApps = onRestoreGamingApps,
                 onActivate = onActivateGamingMode,
                 onDeactivate = onDeactivateGamingMode,
                 sessionActive = uiState.isGameSessionActive,
@@ -588,7 +600,14 @@ fun GamingToolsScreen(
                 keptPackages = uiState.suspendExemptPackages,
                 keepCandidateApps = uiState.suspendExemptCandidateApps,
                 onAddKeptApp = onShowSuspendExemptPicker,
-                onRemoveKeptApp = onRemoveSuspendExemptPackage
+                onRemoveKeptApp = onRemoveSuspendExemptPackage,
+                // The extra freeze list is the same sweep's second input; it moved here from
+                // Background Apps so both lists and the frozen state live on one surface.
+                extraSuspendPackages = uiState.extraSuspendPackages,
+                suspendedPackages = suspendedPackages,
+                suspendCandidateApps = uiState.allApps,
+                onAddExtraSuspend = onShowSuspendPicker,
+                onRemoveExtraSuspend = onRemoveExtraSuspendPackage
             )
             Spacer(modifier = Modifier.height(CatsmokerSpacing.CardGap))
             FixedPerformanceModeCard(
@@ -644,12 +663,6 @@ fun GamingToolsScreen(
                         hasPrivilege = hasPrivilege,
                         gameDevOptions = gameDevOptions,
                         onSetAnimationScale = onSetAnimationScale,
-                        animPresets = uiState.animPresets,
-                        animPresetName = uiState.animPresetName,
-                        onAnimPresetNameChange = onAnimPresetNameChange,
-                        onSaveAnimPreset = onSaveAnimPreset,
-                        onApplyAnimPreset = onApplyAnimPreset,
-                        onDeleteAnimPreset = onDeleteAnimPreset,
                         onToggleAlwaysFinish = onToggleAlwaysFinish,
                         onToggleBackgroundLimit = onToggleBackgroundLimit,
                         onSetForcePeakRefreshRate = onSetForcePeakRefreshRate,
@@ -689,14 +702,6 @@ fun GamingToolsScreen(
                         onOptionSelected = onResOptionSelected,
                         onWidthChange = onResWidthChange, onHeightChange = onResHeightChange, onDpiChange = onResDpiChange,
                         onApply = onApplyResolution, onReset = onResetResolution,
-                        widthPresets = uiState.widthPresets,
-                        widthPresetName = uiState.widthPresetName,
-                        widthPresetDp = uiState.widthPresetDp,
-                        onWidthPresetNameChange = onWidthPresetNameChange,
-                        onWidthPresetDpChange = onWidthPresetDpChange,
-                        onSaveWidthPreset = onSaveWidthPreset,
-                        onApplyWidthPreset = onApplyWidthPreset,
-                        onDeleteWidthPreset = onDeleteWidthPreset,
                         downscale = interventionDownscale,
                         onDownscaleChange = onSetInterventionDownscale,
                         pointerSpeed = pointerSpeedChoice,
@@ -796,27 +801,13 @@ fun GamingToolsScreen(
                     requirementNote = stringResource(R.string.gt_tool_afs_need)
                 ) {
                     AutoForceStopContent(
-                        apps = uiState.allApps,
-                        kept = uiState.autoForceStopKeepPackages,
-                        hasPrivilege = hasPrivilege,
-                        onToggle = onToggleAutoForceStopKeepPackage
+                        hasPrivilege = hasPrivilege
                     )
                 }
-                // Extra suspend list: user-picked packages frozen at Gaming Mode activation on
-                // top of the automatic sweep, woken with everything else on deactivation.
-                ExpandableToolCard(
-                    title = stringResource(R.string.gt_suspend_title),
-                    subtitle = stringResource(R.string.gt_suspend_sub),
-                    icon = Icons.Default.Pause
-                ) {
-                    SuspendListContent(
-                        picked = uiState.extraSuspendPackages,
-                        apps = uiState.allApps,
-                        hasPrivilege = hasPrivilege,
-                        onAdd = onShowSuspendPicker,
-                        onRemove = onRemoveExtraSuspendPackage
-                    )
-                }
+                // The extra suspend list moved into the Gaming Mode card: it is the same suspend
+                // sweep's second input, not a Background Apps feature. Keeping it here as well
+                // meant two surfaces could edit one list and only one of them showed whether a
+                // package was actually frozen.
                 // The keep list moved into the Gaming Mode card: it is the suspend sweep's
                 // exception list, not a second Background Apps feature. Its ViewModel wiring and
                 // store stay unchanged; the screen only hosts the picker dialog.
@@ -825,15 +816,6 @@ fun GamingToolsScreen(
             Spacer(modifier = Modifier.height(CatsmokerSpacing.SectionGap))
             SectionLabel(stringResource(R.string.gt_section_memory))
             Column(verticalArrangement = Arrangement.spacedBy(CatsmokerSpacing.CardGap)) {
-                RamBoostCard(
-                    uiState.isBoostingRam,
-                    uiState.ramResult,
-                    onBoostRam,
-                    uiState.isTrimmingStorage,
-                    uiState.storageTrimResult,
-                    hasPrivilege,
-                    onTrimStorage
-                )
                 ExpandableToolCard(title = stringResource(R.string.gt_tool_cleaner_title), subtitle = stringResource(R.string.gt_tool_cleaner_sub), icon = Icons.Default.DeleteSweep) {
                     CleaningContent(
                         isRooted = uiState.isRooted,
@@ -855,23 +837,14 @@ fun GamingToolsScreen(
                         scheduleIntervalHours = uiState.cleanIntervalHours,
                         scheduleNextRunAt = uiState.cleanNextRunAt,
                         onScheduleEnabledChange = onSetCleanSchedule,
-                        onScheduleIntervalChange = onSetCleanInterval
-                    )
-                }
-                // Manual dangerous-permission toggle: per-app, per-permission, explicitly
-                // confirmed. Revokes the platform may refuse are reported, not recorded, and
-                // everything taken can be regranted from the restore set.
-                ExpandableToolCard(title = stringResource(R.string.gt_perm_title), subtitle = stringResource(R.string.gt_perm_sub), icon = Icons.Default.AdminPanelSettings) {
-                    PermToggleContent(
-                        targetLabel = uiState.permTargetLabel,
-                        targetPkg = uiState.permTargetPkg,
-                        entries = uiState.permEntries,
-                        isBusy = uiState.isPermBusy,
-                        hasPrivilege = hasPrivilege,
-                        onPickTarget = onShowPermPicker,
-                        onRevoke = onRequestPermRevoke,
-                        onRegrant = onRegrantPerm,
-                        onRestoreAll = onRestorePerms
+                        onScheduleIntervalChange = onSetCleanInterval,
+                        isBoostingRam = uiState.isBoostingRam,
+                        ramResult = uiState.ramResult,
+                        onBoostRam = onBoostRam,
+                        isTrimmingStorage = uiState.isTrimmingStorage,
+                        trimResult = uiState.storageTrimResult,
+                        canTrim = hasPrivilege,
+                        onTrimStorage = onTrimStorage
                     )
                 }
             }
@@ -879,57 +852,101 @@ fun GamingToolsScreen(
     }
 }
 
+/**
+ * One game in "Your Games": a launcher-style icon tile whose popup carries the three actions.
+ *
+ * The icon itself is the button and the name underneath is a plain label, so the tap target is
+ * the familiar launcher icon rather than a hidden chevron. The 56 dp [IconButton] keeps the touch
+ * target above the 48 dp rule while the artwork inside stays 48 dp. Only one menu is open at a
+ * time — the screen hoists [isMenuOpen] — and every action is addressed by [GameInfo.packageName]
+ * so two games sharing a label can never act on each other.
+ */
 @Composable
-fun GameLibraryCard(
+fun GameLibraryTile(
     game: GameInfo,
+    isMenuOpen: Boolean,
+    onToggleMenu: () -> Unit,
+    onDismissMenu: () -> Unit,
     onLaunch: (String) -> Unit,
     onRemove: (String) -> Unit,
     onOptimize: (String) -> Unit,
-    isOptimizing: Boolean
+    isOptimizing: Boolean,
+    modifier: Modifier = Modifier
 ) {
-    Surface(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(16.dp),
-        color = MaterialTheme.colorScheme.surface,
-        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
-    ) {
-        Row(
-            modifier = Modifier.fillMaxWidth().padding(12.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            // Cached per game: toBitmap() allocates on every recomposition otherwise.
-            val icon = remember(game.packageName, game.icon) { game.icon.toBitmap().asImageBitmap() }
-            Image(bitmap = icon, contentDescription = null, modifier = Modifier.size(40.dp).clip(RoundedCornerShape(8.dp)))
-            Spacer(modifier = Modifier.width(12.dp))
-            Column(modifier = Modifier.weight(1f)) {
-                Text(text = game.appName, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                Spacer(modifier = Modifier.height(8.dp))
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
-                    CatsmokerButton(onClick = { onLaunch(game.packageName) }, modifier = Modifier.weight(1f).height(32.dp), contentPadding = PaddingValues(0.dp), shape = RoundedCornerShape(8.dp)) {
-                        Text(stringResource(R.string.gt_library_launch), fontSize = 10.sp, fontWeight = FontWeight.Bold)
-                    }
-                    // Pre-launch speed-profile compile for exactly this game. Runs through the same
-                    // sweep lock as the full booster, so it can never race one — the button spins
-                    // while the platform works and the toast reports what it said.
-                    CatsmokerOutlinedButton(
-                        onClick = { onOptimize(game.packageName) },
-                        modifier = Modifier.weight(1f).height(32.dp),
-                        contentPadding = PaddingValues(0.dp),
-                        shape = RoundedCornerShape(8.dp),
-                        enabled = !isOptimizing
-                    ) {
-                        if (isOptimizing) {
-                            CircularProgressIndicator(modifier = Modifier.size(14.dp), strokeWidth = 2.dp)
-                        } else {
-                            Text(stringResource(R.string.gt_library_optimize), fontSize = 10.sp, fontWeight = FontWeight.Bold)
-                        }
-                    }
-                }
+    // Cached per game: toBitmap() allocates on every recomposition otherwise.
+    val icon = remember(game.packageName, game.icon) { game.icon.toBitmap().asImageBitmap() }
+    Column(modifier = modifier, horizontalAlignment = Alignment.CenterHorizontally) {
+        Box {
+            IconButton(onClick = onToggleMenu, modifier = Modifier.size(56.dp)) {
+                Image(
+                    bitmap = icon,
+                    // The icon is the only control on the tile, so it carries the game name: a
+                    // screen reader announces "Actions for <game>", not an unnamed button.
+                    contentDescription = stringResource(R.string.gt_library_actions, game.appName),
+                    modifier = Modifier.size(48.dp).clip(RoundedCornerShape(12.dp))
+                )
             }
-            IconButton(onClick = { onRemove(game.packageName) }, modifier = Modifier.size(32.dp)) {
-                Icon(Icons.Default.Remove, stringResource(R.string.gt_library_remove), tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f), modifier = Modifier.size(16.dp))
+            DropdownMenu(expanded = isMenuOpen, onDismissRequest = onDismissMenu) {
+                DropdownMenuItem(
+                    text = { Text(stringResource(R.string.gt_library_launch)) },
+                    leadingIcon = { Icon(Icons.Default.PlayArrow, contentDescription = null) },
+                    onClick = {
+                        onDismissMenu()
+                        onLaunch(game.packageName)
+                    }
+                )
+                // Pre-launch speed-profile compile for exactly this game. Runs through the same
+                // sweep lock as the full booster, so it can never race one — the item spins while
+                // the platform works and the toast reports what it said.
+                DropdownMenuItem(
+                    text = { Text(stringResource(R.string.gt_library_optimize)) },
+                    leadingIcon = {
+                        if (isOptimizing) {
+                            CircularProgressIndicator(modifier = Modifier.size(16.dp), strokeWidth = 2.dp)
+                        } else {
+                            Icon(Icons.Default.Build, contentDescription = null)
+                        }
+                    },
+                    enabled = !isOptimizing,
+                    onClick = {
+                        onDismissMenu()
+                        onOptimize(game.packageName)
+                    }
+                )
+                DropdownMenuItem(
+                    text = {
+                        Text(
+                            stringResource(R.string.gt_library_remove),
+                            color = MaterialTheme.colorScheme.error
+                        )
+                    },
+                    leadingIcon = {
+                        Icon(
+                            Icons.Default.Delete,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.error
+                        )
+                    },
+                    onClick = {
+                        onDismissMenu()
+                        onRemove(game.packageName)
+                    }
+                )
             }
         }
+        Text(
+            text = game.appName,
+            modifier = Modifier.fillMaxWidth().padding(top = 2.dp, start = 2.dp, end = 2.dp),
+            style = MaterialTheme.typography.labelSmall,
+            fontWeight = FontWeight.SemiBold,
+            color = MaterialTheme.colorScheme.onSurface,
+            textAlign = TextAlign.Center,
+            // Two lines always: tiles in the same row stay the same height, and a long name
+            // ellipsizes instead of pushing the row taller than its neighbours.
+            minLines = 2,
+            maxLines = 2,
+            overflow = TextOverflow.Ellipsis
+        )
     }
 }
 
@@ -1027,17 +1044,6 @@ fun ResolutionChangerContent(
     onOptionSelected: (String) -> Unit,
     onWidthChange: (String) -> Unit, onHeightChange: (String) -> Unit, onDpiChange: (String) -> Unit,
     onApply: () -> Unit, onReset: () -> Unit,
-    /** Named smallest-width presets, in save order. */
-    widthPresets: List<WidthPresetStore.WidthPreset>,
-    /** Name typed for the next width preset. */
-    widthPresetName: String,
-    /** Width in dp typed for the next width preset. */
-    widthPresetDp: String,
-    onWidthPresetNameChange: (String) -> Unit,
-    onWidthPresetDpChange: (String) -> Unit,
-    onSaveWidthPreset: () -> Unit,
-    onApplyWidthPreset: (WidthPresetStore.WidthPreset) -> Unit,
-    onDeleteWidthPreset: (String) -> Unit,
     /** Render scale for the next Gaming Mode activation, or null for full resolution. */
     downscale: Float?,
     /** Chooses the render scale; takes effect on the next activation, never mid-session. */
@@ -1199,24 +1205,6 @@ fun ResolutionChangerContent(
                 modifier = Modifier.weight(0.6f)
             ) { Text(stringResource(R.string.gt_res_reset)) }
         }
-        // Width presets: a named width in dp, applied through the same confirmed
-        // density-only path as a typed change. The panel keeps its native pixel
-        // size, so the aspect ratio cannot drift; the store refuses values outside
-        // the `wm density` clamp.
-        Spacer(modifier = Modifier.height(8.dp))
-        HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
-        Spacer(modifier = Modifier.height(16.dp))
-        WidthPresetLibrary(
-            presets = widthPresets,
-            name = widthPresetName,
-            widthDp = widthPresetDp,
-            canWrite = channel != null && !isApplying,
-            onNameChange = onWidthPresetNameChange,
-            onWidthDpChange = onWidthPresetDpChange,
-            onSave = onSaveWidthPreset,
-            onApply = onApplyWidthPreset,
-            onDelete = onDeleteWidthPreset
-        )
         // Next-activation tuning, kept with the resolution controls it relates to.
         // Render scale lowers the game's internal render resolution (the display
         // override above is untouched); touch speed only changes the pointer speed.
@@ -1250,91 +1238,6 @@ fun ResolutionChangerContent(
                             color = logLineColor(line)
                         )
                     }
-                }
-            }
-        }
-    }
-}
-
-/**
- * Named smallest-width preset library (M67).
- *
- * A preset stores a width in dp, never a resolution: applying it keeps the panel's
- * native pixel size and moves only the density, so the aspect ratio cannot drift.
- * The save button is always available (the store refuses blank names and values
- * outside the `wm density` clamp); Apply is gated on a write channel, the same
- * rule the resolution buttons use.
- */
-@Composable
-private fun WidthPresetLibrary(
-    presets: List<WidthPresetStore.WidthPreset>,
-    name: String,
-    widthDp: String,
-    canWrite: Boolean,
-    onNameChange: (String) -> Unit,
-    onWidthDpChange: (String) -> Unit,
-    onSave: () -> Unit,
-    onApply: (WidthPresetStore.WidthPreset) -> Unit,
-    onDelete: (String) -> Unit
-) {
-    Column(modifier = Modifier.fillMaxWidth()) {
-        Text(
-            stringResource(R.string.gt_preset_width_title),
-            fontSize = 13.sp,
-            fontWeight = FontWeight.Bold,
-            color = MaterialTheme.colorScheme.onSurface
-        )
-        Spacer(modifier = Modifier.height(8.dp))
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            OutlinedTextField(
-                value = name,
-                onValueChange = onNameChange,
-                label = { Text(stringResource(R.string.gt_preset_name)) },
-                singleLine = true,
-                modifier = Modifier.weight(1f)
-            )
-            OutlinedTextField(
-                value = widthDp,
-                onValueChange = onWidthDpChange,
-                label = { Text(stringResource(R.string.gt_preset_width_dp)) },
-                singleLine = true,
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                modifier = Modifier.weight(0.6f)
-            )
-        }
-        Spacer(modifier = Modifier.height(8.dp))
-        CatsmokerOutlinedButton(onClick = onSave, modifier = Modifier.fillMaxWidth()) {
-            Text(stringResource(R.string.gt_preset_width_save))
-        }
-        if (presets.isEmpty()) {
-            Text(
-                stringResource(R.string.gt_preset_empty),
-                fontSize = 11.sp,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.padding(vertical = 4.dp)
-            )
-        }
-        presets.forEach { preset ->
-            Row(
-                modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(preset.name, color = MaterialTheme.colorScheme.onSurface, fontSize = 13.sp)
-                    Text(
-                        "${preset.widthDp} dp",
-                        fontSize = 10.sp,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-                TextButton(onClick = { onApply(preset) }, enabled = canWrite) {
-                    Text(stringResource(R.string.gt_preset_apply))
-                }
-                TextButton(onClick = { onDelete(preset.id) }) {
-                    Text(stringResource(R.string.gt_preset_delete))
                 }
             }
         }
@@ -1480,17 +1383,15 @@ fun OverlayPositionContent(
 }
 
 /**
- * The keep-alive picker for Auto Force Stop.
+ * Auto Force Stop explains itself and reports the two grants it needs.
  *
- * The ticks are the apps to *leave alone*. That is the inverse of what this list used to mean, and the
- * copy says so plainly, because a mis-read here closes the wrong apps.
+ * There is deliberately no app list here: the feature closes every app the user leaves. The
+ * service keeps its own code-level protections (home screen, keyboard, this app, system
+ * packages), which are not user exceptions and cannot be edited.
  */
 @Composable
 fun AutoForceStopContent(
-    apps: List<GameInfo>,
-    kept: Set<String>,
-    hasPrivilege: Boolean,
-    onToggle: (String) -> Unit
+    hasPrivilege: Boolean
 ) {
     val context = LocalContext.current
     // The service reads foreground app changes from UsageStatsManager, which needs the "Usage access"
@@ -1570,28 +1471,6 @@ fun AutoForceStopContent(
                 }) { Text(stringResource(R.string.gt_afs_usage_btn)) }
             }
         }
-        Spacer(modifier = Modifier.height(12.dp))
-        Text(
-            text = if (kept.isEmpty()) stringResource(R.string.gt_afs_keep_none)
-            else stringResource(R.string.gt_afs_keep_some, kept.size),
-            style = MaterialTheme.typography.labelSmall,
-            color = MaterialTheme.colorScheme.primary
-        )
-        Spacer(modifier = Modifier.height(4.dp))
-        Text(stringResource(R.string.gt_afs_tick_hint), fontSize = 10.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
-        Spacer(modifier = Modifier.height(8.dp))
-        androidx.compose.foundation.lazy.LazyColumn(modifier = Modifier.heightIn(max = 260.dp)) {
-            items(apps) { app ->
-                Row(modifier = Modifier.fillMaxWidth().clickable { onToggle(app.packageName) }.padding(vertical = 4.dp), verticalAlignment = Alignment.CenterVertically) {
-                    Checkbox(checked = kept.contains(app.packageName), onCheckedChange = { onToggle(app.packageName) })
-                    // Cached per row: decoding inside LazyColumn items re-runs on every scroll recomposition.
-                    val appIcon = remember(app.packageName, app.icon) { app.icon.toBitmap().asImageBitmap() }
-                    Image(bitmap = appIcon, contentDescription = null, modifier = Modifier.size(24.dp).clip(RoundedCornerShape(4.dp)))
-                    Spacer(modifier = Modifier.width(12.dp))
-                    Text(app.appName, color = MaterialTheme.colorScheme.onSurface, modifier = Modifier.weight(1f))
-                }
-            }
-        }
     }
 }
 
@@ -1633,118 +1512,231 @@ fun CleaningContent(
     scheduleIntervalHours: Int,
     scheduleNextRunAt: Long?,
     onScheduleEnabledChange: (Boolean) -> Unit,
-    onScheduleIntervalChange: (Int) -> Unit
+    onScheduleIntervalChange: (Int) -> Unit,
+    // The memory half. RAM reclaim and filesystem trim live in this same card because they are
+    // the same job — make room now — and three stacked cards made the memory section one and a
+    // half screens tall before a single button was pressed.
+    isBoostingRam: Boolean,
+    ramResult: String?,
+    onBoostRam: () -> Unit,
+    isTrimmingStorage: Boolean,
+    trimResult: String?,
+    canTrim: Boolean,
+    onTrimStorage: () -> Unit
 ) {
     var selectedCategories by remember { mutableStateOf(CleaningFeature.Category.entries.filter { !it.isAggressive }.toSet()) }
+    var reviewExpanded by rememberSaveable { mutableStateOf(false) }
+    var advancedExpanded by rememberSaveable { mutableStateOf(false) }
     val resultsByCategory = remember(report) { report?.results?.associateBy { it.category }.orEmpty() }
+    val motionMs = rememberMotionDurationMs()
+
+    // A finished scan opens the review once: the user asked to look, and the categories are the
+    // result. Collapsing it again stays collapsed — the effect only fires when the report changes.
+    LaunchedEffect(report) {
+        if (report != null && report.results.isNotEmpty()) reviewExpanded = true
+    }
+
+    // One line that answers "what is there?". The channel note replaces it before the first
+    // scan, because then the useful fact is how much of the device can be reached at all.
+    val statusText = when {
+        report == null -> stringResource(
+            R.string.gt_cleaner_reach,
+            when {
+                isRooted -> stringResource(R.string.gt_cleaner_reach_root)
+                isShizukuActive -> stringResource(R.string.gt_cleaner_reach_shizuku)
+                else -> stringResource(R.string.gt_cleaner_reach_plain)
+            }
+        )
+        !report.scannedAnything -> stringResource(R.string.gt_cleaner_unreadable)
+        report.results.isEmpty() -> stringResource(R.string.gt_cleaner_looked_empty)
+        report.totalBytes == 0L -> stringResource(R.string.gt_cleaner_empty_only, report.totalItems)
+        else -> stringResource(R.string.gt_cleaner_can_free, formatBytes(report.totalBytes), report.totalItems)
+    }
+    val statusColor = when {
+        report == null -> MaterialTheme.colorScheme.onSurfaceVariant
+        !report.scannedAnything -> Color(0xFFFFB300)
+        else -> MaterialTheme.colorScheme.primary
+    }
+
     Column(modifier = Modifier.fillMaxWidth()) {
-        // Names the channel that will actually do the deleting, because it decides how much of the
-        // device can be reached — a normal app cannot see another app's cache at all.
         Text(
-            stringResource(
-                R.string.gt_cleaner_reach,
-                when {
-                    isRooted -> stringResource(R.string.gt_cleaner_reach_root)
-                    isShizukuActive -> stringResource(R.string.gt_cleaner_reach_shizuku)
-                    else -> stringResource(R.string.gt_cleaner_reach_plain)
-                }
-            ),
-            fontSize = 12.sp,
-            color = MaterialTheme.colorScheme.primary
+            text = statusText,
+            fontSize = 13.sp,
+            lineHeight = 18.sp,
+            fontWeight = if (report != null) FontWeight.SemiBold else FontWeight.Normal,
+            color = statusColor
         )
-        Spacer(modifier = Modifier.height(8.dp))
-        ExplainerBox(
-            title = stringResource(R.string.gt_explainer_what),
-            lines = listOf(
-                stringResource(R.string.gt_cleaner_what_1),
-                stringResource(R.string.gt_cleaner_what_2),
-                stringResource(R.string.gt_cleaner_what_3)
-            )
-        )
-        Spacer(modifier = Modifier.height(4.dp))
-        ExplainerBox(
-            title = stringResource(R.string.gt_cleaner_safe_title),
-            accent = Color(0xFFFFB300),
-            lines = listOf(
-                stringResource(R.string.gt_cleaner_safe_1),
-                stringResource(R.string.gt_cleaner_safe_2),
-                stringResource(R.string.gt_cleaner_safe_3)
-            )
-        )
-        Spacer(modifier = Modifier.height(8.dp))
-        CleaningFeature.Category.entries.forEach { category ->
-            Row(modifier = Modifier.fillMaxWidth().clickable { selectedCategories = if (selectedCategories.contains(category)) selectedCategories - category else selectedCategories + category }.padding(vertical = 4.dp), verticalAlignment = Alignment.CenterVertically) {
-                Checkbox(checked = selectedCategories.contains(category), onCheckedChange = { checked -> selectedCategories = if (checked) selectedCategories + category else selectedCategories - category })
-                Text(categoryLabel(category), modifier = Modifier.weight(1f), color = if (category.isAggressive) Color.Red else MaterialTheme.colorScheme.onSurface)
-                // Only a measured size is shown as a size. "Not scanned" and "none found" are
-                // different outcomes and neither of them is 0 B.
-                val entry = resultsByCategory[category]
-                when {
-                    report == null -> Unit
-                    // The count leads, because empty files and empty folders are real finds that
-                    // reclaim no bytes — a bare "0 B" there reads as "found nothing".
-                    entry != null -> Text(
-                        stringResource(R.string.gt_cleaner_found_count, entry.itemCount, formatBytes(entry.sizeBytes)),
-                        fontSize = 11.sp,
-                        color = MaterialTheme.colorScheme.primary
+        Spacer(modifier = Modifier.height(10.dp))
+
+        // Memory and storage controls lead: they are one-tap actions, while the scan below is the
+        // longer inspection flow. Both are filled primary buttons so they read as actions, not as
+        // links. The divider keeps the scan's own block separate.
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
+            CatsmokerButton(
+                onClick = onBoostRam,
+                modifier = Modifier.weight(1f),
+                enabled = !isBoostingRam
+            ) {
+                if (isBoostingRam) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(14.dp),
+                        strokeWidth = 2.dp,
+                        color = LocalContentColor.current
                     )
-                    report.scannedAnything -> Text(stringResource(R.string.gt_cleaner_none_found), fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    else -> Text(stringResource(R.string.gt_cleaner_not_scanned), fontSize = 11.sp, color = Color(0xFFFFB300))
+                } else {
+                    Text(
+                        stringResource(R.string.gt_ram_free),
+                        maxLines = 2,
+                        textAlign = TextAlign.Center
+                    )
+                }
+            }
+            CatsmokerButton(
+                onClick = onTrimStorage,
+                modifier = Modifier.weight(1f),
+                enabled = !isTrimmingStorage && canTrim
+            ) {
+                if (isTrimmingStorage) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(14.dp),
+                        strokeWidth = 2.dp,
+                        color = LocalContentColor.current
+                    )
+                } else {
+                    Text(
+                        stringResource(R.string.gt_trim_title),
+                        maxLines = 2,
+                        textAlign = TextAlign.Center
+                    )
                 }
             }
         }
-        Spacer(modifier = Modifier.height(16.dp))
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            CatsmokerButton(onClick = onScan, modifier = Modifier.weight(1f), enabled = !isScanning && !isCleaning) { Text(if (isScanning) stringResource(R.string.gt_cleaner_scanning) else stringResource(R.string.gt_cleaner_scan)) }
-            CatsmokerButton(onClick = { onPerform(selectedCategories.toList()) }, modifier = Modifier.weight(1f), enabled = !isScanning && !isCleaning && selectedCategories.isNotEmpty()) { Text(if (isCleaning) stringResource(R.string.gt_cleaner_cleaning) else stringResource(R.string.gt_cleaner_clean)) }
+        if (!canTrim) {
+            Spacer(modifier = Modifier.height(4.dp))
+            Text(
+                text = stringResource(R.string.gt_trim_need),
+                fontSize = 10.sp,
+                lineHeight = 14.sp,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+        // The toast is transient; keeping the measured result on the card lets the user read it.
+        listOfNotNull(ramResult, trimResult).forEach { result ->
+            Spacer(modifier = Modifier.height(6.dp))
+            Text(
+                text = result,
+                fontSize = 11.sp,
+                lineHeight = 15.sp,
+                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f)
+            )
         }
 
-        // The recurring version of the same sweep: safe buckets only, on a schedule, while the
-        // app is closed. Aggressive buckets stay manual-only in every run (see
-        // CleanerSweepWorker) — the section below states that before the switch.
         Spacer(modifier = Modifier.height(12.dp))
         HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
-        Spacer(modifier = Modifier.height(12.dp))
-        CleanerScheduleSection(
-            enabled = scheduleEnabled,
-            intervalHours = scheduleIntervalHours,
-            nextRunAt = scheduleNextRunAt,
-            onEnabledChange = onScheduleEnabledChange,
-            onIntervalChange = onScheduleIntervalChange
-        )
+        Spacer(modifier = Modifier.height(10.dp))
 
-        // Rule editing sits between the buttons and the result: it is the one part of the card
-        // that takes input rather than reporting it, and it only matters once a scan exists to
-        // show its effect on.
-        CleanerRulesEditor(
-            keepCount = keepEntries.size,
-            patternCount = cleanPatterns.size,
-            onAddKeepEntry = onAddKeepEntry,
-            onAddCleanPattern = onAddCleanPattern
-        )
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            CatsmokerButton(
+                onClick = onScan,
+                modifier = Modifier.weight(1f),
+                enabled = !isScanning && !isCleaning
+            ) {
+                Text(if (isScanning) stringResource(R.string.gt_cleaner_scanning) else stringResource(R.string.gt_cleaner_scan))
+            }
+            CatsmokerButton(
+                onClick = { reviewExpanded = !reviewExpanded },
+                modifier = Modifier.weight(1f),
+                enabled = report != null && !isScanning && !isCleaning && report.scannedAnything
+            ) {
+                Text(
+                    if (reviewExpanded) stringResource(R.string.gt_cleaner_review_hide)
+                    else stringResource(R.string.gt_cleaner_review)
+                )
+            }
+        }
+
+        // Review and clean are one disclosure: the category checkboxes decide what Clean
+        // removes, so separating them into "review here, clean there" was two steps for one
+        // decision. The safe explainer sits with the aggressive rows it explains.
+        AnimatedVisibility(
+            visible = reviewExpanded,
+            enter = fadeIn(tween(motionMs)) + expandVertically(tween(motionMs)),
+            exit = fadeOut(tween(motionMs)) + shrinkVertically(tween(motionMs))
+        ) {
+            Column(modifier = Modifier.fillMaxWidth()) {
+                Spacer(modifier = Modifier.height(8.dp))
+                ExplainerBox(
+                    title = stringResource(R.string.gt_cleaner_safe_title),
+                    accent = Color(0xFFFFB300),
+                    lines = listOf(
+                        stringResource(R.string.gt_cleaner_safe_1),
+                        stringResource(R.string.gt_cleaner_safe_2),
+                        stringResource(R.string.gt_cleaner_safe_3)
+                    )
+                )
+                CleaningFeature.Category.entries.forEach { category ->
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .heightIn(min = 40.dp)
+                            .clickable {
+                                selectedCategories = if (selectedCategories.contains(category)) {
+                                    selectedCategories - category
+                                } else {
+                                    selectedCategories + category
+                                }
+                            }
+                            .padding(vertical = 2.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Checkbox(
+                            checked = selectedCategories.contains(category),
+                            onCheckedChange = { checked ->
+                                selectedCategories = if (checked) selectedCategories + category else selectedCategories - category
+                            }
+                        )
+                        Text(
+                            categoryLabel(category),
+                            modifier = Modifier.weight(1f),
+                            fontSize = 12.sp,
+                            color = if (category.isAggressive) Color.Red else MaterialTheme.colorScheme.onSurface
+                        )
+                        // Only a measured size is shown as a size. "Not scanned" and "none found"
+                        // are different outcomes and neither of them is 0 B. The count leads,
+                        // because empty files and folders are real finds that reclaim no bytes.
+                        val entry = resultsByCategory[category]
+                        when {
+                            report == null -> Unit
+                            entry != null -> Text(
+                                stringResource(R.string.gt_cleaner_found_count, entry.itemCount, formatBytes(entry.sizeBytes)),
+                                fontSize = 10.sp,
+                                color = MaterialTheme.colorScheme.primary
+                            )
+                            report.scannedAnything -> Text(stringResource(R.string.gt_cleaner_none_found), fontSize = 10.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            else -> Text(stringResource(R.string.gt_cleaner_not_scanned), fontSize = 10.sp, color = Color(0xFFFFB300))
+                        }
+                    }
+                }
+                Spacer(modifier = Modifier.height(6.dp))
+                CatsmokerButton(
+                    onClick = { onPerform(selectedCategories.toList()) },
+                    modifier = Modifier.fillMaxWidth(),
+                    enabled = !isScanning && !isCleaning && selectedCategories.isNotEmpty()
+                ) {
+                    Text(if (isCleaning) stringResource(R.string.gt_cleaner_cleaning) else stringResource(R.string.gt_cleaner_clean))
+                }
+            }
+        }
 
         // The outcome of the last clean, in one line. This replaced a scrolling terminal view: the
-        // figures are the same measured counts the log lines were built from, so nothing is lost, but
-        // the result is readable at a glance instead of needing to be parsed out of a transcript.
+        // figures are the same measured counts the log lines were built from, so nothing is lost,
+        // but the result is readable at a glance instead of needing to be parsed out of a transcript.
         if (cleanResult != null) {
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(10.dp))
             CleanResultRow(cleanResult)
         }
 
         if (report != null) {
-            Spacer(modifier = Modifier.height(12.dp))
-            Text(
-                text = when {
-                    !report.scannedAnything -> stringResource(R.string.gt_cleaner_unreadable)
-                    report.results.isEmpty() -> stringResource(R.string.gt_cleaner_looked_empty)
-                    report.totalBytes == 0L ->
-                        stringResource(R.string.gt_cleaner_empty_only, report.totalItems)
-                    else -> stringResource(R.string.gt_cleaner_can_free, formatBytes(report.totalBytes), report.totalItems)
-                },
-                fontSize = 12.sp,
-                color = if (report.scannedAnything) MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f) else Color(0xFFFFB300)
-            )
-
             if (report.limitations.isNotEmpty()) {
                 Spacer(modifier = Modifier.height(8.dp))
                 Column(
@@ -1779,6 +1771,65 @@ fun CleaningContent(
                 )
             }
         }
+
+        // Schedule, rule editing and the two explainers sit behind one disclosure. None of them
+        // is needed to scan once, and all of them were permanently on screen before.
+        Spacer(modifier = Modifier.height(4.dp))
+        TextButton(onClick = { advancedExpanded = !advancedExpanded }) {
+            Text(
+                if (advancedExpanded) stringResource(R.string.gt_cleaner_advanced_hide)
+                else stringResource(R.string.gt_cleaner_advanced),
+                fontSize = 12.sp
+            )
+        }
+        AnimatedVisibility(
+            visible = advancedExpanded,
+            enter = fadeIn(tween(motionMs)) + expandVertically(tween(motionMs)),
+            exit = fadeOut(tween(motionMs)) + shrinkVertically(tween(motionMs))
+        ) {
+            Column(modifier = Modifier.fillMaxWidth()) {
+                ExplainerBox(
+                    title = stringResource(R.string.gt_explainer_what),
+                    lines = listOf(
+                        stringResource(R.string.gt_cleaner_what_1),
+                        stringResource(R.string.gt_cleaner_what_2),
+                        stringResource(R.string.gt_cleaner_what_3)
+                    )
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+                CleanerScheduleSection(
+                    enabled = scheduleEnabled,
+                    intervalHours = scheduleIntervalHours,
+                    nextRunAt = scheduleNextRunAt,
+                    onEnabledChange = onScheduleEnabledChange,
+                    onIntervalChange = onScheduleIntervalChange
+                )
+                CleanerRulesEditor(
+                    keepCount = keepEntries.size,
+                    patternCount = cleanPatterns.size,
+                    onAddKeepEntry = onAddKeepEntry,
+                    onAddCleanPattern = onAddCleanPattern
+                )
+            }
+        }
+    }
+}
+
+/**
+ * Reveal animation length for the cleaner's disclosures.
+ *
+ * Compose animations do not read Android's animator duration scale by themselves, so a user who
+ * turned animations off for accessibility would still get an expanding panel here. 0 makes the
+ * reveal instant instead of merely fast.
+ */
+@Composable
+private fun rememberMotionDurationMs(): Int {
+    val context = LocalContext.current
+    return remember(context) {
+        val scale = runCatching {
+            Settings.Global.getFloat(context.contentResolver, Settings.Global.ANIMATOR_DURATION_SCALE, 1f)
+        }.getOrDefault(1f)
+        if (scale <= 0f) 0 else 180
     }
 }
 
@@ -2222,14 +2273,6 @@ fun DeveloperOptionsContent(
     onToggleBackgroundLimit: (Boolean) -> Unit,
     onSetForcePeakRefreshRate: (Boolean) -> Unit,
     onSetGameDefaultFrameRateDisabled: (Boolean) -> Unit,
-    /** Named animation-scale presets, in save order. */
-    animPresets: List<AnimationPresetStore.AnimationPreset>,
-    /** Name typed for the next animation preset. */
-    animPresetName: String,
-    onAnimPresetNameChange: (String) -> Unit,
-    onSaveAnimPreset: () -> Unit,
-    onApplyAnimPreset: (AnimationPresetStore.AnimationPreset) -> Unit,
-    onDeleteAnimPreset: (String) -> Unit,
     /** Games the ANGLE picker lists; the card picks the first once loaded. */
     games: List<GameInfo>,
     /** Package the ANGLE card acts on, or null before selection. */
@@ -2266,16 +2309,6 @@ fun DeveloperOptionsContent(
         AnimationScaleRow(stringResource(R.string.gt_dev_anim_windows), AnimationScaleKind.WINDOW, animationScales.first, canWriteGlobalSettings, onSetAnimationScale)
         AnimationScaleRow(stringResource(R.string.gt_dev_anim_transition), AnimationScaleKind.TRANSITION, animationScales.second, canWriteGlobalSettings, onSetAnimationScale)
         AnimationScaleRow(stringResource(R.string.gt_dev_anim_animator), AnimationScaleKind.ANIMATOR, animationScales.third, canWriteGlobalSettings, onSetAnimationScale)
-
-        AnimPresetLibrary(
-            presets = animPresets,
-            name = animPresetName,
-            canWrite = canWriteGlobalSettings,
-            onNameChange = onAnimPresetNameChange,
-            onSave = onSaveAnimPreset,
-            onApply = onApplyAnimPreset,
-            onDelete = onDeleteAnimPreset
-        )
 
         HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
 
@@ -2445,94 +2478,6 @@ private fun AngleDriverSection(
                 picking = false
             }
         )
-    }
-}
-
-/**
- * The extra suspend list: picked packages shown with a remove button, plus an add button that
- * opens the app picker. The active game and Catsmoker itself can never be honored however
- * picked (the store filters them at activation), which the note states rather than hiding.
- */
-@Composable
-private fun SuspendListContent(
-    picked: Set<String>,
-    apps: List<GameInfo>,
-    hasPrivilege: Boolean,
-    onAdd: () -> Unit,
-    onRemove: (String) -> Unit
-) = PickedAppsContent(
-    picked = picked,
-    apps = apps,
-    hasPrivilege = hasPrivilege,
-    what1 = R.string.gt_suspend_what_1,
-    what2 = R.string.gt_suspend_what_2,
-    none = R.string.gt_suspend_none,
-    some = R.string.gt_suspend_some,
-    add = R.string.gt_suspend_add,
-    remove = R.string.gt_suspend_remove,
-    onAdd = onAdd,
-    onRemove = onRemove
-)
-
-/**
- * Shared body of the extra-suspend package list: an explainer, the count line, one removable row
- * per pick, and the add button. The layout, privilege gate and name-resolution rule stay in one
- * place — a picked package renders as its app name when the picker source has it, and as the
- * package name otherwise (never hidden).
- */
-@Composable
-private fun PickedAppsContent(
-    picked: Set<String>,
-    apps: List<GameInfo>,
-    hasPrivilege: Boolean,
-    @StringRes what1: Int,
-    @StringRes what2: Int,
-    @StringRes none: Int,
-    @StringRes some: Int,
-    @StringRes add: Int,
-    @StringRes remove: Int,
-    onAdd: () -> Unit,
-    onRemove: (String) -> Unit
-) {
-    val names = remember(picked, apps) {
-        val byPkg = apps.associateBy { it.packageName }
-        picked.sorted().map { pkg -> byPkg[pkg]?.appName ?: pkg }
-            .zip(picked.sorted())
-    }
-    Column(modifier = Modifier.fillMaxWidth()) {
-        ExplainerBox(
-            title = stringResource(R.string.gt_explainer_what),
-            lines = listOf(stringResource(what1), stringResource(what2))
-        )
-        Spacer(modifier = Modifier.height(8.dp))
-        Text(
-            text = if (picked.isEmpty()) stringResource(none)
-            else stringResource(some, picked.size),
-            style = MaterialTheme.typography.labelSmall,
-            color = MaterialTheme.colorScheme.primary
-        )
-        Spacer(modifier = Modifier.height(8.dp))
-        names.forEach { (label, pkg) ->
-            Row(
-                modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(label, color = MaterialTheme.colorScheme.onSurface, modifier = Modifier.weight(1f), fontSize = 13.sp)
-                TextButton(onClick = { onRemove(pkg) }) { Text(stringResource(remove)) }
-            }
-        }
-        Spacer(modifier = Modifier.height(8.dp))
-        CatsmokerOutlinedButton(
-            onClick = onAdd,
-            modifier = Modifier.fillMaxWidth(),
-            enabled = hasPrivilege
-        ) {
-            Text(stringResource(add))
-        }
-        if (!hasPrivilege) {
-            Spacer(modifier = Modifier.height(8.dp))
-            RequirementNotice(stringResource(R.string.gt_needs_root_shizuku_close))
-        }
     }
 }
 
@@ -2981,74 +2926,6 @@ private fun AnimationScaleRow(
  */
 private val ANIMATION_SCALE_VALUES = listOf(0f, 0.5f, 1f)
 
-/**
- * Named animation-scale preset library (M67).
- *
- * "Save current" snapshots the live triple the rows above show — never a typed number — so a
- * preset is always a configuration the device actually held. Applying runs each scale through
- * the verified single-scale path; the toast (not this list) reports the honest count.
- */
-@Composable
-private fun AnimPresetLibrary(
-    presets: List<AnimationPresetStore.AnimationPreset>,
-    name: String,
-    canWrite: Boolean,
-    onNameChange: (String) -> Unit,
-    onSave: () -> Unit,
-    onApply: (AnimationPresetStore.AnimationPreset) -> Unit,
-    onDelete: (String) -> Unit
-) {
-    Column(modifier = Modifier.fillMaxWidth()) {
-        Spacer(modifier = Modifier.height(4.dp))
-        Text(
-            stringResource(R.string.gt_preset_anim_title),
-            fontSize = 13.sp,
-            fontWeight = FontWeight.Bold,
-            color = MaterialTheme.colorScheme.onSurface
-        )
-        Spacer(modifier = Modifier.height(8.dp))
-        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            OutlinedTextField(
-                value = name,
-                onValueChange = onNameChange,
-                label = { Text(stringResource(R.string.gt_preset_name)) },
-                singleLine = true,
-                modifier = Modifier.weight(1f)
-            )
-            CatsmokerOutlinedButton(onClick = onSave) { Text(stringResource(R.string.gt_preset_anim_save)) }
-        }
-        if (presets.isEmpty()) {
-            Text(
-                stringResource(R.string.gt_preset_empty),
-                fontSize = 11.sp,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.padding(vertical = 4.dp)
-            )
-        }
-        presets.forEach { preset ->
-            Row(
-                modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(preset.name, color = MaterialTheme.colorScheme.onSurface, fontSize = 13.sp)
-                    Text(
-                        "${formatAnimationScale(preset.window)} · ${formatAnimationScale(preset.transition)} · ${formatAnimationScale(preset.animator)}",
-                        fontSize = 10.sp,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-                TextButton(onClick = { onApply(preset) }, enabled = canWrite) {
-                    Text(stringResource(R.string.gt_preset_apply))
-                }
-                TextButton(onClick = { onDelete(preset.id) }) {
-                    Text(stringResource(R.string.gt_preset_delete))
-                }
-            }
-        }
-    }
-}
-
 private fun formatAnimationScale(value: Float): String =
     if (value % 1f == 0f) "${value.toInt()}x" else "${value}x"
 
@@ -3292,94 +3169,6 @@ fun AppBoosterContent(
             onEnabledChange = onScheduleEnabledChange,
             onIntervalChange = onScheduleIntervalChange
         )
-    }
-}
-
-/**
- * Manual dangerous-permission toggle for one target app. Every destructive step is explicit:
- * picking names the app, each row names the permission and its live state, revoke asks first
- * (the dialog, not the row button, runs it), and restore-all regrants exactly what this tool
- * took. A refused revoke records nothing; a refused regrant stays recorded and reported.
- */
-@Composable
-private fun PermToggleContent(
-    targetLabel: String?,
-    targetPkg: String?,
-    entries: List<ToggleablePerm>,
-    isBusy: Boolean,
-    hasPrivilege: Boolean,
-    onPickTarget: () -> Unit,
-    onRevoke: (String, String) -> Unit,
-    onRegrant: (String, String) -> Unit,
-    onRestoreAll: (String) -> Unit
-) {
-    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        ExplainerBox(
-            title = stringResource(R.string.gt_perm_what_title),
-            lines = listOf(
-                stringResource(R.string.gt_perm_what_1),
-                stringResource(R.string.gt_perm_what_2)
-            )
-        )
-        CatsmokerOutlinedButton(onClick = onPickTarget, modifier = Modifier.fillMaxWidth()) {
-            Text(targetLabel ?: stringResource(R.string.gt_perm_pick))
-        }
-        if (targetPkg != null) {
-            if (entries.isEmpty()) {
-                Text(
-                    stringResource(R.string.gt_perm_none_toggleable, targetLabel ?: targetPkg),
-                    fontSize = 12.sp,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
-            entries.forEach { entry ->
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    Column(modifier = Modifier.weight(1f)) {
-                        Text(
-                            entry.permission.substringAfterLast('.'),
-                            fontSize = 13.sp,
-                            color = MaterialTheme.colorScheme.onSurface
-                        )
-                        Text(
-                            if (entry.granted) stringResource(R.string.gt_perm_granted_state)
-                            else stringResource(R.string.gt_perm_revoked_state),
-                            fontSize = 11.sp,
-                            color = if (entry.granted) MaterialTheme.colorScheme.primary
-                            else MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
-                    if (entry.granted) {
-                        CatsmokerOutlinedButton(
-                            onClick = { onRevoke(targetPkg, entry.permission) },
-                            enabled = !isBusy && hasPrivilege
-                        ) { Text(stringResource(R.string.gt_perm_revoke), fontSize = 12.sp) }
-                    } else {
-                        CatsmokerButton(
-                            onClick = { onRegrant(targetPkg, entry.permission) },
-                            enabled = !isBusy && hasPrivilege
-                        ) { Text(stringResource(R.string.gt_perm_grant), fontSize = 12.sp) }
-                    }
-                }
-            }
-            if (entries.any { it.wasRevokedByUs }) {
-                CatsmokerOutlinedButton(
-                    onClick = { onRestoreAll(targetPkg) },
-                    modifier = Modifier.fillMaxWidth(),
-                    enabled = !isBusy && hasPrivilege
-                ) { Text(stringResource(R.string.gt_perm_restore_all)) }
-            }
-            if (!hasPrivilege) {
-                Text(
-                    stringResource(R.string.gt_perm_needs_priv),
-                    fontSize = 11.sp,
-                    color = Color(0xFFFFB300)
-                )
-            }
-        }
     }
 }
 
@@ -3652,6 +3441,9 @@ fun GamingToolsPreview() {
             ),
             gamingState = GamingModeState.Idle,
             gamingReport = GamingModeReport(),
+            gamingRecovery = GamingModeRecovery(),
+            isGamingSessionOpen = false,
+            suspendedPackages = emptySet(),
             isFixedPerformanceMode = false,
             boosterLog = listOf("System optimized", "Cache cleared"),
             boosterState = BoosterState(),
@@ -3675,10 +3467,6 @@ fun GamingToolsPreview() {
             onScanJunk = {},
             onSetCleanSchedule = {},
             onSetCleanInterval = {},
-            onShowPermPicker = {},
-            onRequestPermRevoke = { _, _ -> },
-            onRegrantPerm = { _, _ -> },
-            onRestorePerms = {},
             onAddCleanerKeepEntry = {},
             onRemoveCleanerKeepEntry = {},
             onAddCleanerCleanPattern = {},
@@ -3686,6 +3474,7 @@ fun GamingToolsPreview() {
             onGrantStorageAccess = {},
             onActivateGamingMode = {},
             onDeactivateGamingMode = {},
+            onRestoreGamingApps = {},
             onBoostRam = {},
             onTrimStorage = {},
             onRunBooster = { _, _ -> },
@@ -3697,10 +3486,6 @@ fun GamingToolsPreview() {
             onSetPointerSpeedChoice = {},
             onBoostChange = {},
             onSetAnimationScale = { _, _ -> },
-            onAnimPresetNameChange = {},
-            onSaveAnimPreset = {},
-            onApplyAnimPreset = {},
-            onDeleteAnimPreset = {},
             onToggleAlwaysFinish = {},
             onToggleBackgroundLimit = {},
             onSetForcePeakRefreshRate = {},
@@ -3720,7 +3505,6 @@ fun GamingToolsPreview() {
             onRemoveGame = {},
             onAddGameClicked = {},
             onToggleAutoForceStop = {},
-            onToggleAutoForceStopKeepPackage = {},
             onShowSuspendPicker = {},
             onRemoveExtraSuspendPackage = {},
             onShowSuspendExemptPicker = {},
@@ -3732,11 +3516,6 @@ fun GamingToolsPreview() {
             onResOptionSelected = {},
             onApplyResolution = {},
             onResetResolution = {},
-            onWidthPresetNameChange = {},
-            onWidthPresetDpChange = {},
-            onSaveWidthPreset = {},
-            onApplyWidthPreset = {},
-            onDeleteWidthPreset = {},
             onBack = {},
             onSync = {}
         )

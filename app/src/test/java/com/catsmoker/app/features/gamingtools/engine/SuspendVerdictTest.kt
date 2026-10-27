@@ -2,58 +2,100 @@ package com.catsmoker.app.features.gamingtools.engine
 
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
 /**
- * Pins the `pm suspend` / `pm unsuspend` verdict rules plus the pre-suspended skip parser.
+ * Pins the `pm suspend` / `pm unsuspend` verdict rules plus the `dumpsys package` suspension parser.
  *
  * The revert path decides from the verdicts whether a package is actually awake again, so a
  * refusal the shell reports as text must read as a failure even when the exit code is 0 —
  * otherwise the package is dropped from the record while still frozen.
  *
- * The parser half pins `parseSuspendedPackages` against
- * `reference/gamingtools/booster/.../shizuku/ShizukuManager.kt#getSuspendedPackages`: one
- * `cmd package list packages -s` call, `package:` prefix stripped. Suspending an app someone
- * else already suspended would record it as ours, and deactivation would then unsuspend an
- * app this session never froze.
+ * The parser half is pinned against real device output shape (Android 15): each package block
+ * starts with `Package [pkg] (hash):` and its per-user line carries `suspended=true`. The previous
+ * source was `cmd package list packages -s`, where `-s` means *system* packages — on the test
+ * device it returned 250 running system apps and no suspension information at all.
  */
 class SuspendVerdictTest {
 
+    // ------------------------------------------------- dumpsys package parser
+
     @Test
-    fun parsesSuspendedPackageList() {
+    fun parsesSuspendedPackagesFromDumpsysBlocks() {
         val output = """
-            package:com.frozen.one
-            package:com.frozen.two
+            Package [com.frozen.one] (abc123):
+              userId=10123
+              User 0: ceDataInode=1 installed=true hidden=false suspended=true
+              User 10: ceDataInode=2 installed=true hidden=false suspended=true
+            Package [com.awake.two] (def456):
+              userId=10124
+              User 0: ceDataInode=3 installed=true hidden=false suspended=false
+            Package [com.frozen.three] (ghi789):
+              User 0: installed=true hidden=false suspended=true suspendingPackage=com.android.shell
         """.trimIndent()
-        assertEquals(setOf("com.frozen.one", "com.frozen.two"), SuspendVerdict.parseSuspendedPackages(output))
+        assertEquals(
+            setOf("com.frozen.one", "com.frozen.three"),
+            SuspendVerdict.parseDumpsysSuspended(output)
+        )
     }
 
     @Test
-    fun blankOutputMeansNothingPreSuspended() {
-        assertTrue(SuspendVerdict.parseSuspendedPackages("").isEmpty())
-        assertTrue(SuspendVerdict.parseSuspendedPackages("  \n ").isEmpty())
+    fun onlyUserZeroCountsBecauseThatIsTheUserTheEngineSuspends() {
+        val output = """
+            Package [com.work.profile.app] (abc):
+              User 0: installed=true suspended=false
+              User 10: installed=true suspended=true
+        """.trimIndent()
+        assertEquals(emptySet<String>(), SuspendVerdict.parseDumpsysSuspended(output))
     }
 
     @Test
-    fun ignoresNonPackageLines() {
-        val output = "package:com.frozen\nFailure: something\npackage:com.other  "
-        assertEquals(setOf("com.frozen", "com.other"), SuspendVerdict.parseSuspendedPackages(output))
+    fun packageHeaderWithoutHashIsAccepted() {
+        val output = """
+            Package [com.example.game]:
+              User 0: installed=true suspended=true
+        """.trimIndent()
+        assertEquals(setOf("com.example.game"), SuspendVerdict.parseDumpsysSuspended(output))
     }
 
     @Test
-    fun suspendListWithTheAndroidPackageIsUntrustworthy() {
-        // Device evidence (Lenovo TB-8505X, Android 10): `pm suspend android` is refused
-        // (`new suspended state: false`) yet `package:android` still appears in
-        // `list packages -s` — a flag that lists the unsuspendable lists nothing honestly.
-        assertFalse(SuspendVerdict.isSuspendListTrustworthy(setOf("android", "com.frozen")))
-        assertFalse(SuspendVerdict.isSuspendListTrustworthy(setOf("android")))
+    fun componentLinesDoNotStartANewPackageBlock() {
+        val output = """
+            Package [com.example.game] (abc):
+              User 0: installed=true suspended=true
+              com.example.game/com.example.game.MainActivity:
+                suspended=false
+        """.trimIndent()
+        assertEquals(setOf("com.example.game"), SuspendVerdict.parseDumpsysSuspended(output))
     }
 
     @Test
-    fun saneSuspendListIsTrustworthy() {
-        assertTrue(SuspendVerdict.isSuspendListTrustworthy(setOf("com.frozen.one", "com.frozen.two")))
-        assertTrue(SuspendVerdict.isSuspendListTrustworthy(emptySet()))
+    fun unreadableOutputIsUnknownNotEmpty() {
+        // An empty answer is "the command failed", not "nothing is suspended". Collapsing the two
+        // is how a failed query would make the recovery prompt disappear while apps stay frozen.
+        assertNull(SuspendVerdict.parseDumpsysSuspended(""))
+        assertNull(SuspendVerdict.parseDumpsysSuspended("Error: package manager unavailable"))
+        assertNull(SuspendVerdict.parseDumpsysSuspended("Permission denial: can't dump"))
+    }
+
+    @Test
+    fun aDumpWithNoSuspensionsIsAnEmptySetNotUnknown() {
+        val output = """
+            Package [com.example.game] (abc):
+              User 0: installed=true suspended=false
+        """.trimIndent()
+        assertEquals(emptySet<String>(), SuspendVerdict.parseDumpsysSuspended(output))
+    }
+
+    @Test
+    fun suspendedInsideAnotherWordDoesNotCount() {
+        val output = """
+            Package [com.example.game] (abc):
+              User 0: installed=true suspended=false lastSuspendedTime=123
+        """.trimIndent()
+        assertEquals(emptySet<String>(), SuspendVerdict.parseDumpsysSuspended(output))
     }
 
     // --------------------------------------------------------------- suspend

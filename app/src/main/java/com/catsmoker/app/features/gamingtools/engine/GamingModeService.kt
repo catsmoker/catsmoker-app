@@ -54,7 +54,10 @@ class GamingModeService : Service() {
             }
             return START_NOT_STICKY
         }
-        return START_STICKY
+        // Not sticky: a re-created service used to re-post an "active" notification after process
+        // death even though the engine had not reconciled a session. Activation is the only thing
+        // that starts this service, and it now does so only after the engine reached Active.
+        return START_NOT_STICKY
     }
 
     override fun onDestroy() {

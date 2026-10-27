@@ -18,9 +18,9 @@ import kotlin.math.roundToInt
  * two screens could quote different numbers for the same panel. Both now go through here, which
  * keeps them consistent and puts the version gates and fallbacks in a single place.
  *
- * The derived values ([Snapshot.smallestWidthDp], [Snapshot.isTablet], [densityForSmallestWidthDp])
- * are the reference project's own formulas, taken from `DevicePresetCatalog.isTablet` and
- * `SettingsManager.setSmallestWidth`, so a value computed here matches what the reference computes.
+ * The derived values ([Snapshot.smallestWidthDp], [Snapshot.isTablet]) are the reference project's
+ * own formulas, taken from `DevicePresetCatalog.isTablet`, so a value computed here matches what the
+ * reference computes.
  *
  * Nothing here invents a number: when no API on the device answers, [current] returns a snapshot
  * marked [Source.UNAVAILABLE] with zeroed fields and [Snapshot.isValid] `false`, and callers are
@@ -131,25 +131,6 @@ class DisplayMetricsProvider @Inject constructor(
         }
 
         return Snapshot(0, 0, 0, Source.UNAVAILABLE)
-    }
-
-    /**
-     * Density that would make [targetSmallestWidthDp] the device's shorter edge in dp.
-     *
-     * Copied from the reference's `SettingsManager.setSmallestWidth`, including the 72..1000 clamp
-     * `wm density` itself enforces.
-     *
-     * @return the density to write, or null when the target or the snapshot cannot support one.
-     */
-    fun densityForSmallestWidthDp(
-        targetSmallestWidthDp: Int,
-        snapshot: Snapshot = current()
-    ): Int? {
-        if (targetSmallestWidthDp <= 0 || !snapshot.isValid) return null
-        val smallestPx = min(snapshot.widthPixels, snapshot.heightPixels).toFloat()
-        return (smallestPx * DisplayMetrics.DENSITY_DEFAULT / targetSmallestWidthDp)
-            .roundToInt()
-            .coerceIn(MIN_DENSITY_DPI, MAX_DENSITY_DPI)
     }
 
     /**

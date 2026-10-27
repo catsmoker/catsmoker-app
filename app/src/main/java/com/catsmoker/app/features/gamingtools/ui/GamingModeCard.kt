@@ -19,9 +19,12 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.catsmoker.app.R
 import com.catsmoker.app.features.gamingtools.engine.GamingModeNotice
+import com.catsmoker.app.features.gamingtools.engine.GamingModeRecovery
 import com.catsmoker.app.features.gamingtools.engine.GamingModeReport
+import com.catsmoker.app.features.gamingtools.engine.GamingModeRestoreResult
 import com.catsmoker.app.features.gamingtools.engine.GamingModeState
 import com.catsmoker.app.shared.data.model.GameInfo
+import com.catsmoker.app.shared.ui.components.CatsmokerButton
 import com.catsmoker.app.shared.ui.components.SectionCard
 
 /**
@@ -53,6 +56,13 @@ fun GamingModeCard(
     canActivate: Boolean,
     isActive: Boolean,
     isBusy: Boolean,
+    /** Whether a session record is still open, so the power button must revert rather than start. */
+    isSessionOpen: Boolean,
+    /** Leftovers from a previous session that are waiting to be restored. */
+    recovery: GamingModeRecovery,
+    isRestoringApps: Boolean,
+    restoreResult: GamingModeRestoreResult?,
+    onRestoreApps: () -> Unit,
     onActivate: () -> Unit,
     onDeactivate: () -> Unit,
     // Automatic Gaming Mode lives inside this card: it arms the same engine, so a separate
@@ -65,7 +75,14 @@ fun GamingModeCard(
     keptPackages: Set<String>,
     keepCandidateApps: List<GameInfo>,
     onAddKeptApp: () -> Unit,
-    onRemoveKeptApp: (String) -> Unit
+    onRemoveKeptApp: (String) -> Unit,
+    // The extra freeze list is the same sweep's second input, so it lives here too rather than
+    // under Background Apps where it looked like an unrelated feature.
+    extraSuspendPackages: Set<String>,
+    suspendedPackages: Set<String>,
+    suspendCandidateApps: List<GameInfo>,
+    onAddExtraSuspend: () -> Unit,
+    onRemoveExtraSuspend: (String) -> Unit
 ) {
     SectionCard(
         modifier = Modifier.fillMaxWidth()
@@ -80,7 +97,11 @@ fun GamingModeCard(
                     Text(
                         text = stringResource(R.string.gt_gm_title),
                         style = MaterialTheme.typography.labelSmall,
-                        color = if (isActive) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
+                        color = when {
+                            isActive -> MaterialTheme.colorScheme.primary
+                            isSessionOpen -> Color(0xFFFFB300)
+                            else -> MaterialTheme.colorScheme.onSurfaceVariant
+                        },
                         letterSpacing = 1.sp,
                         fontWeight = FontWeight.Bold
                     )
@@ -92,6 +113,10 @@ fun GamingModeCard(
                             // than a generic word.
                             is GamingModeState.Enabling -> gamingState.statusText
                             is GamingModeState.Disabling -> stringResource(R.string.gt_gm_reverting)
+                            // Reconciliation is reading the persisted record and the device; saying
+                            // "ready" here would invite a second session before the first is closed.
+                            is GamingModeState.Checking -> stringResource(R.string.gt_gm_checking)
+                            is GamingModeState.Interrupted -> stringResource(R.string.gt_gm_interrupted)
                             is GamingModeState.Error -> stringResource(R.string.gt_gm_failed)
                             is GamingModeState.Idle ->
                                 if (canActivate) stringResource(R.string.gt_gm_ready) else stringResource(R.string.gt_gm_locked)
@@ -99,6 +124,7 @@ fun GamingModeCard(
                         style = MaterialTheme.typography.titleLarge,
                         color = when {
                             gamingState is GamingModeState.Error -> MaterialTheme.colorScheme.error
+                            gamingState is GamingModeState.Interrupted -> Color(0xFFFFB300)
                             // Item 8: a feature that cannot run must look like it cannot run.
                             !canActivate -> MaterialTheme.colorScheme.onSurfaceVariant
                             else -> MaterialTheme.colorScheme.onSurface
@@ -107,29 +133,36 @@ fun GamingModeCard(
                 }
 
                 IconButton(
-                    onClick = { if (isActive) onDeactivate() else onActivate() },
+                    onClick = { if (isSessionOpen) onDeactivate() else onActivate() },
                     enabled = !isBusy && canActivate,
                     modifier = Modifier
                         .size(56.dp)
                         .clip(CircleShape)
                         .background(
-                            if (isActive) MaterialTheme.colorScheme.primary.copy(alpha = 0.2f)
-                            else MaterialTheme.colorScheme.surfaceVariant
+                            when {
+                                isActive -> MaterialTheme.colorScheme.primary.copy(alpha = 0.2f)
+                                isSessionOpen -> Color(0xFFFFB300).copy(alpha = 0.16f)
+                                else -> MaterialTheme.colorScheme.surfaceVariant
+                            }
                         )
                         .border(
                             1.dp,
-                            if (isActive) MaterialTheme.colorScheme.primary.copy(alpha = 0.4f)
-                            else MaterialTheme.colorScheme.outlineVariant,
+                            when {
+                                isActive -> MaterialTheme.colorScheme.primary.copy(alpha = 0.4f)
+                                isSessionOpen -> Color(0xFFFFB300).copy(alpha = 0.45f)
+                                else -> MaterialTheme.colorScheme.outlineVariant
+                            },
                             CircleShape
                         )
                 ) {
                     Icon(
                         imageVector = Icons.Default.PowerSettingsNew,
                         contentDescription = stringResource(
-                            if (isActive) R.string.gt_gm_toggle_off else R.string.gt_gm_toggle_on
+                            if (isSessionOpen) R.string.gt_gm_toggle_off else R.string.gt_gm_toggle_on
                         ),
                         tint = when {
                             isActive -> MaterialTheme.colorScheme.primary
+                            isSessionOpen -> Color(0xFFFFB300)
                             !canActivate -> MaterialTheme.colorScheme.onSurfaceVariant
                             else -> MaterialTheme.colorScheme.onSurface
                         },
@@ -170,6 +203,88 @@ fun GamingModeCard(
             if (gamingState is GamingModeState.Error) {
                 Spacer(modifier = Modifier.height(16.dp))
                 NoticeBlock(text = gamingState.message, tint = MaterialTheme.colorScheme.error)
+                if (isSessionOpen) {
+                    Spacer(modifier = Modifier.height(6.dp))
+                    Text(
+                        text = stringResource(R.string.gt_gm_error_session_open),
+                        fontSize = 11.sp,
+                        lineHeight = 15.sp,
+                        color = Color(0xFFFFB300)
+                    )
+                }
+            }
+
+            // Recovery is a second, narrower action than the power button: after a reboot the
+            // settings are already at stock, but the package manager keeps suspensions. Making the
+            // user run a full revert just to wake apps would write an old snapshot over settings
+            // the system has since changed. Shown only while no session is running — an active
+            // session's own suspends must never be undone from under it.
+            if (!isActive && (gamingState is GamingModeState.Interrupted || recovery.isNeeded)) {
+                Spacer(modifier = Modifier.height(16.dp))
+                val tint = Color(0xFFFFB300)
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(10.dp))
+                        .background(tint.copy(alpha = 0.10f))
+                        .border(1.dp, tint.copy(alpha = 0.35f), RoundedCornerShape(10.dp))
+                        .padding(horizontal = 12.dp, vertical = 10.dp)
+                ) {
+                    Text(
+                        text = stringResource(R.string.gt_gm_recovery_title),
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = tint
+                    )
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(
+                        text = if (recovery.isNeeded) {
+                            stringResource(R.string.gt_gm_recovery_body, recovery.pendingCount)
+                        } else {
+                            // The app record is clear but the settings snapshot is not: the power
+                            // button is the only action that can close this session, so say so.
+                            stringResource(R.string.gt_gm_revert_needed)
+                        },
+                        fontSize = 11.sp,
+                        lineHeight = 15.sp,
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.85f)
+                    )
+                    if (recovery.isNeeded && !recovery.verified) {
+                        Spacer(modifier = Modifier.height(2.dp))
+                        Text(
+                            text = stringResource(R.string.gt_gm_recovery_unverified),
+                            fontSize = 11.sp,
+                            lineHeight = 15.sp,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                    if (recovery.isNeeded) {
+                        Spacer(modifier = Modifier.height(8.dp))
+                        CatsmokerButton(
+                            onClick = onRestoreApps,
+                            modifier = Modifier.fillMaxWidth(),
+                            enabled = !isRestoringApps && !isBusy && !isActive
+                        ) {
+                            if (isRestoringApps) {
+                                CircularProgressIndicator(modifier = Modifier.size(14.dp), strokeWidth = 2.dp)
+                            } else {
+                                Text(stringResource(R.string.gt_gm_restore))
+                            }
+                        }
+                    }
+                    val result = restoreResult
+                    if (result != null && !result.refusedWhileActive && !isRestoringApps) {
+                        Spacer(modifier = Modifier.height(6.dp))
+                        val complete = result.isComplete
+                        Text(
+                            text = restoreSummary(result),
+                            fontSize = 11.sp,
+                            lineHeight = 15.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            color = if (complete) Color(0xFF4CAF50) else tint
+                        )
+                    }
+                }
             }
 
             Spacer(modifier = Modifier.height(16.dp))
@@ -212,6 +327,20 @@ fun GamingModeCard(
                 canEdit = canActivate,
                 onAdd = onAddKeptApp,
                 onRemove = onRemoveKeptApp
+            )
+
+            Spacer(modifier = Modifier.height(16.dp))
+            HorizontalDivider(color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.12f))
+            Spacer(modifier = Modifier.height(12.dp))
+            GamingModeSuspensionSection(
+                picked = extraSuspendPackages,
+                apps = suspendCandidateApps,
+                // Only this session's confirmed suspends count as frozen. An app the device froze
+                // through another tool is not claimed by this app's badge.
+                suspended = suspendedPackages,
+                canEdit = canActivate,
+                onAdd = onAddExtraSuspend,
+                onRemove = onRemoveExtraSuspend
             )
 
             if (isActive) {
@@ -261,6 +390,31 @@ private fun resolveNotice(notice: GamingModeNotice): String = when (notice) {
         notice.resId,
         *notice.args.map { if (it is GamingModeNotice) resolveNotice(it) else it }.toTypedArray()
     )
+}
+
+/**
+ * One line for a Restore Apps attempt, in counts rather than a bare success flag.
+ *
+ * Without package-manager evidence the counts are what this app recorded, not what the device
+ * confirmed, so the unverified wording is used instead of claiming a partial failure.
+ */
+@Composable
+private fun restoreSummary(result: GamingModeRestoreResult): String {
+    val outstanding = result.stillSuspended + result.failedAppOps
+    return when {
+        !result.verified -> stringResource(R.string.gt_gm_restore_unverified, outstanding)
+        outstanding > 0 -> stringResource(
+            R.string.gt_gm_restore_partial,
+            result.restoredPackages,
+            result.restoredAppOps,
+            outstanding
+        )
+        else -> stringResource(
+            R.string.gt_gm_restore_done,
+            result.restoredPackages,
+            result.restoredAppOps
+        )
+    }
 }
 
 /** Small tinted panel used for an activation error or the list of refused optimizations. */

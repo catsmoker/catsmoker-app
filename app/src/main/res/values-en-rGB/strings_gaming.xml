@@ -22,6 +22,7 @@
 
     <!-- Game library -->
     <string name="gt_library_launch">LAUNCH</string>
+    <string name="gt_library_actions">Actions for %1$s</string>
     <string name="gt_library_remove">Remove</string>
     <string name="gt_library_search">Search games</string>
     <string name="gt_library_no_match">No game matches that search.</string>
@@ -49,10 +50,10 @@
     <string name="gt_tool_dns_title">Faster Address Lookups</string>
     <string name="gt_tool_dns_sub">Choose a quicker, more private phone book.</string>
     <string name="gt_tool_afs_title">Auto Force Stop</string>
-    <string name="gt_tool_afs_sub">Close apps you leave, except your chosen ones.</string>
+    <string name="gt_tool_afs_sub">Closes every app you leave, with no list to manage.</string>
     <string name="gt_tool_afs_need">Needs root or Shizuku. Android does not let a normal app close other apps. Shizuku is a free helper app that lends this app that power without root.</string>
     <string name="gt_tool_cleaner_title">Cleaner</string>
-    <string name="gt_tool_cleaner_sub">Free up space by deleting leftovers.</string>
+    <string name="gt_tool_cleaner_sub">Scan junk, free RAM and trim storage.</string>
 
     <!-- Shared explainer titles -->
     <string name="gt_explainer_what">What is this?</string>
@@ -108,22 +109,19 @@
 
     <!-- Auto Force Stop -->
     <string name="gt_afs_what_1">When you leave an app, this closes it for you. Closing an app frees up memory and stops it slowing your game down.</string>
-    <string name="gt_afs_what_2">Tick an app below to keep it open. Everything you do not tick gets closed when you leave it.</string>
-    <string name="gt_afs_what_3">Your home screen, your keyboard, this app, and your phone\'s built-in apps are never closed, even if you do not tick them.</string>
+    <string name="gt_afs_what_2">Every app you leave is closed — there is no list to manage. The app you switch to stays open.</string>
+    <string name="gt_afs_what_3">Your home screen, your keyboard, this app, and your phone\'s built-in apps are never closed.</string>
     <string name="gt_afs_perm_title">What permission does it need?</string>
     <string name="gt_afs_perm_1">Two things. First, \"Usage access\" — that is what lets this app see which app you are looking at. You turn it on yourself in Android\'s settings; there is a button below if it is missing.</string>
     <string name="gt_afs_perm_2">Second, root or Shizuku. Android does not let a normal app close another app, so without one of these nothing will be closed. Shizuku is a helper app that lends this app some extra powers without root.</string>
     <string name="gt_afs_perm_3">If either one is missing, the switch stays on but the notification will tell you nothing is being closed. It will not pretend to work.</string>
     <string name="gt_afs_should_title">Should I use it?</string>
     <string name="gt_afs_should_1">It helps most if you leave heavy apps open — a browser with lots of tabs, a video app, a social app.</string>
-    <string name="gt_afs_should_2">The cost: a closed app takes longer to open next time, and a closed chat app will not show you new messages until you open it again. Tick your chat apps to keep them running.</string>
+    <string name="gt_afs_should_2">The cost: a closed app takes longer to open next time, and a closed chat app will not show you new messages until you open it again. This applies to every app — there is no exception list.</string>
     <string name="gt_afs_should_3">Gaming Mode already pauses other apps while you play, so you do not need both.</string>
     <string name="gt_afs_usage_off_title">Usage access is off</string>
     <string name="gt_afs_usage_off_text">This needs to see which app you are using. Until you turn it on, nothing will be closed.</string>
     <string name="gt_afs_usage_btn">Turn on usage access</string>
-    <string name="gt_afs_keep_none">Keeping 0 apps open — every app you leave will be closed</string>
-    <string name="gt_afs_keep_some">Keeping %1$d app(s) open</string>
-    <string name="gt_afs_tick_hint">Tick an app to keep it open</string>
 
     <!-- Cleaner -->
     <string name="gt_cleaner_reach">Can reach: %1$s</string>
@@ -150,8 +148,8 @@
     <string name="gt_cleaner_limitations_title">What this could not check:</string>
     <string name="gt_cleaner_grant">Let this app see all files</string>
     <string name="gt_cleaner_rules_title">Your rules:</string>
-    <string name="gt_cleaner_rule_keep">Keep ┬╖ %1$s</string>
-    <string name="gt_cleaner_rule_clean">Clean ┬╖ %1$s</string>
+    <string name="gt_cleaner_rule_keep">Keep · %1$s</string>
+    <string name="gt_cleaner_rule_clean">Clean · %1$s</string>
     <string name="gt_cleaner_remove_keep">Remove keep rule</string>
     <string name="gt_cleaner_remove_clean">Remove clean pattern</string>
     <string name="gt_cleaner_rules_hide">Hide my rules</string>
@@ -161,7 +159,7 @@
     <string name="gt_cleaner_keep_hint">Keep: name or /full/path</string>
     <string name="gt_cleaner_pattern_hint">Clean: .*oldgame.*</string>
     <string name="gt_cleaner_add">Add</string>
-    <string name="gt_cleaner_found_count">%1$d ┬╖ %2$s</string>
+    <string name="gt_cleaner_found_count">%1$d · %2$s</string>
     <string name="gt_cleaner_result_nothing_failed">Nothing could be removed</string>
     <string name="gt_cleaner_result_nothing">Nothing was removed</string>
     <string name="gt_cleaner_result_empty">Cleaned %1$d empty things — they took up no space</string>
@@ -239,7 +237,7 @@
     <string name="gt_bdr_saver_off">your phone would not turn Data Saver on</string>
     <string name="gt_bdr_saver_ok">Data Saver is on and your games are let through</string>
     <string name="gt_bdr_saver_exempt">Data Saver is on, but these games could not be let through: %1$s</string>
-    <string name="gt_bdr_result">%1$s ┬╖ %2$s</string>
+    <string name="gt_bdr_result">%1$s · %2$s</string>
     <string name="gt_bdr_saver_left">Data Saver was left the way it was</string>
     <string name="gt_bdr_saver_was_on">Data Saver was already on before, so it was left on</string>
     <string name="gt_bdr_saver_off_again">Data Saver is off again</string>
@@ -293,7 +291,7 @@
     <string name="gt_gdo_runs_at">Your screen runs at %1$s</string>
     <string name="gt_gdo_need_sys">Needs root or Shizuku, or permission to change system settings.</string>
     <string name="gt_gdo_peak_upto">Your screen can go up to %1$s</string>
-    <string name="gt_gdo_peak_full">Your screen can go up to %1$s ┬╖ it is being held at %2$s or above</string>
+    <string name="gt_gdo_peak_full">Your screen can go up to %1$s · it is being held at %2$s or above</string>
     <string name="gt_gdo_old15">Your phone is too old for this. It needs Android 15 and yours is Android %1$s.</string>
     <string name="gt_gdo_cap">Games are limited to %1$d frames a second on your phone</string>
     <string name="gt_gdo_cap_unknown">Your phone does not say what its game limit is</string>
@@ -569,9 +567,9 @@
     <string name="gt_eng_booster_no_apps">There were no apps to work on — nothing you installed yourself, and no built-in app added to your games.</string>
     <string name="gt_eng_booster_unavail">❌ %1$s</string>
     <string name="gt_eng_booster_failed">❌ Stopped because something went wrong: %1$s</string>
-    <string name="gt_eng_booster_found">≡ƒôª Found %1$d apps to work on.</string>
-    <string name="gt_eng_booster_root">≡ƒöæ Using root.</string>
-    <string name="gt_eng_booster_shizuku">≡ƒöæ Using Shizuku.</string>
+    <string name="gt_eng_booster_found">📦 Found %1$d apps to work on.</string>
+    <string name="gt_eng_booster_root">🔑 Using root.</string>
+    <string name="gt_eng_booster_shizuku">🔑 Using Shizuku.</string>
     <string name="gt_eng_booster_skip_done">⏭ Already done: %1$s</string>
     <string name="gt_eng_booster_skip_verify">⏭ Never opened yet (no profile to work from): %1$s</string>
     <string name="gt_eng_booster_working">⚡ Working on: %1$s</string>
@@ -604,13 +602,12 @@
     <string name="gt_svc_vpn_title">App network block</string>
     <string name="gt_svc_vpn_session">Catsmoker app block</string>
     <string name="gt_svc_vpn_blocking">Blocking %1$d app(s)</string>
-    <string name="gt_svc_vpn_ipv4"> ┬╖ IPv4 only on this device</string>
+    <string name="gt_svc_vpn_ipv4"> · IPv4 only on this device</string>
     <string name="gt_svc_vpn_channel">App network block</string>
     <string name="gt_svc_afs_title">Auto Force Stop</string>
     <string name="gt_svc_afs_no_usage">Needs usage access — tap to grant, nothing is being closed</string>
     <string name="gt_svc_afs_no_priv">Needs root or Shizuku — Android refuses to close other apps, nothing is closed</string>
     <string name="gt_svc_afs_close_all">Closing every app you leave</string>
-    <string name="gt_svc_afs_keep_some">Keeping %1$d app(s) open</string>
     <string name="gt_svc_afs_none_yet">%1$s — none closed yet</string>
     <string name="gt_svc_afs_closed">%1$s — %2$d closed</string>
     <string name="gt_svc_afs_channel">Auto Force Stop</string>
@@ -634,47 +631,6 @@
     <string name="cleaner_scheduled_done">Freed %1$s in %2$d items</string>
     <string name="cleaner_scheduled_unreadable">Storage was unreadable — nothing was cleaned.</string>
     <string name="cleaner_scheduled_nothing_safe">Nothing safe to delete — logs and leftovers stay manual.</string>
-    <string name="gt_perm_title">Permission toggle</string>
-    <string name="gt_perm_sub">Revoke or regrant one app\'s dangerous permissions, by hand.</string>
-    <string name="gt_perm_what_title">What does this do?</string>
-    <string name="gt_perm_what_1">Lists the dangerous permissions an app requested, with each one\'s live state. Revoking takes effect immediately and can break the feature behind it — camera, login, maps and notifications are the usual casualties.</string>
-    <string name="gt_perm_what_2">Only dangerous permissions are listed. Everything revoked here is recorded, and Restore brings back exactly what was taken.</string>
-    <string name="gt_perm_pick">Choose app…</string>
-    <string name="gt_perm_pick_title">Toggle permissions for…</string>
-    <string name="gt_perm_revoke">Revoke</string>
-    <string name="gt_perm_grant">Grant</string>
-    <string name="gt_perm_restore_all">Restore everything taken</string>
-    <string name="gt_perm_granted_state">Granted</string>
-    <string name="gt_perm_revoked_state">Revoked</string>
-    <string name="gt_perm_needs_priv">Root or Shizuku is needed to change permissions.</string>
-    <string name="gt_perm_no_self">This app\'s own permissions are off limits.</string>
-    <string name="gt_perm_none_toggleable">%1$s requests nothing toggleable.</string>
-    <string name="gt_perm_confirm_title">Revoke this permission?</string>
-    <string name="gt_perm_confirm_body">Take %2$s away from %1$s? The feature behind it may stop working until it is granted again.</string>
-    <string name="gt_perm_confirm_revoke">Revoke it</string>
-    <string name="gt_perm_revoked">Took %2$s from %1$s.</string>
-    <string name="gt_perm_revoke_failed">Could not take %2$s from %1$s: %3$s</string>
-    <string name="gt_perm_granted">Gave %2$s back to %1$s.</string>
-    <string name="gt_perm_grant_failed">Could not give %2$s back to %1$s: %3$s</string>
-    <string name="gt_perm_restored">Restored %2$d permission(s) for %1$s.</string>
-    <string name="gt_perm_restore_partial">Restored %2$d for %1$s — these refused: %3$s</string>
-    <string name="gt_preset_anim_title">Animation presets</string>
-    <string name="gt_preset_name">Preset name</string>
-    <string name="gt_preset_anim_save">Save current</string>
-    <string name="gt_preset_apply">Apply</string>
-    <string name="gt_preset_delete">Delete</string>
-    <string name="gt_preset_empty">No presets yet.</string>
-    <string name="gt_preset_width_title">Width presets</string>
-    <string name="gt_preset_width_dp">Width (dp)</string>
-    <string name="gt_preset_width_save">Save width</string>
-    <string name="gt_preset_save_fail">Preset not saved — name it and check the numbers.</string>
-    <string name="gt_preset_deleted">Preset deleted: %1$s</string>
-    <string name="gt_preset_anim_saved">Animation preset saved: %1$s</string>
-    <string name="gt_preset_anim_applied">Animation preset applied: %1$s</string>
-    <string name="gt_preset_anim_partial">Preset %1$s: only %2$d of 3 scales applied.</string>
-    <string name="gt_preset_width_saved">Width preset saved: %1$s (%2$d dp)</string>
-    <string name="gt_preset_width_unknown">Screen size unknown — width presets need a readable panel.</string>
-    <string name="gt_preset_width_no_density">Preset %1$s maps to no density on this panel.</string>
     <string name="gt_dns_ping_measure">Measure resolvers</string>
     <string name="gt_dns_ping_none">no reply</string>
     <string name="gt_booster_scope_title">Scope</string>
@@ -749,6 +705,7 @@
     <string name="gt_trim_some">Trimmed %1$s — %2$d mount(s) refused</string>
     <string name="gt_trim_no">Trim reported nothing: %1$s</string>
     <string name="gt_trim_no_reason">the device said nothing at all</string>
+    <string name="gt_trim_done_unmeasured">Trim finished — this phone does not report how much space was freed.</string>
     <string name="gt_suspend_title">Extra suspended apps</string>
     <string name="gt_suspend_sub">Your picks, frozen with the automatic sweep</string>
     <string name="gt_suspend_what_1">Apps you pick here are suspended when Gaming Mode starts, on top of the automatic sweep — for background apps the sweep protects or cannot see.</string>
@@ -780,4 +737,26 @@
     <string name="gt_svc_session_manual">Manual Gaming Mode active — watch released</string>
     <string name="gt_svc_session_no_usage">Needs usage access — tap to grant, nothing is watched</string>
     <string name="gt_svc_session_no_priv">Needs root or Shizuku — Android refuses gaming changes, nothing is watched</string>
+    <string name="gt_gm_recovery_first">Undo the last Gaming Mode session first.</string>
+    <string name="gt_gm_checking">Checking the last session…</string>
+    <string name="gt_gm_interrupted">Last session was interrupted</string>
+    <string name="gt_gm_recovery_title">Apps from the last session</string>
+    <string name="gt_gm_recovery_body">%1$d app(s) may still be frozen or have background access restricted.</string>
+    <string name="gt_gm_recovery_unverified">The phone would not confirm which ones, so this is what the app recorded.</string>
+    <string name="gt_gm_restore">Restore apps</string>
+    <string name="gt_gm_restore_done">Restored %1$d app(s) and %2$d background restriction(s).</string>
+    <string name="gt_gm_restore_partial">Restored %1$d app(s) and %2$d restriction(s). %3$d still need attention.</string>
+    <string name="gt_gm_restore_unverified">Could not confirm the result. %1$d app(s) are still on the record — try again.</string>
+    <string name="gt_gm_restore_active">Gaming Mode is running. Turn it off before restoring apps.</string>
+    <string name="gt_gm_revert_needed">Settings from the last session may still be applied. Turn Gaming Mode off to restore them.</string>
+    <string name="gt_gm_error_session_open">Part of this session may still be applied. Use the power button to undo it.</string>
+    <string name="gt_suspend_count">%1$d selected · %2$d frozen now</string>
+    <string name="gt_suspend_show">Show apps</string>
+    <string name="gt_suspend_hide">Hide apps</string>
+    <string name="gt_suspend_badge_frozen">frozen</string>
+    <string name="gt_suspend_badge_selected">not frozen</string>
+    <string name="gt_cleaner_review">Review &amp; clean</string>
+    <string name="gt_cleaner_review_hide">Hide items</string>
+    <string name="gt_cleaner_advanced">Schedule &amp; rules</string>
+    <string name="gt_cleaner_advanced_hide">Hide schedule &amp; rules</string>
 </resources>

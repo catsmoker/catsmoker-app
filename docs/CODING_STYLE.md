@@ -76,8 +76,9 @@ These recur across the codebase — a reviewer will expect them:
    backward from full.
 4. **Long pickers stay compact.** A configured count badge at the heading, a
    collapsed summary by default, and a bounded internally scrolling list when
-   expanded (precedent: Apps kept running). Folding changes only what is
-   drawn — it never edits the stored set.
+   expanded (precedent: both Gaming Mode app pickers,
+   `GamingModeAppPickerSection`). Folding changes only what is drawn - it never
+   edits the stored set.
 
 ## Visual system (charcoal + crimson + glass)
 

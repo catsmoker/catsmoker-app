@@ -237,10 +237,16 @@ not silently rewrite history.
   blackholed the *game's* traffic while reporting success. Both post-mortems
   live in `BackgroundDataRestrictor`'s KDoc; read it before touching either
   switch.
-- **Auto Force Stop keeps, it does not kill** (2026-09-20). The keep-list key
-  once meant the opposite of the feature's name; it was renamed with the
-  meaning so old installs start empty. Reinterpreting the gap was the bug —
-  do not "fix" it.
+- **Auto Force Stop keeps, it does not kill** (2026-09-20, superseded
+  2026-10-28). The keep-list key once meant the opposite of the feature's
+  name; it was renamed with the meaning so old installs start empty.
+  Superseded by the no-exceptions decision below: the user keep list is gone.
+- **Auto Force Stop has no user exceptions** (2026-10-28). Reverses the
+  2026-09-20 keep-list decision. The card no longer shows an app list, the
+  service no longer reads one, and `KeepAliveStore` is deleted. Every app you
+  leave is closed; only code-owned protections (this app, the launcher, the
+  current keyboard and system packages) are exempt. Gaming Mode's separate
+  "Apps kept running" list is untouched (`SuspendExemptStore`).
 - **The Gaming Mode bar is an operation indicator, not decoration**
   (2026-10-27). It used to render unconditionally and "relax to a line" when
   idle, which read as a finished or decorative element. It is now composed
@@ -295,9 +301,9 @@ not silently rewrite history.
   never recorded in `affected_pkgs` because it was never frozen. The UI keeps
   the keep list and the extra-suspend list mutually exclusive, but the engine
   resolves a stale or hand-edited overlap as *kept* — the safe direction is
-  the only direction. The store is deliberately separate from `KeepAliveStore`:
-  that answers Auto Force Stop's different question (don't force-stop on
-  leave), and merging them would couple two unrelated lifecycles. The list
+  the only direction. The store is deliberately separate from Auto Force
+  Stop, which now has no keep list at all: the two answer different questions,
+  and merging them would couple two unrelated lifecycles. The list
   widens the user-level exemption only; `hardWhitelist`, `systemCritical`, and
   `gamingDaemons` stay code-owned, and no user list can remove an entry from
   them.
@@ -593,7 +599,8 @@ deliberately not ported, or blocked by hardware/field evidence.
   M220, M223, M224, M226, M227, M230, M238, M242, M254, M257) plus M45 (session
   snapshot + pointer speed; per-game pct sliders add UI, no new mechanism), M48
   (the 3x5s/500ms retry values are already in `ShellRunner`), M67 (preset
-  stores shipped; terminal store dead upstream), M68 (gaming levers ported; dev
+  stores shipped, then removed 2026-10-27 as unnecessary UI; terminal store
+  dead upstream), M68 (gaming levers ported; dev
   toggles correctly absent), M71 (`ShellRunner` channel richer; truncate/grant
   unneeded), M79 (custom upload exists; reference folder executors are stubs),
   M92 (retune math + `WuwaSmartBrain` + tuner cover it), M99 (root/Shizuku/SAF
@@ -637,3 +644,57 @@ deliberately not ported, or blocked by hardware/field evidence.
 - The local `TODO.md` was deleted after this pass at the developer's request;
   this section is its durable record. Field reports still drive fixes for the
   shipped-unverified work (M152, M168, M190, M200, M228).
+
+## Gaming Tools reorganisation and session recovery (2026-10-27)
+
+- **Your Games is a four-column icon grid with an action popup.** The icon is the button; tapping
+  it opens Launch / Pre-compile / Remove for that package, and the name below is a plain label.
+  One popup is open at a time. The earlier list-row layout put an expander on every row, which
+  still cost a full row per game and separated the actions from the icon that identifies the game.
+  The grid stays a chunked set of `Row`s because it lives inside the screen's `verticalScroll`
+  (a lazy grid there would be measured with infinite height); the preview is two full rows.
+- **Named width and animation presets removed.** The Screen Size card's width-preset library and
+  Developer Options' animation-preset library are gone, with their two stores and tests. Neither
+  could express anything the remaining rows already could: width/DPI typing and the three
+  animation-scale chips are the same writes, while the libraries added a parallel save/apply/delete
+  surface and 17 strings per locale. Resolution chips, typed resolution fields, render scale,
+  touch speed and the animation-scale rows remain untouched.
+- **Manual permission toggle removed.** Revoking other apps' dangerous runtime
+  permissions is not a gaming-performance lever, duplicates Android's app-info
+  screen, and its per-app state added a second persistence surface for no game
+  gain. `PermToggle`, `PermToggleManager`, its test, every `gt_perm_*` string in
+  every locale mirror, the ViewModel state/actions and the screen card are gone;
+  ordinary Android permission handling (Shizuku grant, storage access, overlay)
+  is untouched.
+- **Extra suspended apps moved into the Gaming Mode card.** It is the suspend
+  sweep's second input, not a Background Apps feature. One card now owns both
+  the keep list and the extra freeze list, and each pick shows **selected** vs
+  **frozen now** from the engine's verified `pm suspend` record instead of
+  implying that a configured app is already frozen.
+- **Both Gaming Mode app lists share one picker layout.** "Apps kept running"
+  and "Extra suspended apps" render through `GamingModeAppPickerSection`, so
+  neither can drift back to a different count badge, disclosure, Add control,
+  privilege notice or explainer. The freeze list adds only its per-row
+  **frozen** / **not frozen** badge and the selected-vs-frozen line; rows in both
+  lists use the same bounded lazy column and text **Remove**.
+- **Storage Cleaner, RAM reclaim and storage trim merged into one card** with
+  progressive disclosure (review/clean, then schedule/rules). `RamBoostCard` is
+  deleted. The three separate cards for one job made the memory section taller
+  than a screen. The two one-tap actions — **Reclaim RAM** and **Trim
+  storage** — now lead the card as filled primary buttons, above the scan they
+  used to follow.
+- **Storage trim falls back to Android's `sm fstrim` when the device has no
+  `fstrim` binary.** Some builds (toybox without the command) cannot run
+  `fstrim -v`, so the direct command used to report a failure even though the
+  storage could still be trimmed. `fstrim -v` stays first because it is the only
+  channel that reports bytes; `sm fstrim` then trims through vold and reports no
+  byte count, which is shown as "finished without a measurement", never a
+  fabricated 0. The fallback does not seek privilege the app was not granted.
+- **Byte sizes go through `ByteSizeFormat` only.** The old duplicate formatter
+  and the mojibake middle dots in the locale mirrors are removed so sizes read
+  the same in every call site and language.
+- **Gaming Mode sessions are evidence, not a flag.** The session opens before
+  the first lever, records each confirmed app, reconciles on startup into
+  `Checking`/`Interrupted`, and offers **Restore apps** separately from the
+  full power-off revert. A deactivation that cannot verify every wake no
+  longer claims success. See `docs/GAMING_MODE.md`.

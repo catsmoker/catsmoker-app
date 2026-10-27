@@ -6,28 +6,28 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 /**
- * The keep-running control is a picker over a persisted set, not a switch. Its rows must always
+ * The shared app picker is a control over a persisted set, not a switch. Its rows must always
  * follow the set the ViewModel passes in: adding a pick adds a row, removing one removes it, and an
  * unknown package still appears instead of silently disappearing.
  */
-class GamingModeKeepRunningTest {
+class GamingModeAppPickerTest {
 
     @Test
     fun emptySetHasNoRows() {
-        assertTrue(gamingModeKeptApps(emptySet(), emptyMap()).isEmpty())
+        assertTrue(gamingModePickedApps(emptySet(), emptyMap()).isEmpty())
     }
 
     @Test
     fun rowsFollowPickerNamesAndPackageFallbacks() {
-        val rows = gamingModeKeptApps(
+        val rows = gamingModePickedApps(
             picked = setOf("com.example.known", "com.example.unknown"),
             nameByPackage = mapOf("com.example.known" to "Known app")
         )
 
         assertEquals(
             listOf(
-                GamingModeKeptApp("Known app", "com.example.known"),
-                GamingModeKeptApp("com.example.unknown", "com.example.unknown")
+                GamingModePickedApp("Known app", "com.example.known"),
+                GamingModePickedApp("com.example.unknown", "com.example.unknown")
             ),
             rows
         )
@@ -35,40 +35,40 @@ class GamingModeKeepRunningTest {
 
     @Test
     fun addingAndRemovingAPickChangesOnlyThatRow() {
-        val before = gamingModeKeptApps(
+        val before = gamingModePickedApps(
             picked = setOf("com.example.a"),
             nameByPackage = mapOf("com.example.a" to "A", "com.example.b" to "B")
         )
-        val afterAdd = gamingModeKeptApps(
+        val afterAdd = gamingModePickedApps(
             picked = setOf("com.example.a", "com.example.b"),
             nameByPackage = mapOf("com.example.a" to "A", "com.example.b" to "B")
         )
-        val afterRemove = gamingModeKeptApps(
+        val afterRemove = gamingModePickedApps(
             picked = setOf("com.example.b"),
             nameByPackage = mapOf("com.example.a" to "A", "com.example.b" to "B")
         )
 
-        assertEquals(listOf(GamingModeKeptApp("A", "com.example.a")), before)
+        assertEquals(listOf(GamingModePickedApp("A", "com.example.a")), before)
         assertEquals(
             listOf(
-                GamingModeKeptApp("A", "com.example.a"),
-                GamingModeKeptApp("B", "com.example.b")
+                GamingModePickedApp("A", "com.example.a"),
+                GamingModePickedApp("B", "com.example.b")
             ),
             afterAdd
         )
-        assertEquals(listOf(GamingModeKeptApp("B", "com.example.b")), afterRemove)
+        assertEquals(listOf(GamingModePickedApp("B", "com.example.b")), afterRemove)
     }
 
     @Test
     fun countIsZeroForAnEmptyList() {
-        assertEquals(0, GamingModeKeepRunning.count(emptySet()))
+        assertEquals(0, GamingModeAppPicker.count(emptySet()))
     }
 
     @Test
     fun countReflectsEverySavedPick() {
         assertEquals(
             3,
-            GamingModeKeepRunning.count(setOf("com.example.a", "com.example.b", "com.example.c"))
+            GamingModeAppPicker.count(setOf("com.example.a", "com.example.b", "com.example.c"))
         )
     }
 
@@ -76,7 +76,7 @@ class GamingModeKeepRunningTest {
     fun countNeverCountsADuplicatePackageIdTwice() {
         assertEquals(
             2,
-            GamingModeKeepRunning.count(listOf("com.example.a", "com.example.a", "com.example.b"))
+            GamingModeAppPicker.count(listOf("com.example.a", "com.example.a", "com.example.b"))
         )
     }
 
@@ -86,29 +86,29 @@ class GamingModeKeepRunningTest {
         val afterAdd = before + "com.example.b"
         val afterRemove = afterAdd - "com.example.a"
 
-        assertEquals(1, GamingModeKeepRunning.count(before))
-        assertEquals(2, GamingModeKeepRunning.count(afterAdd))
-        assertEquals(1, GamingModeKeepRunning.count(afterRemove))
+        assertEquals(1, GamingModeAppPicker.count(before))
+        assertEquals(2, GamingModeAppPicker.count(afterAdd))
+        assertEquals(1, GamingModeAppPicker.count(afterRemove))
     }
 
     @Test
     fun listStartsCollapsed() {
-        assertFalse(GamingModeKeepRunning.DEFAULT_EXPANDED)
+        assertFalse(GamingModeAppPicker.DEFAULT_EXPANDED)
     }
 
     @Test
     fun togglingOnlyFlipsTheDisclosureState() {
-        val expanded = GamingModeKeepRunning.toggle(GamingModeKeepRunning.DEFAULT_EXPANDED)
+        val expanded = GamingModeAppPicker.toggle(GamingModeAppPicker.DEFAULT_EXPANDED)
 
         assertTrue(expanded)
-        assertFalse(GamingModeKeepRunning.toggle(expanded))
+        assertFalse(GamingModeAppPicker.toggle(expanded))
     }
 
     @Test
     fun collapsedSummaryShowsTheFirstFewNamesAndTheRemainder() {
         val rows = rows(5)
 
-        val summary = GamingModeKeepRunning.preview(rows)
+        val summary = GamingModeAppPicker.preview(rows)
 
         assertEquals(listOf("App 1", "App 2", "App 3"), summary.labels)
         assertEquals(2, summary.hiddenCount)
@@ -116,7 +116,7 @@ class GamingModeKeepRunningTest {
 
     @Test
     fun shortListNeedsNoRemainderLine() {
-        val summary = GamingModeKeepRunning.preview(rows(2))
+        val summary = GamingModeAppPicker.preview(rows(2))
 
         assertEquals(listOf("App 1", "App 2"), summary.labels)
         assertEquals(0, summary.hiddenCount)
@@ -124,12 +124,12 @@ class GamingModeKeepRunningTest {
 
     @Test
     fun emptyPreviewHasNoNames() {
-        val summary = GamingModeKeepRunning.preview(emptyList())
+        val summary = GamingModeAppPicker.preview(emptyList())
 
         assertTrue(summary.labels.isEmpty())
         assertEquals(0, summary.hiddenCount)
     }
 
-    private fun rows(count: Int): List<GamingModeKeptApp> =
-        (1..count).map { GamingModeKeptApp(label = "App $it", packageName = "com.example.$it") }
+    private fun rows(count: Int): List<GamingModePickedApp> =
+        (1..count).map { GamingModePickedApp(label = "App $it", packageName = "com.example.$it") }
 }

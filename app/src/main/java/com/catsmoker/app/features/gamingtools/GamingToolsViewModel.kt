@@ -15,7 +15,9 @@ import androidx.lifecycle.viewModelScope
 import com.catsmoker.app.R
 import com.catsmoker.app.features.gamingtools.engine.AnimationScaleKind
 import com.catsmoker.app.features.gamingtools.engine.GamingEngine
+import com.catsmoker.app.features.gamingtools.engine.GamingModeRestoreResult
 import com.catsmoker.app.features.gamingtools.engine.GamingModeService
+import com.catsmoker.app.features.gamingtools.engine.GamingModeState
 import com.catsmoker.app.features.gamingtools.engine.GameSessionManager
 import com.catsmoker.app.features.gamingtools.engine.GameSessionService
 import com.catsmoker.app.features.gamingtools.engine.StorageTrim
@@ -25,7 +27,6 @@ import com.catsmoker.app.features.gamingtools.tools.cleaner.CleanerPatternStore
 import com.catsmoker.app.features.gamingtools.tools.cleaner.CleaningFeature
 import com.catsmoker.app.features.gamingtools.tools.graphics.GameDeveloperOptions
 import com.catsmoker.app.features.gamingtools.tools.graphics.AngleDriverOptions
-import com.catsmoker.app.features.gamingtools.tools.forcestop.KeepAliveStore
 import com.catsmoker.app.features.gamingtools.tools.forcestop.SuspendExemptStore
 import com.catsmoker.app.features.gamingtools.tools.forcestop.SuspendListStore
 import com.catsmoker.app.features.gamingtools.tools.booster.AppBoosterService
@@ -33,9 +34,6 @@ import com.catsmoker.app.features.gamingtools.tools.booster.DexoptScheduleStore
 import com.catsmoker.app.features.gamingtools.tools.booster.DexoptSweepScheduler
 import com.catsmoker.app.features.gamingtools.tools.cleaner.CleanerScheduleStore
 import com.catsmoker.app.features.gamingtools.tools.cleaner.CleanerSweepScheduler
-import com.catsmoker.app.features.gamingtools.tools.permops.PermToggleManager
-import com.catsmoker.app.features.gamingtools.tools.permops.PermConfirm
-import com.catsmoker.app.features.gamingtools.tools.permops.ToggleablePerm
 import com.catsmoker.app.features.gamingtools.tools.forcestop.AutoForceStopService
 import com.catsmoker.app.features.gamingtools.tools.crosshair.CrosshairOverlayService
 import com.catsmoker.app.features.gamingtools.tools.crosshair.CrosshairPositionStore
@@ -77,7 +75,6 @@ class GamingToolsViewModel @Inject constructor(
     private val gameDeveloperOptions: GameDeveloperOptions,
     private val angleDriverOptions: AngleDriverOptions,
     private val audioBoostController: AudioBoostController,
-    private val keepAliveStore: KeepAliveStore,
     private val suspendListStore: SuspendListStore,
     private val suspendExemptStore: SuspendExemptStore,
     private val crosshairPositionStore: CrosshairPositionStore,
@@ -91,8 +88,7 @@ class GamingToolsViewModel @Inject constructor(
     private val dexoptScheduleStore: DexoptScheduleStore,
     private val dexoptSweepScheduler: DexoptSweepScheduler,
     private val cleanerScheduleStore: CleanerScheduleStore,
-    private val cleanerSweepScheduler: CleanerSweepScheduler,
-    private val permToggleManager: PermToggleManager
+    private val cleanerSweepScheduler: CleanerSweepScheduler
 ) : ViewModel() {
 
     data class UiState(
@@ -209,15 +205,6 @@ class GamingToolsViewModel @Inject constructor(
         /** Package holding an auto-started session right now, or null when none. */
         val gameSessionPkg: String? = null,
         /**
-         * The apps the user chose to *keep* running — Auto Force Stop closes every other app you
-         * switch away from and leaves these alone.
-         *
-         * This list used to be the opposite: the apps to close. Inverting it is what makes the
-         * feature match its name, and it also means an empty list is a valid, meaningful setting
-         * ("close everything") rather than a reason to shut the service down.
-         */
-        val autoForceStopKeepPackages: Set<String> = emptySet(),
-        /**
          * Extra packages frozen at Gaming Mode activation on top of the automatic sweep.
          * Read at construction so the editor shows the persisted truth rather than a blank.
          */
@@ -259,17 +246,6 @@ class GamingToolsViewModel @Inject constructor(
         val resLog: List<String> = emptyList(),
         /** Set while a risky-but-legal change is waiting for confirmation; carries the real reason. */
         val resWarning: String? = null,
-        // ---- Display preset libraries (M67) ----
-        /** Named animation-scale presets, in save order. */
-        val animPresets: List<AnimationPresetStore.AnimationPreset> = emptyList(),
-        /** Name typed for the next animation preset. */
-        val animPresetName: String = "",
-        /** Named smallest-width presets, in save order. */
-        val widthPresets: List<WidthPresetStore.WidthPreset> = emptyList(),
-        /** Name typed for the next width preset. */
-        val widthPresetName: String = "",
-        /** Width in dp typed for the next width preset. */
-        val widthPresetDp: String = "",
 
         // Scheduled dexopt sweep
         /** Whether the recurring ART sweep is enrolled in WorkManager. */
@@ -285,16 +261,11 @@ class GamingToolsViewModel @Inject constructor(
         /** Hours between scheduled sweeps - one of [CleanerScheduleStore.INTERVAL_CHOICES]. */
         val cleanIntervalHours: Int = CleanerScheduleStore.DEFAULT_INTERVAL_HOURS,
         val cleanNextRunAt: Long? = null,
-        // ---- Manual permission toggle ----
-        val isPickingPermTarget: Boolean = false,
-        /** Package chosen for permission toggling, with its display label. */
-        val permTargetPkg: String? = null,
-        val permTargetLabel: String? = null,
-        /** The target's dangerous permissions with live grant states. */
-        val permEntries: List<ToggleablePerm> = emptyList(),
-        val isPermBusy: Boolean = false,
-        /** Revoke awaiting explicit confirmation (app + permission named up front). */
-        val permConfirm: PermConfirm? = null,
+        // ---- Gaming Mode recovery ----
+        /** True while Restore Apps is waking a previous session's suspended packages. */
+        val isRestoringApps: Boolean = false,
+        /** Last Restore Apps outcome, cleared when Gaming Mode is next activated. */
+        val restoreResult: GamingModeRestoreResult? = null,
         /**
          * Package picked for the graphics-driver choice, or null before selection. Defaults to
          * the first game once the library loads, so the card never shows a picker with nothing
@@ -325,6 +296,12 @@ class GamingToolsViewModel @Inject constructor(
     val gamingState = gamingEngine.state
     /** What activation actually applied, verified per setting. Drives the hero card's result rows. */
     val gamingReport = gamingEngine.report
+    /** Leftovers from a previous session, with the evidence behind each entry. */
+    val gamingRecovery = gamingEngine.recovery
+    /** Whether a session record is open, so the power button must revert rather than start. */
+    val isGamingSessionOpen = gamingEngine.sessionOpen
+    /** Packages this app verified as suspended, for the suspension list's status badges. */
+    val suspendedPackages = gamingEngine.suspendedPackages
     val isFixedPerformanceMode = gamingEngine.isFixedPerformanceMode
     val boosterLog = gamingEngine.boosterLog
     val boosterState = gamingEngine.boosterState
@@ -336,11 +313,6 @@ class GamingToolsViewModel @Inject constructor(
     val gameDevOptions = gameDeveloperOptions.state
 
     private val appPrefs by lazy { context.getSharedPreferences("AppPrefs", Context.MODE_PRIVATE) }
-
-    /** Named animation-scale library (M67) — its own file, loaded once, refreshed on mutation. */
-    private val animPresetStore by lazy { AnimationPresetStore(context) }
-    /** Named smallest-width library (M67) — its own file, loaded once, refreshed on mutation. */
-    private val widthPresetStore by lazy { WidthPresetStore(context) }
 
     /** Target held while the confirmation dialog is up, so the dialog cannot alter what gets applied. */
     private var pendingResApply: DisplayMetricsProvider.Snapshot? = null
@@ -402,7 +374,6 @@ class GamingToolsViewModel @Inject constructor(
                 isCrosshairOffCentre = crosshairPositionStore.isOffCentre,
                 isOverlayMoved = performanceOverlayPositionStore.movedFromDefault,
                 boostLevel = appPrefs.getInt("boost_level", 0),
-                autoForceStopKeepPackages = keepAliveStore.getKeptPackages(),
                 extraSuspendPackages = suspendListStore.getSuspendPackages(),
                 suspendExemptPackages = suspendExemptStore.getExemptPackages(),
                 dexoptScheduleEnabled = dexoptScheduleStore.isEnabled(),
@@ -410,9 +381,7 @@ class GamingToolsViewModel @Inject constructor(
                 cleanScheduleEnabled = cleanerScheduleStore.isEnabled(),
                 cleanIntervalHours = cleanerScheduleStore.getIntervalHours(),
                 cleanerKeepEntries = cleanerPatternStore.getKeepEntries(),
-                cleanerCleanPatterns = cleanerPatternStore.getCleanPatterns(),
-                animPresets = animPresetStore.getAll(),
-                widthPresets = widthPresetStore.getAll()
+                cleanerCleanPatterns = cleanerPatternStore.getCleanPatterns()
             )
         }
         // WorkManager persists periodic work across reboots and app updates, so the schedule may
@@ -519,10 +488,17 @@ class GamingToolsViewModel @Inject constructor(
             for (ri in activities) {
                 val ai = ri.activityInfo.applicationInfo
                 val pkg = ai.packageName
-                if (pkg in removedGames) continue
-                if (ai.category == ApplicationInfo.CATEGORY_GAME || pkg in userAdded) {
-                    newGames.add(GameInfo(ai.loadLabel(pm).toString(), pkg, ai.loadIcon(pm)))
-                }
+                // An explicit removal beats automatic discovery: without this check the category
+                // scan put a removed game straight back on the next refresh, which is why Remove
+                // looked broken for games the library had found by itself.
+                if (!GameLibrarySelection.isVisible(
+                        pkg = pkg,
+                        autoDiscovered = ai.category == ApplicationInfo.CATEGORY_GAME,
+                        userGames = userAdded,
+                        removedGames = removedGames
+                    )
+                ) continue
+                newGames.add(GameInfo(ai.loadLabel(pm).toString(), pkg, ai.loadIcon(pm)))
             }
             val games = newGames.distinctBy { it.packageName }
             withContext(Dispatchers.Main) {
@@ -569,17 +545,42 @@ class GamingToolsViewModel @Inject constructor(
     }
 
     fun addGameToLibrary(pkg: String) {
-        val userAdded = appPrefs.getStringSet("user_games", emptySet())?.toMutableSet() ?: mutableSetOf()
-        userAdded.add(pkg)
-        appPrefs.edit { putStringSet("user_games", userAdded) }
+        val selection = GameLibrarySelection.add(
+            pkg = pkg,
+            userGames = appPrefs.getStringSet("user_games", emptySet()) ?: emptySet(),
+            removedGames = appPrefs.getStringSet("removed_games", emptySet()) ?: emptySet()
+        )
+        appPrefs.edit {
+            putStringSet("user_games", selection.userGames)
+            putStringSet("removed_games", selection.removedGames)
+        }
         _uiState.update { it.copy(isPickingGame = false) }
         syncGames()
     }
 
+    /**
+     * Removes a game from the visible library without uninstalling it.
+     *
+     * The exclusion set is written here, not just the user-added set: most entries were discovered
+     * from Android's game category and never lived in `user_games`, so editing that set alone left
+     * the next discovery pass free to re-add them. `syncGames()` reads the exclusion and the list
+     * refreshes immediately; the persisted entry survives a restart until the user picks the game
+     * again, which clears it in [addGameToLibrary].
+     */
     fun removeGameFromLibrary(pkg: String) {
-        val userAdded = appPrefs.getStringSet("user_games", emptySet())?.toMutableSet() ?: mutableSetOf()
-        userAdded.remove(pkg)
-        appPrefs.edit { putStringSet("user_games", userAdded) }
+        val selection = GameLibrarySelection.remove(
+            pkg = pkg,
+            userGames = appPrefs.getStringSet("user_games", emptySet()) ?: emptySet(),
+            removedGames = appPrefs.getStringSet("removed_games", emptySet()) ?: emptySet()
+        )
+        appPrefs.edit {
+            putStringSet("user_games", selection.userGames)
+            putStringSet("removed_games", selection.removedGames)
+        }
+        // The row disappears before the rescan finishes; the rescan then confirms it stays gone.
+        _uiState.update { state ->
+            state.copy(games = state.games.filterNot { it.packageName == pkg })
+        }
         syncGames()
     }
 
@@ -1059,12 +1060,15 @@ class GamingToolsViewModel @Inject constructor(
     // anything applied before captureAndSaveSnapshot() gets recorded as the "original" value and
     // survives deactivation. It already covers every command the old esports pass ran.
     fun activateGamingMode() = viewModelScope.launch {
+        _uiState.update { it.copy(restoreResult = null) }
         gamingEngine.toggleGamingMode(true)
         // The foreground service is what keeps the process alive while gaming mode holds system
         // settings, and its onTaskRemoved is the safety net that reverts them if the app is swiped
-        // away. It belongs to activation — starting it from "Launch game" left it running with no
-        // gaming mode behind it.
-        ContextCompat.startForegroundService(context, Intent(context, GamingModeService::class.java))
+        // away. Start it only when the engine actually reached Active: an activation refused by
+        // the recovery guard used to leave an "active" notification over an idle engine.
+        if (gamingEngine.state.value is GamingModeState.Active) {
+            ContextCompat.startForegroundService(context, Intent(context, GamingModeService::class.java))
+        }
         // Gaming mode writes the refresh-rate keys itself, so the standalone switch has to follow
         // the device rather than keep showing what it read before activation.
         gameDeveloperOptions.refresh()
@@ -1073,6 +1077,20 @@ class GamingToolsViewModel @Inject constructor(
         gamingEngine.toggleGamingMode(false)
         context.stopService(Intent(context, GamingModeService::class.java))
         gameDeveloperOptions.refresh()
+    }
+
+    /**
+     * Wakes only the apps a previous session recorded, leaving system settings to the power
+     * button. The outcome is carried as counts so the card can say success, partial or failure
+     * instead of a bare "done".
+     */
+    fun restoreSuspendedApps() = viewModelScope.launch {
+        _uiState.update { it.copy(isRestoringApps = true, restoreResult = null) }
+        val result = gamingEngine.restoreSuspendedApps()
+        _uiState.update { it.copy(isRestoringApps = false, restoreResult = result) }
+        if (result.refusedWhileActive) {
+            _toasts.tryEmit(context.getString(R.string.gt_gm_restore_active))
+        }
     }
 
     fun boostRam() = viewModelScope.launch {
@@ -1090,30 +1108,49 @@ class GamingToolsViewModel @Inject constructor(
     }
 
     /**
-     * Trims free filesystem blocks (`fstrim -v`) so writes stay fast during play.
+     * Trims free filesystem blocks so writes stay fast during play.
      *
-     * Needs root: the shell UID cannot issue FITRIM on most builds, and without privilege the
-     * button reports that instead of running a trim that cannot work. The result names the
-     * trimmed total from the mounts that answered, plus how many refused — or the refusal,
-     * when nothing answered at all.
+     * Needs root or Shizuku: an ordinary app UID cannot issue a trim, so without privilege the
+     * button reports that instead of running one that cannot work. `fstrim -v` is tried first
+     * because it is the only channel that reports bytes, but some builds do not ship the binary
+     * (toybox has no `fstrim` there). When it yields no measurement, Android's own `sm fstrim`
+     * runs the trim through vold, which succeeds without a byte count — reported as finished
+     * without a measurement, never as a 0 the device never said.
      */
     fun trimStorage() = viewModelScope.launch {
         _uiState.update { it.copy(isTrimmingStorage = true, storageTrimResult = null) }
         val message = if (!shellRunner.hasPrivilege()) {
             context.getString(R.string.gt_trim_need)
         } else {
-            val output = shellRunner.exec("fstrim -v /data /cache")
-            val parsed = StorageTrim.parse(output)
-            if (parsed == null) {
-                context.getString(R.string.gt_trim_no, output.trim().takeIf { it.isNotBlank() }
-                    ?: context.getString(R.string.gt_trim_no_reason))
+            val direct = shellRunner.execResult("fstrim -v /data /cache")
+            // Only the direct command reports bytes. Run the platform fallback when it reported
+            // none, so a device without the binary still trims instead of claiming failure.
+            val platform = if (StorageTrim.parse(direct.text) == null) {
+                shellRunner.execResult("sm fstrim")
             } else {
-                val total = StorageTrim.formatBytes(parsed.totalBytes)
-                if (parsed.failedMounts > 0) {
-                    context.getString(R.string.gt_trim_some, total, parsed.failedMounts)
-                } else {
-                    context.getString(R.string.gt_trim_done, total)
+                null
+            }
+            when (
+                val outcome = StorageTrim.outcome(
+                    direct = StorageTrim.Attempt(direct.text, direct.exitCode),
+                    platform = platform?.let { StorageTrim.Attempt(it.text, it.exitCode) }
+                )
+            ) {
+                is StorageTrim.Outcome.Measured -> {
+                    val total = formatBytes(outcome.trimmed.totalBytes)
+                    if (outcome.trimmed.failedMounts > 0) {
+                        context.getString(R.string.gt_trim_some, total, outcome.trimmed.failedMounts)
+                    } else {
+                        context.getString(R.string.gt_trim_done, total)
+                    }
                 }
+                StorageTrim.Outcome.TrimmedWithoutReport ->
+                    context.getString(R.string.gt_trim_done_unmeasured)
+                is StorageTrim.Outcome.Failed ->
+                    context.getString(
+                        R.string.gt_trim_no,
+                        outcome.detail.ifBlank { context.getString(R.string.gt_trim_no_reason) }
+                    )
             }
         }
         _uiState.update { it.copy(isTrimmingStorage = false, storageTrimResult = message) }
@@ -1217,124 +1254,6 @@ class GamingToolsViewModel @Inject constructor(
         }
     }
 
-    // ---- Manual dangerous-permission toggle (explicit, per-app, confirmed) ----
-
-    fun showPermPicker() {
-        _uiState.update { it.copy(isPickingPermTarget = true) }
-        loadAllApps()
-    }
-
-    fun dismissPermPicker() {
-        _uiState.update { it.copy(isPickingPermTarget = false) }
-    }
-
-    /**
-     * Chooses the toggle target and reads its dangerous permissions. Our own package is
-     * refused: revoking our own runtime permissions (storage, notifications, overlay) would
-     * break the app from inside a feature meant to fix other apps.
-     */
-    fun selectPermTarget(pkg: String) {
-        if (pkg == context.packageName) {
-            _uiState.update { it.copy(isPickingPermTarget = false) }
-            viewModelScope.launch { _toasts.emit(context.getString(R.string.gt_perm_no_self)) }
-            return
-        }
-        viewModelScope.launch(Dispatchers.IO) {
-            val label = _uiState.value.allApps.firstOrNull { it.packageName == pkg }?.appName ?: pkg
-            val entries = permToggleManager.listToggleable(pkg)
-            withContext(Dispatchers.Main) {
-                _uiState.update {
-                    it.copy(
-                        isPickingPermTarget = false,
-                        permTargetPkg = pkg,
-                        permTargetLabel = label,
-                        permEntries = entries
-                    )
-                }
-            }
-            if (entries.isEmpty()) {
-                _toasts.emit(context.getString(R.string.gt_perm_none_toggleable, label))
-            }
-        }
-    }
-
-    /** Stages a revoke: nothing happens until [confirmPermRevoke] runs. */
-    fun requestPermRevoke(pkg: String, permission: String) {
-        val label = _uiState.value.permTargetLabel?.takeIf { _uiState.value.permTargetPkg == pkg } ?: pkg
-        _uiState.update { it.copy(permConfirm = PermConfirm(pkg, label, permission)) }
-    }
-
-    fun cancelPermRevoke() {
-        _uiState.update { it.copy(permConfirm = null) }
-    }
-
-    /** Executes the confirmed revoke, then re-reads the target's states from the platform. */
-    fun confirmPermRevoke() {
-        val confirm = _uiState.value.permConfirm ?: return
-        _uiState.update { it.copy(permConfirm = null, isPermBusy = true) }
-        viewModelScope.launch(Dispatchers.IO) {
-            val outcome = permToggleManager.revoke(confirm.pkg, confirm.permission)
-            val entries = permToggleManager.listToggleable(confirm.pkg)
-            withContext(Dispatchers.Main) {
-                _uiState.update { it.copy(permEntries = entries, isPermBusy = false) }
-            }
-            _toasts.emit(
-                if (outcome.success) {
-                    context.getString(R.string.gt_perm_revoked, confirm.label, confirm.permission)
-                } else {
-                    context.getString(R.string.gt_perm_revoke_failed, confirm.label, confirm.permission, outcome.detail)
-                }
-            )
-        }
-    }
-
-    fun regrantPerm(pkg: String, permission: String) {
-        viewModelScope.launch(Dispatchers.IO) {
-            _uiState.update { it.copy(isPermBusy = true) }
-            val outcome = permToggleManager.regrant(pkg, permission)
-            val entries = permToggleManager.listToggleable(pkg)
-            withContext(Dispatchers.Main) {
-                _uiState.update { it.copy(permEntries = entries, isPermBusy = false) }
-            }
-            val label = _uiState.value.permTargetLabel?.takeIf { _uiState.value.permTargetPkg == pkg } ?: pkg
-            _toasts.emit(
-                if (outcome.success) {
-                    context.getString(R.string.gt_perm_granted, label, permission)
-                } else {
-                    context.getString(R.string.gt_perm_grant_failed, label, permission, outcome.detail)
-                }
-            )
-        }
-    }
-
-    /**
-     * Regrants everything this tool revoked for the target. Permissions that refuse stay
-     * recorded and are named, so a half-restored app never claims wholeness.
-     */
-    fun restorePerms(pkg: String) {
-        viewModelScope.launch(Dispatchers.IO) {
-            _uiState.update { it.copy(isPermBusy = true) }
-            val outcome = permToggleManager.restoreAll(pkg)
-            val entries = permToggleManager.listToggleable(pkg)
-            withContext(Dispatchers.Main) {
-                _uiState.update { it.copy(permEntries = entries, isPermBusy = false) }
-            }
-            val label = _uiState.value.permTargetLabel?.takeIf { _uiState.value.permTargetPkg == pkg } ?: pkg
-            _toasts.emit(
-                if (outcome.failed.isEmpty()) {
-                    context.getString(R.string.gt_perm_restored, label, outcome.restored)
-                } else {
-                    context.getString(
-                        R.string.gt_perm_restore_partial,
-                        label,
-                        outcome.restored,
-                        outcome.failed.joinToString()
-                    )
-                }
-            )
-        }
-    }
-
     // Only the governor lock. Refresh rate and touch response belong to gaming mode, which
     // snapshots them — turning this switch off must not delete settings the user never changed.
     fun toggleFixedPerformance(enabled: Boolean) = viewModelScope.launch {
@@ -1417,112 +1336,6 @@ class GamingToolsViewModel @Inject constructor(
     /** `0.5x`, `1x`, `10x` — trailing `.0` dropped, as Developer Options labels them. */
     private fun formatScale(value: Float): String =
         if (value % 1f == 0f) "${value.toInt()}x" else "${value}x"
-
-    // ---- Display preset libraries (M67) ----
-
-    fun onAnimPresetNameChange(v: String) {
-        _uiState.update { it.copy(animPresetName = v) }
-    }
-
-    fun onWidthPresetNameChange(v: String) {
-        _uiState.update { it.copy(widthPresetName = v) }
-    }
-
-    fun onWidthPresetDpChange(v: String) {
-        _uiState.update { it.copy(widthPresetDp = v) }
-    }
-
-    /** Saves the live triple under the typed name; a blank name is refused, not stored. */
-    fun saveAnimPreset() {
-        val (w, t, a) = gamingEngine.animationScales.value
-        val saved = animPresetStore.savePreset(_uiState.value.animPresetName, w, t, a)
-        if (saved == null) {
-            _toasts.tryEmit(context.getString(R.string.gt_preset_save_fail))
-            return
-        }
-        _uiState.update { it.copy(animPresets = animPresetStore.getAll(), animPresetName = "") }
-        _toasts.tryEmit(context.getString(R.string.gt_preset_anim_saved, saved.name))
-    }
-
-    fun deleteAnimPreset(id: String) {
-        val name = _uiState.value.animPresets.firstOrNull { it.id == id }?.name
-        if (animPresetStore.delete(id)) {
-            _uiState.update { it.copy(animPresets = animPresetStore.getAll()) }
-            _toasts.tryEmit(context.getString(R.string.gt_preset_deleted, name ?: id))
-        }
-    }
-
-    /**
-     * Applies all three scales, each through the verified single-scale path, and reports the
-     * honest count: a preset that lands 2 of 3 is a partial result, not a success.
-     */
-    fun applyAnimPreset(preset: AnimationPresetStore.AnimationPreset) = viewModelScope.launch {
-        val ok = listOf(
-            AnimationScaleKind.WINDOW to preset.window,
-            AnimationScaleKind.TRANSITION to preset.transition,
-            AnimationScaleKind.ANIMATOR to preset.animator
-        ).count { (kind, value) -> gamingEngine.setAnimationScale(kind, value) }
-        if (ok == 3) {
-            _toasts.tryEmit(context.getString(R.string.gt_preset_anim_applied, preset.name))
-        } else {
-            _toasts.tryEmit(context.getString(R.string.gt_preset_anim_partial, preset.name, ok))
-        }
-    }
-
-    /** Saves the typed dp under the typed name; unparseable or out-of-clamp is refused. */
-    fun saveWidthPreset() {
-        val dp = _uiState.value.widthPresetDp.trim().toIntOrNull()
-        val saved = if (dp != null) widthPresetStore.savePreset(_uiState.value.widthPresetName, dp) else null
-        if (saved == null) {
-            _toasts.tryEmit(context.getString(R.string.gt_preset_save_fail))
-            return
-        }
-        _uiState.update {
-            it.copy(widthPresets = widthPresetStore.getAll(), widthPresetName = "", widthPresetDp = "")
-        }
-        _toasts.tryEmit(context.getString(R.string.gt_preset_width_saved, saved.name, saved.widthDp))
-    }
-
-    fun deleteWidthPreset(id: String) {
-        val name = _uiState.value.widthPresets.firstOrNull { it.id == id }?.name
-        if (widthPresetStore.delete(id)) {
-            _uiState.update { it.copy(widthPresets = widthPresetStore.getAll()) }
-            _toasts.tryEmit(context.getString(R.string.gt_preset_deleted, name ?: id))
-        }
-    }
-
-    /**
-     * Applies a width preset through the same confirmed path as a typed change: the native
-     * pixel size is kept and only the density moves, so the aspect ratio — the shape that
-     * letterboxes or crops the system UI when wrong — cannot drift, and the supersample /
-     * unknown-panel warnings stay intact.
-     */
-    fun applyWidthPreset(preset: WidthPresetStore.WidthPreset) {
-        val native = _uiState.value.nativeResolution
-        if (native == null || !native.isValid) {
-            logRes(context.getString(R.string.gt_preset_width_unknown))
-            _toasts.tryEmit(context.getString(R.string.gt_preset_width_unknown))
-            return
-        }
-        val density = displayMetrics.densityForSmallestWidthDp(preset.widthDp, native)
-        if (density == null) {
-            logRes(context.getString(R.string.gt_preset_width_no_density, preset.name))
-            return
-        }
-        val target = DisplayMetricsProvider.Snapshot(
-            widthPixels = native.widthPixels,
-            heightPixels = native.heightPixels,
-            densityDpi = density,
-            source = DisplayMetricsProvider.Source.SHELL_WM
-        )
-        val warning = resolutionWarning(target, native)
-        if (warning != null) {
-            pendingResApply = target
-            _uiState.update { it.copy(resWarning = warning) }
-        } else {
-            executeResolution(target)
-        }
-    }
 
     // GamingEngine owns both toggles: it holds the StateFlow the UI observes and merges
     // activity_manager_constants without clobbering unrelated entries.
@@ -1653,11 +1466,6 @@ class GamingToolsViewModel @Inject constructor(
     /** Mirrors the monitor's live session holder so the card can name the game being boosted. */
     fun refreshGameSessionPkg() {
         _uiState.update { it.copy(gameSessionPkg = gameSessionManager.sessionActivePkg.value) }
-    }
-
-    fun toggleAutoForceStopKeepPackage(pkg: String) {
-        val newSet = keepAliveStore.toggleKeptPackage(pkg)
-        _uiState.update { it.copy(autoForceStopKeepPackages = newSet) }
     }
 
     /**

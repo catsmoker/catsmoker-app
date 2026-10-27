@@ -239,6 +239,7 @@ class LocaleParityTest {
         "gt_trim_some",
         "gt_trim_no",
         "gt_trim_no_reason",
+        "gt_trim_done_unmeasured",
         // Extra suspend list (user picks frozen at Gaming Mode activation).
         "gt_suspend_title",
         "gt_suspend_sub",
@@ -383,6 +384,8 @@ class LocaleParityTest {
         "logs_collection_failed",
         // Pre-launch single-game compile (card button and outcome toasts).
         "gt_library_optimize",
+        // Launcher-style game grid: the icon is the button and announces the game name.
+        "gt_library_actions",
         // Game library search/cap controls (only appear with a large library).
         "gt_library_search",
         "gt_library_no_match",
@@ -495,24 +498,6 @@ class LocaleParityTest {
         // Manager scope readout (count and the actionable empty state).
         "spoof_home_xposed_scope_count",
         "spoof_home_xposed_scope_empty",
-        // Display preset libraries (named animation-scale and smallest-width presets).
-        "gt_preset_anim_title",
-        "gt_preset_name",
-        "gt_preset_anim_save",
-        "gt_preset_apply",
-        "gt_preset_delete",
-        "gt_preset_empty",
-        "gt_preset_width_title",
-        "gt_preset_width_dp",
-        "gt_preset_width_save",
-        "gt_preset_save_fail",
-        "gt_preset_deleted",
-        "gt_preset_anim_saved",
-        "gt_preset_anim_applied",
-        "gt_preset_anim_partial",
-        "gt_preset_width_saved",
-        "gt_preset_width_unknown",
-        "gt_preset_width_no_density",
         // Performance readout reposition mode (position label, four hint states, buttons).
         "gt_overlay_position",
         "gt_overlay_off",
@@ -528,6 +513,32 @@ class LocaleParityTest {
         "gt_svc_perf_done",
         // Performance readout GPU row placeholder (utilization + core clock).
         "overlay_gpu_initial",
+        // Gaming Mode interrupted-session recovery (status, restore action, honest outcomes).
+        "gt_gm_checking",
+        "gt_gm_interrupted",
+        "gt_gm_recovery_title",
+        "gt_gm_recovery_body",
+        "gt_gm_recovery_unverified",
+        "gt_gm_restore",
+        "gt_gm_restore_done",
+        "gt_gm_restore_partial",
+        "gt_gm_restore_unverified",
+        "gt_gm_restore_active",
+        "gt_gm_revert_needed",
+        "gt_gm_error_session_open",
+        "gt_gm_recovery_first",
+        // Extra freeze list inside the card: selected vs actually frozen, and its disclosure.
+        "gt_suspend_count",
+        "gt_suspend_show",
+        "gt_suspend_hide",
+        "gt_suspend_badge_frozen",
+        "gt_suspend_badge_selected",
+        // Merged cleaner card: review/clean disclosure and the advanced schedule/rules fold.
+        "gt_cleaner_review",
+        "gt_cleaner_review_hide",
+        "gt_cleaner_advanced",
+        "gt_cleaner_advanced_hide",
+        "gt_tool_cleaner_sub",
     )
 
     private fun keysIn(dir: String): Set<String> {
