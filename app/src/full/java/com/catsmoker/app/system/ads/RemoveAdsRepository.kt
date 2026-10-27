@@ -15,8 +15,8 @@ import javax.inject.Singleton
  * follow the free `ads_enabled` preference ([AdManager]) and need no
  * purchase. This stub keeps the same FQN, constructor shape and public API
  * as the playstore variant's Play Billing implementation so shared callers
- * ([SettingsViewModel]) compile against both; every member is an inert
- * default.
+ * ([com.catsmoker.app.features.settings.SettingsViewModel]) compile against both; every
+ * member is an inert default.
  */
 @Singleton
 class RemoveAdsRepository @Inject constructor() {

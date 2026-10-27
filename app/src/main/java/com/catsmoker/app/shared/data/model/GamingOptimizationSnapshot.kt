@@ -39,7 +39,9 @@ data class GamingOptimizationSnapshot(
     val vivoScreenRefreshRateAppsList: String? = null,
     /**
      * `global vivo_screen_refresh_rate_mode` as the device held it, before Gaming Mode's
-     * display-mode lock wrote [VivoDisplayMode.REFRESH_RATE_MODE_VALUE] beside the standard
+     * display-mode lock wrote
+     * [com.catsmoker.app.features.gamingtools.engine.VivoDisplayMode.REFRESH_RATE_MODE_VALUE]
+     * beside the standard
      * `min_refresh_rate`/`peak_refresh_rate` pair. Same null contract as the whitelist CSVs
      * above — null when the device is not vivo/iQOO (or the read failed), blank when the key
      * was simply not set, which the revert turns into a delete.
@@ -114,7 +116,8 @@ data class GamingOptimizationSnapshot(
     val debugVendorQtiGameFps: SettingValue? = null,
     /**
      * MediaTek game-mode nodes as they were before Gaming Mode wrote them: GED parameter node
-     * path → prior raw value, plus [MediaTekGameMode.PPM_POLICY_STATUS_NODE] → the prior
+     * path → prior raw value, plus
+     * [com.catsmoker.app.features.gamingtools.engine.MediaTekGameMode.PPM_POLICY_STATUS_NODE] → the prior
      * status-dump text (restored by re-issuing per-index states parsed from it, since the node
      * reports status rather than re-writable text).
      *
@@ -142,8 +145,9 @@ data class GamingOptimizationSnapshot(
      */
     val snapdragonCpuNodes: Map<String, String>? = null,
     /**
-     * `cpu_input_boost` and `/dev/stune` priors: boost-parent node path → prior raw value, for the
-     * nodes [CpuInputBoostNodes] would write (the master switch, the per-CPU `ib_freqs` body and
+     * `cpu_input_boost` and `/dev/stune` priors: boost-parent node path → prior raw value, for
+     * the nodes [com.catsmoker.app.features.gamingtools.engine.CpuInputBoostNodes] would write
+     * (the master switch, the per-CPU `ib_freqs` body and
      * the dynamic stune boost). Empty/null is the normal case on kernels without the interface —
      * the activation-side gate then skips the family entirely. The static top-app boost is never
      * recorded because it is never written (it is the target's reference, not a knob).
@@ -160,7 +164,8 @@ data class GamingOptimizationSnapshot(
      */
     val cpuGovernorNodes: Map<String, String>? = null,
     /**
-     * The Spectrum profile property this session wrote ([SpectrumProfile.PROFILE_PROP] or its
+     * The Spectrum profile property this session wrote
+     * ([com.catsmoker.app.features.gamingtools.engine.SpectrumProfile.PROFILE_PROP] or its
      * vendor twin), or null when the device declares no usable Spectrum interface.
      *
      * The property itself carries the prior value in [spectrumProfile]; it is stored only when
@@ -174,14 +179,16 @@ data class GamingOptimizationSnapshot(
     val spectrumProfile: String? = null,
     /**
      * The `/data` block device's queue priors: `read_ahead_kb` node → prior KB text. The device is
-     * resolved from `/proc/mounts` at capture time ([StorageTuning.dataBlockDeviceName]) and the
+     * resolved from `/proc/mounts` at capture time
+     * ([com.catsmoker.app.features.gamingtools.engine.StorageTuning.dataBlockDeviceName]) and the
      * map is empty when nothing has headroom, so a device already at its queue maximum is never
      * written and old snapshots restore nothing.
      */
     val storageTuningNodes: Map<String, String>? = null,
     /**
      * VM watermark priors: `min_free_kbytes` / `extra_free_kbytes` node → prior KB text, recorded
-     * only where [MemoryTuning] would raise the value. Empty/null means "no headroom" or an
+     * only where [com.catsmoker.app.features.gamingtools.engine.MemoryTuning] would raise the
+     * value. Empty/null means "no headroom" or an
      * unreadable device fact — the revert then touches nothing.
      */
     val memoryTuningNodes: Map<String, String>? = null

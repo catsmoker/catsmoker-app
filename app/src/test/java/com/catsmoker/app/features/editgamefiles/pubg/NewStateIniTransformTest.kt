@@ -5,7 +5,7 @@ import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
-/** The New State INI transform's rules (TODO M168), pure-JVM. */
+/** The New State INI transform's rules (backlog item M168; pure-JVM; field verification pending). */
 class NewStateIniTransformTest {
 
     private fun file(vararg lines: String): ByteArray =

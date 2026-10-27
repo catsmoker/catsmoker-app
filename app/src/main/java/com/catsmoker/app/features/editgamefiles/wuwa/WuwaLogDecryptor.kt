@@ -33,7 +33,7 @@ object WuwaLogDecryptor {
     private val HEADER_MAGIC = byteArrayOf(0x00, 0x54, 0x50)
     private val BACKUP_MAGIC = byteArrayOf(0xEF.toByte(), 0xBB.toByte(), 0xBF.toByte())
 
-    /** LUT[cipher] = cipher xor 0xA5 when cipher is odd, xor 0xEF when even — both references, verbatim. */
+    /** Each LUT entry is the cipher byte xor 0xA5 when odd, xor 0xEF when even — both references, verbatim. */
     private val XOR_LUT = ByteArray(256) { i -> (if (i % 2 == 1) (i xor 0xA5) else (i xor 0xEF)).toByte() }
 
     /** The encryption table, keyed on the *plaintext* parity — the LUT's mirror. Tests use it to round-trip. */

@@ -76,5 +76,5 @@ object VendorPerformanceKeys {
         return map
     }
 
-    private val PROP_LINE = Regex("""\[([^\]]+)]:\s*\[(.*)]""")
+    private val PROP_LINE = Regex("""\[([^]]+)]:\s*\[(.*)]""")
 }

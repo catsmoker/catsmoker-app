@@ -11,13 +11,13 @@ import org.junit.Test
  * v3.6, 51 entries), which was read before this test was written. The app's
  * original 31-key list came from `WuWa-Config-Android-main`'s `ForbiddenCvars.kt`;
  * the v3.6 list is its newer superset — drift between them must be caught
- * mechanically (TODO M102, refactor V12).
+ * mechanically (backlog M102, refactor V12 — both closed).
  *
  * Deliberate divergences from the v3.6 repo (never silent):
  * - Both spellings of the CppEffect(s)System key are kept even though v3.6 ships
  *   only the singular one: stripping a key the game does not watch is harmless,
  *   leaving a watched key in place is not.
- * - Matching stays key-exact + `+CVars=`-aware (TODO M103): the repo's CI script
+ * - Matching stays key-exact + `+CVars=`-aware (closed item M103): the repo's CI script
  *   uses substring matching, which is weaker than the app stripper and is NOT
  *   adopted — only the keys are synced.
  */

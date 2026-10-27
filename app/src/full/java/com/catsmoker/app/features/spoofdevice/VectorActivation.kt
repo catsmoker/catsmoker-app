@@ -291,11 +291,11 @@ object VectorActivation {
      */
     private val LOADING_LINE =
         Regex(
-            """^\[\s*\S+\s+(\d+):\s*\d+:\s*\d+\s+\S+\s*\].*Loading legacy module (\S+)(?:\s+from\s+(\S+))?"""
+            """^\[\s*\S+\s+(\d+):\s*\d+:\s*\d+\s+\S+\s*].*Loading legacy module (\S+)(?:\s+from\s+(\S+))?"""
         )
 
     /** UID at the start of a daemon log line: `[ timestamp uid: pid: tid level/tag ]`. */
-    private val LOG_UID = Regex("""^\[\s*\S+\s+(\d+):\s*\d+:\s*\d+\s+\S+\s*\]""")
+    private val LOG_UID = Regex("""^\[\s*\S+\s+(\d+):\s*\d+:\s*\d+\s+\S+\s*]""")
 
     /** Matches our own `XposedBridge.log("$TAG: spoofing <pkg> as <model>")` daemon lines. */
     private val SPOOF_LINE = Regex("""CatsmokerLSP: spoofing (\S+) as (\S+)""")

@@ -19,6 +19,7 @@ import androidx.compose.ui.unit.sp
 import com.catsmoker.app.R
 import com.catsmoker.app.shared.ui.components.ScreenScaffold
 import com.catsmoker.app.shared.ui.components.SectionCard
+import com.catsmoker.app.shared.ui.theme.CatsmokerSpacing
 
 @Composable
 fun SafeModeScreen(
@@ -86,7 +87,7 @@ fun SafeModeScreen(
                 LazyColumn(
                     modifier = Modifier.fillMaxSize(),
                     contentPadding = PaddingValues(bottom = 32.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                    verticalArrangement = Arrangement.spacedBy(CatsmokerSpacing.CardGap)
                 ) {
                     items(filteredApps) { app ->
                         SafeModeItem(

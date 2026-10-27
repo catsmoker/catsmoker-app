@@ -130,7 +130,7 @@ object CpuInputBoostNodes {
 
     /**
      * The file names this family can ever write. The set exists so the deliberate non-writes can
-     * be asserted: [CpuInputBoostNodesTest] fails if any name starts naming a GPU, thermal,
+     * be asserted: `CpuInputBoostNodesTest` fails if any name starts naming a GPU, thermal,
      * voltage or screen control.
      */
     fun writableNodeNames(): List<String> = listOf(

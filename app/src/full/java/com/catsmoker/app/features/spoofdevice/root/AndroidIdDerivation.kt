@@ -9,8 +9,8 @@ import com.catsmoker.app.shared.data.model.LSPosedConfig
  * Ported byte-for-byte from the reference's `deriveAndroidId`
  * (`reference/spoofdevice/COPG-JSON/webroot/js/copg-data.js`, read in full): FNV-1a 64 over the
  * low byte of every UTF-16 unit (`charCodeAt(i) & 0xff` — identical to the native C++ for the
- * ASCII domain of hex seeds and package names, and the JS shape is what [AndroidIdDerivationTest]
- * pins), then the splitmix64 finalizer. 64-bit wrap is the reference's `& MASK`; Kotlin `Long`
+ * ASCII domain of hex seeds and package names, and the JS shape is what the
+ * `AndroidIdDerivationTest` pins), then the splitmix64 finalizer. 64-bit wrap is the reference's `& MASK`; Kotlin `Long`
  * arithmetic wraps to the same bit pattern, so every step below is just `xor`, `ushr` and `*`.
  *
  * Two deliberate divergences from the reference:

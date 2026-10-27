@@ -64,7 +64,7 @@ class WuwaRemovedFeaturesTest {
         "onDeleteHistory",
         "onClearHistory",
         // The Convene (gacha) tracker: built, never wired, deleted by product
-        // decision 2026-10-17 (TODO item 15 — do not re-add).
+        // decision 2026-10-17 (product item 15 — permanently removed, do not re-add).
         "WuwaGacha",
         "GachaFetcher",
         "GachaHistoryStore",

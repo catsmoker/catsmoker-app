@@ -17,8 +17,8 @@ object VariantCapabilities {
 
     /**
      * No free Settings "Enable Ads" toggle on this variant: ads follow only
-     * the verified `remove_ads` purchase ([AdManager] ignores `ads_enabled`),
-     * so the toggle must stay hidden and unwired here.
+     * the verified `remove_ads` purchase ([com.catsmoker.app.system.ads.AdManager]
+     * ignores `ads_enabled`), so the toggle must stay hidden and unwired here.
      */
     const val HAS_FREE_ADS_TOGGLE = false
 }

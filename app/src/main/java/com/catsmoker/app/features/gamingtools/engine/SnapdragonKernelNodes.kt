@@ -85,7 +85,7 @@ object SnapdragonKernelNodes {
 
     /**
      * Every file this object can ever write, by file name. The set exists so the deliberate
-     * non-writes above can be asserted, not merely intended: [SnapdragonKernelNodesTest] fails if
+     * non-writes above can be asserted, not merely intended: `SnapdragonKernelNodesTest` fails if
      * any name here starts naming a GPU, a pwrlevel or a thermal control.
      */
     val writableFileNames: List<String> = listOf(

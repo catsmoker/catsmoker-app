@@ -24,7 +24,7 @@ import javax.inject.Singleton
  * Feral games keep this file in `Android/data/…/files/feral_app_support/`, which Android 11+
  * exposes to the user through SAF. So the channel set here is deliberate:
  *
- * - **Root / Shizuku shell** ([ShellRunner]) — the same `cp` staging [HsrGameManager] and
+ * - **Root / Shizuku shell** ([ShellRunner]) — the same `cp` staging `HsrGameManager` and
  *   the WuWa deployer use; also the only channel that can `am force-stop` the game first.
  * - **SAF** — the no-root path itself. The user picks the game's `Android/data` folder once
  *   (the same persisted grant the custom-upload flow stores under the game's package name);
@@ -33,7 +33,7 @@ import javax.inject.Singleton
  *   of pretending, because a running GRID overwrites this file from memory on exit and
  *   would clobber the edit.
  *
- * Divergences from [HsrGameManager], all forced by the file rather than taste: this file is
+ * Divergences from `HsrGameManager`, all forced by the file rather than taste: this file is
  * shared state, not a per-package blob, so backups key on the package with the file's own
  * name; and verification is byte-level — the written file is read back and compared against
  * the exact bytes pushed, since a registry XML's binary blobs leave no room for a

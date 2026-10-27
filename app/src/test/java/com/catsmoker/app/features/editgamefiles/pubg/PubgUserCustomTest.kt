@@ -5,7 +5,7 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 import java.io.File
 
-/** The merge-preserve writer's contract + the shipped template's shape (TODO M190/M191). */
+/** The merge-preserve writer's contract + the shipped template's shape (closed items M190/M191). */
 class PubgUserCustomTest {
 
     private val template = "[UserCustom DeviceProfile]\n+CVars=0ABC\n".toByteArray(Charsets.UTF_8)

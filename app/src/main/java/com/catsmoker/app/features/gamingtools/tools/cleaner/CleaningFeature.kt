@@ -12,7 +12,7 @@ import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.withContext
 import java.io.File
 import java.nio.file.Files
-import kotlin.coroutines.coroutineContext
+import kotlinx.coroutines.currentCoroutineContext
 
 object CleaningFeature {
     /**
@@ -420,7 +420,7 @@ object CleaningFeature {
             }
 
             for (child in children) {
-                if (++visited % 512 == 0) coroutineContext.ensureActive()
+                if (++visited % 512 == 0) currentCoroutineContext().ensureActive()
 
                 // Links can point back up the tree or off it, so they are never followed, never
                 // deleted, and never treated as absence of content.
@@ -575,14 +575,14 @@ object CleaningFeature {
         )
 
         for ((category, globs) in globsByCategory) {
-            coroutineContext.ensureActive()
+            currentCoroutineContext().ensureActive()
             for ((path, size) in duSizes(shellRunner, globs)) {
                 if (size > ONE_BLOCK_BYTES) buckets.add(category, path, size)
             }
         }
 
         if (installedPackages != null) {
-            coroutineContext.ensureActive()
+            currentCoroutineContext().ensureActive()
             for ((path, size) in shellCorpses(shellRunner, rootPath, installedPackages)) {
                 buckets.add(Category.CORPSES, path, size)
             }
@@ -823,7 +823,7 @@ object CleaningFeature {
 
             for (result in results) {
                 for (path in result.affectedPaths) {
-                    coroutineContext.ensureActive()
+                    currentCoroutineContext().ensureActive()
                     val file = File(path)
                     if (isProtected(file)) {
                         // The scan already refuses to claim these, so this is a backstop. It is

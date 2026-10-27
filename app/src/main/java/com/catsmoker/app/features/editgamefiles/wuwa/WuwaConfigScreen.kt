@@ -12,7 +12,6 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontFamily
@@ -25,9 +24,8 @@ import com.catsmoker.app.features.editgamefiles.ConfigBackupStore
 import com.catsmoker.app.features.gamingtools.ui.CollapsibleExplainer
 import com.catsmoker.app.shared.ui.components.ScreenScaffold
 import com.catsmoker.app.shared.ui.components.SectionCard
+import com.catsmoker.app.shared.ui.theme.CatsmokerSpacing
 import kotlinx.coroutines.flow.collectLatest
-import java.text.SimpleDateFormat
-import java.util.Date
 import com.catsmoker.app.shared.ui.components.CatsmokerButton
 import com.catsmoker.app.shared.ui.components.CatsmokerOutlinedButton
 import com.catsmoker.app.shared.ui.components.ChipFlowRow
@@ -521,6 +519,9 @@ fun WuwaConfigScreen(
                 uiState.deployReport?.let { report -> DeployReportCard(report) }
             }
 
+            // Deploy and community packs are separate cards in the same stack; without this
+            // gap the two surfaces rendered flush against each other.
+            Spacer(modifier = Modifier.height(CatsmokerSpacing.CardGap))
             CommunityPacksCard(
                 uiState = uiState,
                 onImportPack = onImportPack,

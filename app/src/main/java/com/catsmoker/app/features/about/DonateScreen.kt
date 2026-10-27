@@ -41,6 +41,7 @@ import com.catsmoker.app.R
 import kotlinx.coroutines.launch
 import com.catsmoker.app.shared.ui.components.ScreenScaffold
 import com.catsmoker.app.shared.ui.components.SectionCard
+import com.catsmoker.app.shared.ui.theme.CatsmokerSpacing
 import com.catsmoker.app.shared.ui.theme.CatsmokerTheme
 
 /**
@@ -128,7 +129,7 @@ fun DonateScreen(onBack: () -> Unit) {
     ) {
         Column(
             modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(bottom = 32.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
+            verticalArrangement = Arrangement.spacedBy(CatsmokerSpacing.CardGap)
         ) {
             // Donations are voluntary gifts handled entirely by external processors —
             // stated up front so nobody mistakes them for a purchase.

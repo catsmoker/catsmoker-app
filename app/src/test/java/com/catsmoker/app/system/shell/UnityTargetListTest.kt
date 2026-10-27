@@ -12,7 +12,8 @@ import org.junit.Test
  * wrong-type tolerance, missing-global defaults, per-package resolve with
  * presence flag, and the fps:0 / presence-gate unload rule. No watcher, no
  * native, no socket — behavioral use is blocked on ban-risk review + NDK
- * consumer + profile-model approval (TODO §2 item 13).
+ * consumer + profile-model approval (backlog §2 item 13 — still open; no code
+ * is owed until those land).
  */
 class UnityTargetListTest {
 

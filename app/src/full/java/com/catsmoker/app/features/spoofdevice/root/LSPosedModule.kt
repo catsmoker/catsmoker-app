@@ -444,7 +444,7 @@ class LSPosedModule : IXposedHookLoadPackage {
 
         val displayClass = XposedHelpers.findClassIfExists("android.view.Display", classLoader)
             ?: try {
-                android.view.Display::class.java
+                Display::class.java
             } catch (_: Throwable) {
                 return
             }

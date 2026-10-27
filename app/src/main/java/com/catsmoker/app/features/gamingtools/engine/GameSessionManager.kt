@@ -32,9 +32,8 @@ object GameSessionDecider {
         return when {
             activePkg == null && isGame -> Action.Start(foregroundPkg)
             activePkg != null && !isGame -> Action.Stop(activePkg)
-            activePkg != null && isGame && activePkg != foregroundPkg ->
-                Action.Switch(from = activePkg, to = foregroundPkg)
-            else -> Action.Noop
+            activePkg != null && activePkg != foregroundPkg ->
+                Action.Switch(from = activePkg, to = foregroundPkg)            else -> Action.Noop
         }
     }
 }

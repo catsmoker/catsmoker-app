@@ -167,9 +167,7 @@ class MetricsEngine(
             }
         }
         runCatching {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                power.addThermalStatusListener(context.mainExecutor, listener)
-            }
+            power.addThermalStatusListener(context.mainExecutor, listener)
         }.onSuccess {
             thermalStatusListener = listener
         }.onFailure {

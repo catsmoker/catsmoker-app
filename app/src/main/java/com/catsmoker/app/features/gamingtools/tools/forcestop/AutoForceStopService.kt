@@ -220,7 +220,7 @@ class AutoForceStopService : Service() {
      * Whether the user has granted usage access to this app.
      *
      * `PACKAGE_USAGE_STATS` is an appop, not a runtime permission: `checkSelfPermission` always
-     * reports it denied, so the op has to be read from [AppOpsManager] instead.
+     * reports it denied, so the op has to be read from [android.app.AppOpsManager] instead.
      */
     private fun hasUsageAccess(): Boolean = ForegroundWatcher.hasUsageAccess(this)
 

@@ -84,7 +84,7 @@ object StorageTuning {
     private val SCSI_PARTITION = Regex("""^((?:sd|vd|hd)[a-z]+)\d+$""")
 
     /** `mmcblk0p42` → `mmcblk0`, `nvme0n1p3` → `nvme0n1`. */
-    private val MMC_PARTITION = Regex("""^((?:mmcblk\d+)|(?:nvme\d+n\d+))p\d+$""")
+    private val MMC_PARTITION = Regex("""^((?:mmcblk\d+|nvme\d+n\d+))p\d+$""")
 
     /** Names that are already a whole disk (or a mapper device) and need no folding. */
     private val WHOLE_DISK = Regex("""^(?:sd[a-z]+|vd[a-z]+|hd[a-z]+|mmcblk\d+|nvme\d+n\d+|dm-\d+)$""")

@@ -18,11 +18,11 @@ package com.catsmoker.app.features.editgamefiles.wuwa
  *    database would be fabricating the very verification that made them safe.
  *  - No **log-cvar import / per-device CvarOptimizer retune**: the builders run on
  *    [WuwaDeviceInfo] facts this device reported (EGL, Build, DisplayMetricsProvider) plus
- *    whatever [existingEngineIni] could be read, not on a log the user had to go find.
+ *    whatever `existingEngineIni` could be read, not on a log the user had to go find.
  *    The log-derived axes live downstream instead — [WuwaLogDecryptor]/[WuwaLogParser]
  *    feed [WuwaSmartBrain] and [WuwaBenchmarkTuner], which re-score and re-step from measured
  *    evidence. Thermal throttling is therefore never guessed at inside the generator.
- *  - The reference's [LogInfo] is filled from an uploaded game log. Here
+ *  - The reference's `LogInfo` is filled from an uploaded game log. Here
  *    [WuwaDeviceInfo] is filled from real device reads — EGL for the GPU strings,
  *    `Build` for the model and SoC, [com.catsmoker.app.shared.util.DisplayMetricsProvider]
  *    for the resolution — so the same builders run on facts this device reported, not on a
@@ -142,7 +142,7 @@ object WuWaConfigGenerator {
         val allowRestrictedCvars: Boolean = true,
         val enableGSR: Boolean = false,
         val experimentalCvars: Boolean = false,
-        /** Run the CVar-database hygiene pass over Engine.ini (needs [cvarDb] supplied). */
+        /** Run the CVar-database hygiene pass over Engine.ini (needs `cvarDb` supplied). */
         val optimizeWithCvarDb: Boolean = false,
         // NOTE (product requirement): the analyzed-log cvar import is permanently excluded —
         // no log-derived merge exists here. Do not re-add.

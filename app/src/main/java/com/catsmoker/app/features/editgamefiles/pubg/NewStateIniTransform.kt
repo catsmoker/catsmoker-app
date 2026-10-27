@@ -1,10 +1,11 @@
 package com.catsmoker.app.features.editgamefiles.pubg
 
 /**
- * PUBG: New State's `GameUserSettings.ini` transform (TODO M168), ported from the New State
+ * PUBG: New State's `GameUserSettings.ini` transform (backlog item M168: implementation shipped,
+ * field verification still blocked on a launchable New State device), ported from the New State
  * branch of `reference/Magisk-Modules/Unlocker-p4/customize.sh` — its sed edits, minus the
  * module's concealment commands (`magiskhide`, `adb_enabled 0`, denylist edits — a rejected
- * pattern, TODO M170) and minus two image renames that were never about the game.
+ * pattern, closed item M170) and minus two image renames that were never about the game.
  *
  * What the reference edits, and what this port does with it:
  * - `InGameSetting=...` — replaced with the reference's tuple (every quality key `ULTRA`, the

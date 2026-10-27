@@ -4,7 +4,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Test
 
 /**
- * Pins the performance readout's position math (TODO M49 / V16).
+ * Pins the performance readout's position math (backlog M49 / V16 — shipped).
  *
  * The service is device-only, but the part that decides where a stored or dragged position may
  * land is pure arithmetic and is pinned here: the legal range is the display minus the panel and

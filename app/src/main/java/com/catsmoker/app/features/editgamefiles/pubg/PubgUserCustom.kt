@@ -1,7 +1,8 @@
 package com.catsmoker.app.features.editgamefiles.pubg
 
 /**
- * The `UserCustom.ini` write shape the closed-source PUBG GFX tools use (TODO M190/M191).
+ * The `UserCustom.ini` write shape the closed-source PUBG GFX tools use (backlog items
+ * M190/M191; implementation shipped).
  *
  * The game's file carries two sections: `[UserCustom DeviceProfile]` (the active profile, all
  * values in the native `+CVars=<hex>` encoding) and `[BackUp DeviceProfile]` (the profile the
@@ -12,8 +13,8 @@ package com.catsmoker.app.features.editgamefiles.pubg
  * The shipped template (`assets/PUBG/UserCustom/DeviceProfile.ini`) is the eu tool's own string
  * constant, byte-identical to 29/29 lines of the pinned eu fixture and 28 lines of the live
  * 4.6.0 repull (`app/src/test/resources/pubg_usercustom_*.ini`). What the hex bodies decode to
- * is still unverified (TODO M190) — so the previous file always goes to `ConfigBackupStore`
- * before a write, and the game's own backup section is never touched.
+ * is still unverified (backlog item M190) — so the previous file always goes to
+ * `ConfigBackupStore` before a write, and the game's own backup section is never touched.
  */
 object PubgUserCustom {
 

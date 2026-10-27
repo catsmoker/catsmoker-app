@@ -41,7 +41,7 @@ object CleanerPatternMatcher {
 
     /**
      * Compiles keep-out patterns once per scan. Invalid regular expressions are skipped rather
-     * than thrown: [CleanerPatternStore.addBlacklist] rejects them at write time, so one here can
+     * than thrown: [CleanerPatternStore.addCleanPattern] rejects them at write time, so one here can
      * only mean an entry that arrived some other way — and a bad pattern must never take the
      * whole scan down with it.
      */

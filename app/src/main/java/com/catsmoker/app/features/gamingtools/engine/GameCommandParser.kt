@@ -48,8 +48,8 @@ object GameCommandParser {
     const val CUSTOM_MODE = 4
 
     private val CURRENT = Regex("""current mode:\s*([A-Za-z0-9_]+)""", RegexOption.IGNORE_CASE)
-    private val AVAILABLE = Regex("""available game modes:\s*\[([^\]]*)]""", RegexOption.IGNORE_CASE)
-    private val MODE_BLOCK = Regex("""\[Game Mode:(\d+)([^\]]*)]""")
+    private val AVAILABLE = Regex("""available game modes:\s*\[([^]]*)]""", RegexOption.IGNORE_CASE)
+    private val MODE_BLOCK = Regex("""\[Game Mode:(\d+)([^]]*)]""")
     private val FPS = Regex("""Fps:(\d+)""")
     private val SCALING = Regex("""Scaling:([0-9.]+)""")
     private val NO_INTERVENTION = Regex("""No intervention found""", RegexOption.IGNORE_CASE)

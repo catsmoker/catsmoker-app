@@ -641,7 +641,7 @@ class MagiskModuleBuilderTest {
         assertTrue(MagiskModuleBuilder.bootSafeProperties(empty).isEmpty())
     }
 
-    /** The model survives when only [ModuleSpec.spoofedModel] carries it. */
+    /** The model survives when only [MagiskModuleBuilder.ModuleSpec.spoofedModel] carries it. */
     @Test
     fun theSpoofedModelIsTheFallbackSourceOfTheModel() {
         val noProp = spec(props = linkedMapOf("ro.build.id" to "UP1A.260805.001"), model = "SM-S948B")

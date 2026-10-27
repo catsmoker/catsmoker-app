@@ -17,7 +17,7 @@ class LogcatStreamer(
     private val processFactory: (Array<String>) -> Process = { args ->
         ProcessBuilder(*args).redirectErrorStream(true).start()
     },
-    private val maxLines: Int = MAX_LINES,
+    maxLines: Int = MAX_LINES,
     private val pollIntervalMs: Long = POLL_INTERVAL_MS,
 ) {
 

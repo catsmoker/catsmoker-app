@@ -13,8 +13,8 @@ import java.io.File
  * This test bans the removed dashboard pieces from the Logs sources so they
  * cannot creep back: refresh buttons, filters, recording, exit history, source
  * cards, status lines, advanced sections, and the privileged snapshot/clear
- * paths. Recording infrastructure ([SessionRecorder]) and exit history
- * ([AppExitReader]) had no other callers and were deleted with their UI.
+ * paths. Recording infrastructure (`SessionRecorder`) and exit history
+ * (`AppExitReader`) had no other callers and were deleted with their UI.
  */
 class LogsScreenSimplicityTest {
 

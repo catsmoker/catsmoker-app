@@ -169,7 +169,7 @@ private fun WebsiteLegalFooter(uriHandler: UriHandler, legalUrl: String) {
 }
 
 /**
- * One headed section of a legal page. Headings use [MaterialTheme.typography.titleSmall]
+ * One headed section of a legal page. Headings use `MaterialTheme.typography.titleSmall`
  * so screen readers and large-text scaling treat them as structure, not decoration.
  */
 @Composable

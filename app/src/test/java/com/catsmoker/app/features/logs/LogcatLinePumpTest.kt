@@ -1,9 +1,7 @@
 package com.catsmoker.app.features.logs
 
 import java.io.ByteArrayInputStream
-import java.io.ByteArrayOutputStream
 import java.io.InputStream
-import java.io.OutputStream
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test

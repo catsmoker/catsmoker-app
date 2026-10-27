@@ -146,7 +146,9 @@ fun HsrGraphicsScreen(
 
                     if (missingInstall && uiState.loadFailure != null) {
                         HsrLoadFailureCard(uiState.loadFailure, onRefresh, onShowAnyway = null)
-                        Spacer(modifier = Modifier.height(12.dp))
+                        // Flat format hides the frame-rate card below, so its leading spacer
+                        // cannot be the only gap — add this one only when that card follows.
+                        if (!flat) Spacer(modifier = Modifier.height(12.dp))
                     }
 
                     if (!flat) {
@@ -256,11 +258,12 @@ fun HsrGraphicsScreen(
                         Spacer(modifier = Modifier.height(4.dp))
                         QualitySlider(stringResource(R.string.gf_hsr_q_tier), settings.graphicsQuality, qualityNameFor(settings.graphicsQuality)) { v -> onUpdate { it.copy(graphicsQuality = v) } }
                     }
-
-                    Spacer(modifier = Modifier.height(12.dp))
                     }
 
-                    Spacer(modifier = Modifier.height(12.dp))
+                    // Each section below is JSON-only; in flat format its leading spacer
+                    // would stack with the others and leave one oversized gap, so only
+                    // emit the gap when the section actually renders.
+                    if (!flat) Spacer(modifier = Modifier.height(12.dp))
 
                     // One-tap starting points from the community reference (Low…Max): a single
                     // undo step, and every slider below stays adjustable afterwards.
@@ -287,7 +290,7 @@ fun HsrGraphicsScreen(
                     }
                     }
 
-                    Spacer(modifier = Modifier.height(12.dp))
+                    if (!flat) Spacer(modifier = Modifier.height(12.dp))
 
                     // JSON-backed toggles — hidden in flat format with the rest.
                     if (!flat) {
@@ -368,7 +371,7 @@ fun HsrGraphicsScreen(
                     }
                     }
 
-                    Spacer(modifier = Modifier.height(12.dp))
+                    if (!flat) Spacer(modifier = Modifier.height(12.dp))
 
                     if (!flat) {
                     SectionCard {

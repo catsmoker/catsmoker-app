@@ -23,7 +23,7 @@ import com.google.gson.JsonParser
  * An `fps` value here is a stored number only: only a measured panel-peak value
  * is ever admissible behaviorally (no-caps rule), and any behavioral consumer
  * stays blocked on ban-risk review + NDK consumer + profile-model approval
- * (TODO §2 item 13).
+ * (backlog §2 item 13 — still open; no code is owed until those land).
  */
 object UnityTargetList {
 

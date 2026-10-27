@@ -60,6 +60,7 @@ import com.catsmoker.app.shared.data.model.GameInfo
 import com.catsmoker.app.shared.ui.components.*
 import com.catsmoker.app.shared.util.DisplayMetricsProvider
 import com.catsmoker.app.shared.util.formatBytes
+import com.catsmoker.app.shared.ui.theme.CatsmokerSpacing
 import com.catsmoker.app.shared.ui.theme.CatsmokerTheme
 
 /** How many library rows a collapsed "Your Games" list shows. */
@@ -535,7 +536,7 @@ fun GamingToolsScreen(
                         if (showAllGames) matchingGames else matchingGames.take(GAME_LIBRARY_PREVIEW)
                     Column(
                         modifier = Modifier.fillMaxWidth(),
-                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                        verticalArrangement = Arrangement.spacedBy(CatsmokerSpacing.CardGap)
                     ) {
                         visibleGames.forEach { game ->
                             GameLibraryCard(
@@ -564,8 +565,8 @@ fun GamingToolsScreen(
                 }
             }
 
-            Spacer(modifier = Modifier.height(24.dp))
-            Text(stringResource(R.string.gt_section_gaming_mode), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(bottom = 12.dp))
+            Spacer(modifier = Modifier.height(CatsmokerSpacing.SectionGap))
+            SectionLabel(stringResource(R.string.gt_section_gaming_mode))
             GamingModeCard(
                 gamingState = gamingState,
                 report = gamingReport,
@@ -589,16 +590,16 @@ fun GamingToolsScreen(
                 onAddKeptApp = onShowSuspendExemptPicker,
                 onRemoveKeptApp = onRemoveSuspendExemptPackage
             )
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(CatsmokerSpacing.CardGap))
             FixedPerformanceModeCard(
                 enabled = isFixedPerformanceMode,
                 onToggle = onToggleFixedPerformance,
                 isGamingModeActive = isActive
             )
-            Spacer(modifier = Modifier.height(24.dp))
+            Spacer(modifier = Modifier.height(CatsmokerSpacing.SectionGap))
 
-            Text(stringResource(R.string.gt_section_performance), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(bottom = 12.dp))
-            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            SectionLabel(stringResource(R.string.gt_section_performance))
+            Column(verticalArrangement = Arrangement.spacedBy(CatsmokerSpacing.CardGap)) {
                 ExpandableToolCard(title = stringResource(R.string.gt_tool_sound_title), subtitle = stringResource(R.string.gt_tool_sound_sub), icon = Icons.AutoMirrored.Filled.VolumeUp) {
                     BoostContent(uiState.boostLevel, uiState.audioOutput, onBoostChange)
                 }
@@ -668,9 +669,9 @@ fun GamingToolsScreen(
                 // in KernelInfo/ThermalZoneReader for any future diagnostics use.
             }
 
-            Spacer(modifier = Modifier.height(24.dp))
-            Text(stringResource(R.string.gt_section_graphics), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(bottom = 12.dp))
-            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            Spacer(modifier = Modifier.height(CatsmokerSpacing.SectionGap))
+            SectionLabel(stringResource(R.string.gt_section_graphics))
+            Column(verticalArrangement = Arrangement.spacedBy(CatsmokerSpacing.CardGap)) {
                 ExpandableToolCard(title = stringResource(R.string.gt_tool_screen_title), subtitle = stringResource(R.string.gt_tool_screen_sub), icon = Icons.Default.AspectRatio) {
                     ResolutionChangerContent(
                         native = uiState.nativeResolution,
@@ -705,9 +706,9 @@ fun GamingToolsScreen(
                 }
             }
 
-            Spacer(modifier = Modifier.height(24.dp))
-            Text(stringResource(R.string.gt_section_overlays), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(bottom = 12.dp))
-            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            Spacer(modifier = Modifier.height(CatsmokerSpacing.SectionGap))
+            SectionLabel(stringResource(R.string.gt_section_overlays))
+            Column(verticalArrangement = Arrangement.spacedBy(CatsmokerSpacing.CardGap)) {
                 ExpandableToolCard(
                     title = stringResource(R.string.gt_tool_fps_title),
                     subtitle = stringResource(R.string.gt_tool_fps_sub),
@@ -738,9 +739,9 @@ fun GamingToolsScreen(
                 }
             }
 
-            Spacer(modifier = Modifier.height(24.dp))
-            Text(stringResource(R.string.gt_section_focus_network), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(bottom = 12.dp))
-            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            Spacer(modifier = Modifier.height(CatsmokerSpacing.SectionGap))
+            SectionLabel(stringResource(R.string.gt_section_focus_network))
+            Column(verticalArrangement = Arrangement.spacedBy(CatsmokerSpacing.CardGap)) {
                 FeatureToggleCard(title = stringResource(R.string.gt_tool_dnd_title), subtitle = stringResource(R.string.gt_tool_dnd_sub), icon = Icons.Default.NotificationsOff, checked = uiState.isDndEnabled, onCheckedChange = onToggleDnd)
                 // Two independent ways to stop other apps using the network, and the card carries no
                 // toggle of its own: each switch lives in the body with its own state and its own
@@ -781,9 +782,9 @@ fun GamingToolsScreen(
                 }
             }
 
-            Spacer(modifier = Modifier.height(24.dp))
-            Text(stringResource(R.string.gt_section_bg_apps), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(bottom = 12.dp))
-            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            Spacer(modifier = Modifier.height(CatsmokerSpacing.SectionGap))
+            SectionLabel(stringResource(R.string.gt_section_bg_apps))
+            Column(verticalArrangement = Arrangement.spacedBy(CatsmokerSpacing.CardGap)) {
                 ExpandableToolCard(
                     title = stringResource(R.string.gt_tool_afs_title),
                     subtitle = stringResource(R.string.gt_tool_afs_sub),
@@ -821,9 +822,9 @@ fun GamingToolsScreen(
                 // store stay unchanged; the screen only hosts the picker dialog.
             }
 
-            Spacer(modifier = Modifier.height(24.dp))
-            Text(stringResource(R.string.gt_section_memory), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(bottom = 12.dp))
-            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            Spacer(modifier = Modifier.height(CatsmokerSpacing.SectionGap))
+            SectionLabel(stringResource(R.string.gt_section_memory))
+            Column(verticalArrangement = Arrangement.spacedBy(CatsmokerSpacing.CardGap)) {
                 RamBoostCard(
                     uiState.isBoostingRam,
                     uiState.ramResult,

@@ -5,7 +5,8 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 /**
- * Pins the force-stop kill cooldown (TODO M70): a rapid A→B→A foreground switch must not
+ * Pins the force-stop kill cooldown (backlog M70; the 5× poll window stays a heuristic pending
+ * device observation): a rapid A→B→A foreground switch must not
  * kill A twice within seconds for nothing — the first kill already did the job.
  *
  * There is no reference to port here (neither tree has a killer, let alone a cooldown), so

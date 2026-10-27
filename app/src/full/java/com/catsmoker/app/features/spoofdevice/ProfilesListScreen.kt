@@ -28,6 +28,7 @@ import com.catsmoker.app.shared.data.repository.SpoofRepository
 import com.catsmoker.app.shared.ui.components.CatsmokerButton
 import com.catsmoker.app.shared.ui.components.ScreenScaffold
 import com.catsmoker.app.shared.ui.components.SectionCard
+import com.catsmoker.app.shared.ui.theme.CatsmokerSpacing
 
 /**
  * The profile list: Default Profile plus user profiles, nothing else.
@@ -122,7 +123,7 @@ fun ProfilesListScreen(
             LazyColumn(
                 modifier = Modifier.fillMaxSize(),
                 contentPadding = PaddingValues(bottom = 32.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp)
+                verticalArrangement = Arrangement.spacedBy(CatsmokerSpacing.CardGap)
             ) {
                 items(ordered, key = { it.id }) { entry ->
                     val isDefault = SpoofRepository.isDefault(entry)

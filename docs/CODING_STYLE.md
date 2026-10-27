@@ -88,6 +88,13 @@ These recur across the codebase — a reviewer will expect them:
   `GlassBorder`, top-highlight gradient, soft shadow; `accentGlow = true`
   when selected or active). Never hand-roll a card surface; disabled cards
   stay flat grey.
+- Card rhythm comes from `CatsmokerSpacing` (`shared/ui/theme/Spacing.kt`):
+  `CardGap` 12dp between sibling cards (stacked or side by side),
+  `SectionGap` 24dp between labelled sections, `LabelGap` 8dp from a section
+  label to its first card. Pass siblings through `CardGroup` or
+  `Arrangement.spacedBy(CatsmokerSpacing.CardGap)` and headings through
+  `SectionLabel`; don't hand-place per-pair `Spacer`s. A card is a surface,
+  not a layout, so it carries no outer margin — the host spaces it.
 - Buttons are `CatsmokerButton` (crimson spot-glow when live). Tiles/icons use
   `QuickActionButton` (`TactileBadge`: gradient + highlight + shadow).
 - Numerals/scores use `MetricNumerals` (Ndot dot-matrix); body copy stays a

@@ -7,14 +7,15 @@ import org.junit.Test
 import java.io.File
 
 /**
- * The native-hex `UserCustom.ini` corpus for a future `+CVars=` encoder (TODO M190/M212).
+ * The native-hex `UserCustom.ini` corpus for a future `+CVars=` encoder (backlog items
+ * M190/M212; the encoder is not built, so the corpus is pinned as data only).
  *
  * Both files are shipped template blobs from the two decompiled reference tools
  * (`reference/pubg-closed-source-tools/`): the section is `[UserCustom DeviceProfile]`,
  * every cvar line is a `+CVars=<hex>` blob the engine decodes at runtime (proven native
  * encoding, not obfuscation — both tools emit it). Meanings of individual hex bodies are
  * UNVERIFIED: this test pins the corpus shape only, and no whole template is ever pushed
- * (see TODO M211/M189 — whole-blob push stays rejected).
+ * (items M211/M189 are closed — whole-blob push stays rejected).
  */
 class PubgUserCustomCorpusTest {
 

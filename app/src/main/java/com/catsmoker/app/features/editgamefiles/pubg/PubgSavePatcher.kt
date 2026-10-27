@@ -57,7 +57,7 @@ object PubgSavePatcher {
      * Other int fields real saves carry, reported by [read] but never written by this editor.
      *
      * The deep decompile (2026-09-07) pattern-scanned all 34 GVAS saves bundled in the two
-     * closed reference tools' APKs: these are the additional [IntProperty] fields found, each
+     * closed reference tools' APKs: these are the additional `IntProperty` fields found, each
      * observed with only one to four distinct values from one author's tools. That is
      * observation, not verification — unlike the FPS tiers (pinned per-tier by BattleGrounds_GFX's
      * own assets), the render ladder (pinned by the GFX tool's `Render Quality/` tree) and the

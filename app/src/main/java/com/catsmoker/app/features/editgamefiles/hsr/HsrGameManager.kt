@@ -96,7 +96,7 @@ class HsrGameManager @Inject constructor(
      * picker's dot used to re-list the packages by hand, which could drift from this list
      * (a KDoc cross-check is data, but a duplicated list is a second place to update); the
      * manager owns the variants, so it answers the question. Uses the same
-     * [PackageManager.getPackageInfo] check as [detectInstalledPackage] — a failed query
+     * [android.content.pm.PackageManager.getPackageInfo] check as [detectInstalledPackage] — a failed query
      * (package-visibility filtering) counts as absent for that variant, and a variant only the
      * privileged sweep could find still surfaces when the editor itself loads.
      */

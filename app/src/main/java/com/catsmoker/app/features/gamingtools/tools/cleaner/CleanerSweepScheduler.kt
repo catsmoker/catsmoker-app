@@ -13,7 +13,8 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 /**
- * Owns the recurring junk sweep's WorkManager enrollment, mirroring [DexoptSweepScheduler]:
+ * Owns the recurring junk sweep's WorkManager enrollment, mirroring
+ * [com.catsmoker.app.features.gamingtools.tools.booster.DexoptSweepScheduler]:
  * [ExistingPeriodicWorkPolicy.UPDATE] so re-applying the schedule retunes in place instead of
  * restarting the countdown, and [Constraints] requiring battery-not-low — a storage walk plus
  * deletions is real I/O, not something to run on the last percent.

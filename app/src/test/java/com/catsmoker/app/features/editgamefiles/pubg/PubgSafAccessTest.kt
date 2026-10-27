@@ -5,7 +5,7 @@ import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
-/** The version-branched picker hint's shapes (TODO M200), pinned as strings. */
+/** The version-branched picker hint's shapes (backlog item M200; field verification pending), pinned as strings. */
 class PubgSafAccessTest {
 
     private val pkg = "com.tencent.ig"

@@ -17,8 +17,9 @@ object VariantCapabilities {
 
     /**
      * The free Settings "Enable Ads" toggle is available: ads follow the
-     * `ads_enabled` preference ([AdManager]). The Play variant sets this to
-     * false — there ads follow only the verified `remove_ads` purchase.
+     * `ads_enabled` preference ([com.catsmoker.app.system.ads.AdManager]).
+     * The Play variant sets this to false — there ads follow only the
+     * verified `remove_ads` purchase.
      */
     const val HAS_FREE_ADS_TOGGLE = true
 }

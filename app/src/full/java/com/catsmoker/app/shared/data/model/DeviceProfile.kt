@@ -124,7 +124,7 @@ data class DeviceProfile(
         }
 
         if (buildFingerprint.isBlank()) {
-            val b = (if (brand.isNotBlank()) brand else manufacturer).lowercase(Locale.US)
+            val b = brand.ifBlank { manufacturer }.lowercase(Locale.US)
             buildFingerprint = String.format(
                 Locale.US,
                 "%s/%s/%s:%s/%s/%s:user/release-keys",

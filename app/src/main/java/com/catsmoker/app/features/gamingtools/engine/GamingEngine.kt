@@ -422,7 +422,7 @@ class GamingEngine(
      * Finished sweeps, newest last, persisted across process death by [BoosterHistoryStore].
      *
      * The in-memory booster log dies with the process; this is the "what did the last boost
-     * actually do" that survives. Loaded off the main thread in [init], since reading the file
+     * actually do" that survives. Loaded off the main thread in the `init` block, since reading the file
      * is real disk I/O however small.
      */
     private val _boosterHistory = MutableStateFlow<List<BoosterRun>>(emptyList())
@@ -1134,7 +1134,7 @@ class GamingEngine(
      * thermal service holding an override after every other lever is reverted — on some vendor
      * HALs the override stays engaged until it is explicitly cleared, which presents as the
      * phone running hot long after Gaming Mode is off. Activation records that one of those
-     * paths was accepted ([thermal_recovery_needed]); this runs once, on deactivation, and
+     * paths was accepted (`thermal_recovery_needed`); this runs once, on deactivation, and
      * clears the flag only when `cmd thermalservice reset` actually answered with success.
      *
      * Modelled on the reference project's `EsportsOptimizationEngine.recoverThermalOverrideIfNeeded`

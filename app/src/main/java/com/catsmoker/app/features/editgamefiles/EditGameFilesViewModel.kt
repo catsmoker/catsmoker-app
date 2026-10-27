@@ -29,7 +29,6 @@ import com.catsmoker.app.features.editgamefiles.wuwa.WuwaConfigManager
 import com.catsmoker.app.shared.data.model.GameConfig
 import com.catsmoker.app.shared.data.model.GameProfile
 import com.catsmoker.app.shared.data.model.GameType
-import com.catsmoker.app.shared.data.model.GameUploadFormat
 import com.catsmoker.app.shared.data.model.GameUploadTarget
 import com.catsmoker.app.system.shell.ShellRunner
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -101,7 +100,7 @@ class EditGameFilesViewModel @Inject constructor(
          * own `[BackUp DeviceProfile]` tail (PUBG's `UserCustom.ini`) or to patch the save's
          * fields in place (`Active.sav` profiles). The method chooser hides ZARCHIVER while set:
          * a manual copy cannot read the current file, so it could neither preserve that section
-         * nor patch the values the profile names (TODO M190/M191).
+         * nor patch the values the profile names.
          */
         val selectedProfileNeedsExistingFile: Boolean = false,
         /** String-resource IDs of the selected game's profile labels — resolved in Compose so a language switch re-renders them (a resolved string cached here would survive `recreate()` in the old language). */
@@ -133,7 +132,7 @@ class EditGameFilesViewModel @Inject constructor(
         val canPatchSave: Boolean = false,
         /**
          * True when the selected game's file opens only under root
-         * ([GameConfig.rootOnlyIniPath] — PUBG: New State, TODO M168): the method chooser never
+         * ([GameConfig.rootOnlyIniPath] — PUBG: New State, backlog item M168): the method chooser never
          * appears, the profile card carries the root note, and the restore chooser offers only
          * the root channel.
          */
@@ -250,7 +249,7 @@ class EditGameFilesViewModel @Inject constructor(
                     "PUBG/TabletView/Active.sav",
                     saveEdits = PubgSavePatcher.viewEdits(PubgSavePatcher.TABLET_VIEW)
                 ),
-                // The eu tool's own file (TODO M190/M191): `UserCustom.ini` sits in
+                // The eu tool's own file: `UserCustom.ini` sits in
                 // `Saved/Config/Android/`, not `SaveGames/`, so the profile carries its own
                 // target — and the game keeps its previous device profile in a
                 // `[BackUp DeviceProfile]` tail the push must carry over.
@@ -300,13 +299,13 @@ class EditGameFilesViewModel @Inject constructor(
 
     /**
      * PUBG: New State, from the New State branch of the reference
-     * `reference/Magisk-Modules/Unlocker-p4` (TODO M168). The game keeps `GameUserSettings.ini`
+     * `reference/Magisk-Modules/Unlocker-p4` (backlog item M168). The game keeps `GameUserSettings.ini`
      * inside its private data directory, which neither SAF nor a Shizuku shell can reach — so
      * this config ships no asset at all: APPLY runs [NewStateIniTransform] over the bytes the
-     * device already holds, through root. [saveDir]/[saveFile] are labels for the UI; the
+     * device already holds, through root. `saveDir`/`saveFile` are labels for the UI; the
      * reset, custom-upload and save-editor channels stay off, and the restore channel targets
      * the same path. The module's non-INI lines (its concealment commands) are a rejected
-     * pattern and stay out (TODO M170).
+     * pattern and stay out (closed item M170).
      */
     private fun buildNewStateConfig(): GameConfig {
         return GameConfig(
@@ -443,7 +442,7 @@ class EditGameFilesViewModel @Inject constructor(
         val config = gameConfigs[_uiState.value.selectedGame] ?: return
         // A root-only config (New State) has no asset to push and no channel but root: run its
         // transform directly, never the method chooser — none of its entries could reach the
-        // file, and offering them would be a promise they cannot keep (TODO M168).
+        // file, and offering them would be a promise they cannot keep.
         if (config.rootOnlyIniPath != null) {
             applyRootOnlyIni(config)
             return
@@ -607,8 +606,8 @@ class EditGameFilesViewModel @Inject constructor(
 
     /**
      * The save's bytes, or null with the failure already reported. Two distinct nulls:
-     * [PullOutcome.MISSING] means the privileged channel answered and the file is not there
-     * (the game has not created it yet); [PullOutcome.NO_CHANNEL] means no privileged channel
+     * [PullOutcome.Missing] means the privileged channel answered and the file is not there
+     * (the game has not created it yet); [PullOutcome.NoChannel] means no privileged channel
      * could answer at all. The old single message collapsed both into "launch the game once",
      * which read as nonsense on a device where root and Shizuku were both gone.
      */
@@ -947,7 +946,7 @@ class EditGameFilesViewModel @Inject constructor(
         pendingRestore = null
         // A root-only config has exactly one channel — its file is another app's private
         // data — so every choice lands on the root restore, which is also the only button the
-        // screen offers for it (TODO M168).
+        // screen offers for it.
         val config = gameConfigs[_uiState.value.selectedGame]
         if (config != null && config.rootOnlyIniPath != null) {
             restoreRootOnlyIni(config, entry)
@@ -996,7 +995,7 @@ class EditGameFilesViewModel @Inject constructor(
             // so no privileged-uid leftover can sit on a path this app later writes.
             // The entry's own file name picks the target: a profile whose file is not the
             // config's `saveFile` (`UserCustom.ini`) must get its bytes back into its own file
-            // and directory, never into `Active.sav` (TODO M190/M191).
+            // and directory, never into `Active.sav`.
             val profile = profileForBackup(config, entry)
             val targetName = profile?.targetFile ?: config.saveFile
             val tempFile = File.createTempFile("restore_", "_" + targetName, context.externalCacheDir ?: context.cacheDir)
@@ -1139,7 +1138,8 @@ class EditGameFilesViewModel @Inject constructor(
     // ------------------------------------------------------ root-only INI (New State)
 
     /**
-     * Applies the New State INI transform (TODO M168) — the reference module's choreography
+     * Applies the New State INI transform (backlog item M168; field verification pending) — the
+     * reference module's choreography
      * minus its concealment commands: the game is force-stopped first (it rewrites its own
      * settings on exit), the current bytes are read, transformed and backed up, the transform
      * is written back, the file keeps the reference's `chmod 0440` lock, and the result is
@@ -1315,10 +1315,10 @@ class EditGameFilesViewModel @Inject constructor(
      * copy-then-read shape the save editor uses. Null when the copy produced no file (the
      * file is gone, or the channel died between the check and the read).
      */
-    private suspend fun readRootFile(path: String): ByteArray? {
+    private suspend fun readRootFile(path: String): ByteArray? = withContext(Dispatchers.IO) {
         val tempFile = File.createTempFile("rootread_", ".tmp", context.externalCacheDir ?: context.cacheDir)
         tempFile.delete()
-        return try {
+        try {
             val copy = shellRunner.execSafeResult("cp", "-f", path, tempFile.absolutePath)
             if (copy.isSuccess && tempFile.exists()) tempFile.readBytes() else null
         } finally {
@@ -1533,7 +1533,7 @@ class EditGameFilesViewModel @Inject constructor(
     /**
      * The profile a backup entry belongs to, by the original file name [ConfigBackupStore]
      * keeps in its `<timestamp>_<name>` layout — how a restore finds the right file and
-     * directory for a profile that does not target the config's own `saveFile` (TODO M190/M191).
+     * directory for a profile that does not target the config's own `saveFile`.
      */
     private fun profileForBackup(config: GameConfig, entry: ConfigBackupStore.Entry): GameProfile? {
         val original = entry.file.name.substringAfter('_')

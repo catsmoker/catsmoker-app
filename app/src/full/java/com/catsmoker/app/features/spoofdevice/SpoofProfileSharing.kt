@@ -4,7 +4,6 @@ import com.catsmoker.app.shared.data.model.DeviceProfile
 import com.catsmoker.app.shared.data.repository.SpoofRepository
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder
-import com.google.gson.JsonObject
 import com.google.gson.JsonParser
 
 /**
@@ -13,8 +12,8 @@ import com.google.gson.JsonParser
  * Design around the real model:
  * - The payload is a [DeviceProfile] verbatim (no field is dropped, none added), so a
  *   round-trip preserves every spoofing field the editor supports.
- * - The envelope carries [FORMAT_VERSION], [DOCUMENT_TYPE], the display [name] and the
- *   optional [sourcePresetId] (display hint only — never trusted for logic).
+ * - The envelope carries [FORMAT_VERSION], [DOCUMENT_TYPE], the display
+ *   [ExportedDocument.name] and the optional [ExportedDocument.sourcePresetId] (display hint only — never trusted for logic).
  * - Internal store IDs are never exported and never honored on import: every import
  *   mints a fresh UUID, so an imported file can neither collide with nor hijack an
  *   existing profile.

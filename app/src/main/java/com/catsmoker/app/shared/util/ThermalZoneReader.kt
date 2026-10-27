@@ -7,7 +7,7 @@ import java.io.File
  * (consolidation C3).
  *
  * KernelInfo delegates here for its pre-game glance. ShellRunner's thermal
- * transport ([system.shell.ShellRunner.readThermal]) still reports raw text for
+ * transport ([com.catsmoker.app.system.shell.ShellRunner.readThermal]) still reports raw text for
  * `ThermalServiceParser`, which applies its own 0..150 C HAL plausibility band;
  * the sysfs millidegree rule here (-273..200 C stuck-sensor rejection) is the
  * shared file-reading contract both paths honour.

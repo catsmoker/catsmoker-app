@@ -20,8 +20,8 @@ import androidx.compose.ui.unit.sp
 import com.catsmoker.app.R
 import com.catsmoker.app.shared.ui.components.ScreenScaffold
 import com.catsmoker.app.shared.ui.components.SectionCard
+import com.catsmoker.app.shared.ui.theme.CatsmokerSpacing
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AppAssignmentScreen(
     uiState: SpoofDeviceViewModel.UiState,
@@ -74,7 +74,7 @@ fun AppAssignmentScreen(
                 LazyColumn(
                     modifier = Modifier.fillMaxSize(),
                     contentPadding = PaddingValues(bottom = 32.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                    verticalArrangement = Arrangement.spacedBy(CatsmokerSpacing.CardGap)
                 ) {
                     items(filteredApps) { app ->
                         AppItem(
@@ -165,7 +165,7 @@ private fun AssignProfileDialog(
     val hasLadder = uiState.rateAssignments[app.packageName].orEmpty().isNotEmpty()
     val currentId = uiState.assignments[app.packageName]
 
-    var selectedId by remember(app.packageName) { mutableStateOf<String?>(currentId) }
+    var selectedId by remember(app.packageName) { mutableStateOf(currentId) }
 
     val currentLabel = when {
         hasLadder -> stringResource(R.string.spoof_ladder_label)

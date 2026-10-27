@@ -23,9 +23,12 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.LifecycleOwner
 import com.catsmoker.app.R
+import com.catsmoker.app.shared.ui.components.CardGroup
 import com.catsmoker.app.shared.ui.components.QuickActionButton
 import com.catsmoker.app.shared.ui.components.ScreenScaffold
 import com.catsmoker.app.shared.ui.components.SectionCard
+import com.catsmoker.app.shared.ui.components.SectionLabel
+import com.catsmoker.app.shared.ui.theme.CatsmokerSpacing
 import com.catsmoker.app.shared.ui.theme.CatsmokerTheme
 import com.catsmoker.app.shared.ui.components.CatsmokerButton
 import com.catsmoker.app.shared.ui.components.LanguageOptions
@@ -170,7 +173,7 @@ fun SettingsScreen(
         ) {
             Spacer(modifier = Modifier.height(16.dp))
 
-            Text(stringResource(R.string.sys_section_appearance), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(start = 4.dp, bottom = 8.dp))
+            SectionLabel(stringResource(R.string.sys_section_appearance))
             SectionCard {
                 SettingsOptionRow(
                     title = stringResource(R.string.sys_theme_title),
@@ -191,39 +194,41 @@ fun SettingsScreen(
                 modifier = Modifier.padding(start = 4.dp, top = 6.dp)
             )
 
-            Spacer(modifier = Modifier.height(24.dp))
-            Text(stringResource(R.string.sys_section_general), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(start = 4.dp, bottom = 8.dp))
-            SectionCard {
-                SettingsToggle(stringResource(R.string.sys_analytics_title), analyticsEnabled, onAnalyticsToggled)
-                Text(
-                    stringResource(R.string.sys_analytics_sub),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.padding(top = 4.dp)
-                )
-            }
-            // Full keeps the free toggle; Play sells removal via Google Play
-            // Billing instead, so the free switch must not appear there.
-            if (VariantCapabilities.HAS_FREE_ADS_TOGGLE) {
+            Spacer(modifier = Modifier.height(CatsmokerSpacing.SectionGap))
+            SectionLabel(stringResource(R.string.sys_section_general))
+            CardGroup {
                 SectionCard {
-                    SettingsToggle(stringResource(R.string.sys_ads_title), adsEnabled, onAdsToggled)
+                    SettingsToggle(stringResource(R.string.sys_analytics_title), analyticsEnabled, onAnalyticsToggled)
                     Text(
-                        stringResource(R.string.sys_ads_sub),
+                        stringResource(R.string.sys_analytics_sub),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier.padding(top = 4.dp)
                     )
                 }
-            } else {
-                SectionCard {
-                    if (isAdFree) {
-                        AdFreeRow()
-                    } else {
-                        RemoveAdsRow(
-                            price = removeAdsPrice,
-                            isWorking = isBillingWorking,
-                            onRemoveAdsClicked = onRemoveAdsClicked
+                // Full keeps the free toggle; Play sells removal via Google Play
+                // Billing instead, so the free switch must not appear there.
+                if (VariantCapabilities.HAS_FREE_ADS_TOGGLE) {
+                    SectionCard {
+                        SettingsToggle(stringResource(R.string.sys_ads_title), adsEnabled, onAdsToggled)
+                        Text(
+                            stringResource(R.string.sys_ads_sub),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.padding(top = 4.dp)
                         )
+                    }
+                } else {
+                    SectionCard {
+                        if (isAdFree) {
+                            AdFreeRow()
+                        } else {
+                            RemoveAdsRow(
+                                price = removeAdsPrice,
+                                isWorking = isBillingWorking,
+                                onRemoveAdsClicked = onRemoveAdsClicked
+                            )
+                        }
                     }
                 }
             }
@@ -231,8 +236,8 @@ fun SettingsScreen(
             // GitHub self-updater exists only where it is compiled in (full).
             // Play updates come from the Play Store itself — no section, no entry point.
             if (VariantCapabilities.HAS_SELF_UPDATE) {
-                Spacer(modifier = Modifier.height(24.dp))
-                Text(stringResource(R.string.sys_section_updates), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(start = 4.dp, bottom = 8.dp))
+                Spacer(modifier = Modifier.height(CatsmokerSpacing.SectionGap))
+                SectionLabel(stringResource(R.string.sys_section_updates))
                 SectionCard {
                     if (isUpdating) {
                         Column {
@@ -260,30 +265,30 @@ fun SettingsScreen(
                 }
             }
 
-            Spacer(modifier = Modifier.height(24.dp))
-            Text(stringResource(R.string.sys_section_management), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(start = 4.dp, bottom = 8.dp))
-            QuickActionButton(
-                title = stringResource(R.string.sys_permissions_title),
-                subtitle = stringResource(R.string.sys_permissions_subtitle),
-                iconContainerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f),
-                iconContentColor = MaterialTheme.colorScheme.primary,
-                onClick = onOpenPermissions,
-                isFullWidth = true,
-                showChevron = true,
-                icon = { Icon(Icons.Default.Security, null) }
-            )
-
-            Spacer(modifier = Modifier.height(12.dp))
-            QuickActionButton(
-                title = stringResource(R.string.sys_logs_title),
-                subtitle = stringResource(R.string.sys_logs_subtitle),
-                iconContainerColor = MaterialTheme.colorScheme.tertiary.copy(alpha = 0.1f),
-                iconContentColor = MaterialTheme.colorScheme.onSurface,
-                onClick = onOpenLogs,
-                isFullWidth = true,
-                showChevron = true,
-                icon = { Icon(Icons.Default.Terminal, null) }
-            )
+            Spacer(modifier = Modifier.height(CatsmokerSpacing.SectionGap))
+            SectionLabel(stringResource(R.string.sys_section_management))
+            CardGroup {
+                QuickActionButton(
+                    title = stringResource(R.string.sys_permissions_title),
+                    subtitle = stringResource(R.string.sys_permissions_subtitle),
+                    iconContainerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f),
+                    iconContentColor = MaterialTheme.colorScheme.primary,
+                    onClick = onOpenPermissions,
+                    isFullWidth = true,
+                    showChevron = true,
+                    icon = { Icon(Icons.Default.Security, null) }
+                )
+                QuickActionButton(
+                    title = stringResource(R.string.sys_logs_title),
+                    subtitle = stringResource(R.string.sys_logs_subtitle),
+                    iconContainerColor = MaterialTheme.colorScheme.tertiary.copy(alpha = 0.1f),
+                    iconContentColor = MaterialTheme.colorScheme.onSurface,
+                    onClick = onOpenLogs,
+                    isFullWidth = true,
+                    showChevron = true,
+                    icon = { Icon(Icons.Default.Terminal, null) }
+                )
+            }
         }
     }
 

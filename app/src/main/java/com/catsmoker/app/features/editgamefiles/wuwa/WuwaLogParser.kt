@@ -10,14 +10,14 @@ package com.catsmoker.app.features.editgamefiles.wuwa
  * dynamic-atlas exclusion from texture errors (its "Error pixel format" warnings are
  * unrelated to streaming/VRAM pressure — counting them would falsely flag low-end devices),
  * and the post-loop graphics-API resolution order (explicit LogRHI → `_GL` profile suffix →
- * `r.RHI` cvar → per-line flags). [WuwaForbiddenCvars.isForbidden] supplies the forbidden
+ * `r.RHI` cvar → per-line flags). [WuWaForbiddenCvars.isForbidden] supplies the forbidden
  * count — the app already ships that key list verbatim from the same reference.
  *
  * Deliberately not ported as separate surfaces: the battle-stats reader and the
  * one-tap log analysis lived beside this parser and were permanently removed with
  * Game Log Analysis (product requirement — do not re-add); the record-URL
  * extraction was deleted 2026-10-17 together with the unwired tracker it fed
- * (product decision, TODO item 15 — do not re-add). No second regex copy exists
+ * (product decision, item 15 — permanently removed, do not re-add). No second regex copy exists
  * to drift.
  */
 object WuwaLogParser {

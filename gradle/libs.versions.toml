@@ -19,7 +19,7 @@ billing = "9.1.0"
 # Firebase Analytics is SHARED (both variants, same project catsmoker-5b6c6).
 # google-services.json is gitignored/local-only; the build requires it present.
 googleServices = "4.5.0"
-firebaseBom = "35.0.2"
+firebaseBom = "35.1.0"
 provider = "13.1.5"
 coreKtx = "1.19.1"
 kotlin = "2.4.21"
@@ -30,7 +30,7 @@ ksp = "2.3.10"
 androidxHilt = "1.4.0"
 hilt = "2.60.1"
 kotlinxCoroutines = "1.11.0"
-gson = "2.14.0"
+gson = "2.15.0"
 work = "2.12.0"
 
 [libraries]

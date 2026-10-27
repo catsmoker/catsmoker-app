@@ -97,8 +97,8 @@ object DexoptStatusParser {
 
     /**
      * Interprets `cmd package compile --check <package>`: `true`/`false`, or prose containing
-     * "compilation [not] needed" / "need[s] compile". Anything else is unknown (null), never
-     * a fabricated verdict.
+     * "compilation needed", "compilation not needed" or "needs compile". Anything else is
+     * unknown (null), never a fabricated verdict.
      */
     fun parseCompileCheckNeedsOptimization(output: String): Boolean? {
         if (output.isBlank()) return null

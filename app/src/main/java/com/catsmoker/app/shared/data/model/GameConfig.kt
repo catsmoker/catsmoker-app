@@ -23,7 +23,7 @@ data class GameProfile(
      * Where this profile's file lands, as a path relative to external storage (same convention
      * as [GameConfig.saveDir]). Null keeps the config's own directory. The `UserCustom.ini`
      * profile needs this: its file is not the config's `Active.sav` and sits in the game's
-     * `Saved/Config/Android/` folder instead of `SaveGames/` (TODO M190).
+     * `Saved/Config/Android/` folder instead of `SaveGames/` (backlog item M190).
      */
     val targetDir: String? = null,
     /**
@@ -35,7 +35,7 @@ data class GameProfile(
      * True when the push must merge with the file already on the device instead of replacing it
      * wholesale: the bundled asset is only the `[UserCustom DeviceProfile]` section, and the
      * device's own `[BackUp DeviceProfile]` tail is carried over — the merge the eu GFX tool
-     * performs (TODO M190/M191). ZARCHIVER is never offered for these profiles: a manual copy
+     * performs (backlog items M190/M191). ZARCHIVER is never offered for these profiles: a manual copy
      * cannot read the current file, so it could not preserve that section.
      */
     val preserveDeviceProfileBackup: Boolean = false,
@@ -61,9 +61,9 @@ data class GameProfile(
 /**
  * One genuinely supported custom-file destination for a game.
  *
- * The file type is selected first; [directory] and [fileName] then resolve the destination
- * automatically for the selected game variant. That keeps the upload UI from asking a beginner
- * to know the package-specific `Android/data/<package>/...` tree, while still naming the path
+ * The file type is selected first; [GameUploadTarget.directory] and [GameUploadTarget.fileName]
+ * then resolve the destination automatically for the selected game variant. That keeps the
+ * upload UI from asking a beginner to know the package-specific `Android/data/<package>/...` tree, while still naming the path
  * in the confirmation copy.
  */
 enum class GameUploadFormat {

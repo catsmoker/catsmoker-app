@@ -24,7 +24,7 @@ import org.json.JSONObject
  * Play Store variant at all (Play policy forbids self-updating).
  *
  * Release contract (verified against the live API 2026-10-09): tags are
- * `{versionCode}-{versionName}` (`9-2.0.3`), so the authoritative comparison
+ * `{versionCode}-{versionName}` (`10-2.0.4`), so the authoritative comparison
  * is numeric on the code, never lexicographic on the name; APK assets carry a
  * `digest: "sha256:..."` plus size. Drafts never appear in the listing;
  * prereleases are skipped unless explicitly wanted (an all-prerelease listing
@@ -59,7 +59,7 @@ object SelfUpdater {
     }
 
     /**
-     * Splits a `9-2.0.3` tag into its numeric code and version name. A tag
+     * Splits a `10-2.0.4` tag into its numeric code and version name. A tag
      * without a numeric `code-` prefix keeps the whole tag as the name with a
      * null code, so legacy tags compare by semver name instead of failing.
      */

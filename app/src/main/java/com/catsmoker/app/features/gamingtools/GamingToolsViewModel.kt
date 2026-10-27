@@ -1180,7 +1180,8 @@ class GamingToolsViewModel @Inject constructor(
      * Enrolls (or removes) the recurring junk sweep. Same contract as the dexopt schedule:
      * WorkManager decides afterwards, and the published state carries its answer. Off by
      * default — an unattended sweep deletes files, so it starts only on explicit opt-in —
-     * and aggressive buckets stay manual-only in every run (see [CleanerSweepWorker]).
+     * and aggressive buckets stay manual-only in every run (see
+     * [com.catsmoker.app.features.gamingtools.tools.cleaner.CleanerSweepWorker]).
      */
     fun setCleanSchedule(enabled: Boolean) = viewModelScope.launch {
         cleanerScheduleStore.setEnabled(enabled)

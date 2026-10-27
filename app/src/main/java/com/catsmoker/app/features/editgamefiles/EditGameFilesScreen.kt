@@ -509,8 +509,7 @@ fun EditGameFilesScreen(
                     TextButton(onClick = { onMethodSelected(1) }) { Text(stringResource(R.string.gf_method_shizuku)) }
                     TextButton(onClick = { onMethodSelected(2) }) { Text(stringResource(R.string.gf_method_saf)) }
                     // Hidden when the push must read the file first: a manual copy cannot patch
-                    // the save's values or keep the game's own [BackUp DeviceProfile] section
-                    // (TODO M190/M191).
+                    // the save's values or keep the game's own [BackUp DeviceProfile] section.
                     if (!uiState.selectedProfileNeedsExistingFile) {
                         TextButton(onClick = { onMethodSelected(3) }) { Text(stringResource(R.string.gf_method_zarchiver)) }
                     }
@@ -592,7 +591,7 @@ fun EditGameFilesScreen(
                     TextButton(onClick = { onRestoreMethodSelected(0) }) { Text(stringResource(R.string.gf_method_root)) }
                     // Root-only games (New State) offer just the root path — the other two
                     // channels cannot reach a private data file, and listing them would be a
-                    // promise they cannot keep (TODO M168).
+                    // promise they cannot keep.
                     if (!uiState.rootOnlyIni) {
                         TextButton(onClick = { onRestoreMethodSelected(1) }) { Text(stringResource(R.string.gf_method_shizuku)) }
                         TextButton(onClick = { onRestoreMethodSelected(2) }) { Text(stringResource(R.string.gf_method_saf)) }
@@ -656,7 +655,7 @@ private fun ProfileGameEditor(
                 }
                 // A root-only game (New State) carries the fact inside this actionable card
                 // rather than a card of its own: APPLY writes through root and nothing else
-                // can reach the file (TODO M168).
+                // can reach the file.
                 if (uiState.rootOnlyIni) {
                     Text(
                         stringResource(R.string.gf_newstate_need_root),

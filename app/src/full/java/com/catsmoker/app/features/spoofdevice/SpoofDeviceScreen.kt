@@ -29,6 +29,8 @@ import com.catsmoker.app.R
 import com.catsmoker.app.shared.ui.components.QuickActionButton
 import com.catsmoker.app.shared.ui.components.ScreenScaffold
 import com.catsmoker.app.shared.ui.components.SectionCard
+import com.catsmoker.app.shared.ui.components.SectionLabel
+import com.catsmoker.app.shared.ui.theme.CatsmokerSpacing
 import com.catsmoker.app.system.navigation.Routes
 
 @Composable
@@ -251,7 +253,7 @@ fun SpoofDeviceScreen(
                     magisk = uiState.magiskModuleStatus
                 )
             ) {
-                Spacer(modifier = Modifier.height(12.dp))
+                Spacer(modifier = Modifier.height(CatsmokerSpacing.CardGap))
                 SectionCard {
                     Text(
                         stringResource(R.string.spoof_method_conflict_title),
@@ -279,10 +281,10 @@ fun SpoofDeviceScreen(
                 }
             }
 
-            Spacer(modifier = Modifier.height(24.dp))
+            Spacer(modifier = Modifier.height(CatsmokerSpacing.SectionGap))
 
-            Text(stringResource(R.string.spoof_home_management), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            SectionLabel(stringResource(R.string.spoof_home_management))
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(CatsmokerSpacing.CardGap)) {
                 SpoofMenuCard(
                     title = stringResource(R.string.spoof_menu_profiles),
                     subtitle = stringResource(R.string.spoof_menu_identities, uiState.profiles.size),
@@ -302,9 +304,9 @@ fun SpoofDeviceScreen(
                 )
             }
 
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(CatsmokerSpacing.CardGap))
 
-            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(CatsmokerSpacing.CardGap)) {
                 SpoofMenuCard(
                     title = stringResource(R.string.spoof_menu_safe),
                     // The card opens both lists now; the count is their union, so an app in
@@ -326,9 +328,9 @@ fun SpoofDeviceScreen(
                 )
             }
 
-            Spacer(modifier = Modifier.height(24.dp))
+            Spacer(modifier = Modifier.height(CatsmokerSpacing.SectionGap))
 
-            Text(stringResource(R.string.spoof_home_advanced), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            SectionLabel(stringResource(R.string.spoof_home_advanced))
             SectionCard {
                 QuickActionButton(
                     title = stringResource(R.string.spoof_magisk_title),
