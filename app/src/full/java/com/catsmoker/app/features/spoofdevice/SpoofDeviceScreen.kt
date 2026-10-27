@@ -22,6 +22,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.catsmoker.app.R
 import com.catsmoker.app.shared.ui.components.QuickActionButton
 import com.catsmoker.app.shared.ui.components.ScreenScaffold
@@ -41,6 +44,23 @@ fun SpoofRoute(
         viewModel.toasts.collect { message ->
             android.widget.Toast.makeText(context, message, android.widget.Toast.LENGTH_SHORT).show()
         }
+    }
+
+    // Root, the Magisk module and the framework scope can all change while this screen is
+    // in the background (the user is sent to the root manager from here). The first
+    // ON_RESUME would duplicate the ViewModel's init probe, so it is skipped; later
+    // resumes re-read the device silently. Without this, a newly granted root or a
+    // newly installed module kept reading as absent until the app was restarted.
+    val lifecycleOwner = LocalLifecycleOwner.current
+    var seenFirstResume by remember { mutableStateOf(false) }
+    DisposableEffect(lifecycleOwner) {
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_RESUME) {
+                if (seenFirstResume) viewModel.refreshStatus(silent = true) else seenFirstResume = true
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
     }
 
     SpoofDeviceScreen(
@@ -93,20 +113,55 @@ fun SpoofDeviceScreen(
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                         Spacer(modifier = Modifier.height(6.dp))
+                        // Shizuku does not make spoofing work, but it is the app's fallback
+                        // shell for game tools. Naming it here keeps "no root" from reading
+                        // as "nothing on this device is privileged".
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            StatusIndicator(
+                                active = uiState.shizukuGranted,
+                                warn = uiState.shizukuRunning && !uiState.shizukuGranted
+                            )
+                            Text(
+                                stringResource(R.string.spoof_home_shizuku),
+                                color = MaterialTheme.colorScheme.onSurface,
+                                fontSize = 14.sp
+                            )
+                        }
+                        Text(
+                            text = when {
+                                uiState.shizukuGranted ->
+                                    stringResource(R.string.spoof_home_shizuku_granted)
+                                uiState.shizukuRunning ->
+                                    stringResource(R.string.spoof_home_shizuku_not_granted)
+                                else -> stringResource(R.string.spoof_home_shizuku_stopped)
+                            },
+                            modifier = Modifier.padding(start = 16.dp, top = 2.dp),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        Spacer(modifier = Modifier.height(6.dp))
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             val headline = VectorActivation.headline(uiState.xposedEvidence)
                             StatusIndicator(
                                 active = headline == VectorActivation.Headline.ACTIVE,
                                 unknown = headline == VectorActivation.Headline.UNKNOWN,
-                                warn = headline == VectorActivation.Headline.ENABLED_UNVERIFIED
+                                warn = headline == VectorActivation.Headline.ENABLED_UNVERIFIED ||
+                                    headline == VectorActivation.Headline.ACTIVE_DISABLED
                             )
                             Text(
                                 stringResource(
                                     when (headline) {
                                         VectorActivation.Headline.ACTIVE -> R.string.spoof_home_lsposed_on
+                                        VectorActivation.Headline.ACTIVE_DISABLED ->
+                                            R.string.spoof_home_lsposed_loaded_disabled
                                         VectorActivation.Headline.ENABLED_UNVERIFIED ->
                                             R.string.spoof_home_lsposed_unverified
-                                        else -> R.string.spoof_home_lsposed_off
+                                        VectorActivation.Headline.DISABLED ->
+                                            R.string.spoof_home_lsposed_disabled
+                                        VectorActivation.Headline.FRAMEWORK_ABSENT ->
+                                            R.string.spoof_home_lsposed_absent
+                                        VectorActivation.Headline.UNKNOWN ->
+                                            R.string.spoof_home_lsposed_unknown
                                     }
                                 ),
                                 color = MaterialTheme.colorScheme.onSurface, fontSize = 14.sp
@@ -237,8 +292,9 @@ fun SpoofDeviceScreen(
                 )
                 SpoofMenuCard(
                     title = stringResource(R.string.spoof_menu_apps),
-                    // Ladder packages are hooked too — they just get their identity per tier, so
-                    // counting only the plain assignments would under-report.
+                    // The count is packages with an assignment, not packages with a proven
+                    // hook: nothing here observes per-package execution, so the label says
+                    // "assigned" rather than claiming each one is hooked.
                     subtitle = stringResource(R.string.spoof_menu_hooked, (uiState.assignments.keys + uiState.rateAssignments.keys).size),
                     icon = Icons.Default.Apps,
                     modifier = Modifier.weight(1f),
@@ -373,18 +429,27 @@ fun SpoofMenuCard(
  */
 @Composable
 private fun XposedEvidenceLine(evidence: VectorActivation.Evidence) {
-    val detail = when (evidence.framework) {
-        VectorActivation.Framework.UNKNOWN ->
+    val frameworkName = evidence.frameworkVersion?.let { "Vector $it" } ?: "Vector"
+    val detail = when {
+        // The manager row says disabled while a load is still provably observed: the
+        // process started before the change and keeps the injected code until it dies.
+        // Saying only "disabled" next to an ACTIVE headline was a contradiction.
+        evidence.framework == VectorActivation.Framework.VECTOR &&
+            evidence.loadedProof && evidence.moduleEnabled == false ->
+            stringResource(R.string.spoof_home_xposed_disabled_but_loaded, frameworkName)
+        // Proof without a readable framework (LSPosed has no CLI, or no root): the
+        // observed load is real, and only the manager detail is missing. Saying
+        // "nothing was verified" under an ACTIVE headline was false.
+        evidence.loadedProof && evidence.framework != VectorActivation.Framework.VECTOR ->
+            stringResource(R.string.spoof_home_xposed_loaded_nopriv)
+        evidence.framework == VectorActivation.Framework.UNKNOWN ->
             stringResource(R.string.spoof_home_xposed_nopriv)
-        VectorActivation.Framework.ABSENT ->
+        evidence.framework == VectorActivation.Framework.ABSENT ->
             stringResource(R.string.spoof_home_xposed_nofw)
-        VectorActivation.Framework.VECTOR -> {
-            val framework = evidence.frameworkVersion?.let { "Vector $it" } ?: "Vector"
-            when (evidence.moduleEnabled) {
-                true -> stringResource(R.string.spoof_home_xposed_active_detail, framework)
-                false -> stringResource(R.string.spoof_home_xposed_disabled_detail, framework)
-                null -> stringResource(R.string.spoof_home_xposed_unknown_detail, framework)
-            }
+        else -> when (evidence.moduleEnabled) {
+            true -> stringResource(R.string.spoof_home_xposed_active_detail, frameworkName)
+            false -> stringResource(R.string.spoof_home_xposed_disabled_detail, frameworkName)
+            null -> stringResource(R.string.spoof_home_xposed_unknown_detail, frameworkName)
         }
     }
     Text(
@@ -396,7 +461,12 @@ private fun XposedEvidenceLine(evidence: VectorActivation.Evidence) {
     // package names and models stay on Diagnostics; this card answers status,
     // not per-app attribution.
     val observed: String? = when {
-        evidence.loadedProof -> stringResource(R.string.spoof_home_xposed_loads_seen)
+        // "Target loads" is reserved for actual target processes. The own heart-beat/load
+        // is proof too, but calling it a target load was wrong on-device.
+        evidence.loadedTargets.isNotEmpty() || evidence.logSpoofTargets.isNotEmpty() ->
+            stringResource(R.string.spoof_home_xposed_loads_seen)
+        evidence.heartbeatFresh || evidence.logOwnLoad ->
+            stringResource(R.string.spoof_home_xposed_own_load_seen)
         evidence.framework == VectorActivation.Framework.VECTOR &&
             evidence.moduleEnabled == true ->
             stringResource(R.string.spoof_home_xposed_load_pending)
@@ -405,6 +475,22 @@ private fun XposedEvidenceLine(evidence: VectorActivation.Evidence) {
     observed?.let {
         Text(
             text = it,
+            color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 11.sp,
+            modifier = Modifier.padding(start = 16.dp, top = 2.dp)
+        )
+    }
+    // Third line: the manager's scope, which used to be probed and then never shown.
+    // Null means the scope could not be read — that stays silent rather than claiming
+    // an empty scope. An empty set is a real, actionable state: the module is enabled
+    // but no app is selected for it.
+    val scope = evidence.scopePackages
+    if (evidence.framework == VectorActivation.Framework.VECTOR && scope != null) {
+        Text(
+            text = if (scope.isEmpty()) {
+                stringResource(R.string.spoof_home_xposed_scope_empty)
+            } else {
+                stringResource(R.string.spoof_home_xposed_scope_count, scope.size)
+            },
             color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 11.sp,
             modifier = Modifier.padding(start = 16.dp, top = 2.dp)
         )

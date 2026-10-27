@@ -4,7 +4,11 @@
     <string name="spoof_home_subtitle">Suíte de identidade do dispositivo e ocultação de root.</string>
     <string name="spoof_home_status">Status do ambiente</string>
     <string name="spoof_home_root">Acesso root</string>
-    <string name="spoof_root_provider_none">Nenhum acesso root detectado.</string>
+    <string name="spoof_home_shizuku">Shizuku</string>
+    <string name="spoof_home_shizuku_granted">Em execução e autorizado — as ferramentas de jogo podem usá-lo; o spoof ainda precisa de root.</string>
+    <string name="spoof_home_shizuku_not_granted">Em execução — permissão ainda não concedida.</string>
+    <string name="spoof_home_shizuku_stopped">Não está em execução.</string>
+    <string name="spoof_root_provider_none">Root não disponível — tanto o Xposed quanto o módulo Magisk precisam dele.</string>
     <string name="spoof_root_provider_unknown">Acesso root disponível, provedor não identificado.</string>
     <string name="spoof_root_provider_magisk">Root do Magisk detectado.</string>
     <string name="spoof_root_provider_kernelsu">Root do KernelSU detectado.</string>
@@ -14,22 +18,30 @@
     <string name="spoof_root_name_kernelsu">KernelSU</string>
     <string name="spoof_root_name_apatch">APatch</string>
     <string name="spoof_home_lsposed_on">Módulo Xposed ativo</string>
-    <string name="spoof_home_lsposed_off">Módulo Xposed não carregado</string>
+    <string name="spoof_home_lsposed_disabled">Módulo Xposed desativado</string>
+    <string name="spoof_home_lsposed_loaded_disabled">Módulo Xposed carregado — gerenciador desativado</string>
+    <string name="spoof_home_lsposed_absent">Nenhum framework Xposed detectado</string>
+    <string name="spoof_home_lsposed_unknown">Status do Xposed desconhecido</string>
     <!-- Vector activation evidence (framework, manager state, observed load). -->
     <string name="spoof_home_xposed_active_detail">%1$s ativado para apps no escopo</string>
     <string name="spoof_home_xposed_disabled_detail">%1$s desativado</string>
     <string name="spoof_home_xposed_unknown_detail">estado do gerenciador do %1$s desconhecido</string>
+    <string name="spoof_home_xposed_loaded_nopriv">Execução observada — os detalhes do framework precisam de root para inspeção</string>
+    <string name="spoof_home_xposed_disabled_but_loaded">%1$s está desativado no gerenciador, mas uma carga foi observada — um processo iniciado antes da mudança pode continuar com o hook.</string>
     <string name="spoof_home_xposed_nopriv">A verificação do framework precisa de root — nada abaixo foi verificado</string>
     <string name="spoof_home_xposed_nofw">Nenhum framework Xposed encontrado</string>
     <string name="spoof_home_lsposed_unverified">Ativado — carga não verificada</string>
     <string name="spoof_home_xposed_loads_seen">Cargas no destino observadas</string>
+    <string name="spoof_home_xposed_own_load_seen">Carga observada no próprio processo</string>
     <string name="spoof_home_xposed_load_pending">Nenhuma carga no destino observada ainda</string>
+    <string name="spoof_home_xposed_scope_count">Apps no escopo do gerenciador: %1$d</string>
+    <string name="spoof_home_xposed_scope_empty">O escopo do gerenciador está vazio — nenhum app está habilitado para o módulo.</string>
     <string name="spoof_home_management">Gerenciamento</string>
     <string name="spoof_home_advanced">Ferramentas avançadas</string>
     <string name="spoof_menu_profiles">Perfis</string>
     <string name="spoof_menu_identities">%1$d identidades</string>
     <string name="spoof_menu_apps">Apps</string>
-    <string name="spoof_menu_hooked">%1$d com hook</string>
+    <string name="spoof_menu_hooked">%1$d apps atribuídos</string>
     <string name="spoof_menu_safe">Modo seguro</string>
     <string name="spoof_menu_apps_count">%1$d apps</string>
     <string name="spoof_menu_diag">Diagnósticos</string>
@@ -169,6 +181,8 @@
     <string name="spoof_diag_unknown">Desconhecido</string>
     <string name="spoof_diag_native_title">Ponte nativa</string>
     <string name="spoof_diag_native_bridge">Ponte interna do app</string>
+    <string name="spoof_diag_soc">SoC</string>
+    <string name="spoof_diag_abi">ABIs suportados</string>
     <!-- ViewModel toasts -->
     <string name="spoof_error_save">Não foi possível salvar os perfis: %1$s</string>
     <string name="spoof_error_write_failed">falha na gravação</string>

@@ -508,10 +508,10 @@ fun EditGameFilesScreen(
                     TextButton(onClick = { onMethodSelected(0) }) { Text(stringResource(R.string.gf_method_root)) }
                     TextButton(onClick = { onMethodSelected(1) }) { Text(stringResource(R.string.gf_method_shizuku)) }
                     TextButton(onClick = { onMethodSelected(2) }) { Text(stringResource(R.string.gf_method_saf)) }
-                    // Hidden for a preserve profile: a manual copy cannot read the file first,
-                    // so it could not keep the game's own [BackUp DeviceProfile] section
+                    // Hidden when the push must read the file first: a manual copy cannot patch
+                    // the save's values or keep the game's own [BackUp DeviceProfile] section
                     // (TODO M190/M191).
-                    if (!uiState.selectedProfilePreservesBackup) {
+                    if (!uiState.selectedProfileNeedsExistingFile) {
                         TextButton(onClick = { onMethodSelected(3) }) { Text(stringResource(R.string.gf_method_zarchiver)) }
                     }
                 }

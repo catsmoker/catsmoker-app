@@ -34,21 +34,34 @@ class SuspendExemptStore @Inject constructor(
 
     /** Adds [packageName], or removes it when already picked. Returns the set afterwards. */
     fun toggleExemptPackage(packageName: String): Set<String> {
-        val current = getExemptPackages().toMutableSet()
-        if (!current.add(packageName)) current.remove(packageName)
-        prefs.edit { putStringSet(KEY_EXEMPT, current) }
-        return current
+        val next = toggled(getExemptPackages(), packageName)
+        prefs.edit { putStringSet(KEY_EXEMPT, next) }
+        return next
     }
 
     fun removeExemptPackage(packageName: String): Set<String> {
-        val current = getExemptPackages().toMutableSet()
-        current.remove(packageName)
-        prefs.edit { putStringSet(KEY_EXEMPT, current) }
-        return current
+        val next = removed(getExemptPackages(), packageName)
+        prefs.edit { putStringSet(KEY_EXEMPT, next) }
+        return next
     }
 
-    private companion object {
-        const val PREFS_NAME = "SuspendExemptPrefs"
-        const val KEY_EXEMPT = "exempt_packages"
+    companion object {
+        /**
+         * The set transition behind [toggleExemptPackage], kept pure so the UI's state change can be
+         * tested without a device: one pick flips, every other pick is untouched, and the caller's
+         * set is never mutated.
+         */
+        internal fun toggled(current: Set<String>, packageName: String): Set<String> {
+            val next = current.toMutableSet()
+            if (!next.add(packageName)) next.remove(packageName)
+            return next
+        }
+
+        /** The transition behind [removeExemptPackage]; removing an absent pick is a no-op. */
+        internal fun removed(current: Set<String>, packageName: String): Set<String> =
+            current - packageName
+
+        private const val PREFS_NAME = "SuspendExemptPrefs"
+        private const val KEY_EXEMPT = "exempt_packages"
     }
 }

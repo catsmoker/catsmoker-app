@@ -1,33 +1,31 @@
 <resources>
-    <!-- Legal screens (Privacy Policy + Terms of Service). Every key here is user-visible
-        and must be mirrored in values-ar, values-es and values-zh-rCN (see LocaleParityTest).
-        Bodies describe only verified behavior — no invented entities, addresses or providers. -->
+    <!-- Legal screens (Privacy Policy + Terms & Conditions). Mirror of values/strings_legal.xml. -->
 
     <string name="legal_section_title">Legal</string>
     <string name="legal_privacy_title">Privacy Policy</string>
     <string name="legal_privacy_subtitle">What the app stores and shares.</string>
-    <string name="legal_privacy_updated">Last updated: 2026-09-30</string>
-    <string name="legal_terms_title">Terms of Service</string>
+    <string name="legal_privacy_updated">Last updated: 2026-10-25</string>
+    <string name="legal_terms_title">Terms &amp; Conditions</string>
     <string name="legal_website_title">Legal Website</string>
     <string name="legal_terms_subtitle">Rules for using the app.</string>
-    <string name="legal_terms_updated">Last updated: 2026-09-30</string>
+    <string name="legal_terms_updated">Last updated: 2026-10-25</string>
 
-    <string name="legal_p_intro">CatSmoker is an open-source Android app with no accounts, no sign-in and no project-operated servers. Almost everything the app knows stays on your device. This policy explains what is stored locally, what leaves the device, and when.</string>
+    <string name="legal_p_intro">CatSmoker is an open-source Android app with no accounts, no sign-in and no project-operated servers. Almost everything the app knows stays on your device. This policy explains what is stored locally, what the app\u2019s third-party SDKs send, and what rights you have. CatSmoker is the \u201cService Provider\u201d referred to below.</string>
 
     <string name="legal_p_local_title">1. Data stored on your device</string>
-    <string name="legal_p_local_body">Settings and app state are kept in on-device storage only: theme, language, onboarding choices, launch counters, ad preferences, update-check preferences, game library entries, spoofing profiles and per-app assignments, Gaming Mode options (DNS choice, refresh rate, cleaner patterns, suspend lists), overlay and crosshair positions, game-config backups, session recordings and cached logs. Nothing in this list is uploaded to the developer — there is no backend to upload it to. Uninstalling the app, or clearing its data, deletes it.</string>
+    <string name="legal_p_local_body">Settings and app state are kept in on-device storage only: theme, language, onboarding choices, launch counters, ad preferences, update-check preferences, game library entries, spoofing profiles and per-app assignments, Gaming Mode options (DNS choice, refresh rate, cleaner patterns, suspend lists), overlay and crosshair positions, game-config backups, diagnostic logs and crash records. Nothing in this list is uploaded to the developer — there is no backend to upload it to. Uninstalling the app, or clearing its data, deletes it.</string>
 
-    <string name="legal_p_ads_title">2. Advertising (Start.io)</string>
-    <string name="legal_p_ads_body">The full (non-Play-Store) build shows banner ads served by the Start.io SDK. The ad SDK may collect your advertising ID and device information to serve and measure ads. You can turn ads off at any time in Settings; the switch takes effect in the app immediately. The Play Store build uses AdMob instead of Start.io, which is governed by Google\u2019s advertising policies.</string>
+    <string name="legal_p_analytics_title">2. Analytics, cookies and tracking technologies</string>
+    <string name="legal_p_analytics_body">The app bundles Firebase Analytics (Google Analytics for Firebase) in both builds. Unless you turn it off, it sends Google automatic usage events (app opens, sessions, app updates and app exceptions) together with the app version, device model, language and a per-install identifier; Google also estimates an approximate location from your IP address. The app itself logs no custom events, so game titles, file paths, configuration contents and values you type are never sent. Firebase may also read the advertising identifier, as the ad SDKs do. Collection is on by default. The switch under Settings &gt; Send Analytics Data is saved on the device, re-applied to the SDK at every startup and applied immediately when changed; while it is off, no analytics events are sent. Neither build sets cookies or runs web pixels. The Firebase installations service may still contact Google to keep an installation ID current, and Google handles that data under its own privacy policy.</string>
 
-    <string name="legal_p_updates_title">3. Update checks</string>
+    <string name="legal_p_ads_title">3. Advertising (Start.io or AdMob)</string>
+    <string name="legal_p_ads_body">Ads depend on the build. The full (GitHub) build shows banner ads from Start.io and has a free ads-off switch in Settings. The Play Store build shows ads from AdMob and lets you remove them with a one-time Google Play purchase. The ad SDK starts with the app and may collect your advertising ID, device information and IP address to serve and measure ads, under that provider\u2019s policy. Turning ads off or buying ad removal stops banners being requested and shown; it does not remove the SDK from the app.</string>
+
+    <string name="legal_p_updates_title">4. Update checks</string>
     <string name="legal_p_updates_body">When you tap \u201cCheck for Updates\u201d (or when automatic checks run), the app queries the public GitHub releases API for this project. That request necessarily reveals your IP address and app version to GitHub, under GitHub\u2019s own privacy terms. In the full build automatic checks are on by default and can be turned off in Settings; the Play Store build never checks GitHub for updates. Downloaded update files are stored in the app\u2019s private external files directory and installed only after you confirm.</string>
 
-    <string name="legal_p_sharing_title">4. Logs and recordings you choose to share</string>
-    <string name="legal_p_sharing_body">Diagnostic logs and session recordings never leave the device on their own. They are exported only when you tap Share, through Android\u2019s share sheet to an app you pick. Logs can contain device and system details — please review them before sending them to anyone.</string>
-
-    <string name="legal_p_external_title">5. External links and donations</string>
-    <string name="legal_p_external_body">Community links (GitHub, website, Discord, Telegram) and donation options (PayPal, Binance, crypto addresses) open outside the app. When you use them, those services receive the data they normally collect (such as your IP address and, for payments, your payment details) under their own policies. Donations are voluntary and processed entirely by those external services — the app never sees or stores your payment information.</string>
+    <string name="legal_p_sharing_title">5. Logs, profiles and files you choose to share</string>
+    <string name="legal_p_sharing_body">Diagnostic logs, crash reports, exported profiles and game configs never leave the device on their own. They are exported only when you tap Share or Export, through Android\u2019s share sheet or a file picker, to a destination you choose. Logs can contain device and system details — review them before sending them to anyone.</string>
 
     <string name="legal_p_permissions_title">6. Device permissions</string>
     <string name="legal_p_permissions_body">The app requests permissions only to perform the features you ask for: file access for reading and backing up game configs, overlay permission for the performance and crosshair overlays, usage access to detect game sessions, notification access for Gaming Mode quiet-hours, microphone access only for the optional audio-visualizer boost, and Bluetooth information only to identify audio devices. Each can be denied — the related feature then reports itself as unavailable instead of failing silently.</string>
@@ -35,28 +33,91 @@
     <string name="legal_p_vpn_title">7. Local VPN firewall</string>
     <string name="legal_p_vpn_body">The optional app-network firewall uses Android\u2019s VPN framework as a local on-device filter. Traffic rules are applied on the phone itself; no traffic is sent to project servers, because there are none.</string>
 
-    <string name="legal_p_contact_title">8. Contact and changes</string>
-    <string name="legal_p_contact_body">Questions about this policy can be raised as an issue on the project\u2019s GitHub repository. If this policy changes, the updated text ships inside the app with a new \u201clast updated\u201d date.</string>
+    <string name="legal_p_external_title">8. External links and donations</string>
+    <string name="legal_p_external_body">Community links (GitHub, website, Discord, Telegram) and donation options (PayPal, Binance, crypto addresses) open outside the app. When you use them, those services receive the data they normally collect (such as your IP address and, for payments, your payment details) under their own policies. Donations are voluntary and processed entirely by those external services — the app never sees or stores your payment information.</string>
 
-    <string name="legal_t_intro">By installing and using CatSmoker you agree to these terms. If you do not agree, do not use the app.</string>
+    <string name="legal_p_rights_title">9. Your rights (including California)</string>
+    <string name="legal_p_rights_body">You can ask the developer to access, correct or delete personal data the developer holds about you — in practice, support emails and any files you chose to send — and you can withdraw consent at any time without affecting processing already carried out. Write to catsmoker.lab@gmail.com. Data held by Google or Start.io is controlled by those providers; use their privacy tools or ask the developer for the right contact. California residents (CCPA/CPRA) have the right to know what personal information is collected, to delete it, to opt out of its sale or sharing, and not to be discriminated against for exercising these rights. The developer does not sell personal information and does not receive your raw analytics or advertising data; the providers named above may share identifiers for advertising under their own policies. Send CCPA/CPRA requests to catsmoker.lab@gmail.com.</string>
+
+    <string name="legal_p_disclosure_title">10. Legal disclosure and service providers</string>
+    <string name="legal_p_disclosure_body">Data may be disclosed when required by law, such as to comply with a subpoena or similar legal process, or when the developer believes in good faith that disclosure is necessary to protect rights, safety or the safety of others, investigate fraud, or respond to a government request. Providers that work for the developer — for example the email service behind the support inbox — process data only for that purpose and under confidentiality obligations. The developer does not receive your raw app data from Firebase or the ad SDKs, only aggregated reports.</string>
+
+    <string name="legal_p_transfers_title">11. International data transfers</string>
+    <string name="legal_p_transfers_body">Google (Firebase, AdMob, Google Play) and Start.io may process data in countries outside your own, including outside the European Economic Area. Where the law requires safeguards for such transfers, those providers use mechanisms such as Standard Contractual Clauses approved by the European Commission, adequacy decisions, or your consent where required and legally permitted. The developer\u2019s own correspondence is handled by email providers that may store it abroad. Data protection laws in other countries may differ from those where you live.</string>
+
+    <string name="legal_p_retention_title">12. Data retention</string>
+    <string name="legal_p_retention_body">Data on your device stays until you uninstall the app or clear its data. Support emails and files you send are kept until you ask for deletion, or longer where the law requires it. Firebase and the ad providers keep data under their own retention policies; the developer cannot delete data held by them on your behalf — use their privacy controls or contact them. Aggregated statistics that no longer identify you may be kept indefinitely.</string>
+
+    <string name="legal_p_children_title">13. Children</string>
+    <string name="legal_p_children_body">The app is not intended for children under 16, or the higher age required where you live, and the developer does not knowingly collect personal data from children or market the app to them. If a child has sent personal data — for example in an email — a parent or guardian can write to catsmoker.lab@gmail.com and it will be deleted. Where parental or guardian consent is required by law, the app is not intended for use without that consent.</string>
+
+    <string name="legal_p_security_title">14. Security and data breach notification</string>
+    <string name="legal_p_security_body">App data is protected by Android\u2019s app sandbox and your device lock. The developer operates no server that stores app data, so there is no central user database to breach; support emails are protected by the email provider\u2019s security. If a breach affects personal data the developer holds, affected users will be notified as required by law, including the nature of the breach and the steps taken to address it.</string>
+
+    <string name="legal_p_consent_title">15. Your consent and opt-out</string>
+    <string name="legal_p_consent_body">Optional features — overlays, the VPN filter, root or Shizuku actions and sharing — run only when you turn them on. You can withdraw consent by turning a feature off or uninstalling the app; this does not affect processing carried out before withdrawal. Uninstalling stops the app from collecting data on your device, but does not delete data already sent to Google or Start.io. To request deletion of data the developer holds, email catsmoker.lab@gmail.com.</string>
+
+    <string name="legal_p_changes_title">16. Changes to this policy</string>
+    <string name="legal_p_changes_body">The developer may update this policy from time to time. The current version always ships in the app on this screen with a new \u201clast updated\u201d date. Material changes are announced by posting the new text here; where the law requires consent to a material change, it will be requested before the change takes effect. Previous versions are available on request at catsmoker.lab@gmail.com.</string>
+
+    <string name="legal_p_contact_title">17. Contact</string>
+    <string name="legal_p_contact_body">Questions about this policy, privacy requests, and reports of unlawful content or misuse can be sent to catsmoker.lab@gmail.com. The developer will respond within a reasonable period.</string>
+
+    <string name="legal_t_intro">These Terms and Conditions apply to the CatSmoker app for mobile devices and to any related services operated by CatSmoker (together, the \u201cApplication\u201d). CatSmoker is the \u201cService Provider\u201d. By downloading, installing or using the Application, you agree to these Terms. Read them carefully before using the app. If you do not agree, do not use the Application. The app has no accounts and no project-operated servers, so these Terms mainly describe your responsibilities when using local features.</string>
 
     <string name="legal_t_license_title">1. Open-source license</string>
-    <string name="legal_t_license_body">The app\u2019s source code is licensed under the Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International License (CC BY-NC-SA 4.0). You may share and adapt it for non-commercial purposes with attribution, under the same license. The full license text is linked from the onboarding screen and the project repository.</string>
+    <string name="legal_t_license_body">The Application\u2019s source code is distributed as open-source software under the Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International License (CC BY-NC-SA 4.0). Your use, reproduction and distribution of the Application are governed by that license. Nothing in these Terms restricts the rights that license gives you.</string>
 
-    <string name="legal_t_games_title">2. Games\u2019 own rules still apply</string>
-    <string name="legal_t_games_body">Spoofing device identity or modifying game files may violate the terms of service of individual games and can lead to penalties such as restricted features or banned accounts. The developers are not responsible for account bans or any loss in third-party games. Use these features at your own risk.</string>
+    <string name="legal_t_ip_title">2. Intellectual property</string>
+    <string name="legal_t_ip_body">CatSmoker retains all intellectual property rights in the Application\u2019s code, design, name, logos and branding. The open-source license covers the code only. It does not grant you any right to use the CatSmoker name, logos or branding in a way that suggests endorsement or an official version. Do not remove or alter copyright, license or other proprietary notices displayed in the Application.</string>
 
-    <string name="legal_t_risk_title">3. System changes are your responsibility</string>
-    <string name="legal_t_risk_body">The app is provided \u201cas is\u201d, without warranty. Features that change system settings (resolution, refresh rate, animation scales, DNS, audio, dexopt compilation) or use root or Shizuku privileges act on your instruction; the app backs up configs before writing them where feasible, but you accept the risk of instability, boot issues or data loss. Nothing here prevents you from reverting changes or uninstalling the app.</string>
+    <string name="legal_t_eligibility_title">3. Eligibility</string>
+    <string name="legal_t_eligibility_body">You represent that the law of your jurisdiction permits you to use the Application. You must be at least 16 years old, or the age of digital consent in your jurisdiction if that is higher. If you are younger, a parent or legal guardian must review and accept these Terms on your behalf.</string>
 
-    <string name="legal_t_donations_title">4. Donations</string>
-    <string name="legal_t_donations_body">Donations are voluntary gifts supporting development. They are non-refundable, processed entirely by external services, and do not unlock premium features or entitle donors to support or influence over the project.</string>
+    <string name="legal_t_use_title">4. Acceptable use</string>
+    <string name="legal_t_use_body">Use the Application lawfully and only for its gaming-performance purpose. Do not use it to harm devices, networks or other people, to break the law or infringe intellectual property rights, or to misrepresent modified game clients as unmodified where that matters. Do not attempt to use the Application to interfere with another person\u2019s device or data.</string>
 
-    <string name="legal_t_use_title">5. Acceptable use</string>
-    <string name="legal_t_use_body">Use the app lawfully and only for its gaming-performance purpose. Do not use it to harm devices, networks or other people, or to misrepresent modified game clients as unmodified where that matters.</string>
+    <string name="legal_t_games_title">5. Games\u2019 own rules still apply</string>
+    <string name="legal_t_games_body">Spoofing device identity or modifying game files may violate the terms of service of individual games and can lead to penalties such as restricted features or banned accounts. The developer is not responsible for account bans or any loss in third-party games. Use these features at your own risk.</string>
 
-    <string name="legal_t_changes_title">6. Changes to these terms</string>
-    <string name="legal_t_changes_body">These terms may be updated as the app evolves; the current version always ships inside the app on this screen.</string>
+    <string name="legal_t_risk_title">6. Root, Shizuku and system changes</string>
+    <string name="legal_t_risk_body">The Application works without root for many features. Advanced features (device spoofing, some system tweaks and file edits) require Shizuku, root or a generated Magisk module, and are optional. Rooting or jailbreaking a device removes security restrictions and can expose it to malware, void warranties, break banking or payment apps, or stop the app from working. Enable these features only if you understand and accept that risk. Features that change system settings (resolution, refresh rate, animation scales, DNS, audio, dexopt compilation) act on your instruction. The app backs up game configs before writing where it can, but you accept the risk of instability, boot problems or data loss. You can revert changes or uninstall the app at any time.</string>
+
+    <string name="legal_t_content_title">7. Content you choose to share</string>
+    <string name="legal_t_content_body">The Application has no accounts, no public feed and no server that stores user content. You can export profiles, game configs, logs or recordings and send them through Android\u2019s share sheet or another app. You are responsible for what you share, for having the rights to it, and for any personal data in it (including other people\u2019s data, which needs their consent). Do not share illegal content, malware, or content that infringes someone else\u2019s rights. If you send content to the developer (for example a bug report), you give the developer permission to use it to investigate and improve the Application; it is not sold and is handled under the Privacy Policy. To report unlawful content or misuse, contact the developer at catsmoker.lab@gmail.com.</string>
+
+    <string name="legal_t_thirdparty_title">8. Third-party services</string>
+    <string name="legal_t_thirdparty_body">Depending on the build you install, the Application uses these third-party services:\n\u2022 Both builds: Google Play Services (base libraries required by Firebase) and Google Analytics for Firebase.\n\u2022 Play Store build: AdMob for ads and Google Play Billing for the optional remove-ads purchase.\n\u2022 Full build (GitHub): Start.io (formerly StartApp) for ads.\nEach provider processes data under its own terms and privacy policy. The Privacy Policy explains what the app itself stores. Some features need an internet connection. Your mobile provider\u2019s terms still apply; you are responsible for data charges, including roaming charges, and if you are not the bill payer you confirm that you have permission. Game presets and other third-party information are provided for convenience \u2014 verify them before use. The developer is not responsible for third-party services, their availability, their content, or their decisions (including ad content or billing decisions).</string>
+
+    <string name="legal_t_payments_title">9. Charges and donations</string>
+    <string name="legal_t_payments_body">The Application is free to use. The Play Store build offers an optional one-time purchase to remove ads; Google Play shows the price before you pay, and refunds follow Google Play\u2019s policy. Donations are voluntary gifts, are non-refundable, are processed entirely by external services, and do not unlock premium features or buy influence over the project. The developer may add or change paid features in the future; any charge will be shown clearly before you pay. The developer may also modify the Application at any time.</string>
+
+    <string name="legal_t_privacy_title">10. Privacy and device security</string>
+    <string name="legal_t_privacy_body">The Application stores and processes data on your device as described in the Privacy Policy. You are responsible for keeping your device and access to the Application secure. Because there are no accounts, anyone with access to your unlocked device can use the app and see its local data. Uninstalling the app or clearing its data deletes that local data.</string>
+
+    <string name="legal_t_updates_title">11. Updates and availability</string>
+    <string name="legal_t_updates_body">The developer may update the Application from time to time. Updates may be needed for the app to keep working with new Android versions; you can choose not to install them, but older versions may stop working or lose support. The developer does not guarantee that updates will always be available, compatible with your device, or relevant to you. The developer may also stop providing the Application at any time. The developer cannot be responsible if your device is out of battery, offline, or otherwise unable to run the app. If the Application is discontinued, the open-source license for code you already have continues under its own terms.</string>
+
+    <string name="legal_t_termination_title">12. Termination</string>
+    <string name="legal_t_termination_body">If you materially breach these Terms, the developer may end your permission to use the Application\u2019s name, branding and any services the developer provides. Where the breach can be fixed, you will receive written notice and 14 days to fix it. The developer may act immediately, without notice, if you break the law, infringe intellectual property rights, or do something that could harm other users or the developer. Because the app has no accounts, \u201ctermination\u201d means the end of that permission; it does not delete anything from your device. The open-source license for code you already received is irrevocable and is not affected. On termination you must stop using the CatSmoker name and branding and, where the developer asks, stop using any related services.</string>
+
+    <string name="legal_t_liability_title">13. Limitation of liability</string>
+    <string name="legal_t_liability_body">The Application is provided \u201cas is\u201d and \u201cas available\u201d, without warranties of any kind, to the fullest extent permitted by law. The developer is not liable for indirect, incidental, special, consequential or punitive damages, including lost profits, data loss or business interruption, even if advised of the possibility. The developer remains fully liable for death or personal injury caused by negligence, for fraud or fraudulent misrepresentation, and for any liability that cannot be excluded or limited by law. To the fullest extent permitted by law, the developer\u2019s total liability for any claim is limited to the amount you paid for the Application in the 12 months before the claim, or the minimum amount required by law, whichever is greater. If the Application is free, that means the minimum amount permitted by law. Nothing in these Terms limits rights you have under mandatory consumer protection law.</string>
+
+    <string name="legal_t_indemnity_title">14. Indemnification</string>
+    <string name="legal_t_indemnity_body">To the fullest extent permitted by law, you agree to indemnify and hold harmless the developer, its affiliates, officers, directors, employees and agents from any claims, liabilities, damages, losses and reasonable legal fees arising out of your breach of these Terms or your intentional misuse of the Application, including content you share in violation of these Terms. This does not apply to claims caused by the developer\u2019s own negligence, breach of these Terms or violation of law. Where consumer indemnification is restricted by law, this clause is limited to the maximum extent permitted.</string>
+
+    <string name="legal_t_law_title">15. Governing law and jurisdiction</string>
+    <string name="legal_t_law_body">These Terms are governed by the laws of the jurisdiction in which the developer is established, excluding conflict-of-law rules, except where mandatory consumer protection law provides otherwise. Disputes will be brought before the courts that have jurisdiction under applicable law. Nothing here limits your right to bring a claim in a court competent under mandatory law.</string>
+
+    <string name="legal_t_misc_title">16. Severability and entire agreement</string>
+    <string name="legal_t_misc_body">If any provision is held invalid, illegal or unenforceable by a court of competent jurisdiction, it will be modified only as much as necessary to make it valid and enforceable, and the remaining provisions stay in full force. These Terms and the Privacy Policy are the entire agreement between you and the developer about the Application and replace any earlier agreement or understanding.</string>
+
+    <string name="legal_t_changes_title">17. Changes to these terms</string>
+    <string name="legal_t_changes_body">The developer may update these Terms from time to time. The current version always ships in the app on this screen, with a new \u201clast updated\u201d date. The developer will notify you of changes by posting the new Terms here. Previous versions are available on request at catsmoker.lab@gmail.com. These Terms are effective as of 2026-10-25.</string>
+
+    <string name="legal_t_contact_title">18. Contact</string>
+    <string name="legal_t_contact_body">Questions, reports of unlawful content or misuse, and requests for further review of a moderation decision can be sent to catsmoker.lab@gmail.com. The developer will respond within a reasonable period.</string>
 
     <!-- Donate-screen voluntary-gift notice. -->
     <string name="donate_notice">Donations are voluntary gifts and are non-refundable. Payments are processed externally by PayPal, Binance or the relevant crypto network — CatSmoker never sees your payment details.</string>
@@ -72,5 +133,5 @@
 
     <!-- Onboarding legal dialogs. -->
     <string name="core_terms_read_privacy">Read Privacy Policy</string>
-    <string name="core_terms_read_terms">Read Terms of Service</string>
+    <string name="core_terms_read_terms">Read Terms &amp; Conditions</string>
 </resources>

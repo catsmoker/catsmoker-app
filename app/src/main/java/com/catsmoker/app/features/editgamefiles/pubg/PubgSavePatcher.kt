@@ -243,14 +243,20 @@ object PubgSavePatcher {
      */
     data class ViewPreset(val label: String, val tpView: Int, val fpView: Int)
 
-    val VIEW_PRESETS = listOf(
-        ViewPreset("Phone (90/103)", tpView = 90, fpView = 103),
-        ViewPreset("Tablet Wide (110/103)", tpView = 110, fpView = 103)
-    )
+    /** The phone-context point every reference save carries. */
+    val PHONE_VIEW = ViewPreset("Phone (90/103)", tpView = 90, fpView = 103)
+
+    /** The tablet-widen point — this app's `assets/PUBG/TabletView` blob and the profile push. */
+    val TABLET_VIEW = ViewPreset("Tablet Wide (110/103)", tpView = 110, fpView = 103)
+
+    val VIEW_PRESETS = listOf(PHONE_VIEW, TABLET_VIEW)
 
     /** The two camera-view fields one preset writes, as a [patch] edit set. */
     fun viewEdits(tpView: Int, fpView: Int): Map<String, Int> =
         mapOf(FIELD_TP_VIEW to tpView, FIELD_FP_VIEW to fpView)
+
+    /** [viewEdits] for a named preset — how the bundled tablet profile describes its payload. */
+    fun viewEdits(preset: ViewPreset): Map<String, Int> = viewEdits(preset.tpView, preset.fpView)
 
     /** Where one field's int32 lives, or why it cannot be written honestly. */
     private sealed interface Locate {

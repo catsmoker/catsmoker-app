@@ -110,6 +110,13 @@
     <string name="gf_applied_holds">已应用——文件当前内容：%1$s</string>
     <string name="gf_game_stopped_relaunch">游戏已停止——请重新启动以使用新设置游玩。</string>
     <string name="gf_written_no_readback">已写入，但回读失败——如有异常请检查恢复备份。</string>
+    <string name="gf_save_verify_failed">未应用——文件不包含所请求的值（%1$s）。修改仍保持选中以便重试，恢复备份中仍保留之前的存档。</string>
+    <string name="gf_backup_failed_refused">未写入任何内容——无法备份当前文件，因此没有回退途径。请释放一些存储空间后重试。</string>
+    <string name="gf_profile_patch_refused">未应用——无法验证 %1$s 的存档结构。未写入任何内容；请使用读取存档查看文件内容，或在存档编辑器中修改该值。</string>
+    <string name="gf_profile_nothing_to_apply">未写入任何内容——此配置只会为游戏尚未创建的存档做初始填充，而该文件已存在。</string>
+    <string name="gf_zarchiver_unavailable">此配置必须从应用内应用，因为它会先读取设备上已有的文件。请使用 Root、Shizuku 或 SAF。</string>
+    <string name="gf_existing_unreadable">未更改任何内容——当前文件存在但无法读取，因此无法先备份。</string>
+    <string name="gf_permissions_failed">文件已写入，但无法设置其所有者或权限（%1$s）——游戏可能无法读取它。</string>
     <string name="gf_save_not_created">%1$s 不存在于 %2$s——游戏尚未创建它。请先运行一次游戏生成存档，然后重试。</string>
     <string name="gf_shizuku_channel_unavailable">Shizuku 正在运行，但存档通道不可用——请确认应用已获得 Shizuku 权限（Shizuku 应用 → 应用 → 允许），然后重试读取。</string>
     <string name="gf_shizuku_channel_unavailable_short">Shizuku 正在运行，但存档通道不可用——请确认应用已获得 Shizuku 权限，然后重试。</string>

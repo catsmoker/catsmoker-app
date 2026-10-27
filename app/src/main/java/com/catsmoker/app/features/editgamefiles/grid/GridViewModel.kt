@@ -265,7 +265,13 @@ class GridViewModel @Inject constructor(
                 null -> _events.emit(GridEvent.Toast(context.getString(R.string.gf_no_backup_yet), false))
                 is GridPreferencesManager.WriteResult.Success -> {
                     _uiState.update { it.copy(lastApply = context.getString(R.string.gf_grid_restored, result.channelUsed, result.verified.toString())) }
-                    _events.emit(GridEvent.Toast(context.getString(R.string.gf_backup_restored), false))
+                    // Only a read-back that matches the backup may be announced as restored.
+                    _events.emit(
+                        GridEvent.Toast(
+                            context.getString(if (result.verified) R.string.gf_backup_restored else R.string.gf_grid_applied_unverified),
+                            true
+                        )
+                    )
                     refresh()
                 }
                 is GridPreferencesManager.WriteResult.Failure -> {

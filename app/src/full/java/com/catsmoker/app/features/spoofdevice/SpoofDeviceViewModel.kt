@@ -8,6 +8,7 @@ import android.content.pm.ApplicationInfo
 import android.graphics.Bitmap
 import android.os.Build
 import android.os.Environment
+import android.os.Process
 import android.os.SystemClock
 import android.provider.MediaStore
 import android.util.Base64
@@ -69,6 +70,14 @@ class SpoofDeviceViewModel @Inject constructor(
          * those two cases distinct.
          */
         val rootProviders: Set<RootProvider> = emptySet(),
+        /**
+         * Shizuku's binder answers. Shizuku does not enable spoofing (LSPosed and the
+         * Magisk module both need root), but it is the app's fallback shell for game
+         * tools, so "no root" must not read as "no privilege at all".
+         */
+        val shizukuRunning: Boolean = false,
+        /** Shizuku is running and this app holds its permission grant. */
+        val shizukuGranted: Boolean = false,
         /**
          * Whether the Xposed module is proven loaded: own-process heartbeat fresh OR the
          * Vector daemon log shows our load (which survives the reinstall that wipes the
@@ -235,6 +244,10 @@ class SpoofDeviceViewModel @Inject constructor(
     /**
      * Re-probes root and reports what the shell actually answered.
      *
+     * [silent] suppresses the root-status toast, for the automatic refresh on returning
+     * from another screen or the root manager. State changes that need an explanation
+     * (a verified conflict disable, or a failed one) still toast.
+     *
      * The probe is forced. [ShellRunner.isRootAvailable] serves a cached verdict for
      * [ShellRunner.ROOT_CHECK_COOLDOWN_MS] so the many callers that ask per command do not each pay
      * for a shell round-trip — but this one is user-initiated, and an unforced call made it a lie:
@@ -242,17 +255,25 @@ class SpoofDeviceViewModel @Inject constructor(
      * "Status Refreshed" toast, and "Open Root Manager" stayed hidden with no way to reveal it.
      * [com.catsmoker.app.features.permissions.PermissionViewModel] forces for the same reason.
      */
-    fun refreshStatus() {
+    fun refreshStatus(silent: Boolean = false) {
         _uiState.update { it.copy(isRefreshing = true) }
         viewModelScope.launch(Dispatchers.IO) {
             val rooted = shellRunner.isRootAvailable(force = true)
             val rootProviders = if (rooted) probeRootProviders() else emptySet()
+            // Re-read the Shizuku grant: the status card used to show only root, so a
+            // Shizuku-only device read as "No root access detected" and nothing else —
+            // true about spoofing, false about the rest of the app.
+            shellRunner.refreshShizukuPermission()
+            val shizukuRunning = shellRunner.isShizukuRunning()
+            val shizukuGranted = shellRunner.shizukuHasPermission.value
             // Own prefs file, own UID on both sides: the module writes it from inside
-            // our process, we read it here. Absent/stale reads as not loaded — unless the
-            // daemon log proves the load (a reinstall wipes our prefs but not Vector's log).
+            // our process, we read it here. A heartbeat older than this process proves
+            // nothing (it was written by a previous process, possibly before the
+            // install/update), so freshness is bounded by both age and process start.
             val heartbeatFresh = LSPosedConfig.isHeartbeatFresh(
                 openLsposedPrefs(context).getLong(LSPosedConfig.KEY_MODULE_HEARTBEAT_ELAPSED, 0L),
-                SystemClock.elapsedRealtime()
+                SystemClock.elapsedRealtime(),
+                Process.getStartElapsedRealtime()
             )
             var evidence = probeVectorEvidence(rooted, heartbeatFresh)
             val magiskStatus = probeMagiskModuleStatus(rooted)
@@ -278,6 +299,8 @@ class SpoofDeviceViewModel @Inject constructor(
                     it.copy(
                         isRooted = rooted,
                         rootProviders = rootProviders,
+                        shizukuRunning = shizukuRunning,
+                        shizukuGranted = shizukuGranted,
                         moduleActive = evidence.loadedProof,
                         xposedEvidence = evidence,
                         magiskModuleStatus = magiskStatus,
@@ -285,18 +308,21 @@ class SpoofDeviceViewModel @Inject constructor(
                         isRefreshing = false
                     )
                 }
-                // Naming the verdict is the point of the refresh: "Status Refreshed" alone left a
-                // user staring at a hidden root-only button with no idea the probe said no.
-                _toasts.tryEmit(
-                    when {
-                        disabledVector && !conflictResolutionFailed ->
-                            context.getString(R.string.spoof_method_conflict_disabled)
-                        conflictResolutionFailed ->
-                            context.getString(R.string.spoof_method_conflict_disable_failed)
-                        rooted -> context.getString(R.string.spoof_root_available)
-                        else -> context.getString(R.string.spoof_root_unavailable)
-                    }
-                )
+                // Naming the verdict is the point of a user-initiated refresh: "Status
+                // Refreshed" alone left a user staring at a hidden root-only button with
+                // no idea the probe said no. A resume refresh stays silent unless it
+                // changed the framework state — repeating "Root access available" every
+                // time the user comes back from the manager is noise, not a verdict.
+                val message = when {
+                    disabledVector && !conflictResolutionFailed ->
+                        context.getString(R.string.spoof_method_conflict_disabled)
+                    conflictResolutionFailed ->
+                        context.getString(R.string.spoof_method_conflict_disable_failed)
+                    silent -> null
+                    rooted -> context.getString(R.string.spoof_root_available)
+                    else -> context.getString(R.string.spoof_root_unavailable)
+                }
+                if (message != null) _toasts.tryEmit(message)
             }
         }
     }
@@ -395,10 +421,11 @@ class SpoofDeviceViewModel @Inject constructor(
         if (!rooted) return VectorActivation.Evidence(heartbeatFresh = heartbeatFresh)
         val cliExists = shellRunner.execSafeResult("test", "-x", VectorActivation.CLI_PATH).isSuccess
         if (!cliExists) {
-            return VectorActivation.Evidence(
-                framework = VectorActivation.Framework.ABSENT,
-                heartbeatFresh = heartbeatFresh
-            )
+            // No Vector CLI says nothing about LSPosed, which has no such CLI but does load
+            // this module. The probe stays UNKNOWN; the heartbeat/log proof above still
+            // decides ACTIVE. Reporting ABSENT here turned "no Vector" into "no framework",
+            // which is false on every LSPosed install.
+            return VectorActivation.Evidence(heartbeatFresh = heartbeatFresh)
         }
         val own = context.packageName
         val version = VectorActivation.parseFrameworkVersion(
@@ -417,7 +444,11 @@ class SpoofDeviceViewModel @Inject constructor(
             shellRunner.execResult(
                 "${VectorActivation.CLI_PATH} log cat | grep -F -e 'CatsmokerLSP' " +
                     "-e 'Loading legacy module ${VectorActivation.OWN_PACKAGE}'"
-            ).stdout
+            ).stdout,
+            // Only loads from this base.apk count. The daemon log survives reinstalls
+            // and updates, so an old line from a previous install would otherwise keep
+            // the card claiming a load that this installation never had.
+            currentApkPath = context.packageCodePath
         )
         // Name the target processes behind the load UIDs (own UID excluded — an
         // own-process load is heartbeat-class evidence, reported separately).

@@ -133,11 +133,11 @@ class ShellRunner @Inject constructor(
             return cached
         }
 
-        val rooted = try {
-            Shell.getShell().isRoot
-        } catch (_: Throwable) {
-            Shell.isAppGrantedRoot() == true
-        }
+        // A working root shell or a recorded grant. The grant flag distinguishes "never
+        // granted" from "granted, but the shell daemon failed to start" — the old code
+        // consulted it only when getShell() threw, so the second case read as unrooted.
+        val granted = runCatching { Shell.isAppGrantedRoot() == true }.getOrDefault(false)
+        val rooted = granted || runCatching { Shell.getShell().isRoot }.getOrDefault(false)
 
         cachedRootAvailable = rooted
         lastRootCheckTime = now
@@ -145,6 +145,17 @@ class ShellRunner @Inject constructor(
     }
 
     fun hasPrivilege(): Boolean = isRootAvailable() || _shizukuHasPermission.value
+
+    /**
+     * True when Shizuku's binder answers, regardless of whether this app holds the grant.
+     * Kept separate from [hasPrivilege] so the UI can tell "not installed/stopped" from
+     * "running but permission not granted" instead of collapsing both into "no root".
+     */
+    fun isShizukuRunning(): Boolean = try {
+        Shizuku.pingBinder()
+    } catch (_: Throwable) {
+        false
+    }
 
     /**
      * Drops the cached user-service proxy so the next command rebinds from scratch. Callers

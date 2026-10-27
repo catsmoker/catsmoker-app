@@ -471,6 +471,11 @@
     <string name="gt_gm_what_3">كل ما يرفضه هاتفك يُعرض على هذه البطاقة كمرفوض. لا يُدَّعى شيء ما لم يؤكده هاتفك.</string>
     <string name="gt_gm_unavailable_title">غير متوفر على هذا الجهاز:</string>
     <string name="gt_gm_revert_leftovers">إيقافه ترك بعض الأشياء خلفه:</string>
+    <!-- Folded read-back report: collapsed by default; expanding is review only. -->
+    <string name="gt_gm_details_show">عرض تفاصيل التحسينات</string>
+    <string name="gt_gm_details_hide">إخفاء تفاصيل التحسينات</string>
+    <string name="gt_gm_details_summary">تم تأكيد %1$d من %2$d من التغييرات</string>
+    <string name="gt_gm_details_empty">لم يُسجَّل أي تغيير في هذه الجلسة.</string>
     <string name="gt_gm_label_gpu">وضع GPU</string>
     <string name="gt_gm_label_fps_hint">تلميح FPS للألعاب</string>
     <string name="gt_gm_label_display">الشاشة</string>
@@ -764,6 +769,9 @@
     <string name="gt_keep_what_2">يمكن إبقاء التطبيق أو تجميده، وليس كليهما: اختيار تطبيق هنا يزيله من «تطبيقات مجمدة إضافية» والعكس. اللعبة النشطة وهذا التطبيق نفسه يبقيان دائمًا مهما اخترت.</string>
     <string name="gt_keep_none">لا استثناءات — المسح التلقائي يقرر</string>
     <string name="gt_keep_some">تبقى قيد التشغيل: %1$d</string>
+    <string name="gt_keep_summary_more">%1$s و%2$d أخرى</string>
+    <string name="gt_keep_show_list">عرض القائمة</string>
+    <string name="gt_keep_hide_list">إخفاء القائمة</string>
     <string name="gt_keep_add">أضف تطبيقًا</string>
     <string name="gt_keep_remove">إزالة</string>
     <!-- Auto game session: watch the foreground app, start Gaming Mode for library games. -->

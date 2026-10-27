@@ -40,6 +40,24 @@ class ModuleHeartbeatTest {
     }
 
     @Test
+    fun heartbeatFromABeforeThisProcessIsNotActive() {
+        // Device evidence: a heartbeat written 21 h earlier survived an `install -r`,
+        // while Vector reported the module disabled. Age alone called it fresh; the
+        // process start is the second bound — this process was never injected.
+        assertFalse(
+            LSPosedConfig.isHeartbeatFresh(100_000L, 200_000L, processStartElapsed = 150_000L)
+        )
+        // A heartbeat written at/after this process started is the real signal.
+        assertTrue(
+            LSPosedConfig.isHeartbeatFresh(150_000L, 200_000L, processStartElapsed = 150_000L)
+        )
+        // Small elapsedRealtime skew between the write and the start stamp is tolerated.
+        assertTrue(
+            LSPosedConfig.isHeartbeatFresh(149_500L, 200_000L, processStartElapsed = 150_000L)
+        )
+    }
+
+    @Test
     fun weekOldHeartbeatIsStale() {
         // Device evidence: a 7-day-old heartbeat read Active while the module could not
         // load at all (stale install path). Age-bounded now: reopening the app refreshes

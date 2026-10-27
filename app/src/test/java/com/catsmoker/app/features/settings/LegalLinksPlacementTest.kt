@@ -7,7 +7,7 @@ import org.junit.Test
 import java.io.File
 
 /**
- * Legal-link placement: the Privacy Policy / Terms of Service rows live in
+ * Legal-link placement: the Privacy Policy / Terms & Conditions rows live in
  * About CatSmoker only. Settings used to duplicate them; the duplication was
  * removed so About stays the single canonical location.
  *
@@ -94,7 +94,7 @@ class LegalLinksPlacementTest {
             settings.contains("legal_privacy_title")
         )
         assertFalse(
-            "Settings must not link the Terms of Service (About is canonical)",
+            "Settings must not link the Terms & Conditions (About is canonical)",
             settings.contains("legal_terms_title")
         )
         assertFalse(
@@ -115,7 +115,7 @@ class LegalLinksPlacementTest {
             about.contains("legal_privacy_title")
         )
         assertTrue(
-            "About must keep the Terms of Service row",
+            "About must keep the Terms & Conditions row",
             about.contains("legal_terms_title")
         )
         assertTrue(

@@ -471,6 +471,11 @@
     <string name="gt_gm_what_3">手机拒绝的任何事项都会在此卡上标为拒绝。未经手机确认，绝不宣称成功。</string>
     <string name="gt_gm_unavailable_title">此设备不可用：</string>
     <string name="gt_gm_revert_leftovers">关闭后留下了一些收尾：</string>
+    <!-- Folded read-back report: collapsed by default; expanding is review only. -->
+    <string name="gt_gm_details_show">查看优化详情</string>
+    <string name="gt_gm_details_hide">隐藏优化详情</string>
+    <string name="gt_gm_details_summary">已确认 %1$d 项，共 %2$d 项更改</string>
+    <string name="gt_gm_details_empty">本次运行未记录任何更改。</string>
     <string name="gt_gm_label_gpu">GPU 模式</string>
     <string name="gt_gm_label_fps_hint">游戏 FPS 提示</string>
     <string name="gt_gm_label_display">显示</string>
@@ -764,6 +769,9 @@
     <string name="gt_keep_what_2">应用只能保留或冻结，不能两者兼有：在此选择会将其从「额外挂起应用」中移除，反之亦然。无论如何选择，当前游戏和 Catsmoker 本身始终保留。</string>
     <string name="gt_keep_none">无例外 — 由自动扫描决定</string>
     <string name="gt_keep_some">保持运行 %1$d 个应用</string>
+    <string name="gt_keep_summary_more">%1$s 等 %2$d 个</string>
+    <string name="gt_keep_show_list">显示列表</string>
+    <string name="gt_keep_hide_list">隐藏列表</string>
     <string name="gt_keep_add">添加应用</string>
     <string name="gt_keep_remove">移除</string>
     <!-- Auto game session: watch the foreground app, start Gaming Mode for library games. -->

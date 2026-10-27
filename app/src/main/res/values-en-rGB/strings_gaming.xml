@@ -398,6 +398,11 @@
     <string name="gt_gm_what_3">Anything your phone refuses is listed on this card as refused. Nothing is claimed unless your phone confirmed it.</string>
     <string name="gt_gm_unavailable_title">Not available on this device:</string>
     <string name="gt_gm_revert_leftovers">Turning it off left some things behind:</string>
+    <!-- Folded read-back report: collapsed by default; expanding is review only. -->
+    <string name="gt_gm_details_show">View optimization details</string>
+    <string name="gt_gm_details_hide">Hide optimization details</string>
+    <string name="gt_gm_details_summary">%1$d of %2$d changes confirmed</string>
+    <string name="gt_gm_details_empty">No changes recorded for this run.</string>
     <string name="gt_gm_label_gpu">GPU mode</string>
     <string name="gt_gm_label_fps_hint">Game FPS hint</string>
     <string name="gt_gm_label_display">Display</string>
@@ -759,6 +764,9 @@
     <string name="gt_keep_what_2">An app can be kept or frozen, never both: picking one here removes it from Extra suspended apps, and the reverse. The active game and Catsmoker itself are always kept, whatever you pick.</string>
     <string name="gt_keep_none">No exceptions — the automatic sweep decides</string>
     <string name="gt_keep_some">%1$d app(s) kept running</string>
+    <string name="gt_keep_summary_more">%1$s and %2$d more</string>
+    <string name="gt_keep_show_list">Show list</string>
+    <string name="gt_keep_hide_list">Hide list</string>
     <string name="gt_keep_add">Add an app</string>
     <string name="gt_keep_remove">Remove</string>
     <string name="gt_session_title">Automatic Gaming Mode</string>

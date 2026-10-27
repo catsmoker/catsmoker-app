@@ -377,7 +377,11 @@ class HsrGraphicsViewModel @Inject constructor(
         viewModelScope.launch {
             _uiState.update { it.copy(applying = true) }
 
-            gameManager.forceStopGame()
+            // A refused stop is surfaced, not swallowed: the write still runs, but a running HSR
+            // can rewrite the file from memory on exit, so the user must know.
+            if (!gameManager.forceStopGame()) {
+                _events.emit(HsrEvent.Toast(context.getString(R.string.gf_hs_stop_refused), true))
+            }
             val result = if (flat) gameManager.writeFlatSettings(settings) else gameManager.writeSettings(settings)
             when (result) {
                 is HsrWriteResult.Success -> {

@@ -1,31 +1,31 @@
 <resources>
-    <!-- Legal screens (Privacy Policy + Terms of Service). Mirror of values/strings_legal.xml. -->
+    <!-- Legal screens (Privacy Policy + Terms & Conditions). Mirror of values/strings_legal.xml. -->
 
     <string name="legal_section_title">法律信息</string>
     <string name="legal_privacy_title">隐私政策</string>
     <string name="legal_privacy_subtitle">本应用存储与共享的内容。</string>
-    <string name="legal_privacy_updated">最后更新：2026-09-30</string>
-    <string name="legal_terms_title">服务条款</string>
+    <string name="legal_privacy_updated">最后更新：2026-10-25</string>
+    <string name="legal_terms_title">条款与条件</string>
     <string name="legal_website_title">法律网站</string>
     <string name="legal_terms_subtitle">使用本应用的规则。</string>
-    <string name="legal_terms_updated">最后更新：2026-09-30</string>
+    <string name="legal_terms_updated">最后更新：2026-10-25</string>
 
-    <string name="legal_p_intro">CatSmoker 是一款开源 Android 应用，无账号、无登录，也没有项目方运营的服务器。应用所知的一切几乎都保留在你的设备上。本政策说明哪些数据保存在本地、哪些会离开设备，以及在何时离开。</string>
+    <string name="legal_p_intro">CatSmoker 是一款开源 Android 应用，无账号、无登录，也没有项目方运营的服务器。应用所知的一切几乎都保留在你的设备上。本政策说明哪些数据保存在本地、应用的第三方 SDK 会发送哪些数据，以及你拥有哪些权利。下文所称“服务提供方”即 CatSmoker。</string>
 
     <string name="legal_p_local_title">1. 保存在设备上的数据</string>
-    <string name="legal_p_local_body">设置与应用状态仅保存在设备存储中：主题、语言、初始选项、启动计数、广告偏好、更新检查偏好、游戏库、机型伪装配置与按应用分配、游戏模式选项（DNS 选择、刷新率、清理规则、冻结列表）、性能浮窗与准星位置、游戏配置文件备份、会话记录与缓存日志。以上内容均不会上传给开发者——因为根本没有可上传的后端服务器。卸载应用或清除数据即可将其删除。</string>
+    <string name="legal_p_local_body">设置与应用状态仅保存在设备存储中：主题、语言、初始选项、启动计数、广告偏好、更新检查偏好、游戏库、机型伪装配置与按应用分配、游戏模式选项（DNS 选择、刷新率、清理规则、冻结列表）、性能浮窗与准星位置、游戏配置文件备份、诊断日志与崩溃记录。以上内容均不会上传给开发者——因为根本没有可上传的后端服务器。卸载应用或清除数据即可将其删除。</string>
 
-    <string name="legal_p_ads_title">2. 广告（Start.io）</string>
-    <string name="legal_p_ads_body">完整版（非 Play 商店版）会展示 Start.io SDK 提供的横幅广告。广告 SDK 可能会收集你的广告 ID 与设备信息，用于投放与统计。你可以随时在设置中关闭广告，开关会立即生效。Play 商店版使用 AdMob 而非 Start.io，受 Google 广告政策约束。</string>
+    <string name="legal_p_analytics_title">2. 分析、Cookie 与跟踪技术</string>
+    <string name="legal_p_analytics_body">应用在两种版本中都内置了 Firebase Analytics（Google Analytics for Firebase）。除非你关闭它，否则它会向 Google 发送自动使用事件（应用打开、会话、应用更新和应用异常），以及应用版本、设备型号、语言和每次安装的标识符；Google 还会根据你的 IP 地址估算大致位置。应用本身不记录任何自定义事件，因此游戏名称、文件路径、配置内容和输入的值都不会发送。Firebase 还可能读取广告标识符，广告 SDK 也会这样做。数据收集默认开启。设置 &gt; 发送分析数据 中的开关保存在设备上，每次启动时重新应用到 SDK，更改后立即生效；关闭期间不会发送任何分析事件。两种版本都不使用 Cookie，也不运行网页像素。Firebase 安装服务仍可能联系 Google 以维护安装 ID，这些数据由 Google 按其自身隐私政策处理。</string>
 
-    <string name="legal_p_updates_title">3. 更新检查</string>
+    <string name="legal_p_ads_title">3. 广告（Start.io 或 AdMob）</string>
+    <string name="legal_p_ads_body">广告因版本而异。完整版（GitHub）展示 Start.io 的横幅广告，并在设置中提供免费的广告关闭开关。Play 商店版展示 AdMob 广告，可通过 Google Play 一次性购买移除。广告 SDK 随应用启动，可能收集你的广告 ID、设备信息和 IP 地址以投放和统计广告，具体受该提供商政策约束。关闭广告或购买去广告只会停止请求和展示横幅，并不会从应用中移除该 SDK。</string>
+
+    <string name="legal_p_updates_title">4. 更新检查</string>
     <string name="legal_p_updates_body">当你点击“检查更新”（或自动检查运行时），应用会查询本项目的 GitHub releases 公开 API。该请求会向 GitHub 暴露你的 IP 地址与应用版本，受 GitHub 自身隐私条款约束。完整版默认开启自动检查，可在设置中关闭；Play 商店版从不检查 GitHub 更新。下载的更新文件保存在应用私有目录中，仅在你确认后才会安装。</string>
 
-    <string name="legal_p_sharing_title">4. 由你主动分享的日志与记录</string>
-    <string name="legal_p_sharing_body">诊断日志与会话记录绝不会自行离开设备。只有当你点击“分享”时，才会通过 Android 分享菜单发送到你选择的 app。日志可能包含设备与系统信息——发送给他人之前请先检查。</string>
-
-    <string name="legal_p_external_title">5. 外部链接与捐赠</string>
-    <string name="legal_p_external_body">社区链接（GitHub、官网、Discord、Telegram）与捐赠方式（PayPal、Binance、加密货币地址）均在应用外部打开。使用这些服务时，对方会按其自身政策收集常规数据（如 IP 地址，支付时包括支付信息）。捐赠完全自愿，由外部服务处理——应用不会看到或保存你的支付信息。</string>
+    <string name="legal_p_sharing_title">5. 由你主动分享的日志、配置与文件</string>
+    <string name="legal_p_sharing_body">诊断日志、崩溃报告、导出的配置与游戏配置文件绝不会自行离开设备。只有当你点击“分享”或“导出”时，才会通过 Android 分享菜单或文件选择器发送到你选择的目标。日志可能包含设备与系统信息——发送给他人之前请先检查。</string>
 
     <string name="legal_p_permissions_title">6. 设备权限</string>
     <string name="legal_p_permissions_body">应用仅为实现你要求的功能而请求权限：文件访问用于读取与备份游戏配置，悬浮窗权限用于性能浮窗与准星，使用情况访问用于检测游戏会话，通知访问用于游戏模式静音时段，麦克风仅用于可选的音频可视化增强，蓝牙信息仅用于识别音频设备。每项权限都可以拒绝——相关功能会显示为不可用，而不会静默失败。</string>
@@ -33,28 +33,91 @@
     <string name="legal_p_vpn_title">7. 本地 VPN 防火墙</string>
     <string name="legal_p_vpn_body">可选的应用联网防火墙使用 Android VPN 框架作为设备本地过滤器。规则在手机本机执行；不会向项目服务器发送任何流量，因为根本不存在这样的服务器。</string>
 
-    <string name="legal_p_contact_title">8. 联系与变更</string>
-    <string name="legal_p_contact_body">对本政策的疑问可在项目 GitHub 仓库中提出 issue。若政策变更，更新后的文本将随应用发布，并标注新的更新日期。</string>
+    <string name="legal_p_external_title">8. 外部链接与捐赠</string>
+    <string name="legal_p_external_body">社区链接（GitHub、官网、Discord、Telegram）与捐赠方式（PayPal、Binance、加密货币地址）均在应用外部打开。使用这些服务时，对方会按其自身政策收集常规数据（如 IP 地址，支付时包括支付信息）。捐赠完全自愿，由外部服务处理——应用不会看到或保存你的支付信息。</string>
 
-    <string name="legal_t_intro">安装并使用 CatSmoker 即表示你同意这些条款。若不同意，请勿使用本应用。</string>
+    <string name="legal_p_rights_title">9. 你的权利（包括加州）</string>
+    <string name="legal_p_rights_body">你可以要求开发者查阅、更正或删除开发者持有的你的个人数据——实际上就是支持邮件及你主动发送的文件——你也可以随时撤回同意，且不影响此前已进行的处理。请写信至 catsmoker.lab@gmail.com。Google 或 Start.io 持有的数据由这些提供商控制；请使用其隐私工具，或向开发者索取正确的联系方式。加州居民（CCPA/CPRA）有权了解收集了哪些个人信息、要求删除、选择退出出售或共享，并有权因行使这些权利而不受歧视。开发者不出售个人信息，也不会收到你的原始分析或广告数据；上述提供商可能按其自身政策共享用于广告的标识符。请将 CCPA/CPRA 请求发送至 catsmoker.lab@gmail.com。</string>
+
+    <string name="legal_p_disclosure_title">10. 法律披露与服务提供商</string>
+    <string name="legal_p_disclosure_body">在法律规定时（例如遵守传票或类似法律程序），或开发者善意认为披露对于保护自身或他人的权利与安全、调查欺诈或回应政府请求确有必要时，可能会披露数据。为开发者工作的提供商——例如支持邮箱背后的邮件服务——仅为此目的并在保密义务下处理数据。开发者不会收到来自 Firebase 或广告 SDK 的原始应用数据，只会收到汇总报告。</string>
+
+    <string name="legal_p_transfers_title">11. 国际数据传输</string>
+    <string name="legal_p_transfers_body">Google（Firebase、AdMob、Google Play）和 Start.io 可能在您所在国家/地区以外的国家/地区处理数据，包括欧洲经济区以外。在法律要求为此类传输提供保障时，这些提供商会采用欧盟委员会批准的标准合同条款、充分性认定等机制，或在法律要求且允许的情况下征得你的同意。开发者自身的往来邮件由可能将数据存储在境外的邮件服务商处理。其他国家的数据保护法律可能与您所在国家/地区不同。</string>
+
+    <string name="legal_p_retention_title">12. 数据保留</string>
+    <string name="legal_p_retention_body">设备上的数据会一直保留，直到你卸载应用或清除其数据。支持邮件和你发送的文件会保留到你要求删除为止，或按法律要求保留更长时间。Firebase 和广告提供商按其自身保留政策保存数据；开发者无法代为删除他们持有的数据——请使用其隐私控制功能或联系他们。不再能识别你身份的汇总统计可能被无限期保留。</string>
+
+    <string name="legal_p_children_title">13. 儿童</string>
+    <string name="legal_p_children_body">本应用不面向 16 岁以下儿童，或您所在地区规定的更高年龄；开发者不会在知情情况下收集儿童的个人数据，也不会向儿童推广本应用。如果儿童发送了个人数据——例如通过电子邮件——父母或监护人可写信至 catsmoker.lab@gmail.com，相关数据将被删除。在法律要求父母或监护人同意的情况下，本应用不得在未获得该同意时使用。</string>
+
+    <string name="legal_p_security_title">14. 安全与数据泄露通知</string>
+    <string name="legal_p_security_body">应用数据受 Android 应用沙箱和设备锁保护。开发者不运营存储应用数据的服务器，因此不存在可能被攻破的中央用户数据库；支持邮件受邮件服务商的安全保护。如果发生影响开发者所持个人数据的泄露，将按法律要求通知受影响用户，包括泄露的性质和已采取的应对措施。</string>
+
+    <string name="legal_p_consent_title">15. 你的同意与退出</string>
+    <string name="legal_p_consent_body">可选功能——浮窗、VPN 过滤、root 或 Shizuku 操作以及分享——仅在你开启时运行。你可以通过关闭功能或卸载应用来撤回同意；这不影响撤回前已进行的处理。卸载会停止应用在你的设备上收集数据，但不会删除已发送给 Google 或 Start.io 的数据。如需请求删除开发者持有的数据，请发送邮件至 catsmoker.lab@gmail.com。</string>
+
+    <string name="legal_p_changes_title">16. 本政策的变更</string>
+    <string name="legal_p_changes_body">开发者可能不时更新本政策。当前版本始终随应用发布在本页面，并标注新的更新日期。重大变更将通过在此发布新文本予以公告；在法律要求就重大变更征得同意时，会在变更生效前征求你的同意。如需旧版本，可发送邮件至 catsmoker.lab@gmail.com 索取。</string>
+
+    <string name="legal_p_contact_title">17. 联系方式</string>
+    <string name="legal_p_contact_body">有关本政策的疑问、隐私请求，以及违法内容或滥用行为的举报，均可发送至 catsmoker.lab@gmail.com。开发者将在合理期限内回复。</string>
+
+    <string name="legal_t_intro">本条款与条件适用于 CatSmoker 移动应用及 CatSmoker 运营的任何相关服务（合称“本应用”）。CatSmoker 为“服务提供方”。下载、安装或使用本应用，即表示你同意本条款。使用前请仔细阅读。若不同意，请勿使用本应用。本应用没有账号，也没有项目方运营的服务器，因此本条款主要说明你在使用本地功能时的责任。</string>
 
     <string name="legal_t_license_title">1. 开源许可</string>
-    <string name="legal_t_license_body">本应用源代码采用知识共享署名-非商业性使用-相同方式共享 4.0 国际许可协议（CC BY-NC-SA 4.0）。你可以在署名、以相同许可发布的前提下，出于非商业目的分享与改编。完整许可文本可在初始设置页与项目仓库中找到链接。</string>
+    <string name="legal_t_license_body">本应用的源代码以开源软件形式发布，适用知识共享署名-非商业性使用-相同方式共享 4.0 国际许可协议（CC BY-NC-SA 4.0）。你对本应用的使用、复制与分发均受该许可约束。本条款不限制该许可赋予你的权利。</string>
 
-    <string name="legal_t_games_title">2. 游戏自身规则仍然适用</string>
+    <string name="legal_t_ip_title">2. 知识产权</string>
+    <string name="legal_t_ip_body">CatSmoker 保留对本应用代码、设计、名称、标识和品牌的所有知识产权。开源许可仅覆盖代码，不授予你以暗示背书或官方版本的方式使用 CatSmoker 名称、标识或品牌的权利。请勿删除或更改本应用中显示的版权、许可或其他权利声明。</string>
+
+    <string name="legal_t_eligibility_title">3. 使用资格</string>
+    <string name="legal_t_eligibility_body">你声明你所在司法辖区的法律允许你使用本应用。你须年满 16 周岁，或达到你所在辖区规定的数字同意年龄（以较高者为准）。若你未满该年龄，须由父母或法定监护人代为审阅并接受本条款。</string>
+
+    <string name="legal_t_use_title">4. 可接受的使用</string>
+    <string name="legal_t_use_body">请合法使用本应用，且仅用于提升游戏性能。不得利用本应用损害设备、网络或他人，不得违法或侵犯知识产权，也不得在重要场合将修改过的游戏客户端冒充为未修改版本。不得试图利用本应用干扰他人的设备或数据。</string>
+
+    <string name="legal_t_games_title">5. 游戏自身规则仍然适用</string>
     <string name="legal_t_games_body">伪装设备身份或修改游戏文件可能违反各游戏的服务条款，并导致功能受限或封号等处罚。开发者不对第三方游戏中的封号或任何损失负责。使用这些功能风险自负。</string>
 
-    <string name="legal_t_risk_title">3. 系统更改由你自行负责</string>
-    <string name="legal_t_risk_body">本应用按“现状”提供，不作任何保证。更改系统设置（分辨率、刷新率、动画缩放、DNS、音频、dexopt 编译）或使用 root、Shizuku 权限的功能均按你的指令执行；应用会在可行时先备份配置，但你需自行承担不稳定、启动问题或数据丢失的风险。你随时可以还原更改或卸载应用。</string>
+    <string name="legal_t_risk_title">6. Root、Shizuku 与系统更改</string>
+    <string name="legal_t_risk_body">本应用的许多功能无需 root 即可使用。高级功能（设备伪装、部分系统调整和文件编辑）需要 Shizuku、root 或生成的 Magisk 模块，且均为可选。对设备进行 root 或越狱会移除安全限制，可能使其暴露于恶意软件、失去保修、导致银行或支付应用无法使用，或使本应用无法运行。仅在你理解并接受这些风险时才启用相关功能。更改系统设置（分辨率、刷新率、动画缩放、DNS、音频、dexopt 编译）的功能均按你的指令执行。应用会在可行时先备份游戏配置，但你需自行承担不稳定、启动问题或数据丢失的风险。你可以随时还原更改或卸载应用。</string>
 
-    <string name="legal_t_donations_title">4. 捐赠</string>
-    <string name="legal_t_donations_body">捐赠是支持开发的自愿赠与，不可退款，完全由外部服务处理，不会解锁高级功能，也不赋予捐赠者索取支持或干预项目的权利。</string>
+    <string name="legal_t_content_title">7. 你选择分享的内容</string>
+    <string name="legal_t_content_body">本应用没有账号、没有公开内容流，也没有存储用户内容的服务器。你可以导出配置、游戏配置、日志或记录，并通过 Android 分享菜单或其他应用发送。你对自己的分享内容、你是否拥有相关权利，以及内容中的个人数据负责（包括他人的数据，须经其同意）。不得分享违法内容、恶意软件或侵犯他人权利的内容。若你向开发者发送内容（例如错误报告），即授予开发者使用该内容进行调查和改进本应用的许可；该内容不会被出售，并按隐私政策处理。如需举报违法内容或滥用行为，请联系 catsmoker.lab@gmail.com。</string>
 
-    <string name="legal_t_use_title">5. 可接受的使用</string>
-    <string name="legal_t_use_body">请合法使用本应用，且仅用于提升游戏性能。不得用其损害设备、网络或他人，也不得在重要场合将修改过的游戏客户端冒充为未修改的客户端。</string>
+    <string name="legal_t_thirdparty_title">8. 第三方服务</string>
+    <string name="legal_t_thirdparty_body">根据你安装的版本，本应用使用以下第三方服务：\n\u2022 两个版本：Google Play Services（Firebase 所需的基础库）和 Google Analytics for Firebase。\n\u2022 Play 商店版：AdMob（广告）和 Google Play Billing（可选的去广告购买）。\n\u2022 完整版（GitHub）：Start.io（原 StartApp，广告）。\n各提供商按其自身条款和隐私政策处理数据。隐私政策说明本应用自身存储的内容。部分功能需要联网。你的移动运营商条款仍然适用；数据费用（包括漫游费）由你承担；若你不是账单持有人，请确认已获授权。游戏预设及其他第三方信息仅为方便而提供——使用前请自行核实。开发者不对第三方服务、其可用性、其内容或其决定（包括广告内容或计费决定）负责。</string>
 
-    <string name="legal_t_changes_title">6. 条款变更</string>
-    <string name="legal_t_changes_body">这些条款可能随应用发展而更新；现行版本始终刊载于应用内的本页面。</string>
+    <string name="legal_t_payments_title">9. 收费与捐赠</string>
+    <string name="legal_t_payments_body">本应用免费使用。Play 商店版提供可选的去广告一次性购买；价格由 Google Play 在付款前显示，退款遵循 Google Play 政策。捐赠为自愿赠与，不可退款，完全由外部服务处理，不会解锁高级功能，也不会换取对项目的影响力。开发者未来可能新增或调整付费功能；任何收费都会在付款前明确显示。开发者也可随时修改本应用。</string>
+
+    <string name="legal_t_privacy_title">10. 隐私与设备安全</string>
+    <string name="legal_t_privacy_body">本应用按隐私政策所述在设备上存储和处理数据。你有责任保护设备和本应用的访问安全。由于没有账号，任何能访问你已解锁设备的人都可以使用本应用并查看其本地数据。卸载应用或清除其数据会删除这些本地数据。</string>
+
+    <string name="legal_t_updates_title">11. 更新与可用性</string>
+    <string name="legal_t_updates_body">开发者可能不时更新本应用。更新可能是本应用在新版 Android 上继续运行所必需的；你可以选择不安装，但旧版本可能停止工作或失去支持。开发者不保证更新始终可用、与你的设备兼容或对你适用。开发者也可随时停止提供本应用。若设备没电、离线或因其他原因无法运行本应用，开发者无法承担责任。若本应用停止提供，你已获得的代码所适用的开源许可仍按其条款继续有效。</string>
+
+    <string name="legal_t_termination_title">12. 终止</string>
+    <string name="legal_t_termination_body">若你严重违反本条款，开发者可终止你使用本应用名称、品牌及开发者提供的任何服务的许可。若该违约可以补救，你将收到书面通知，并有 14 天时间补救。若你违法、侵犯知识产权，或从事可能损害其他用户或开发者的行为，开发者可立即采取行动，无需通知。由于本应用没有账号，“终止”指该许可的结束，不会删除你设备上的任何内容。你已获得的代码所适用的开源许可是不可撤销的，不受影响。终止后，你须停止使用 CatSmoker 名称和品牌，并在开发者要求时停止使用相关服务。</string>
+
+    <string name="legal_t_liability_title">13. 责任限制</string>
+    <string name="legal_t_liability_body">本应用按“现状”和“现有可用”提供，在法律允许的最大范围内不作任何保证。开发者不对间接、附带、特殊、后果性或惩罚性损害负责，包括利润损失、数据丢失或业务中断，即使已被告知可能发生。开发者仍对因过失造成的死亡或人身伤害、欺诈或虚假陈述，以及依法不能排除或限制的责任承担全部责任。在法律允许的最大范围内，开发者对任何索赔的总责任以你在索赔前 12 个月内为本应用支付的金额为限，或以法律规定的最低金额为限（以较高者为准）。若本应用免费，则以法律规定的最低金额为准。本条款不限制强制性消费者保护法赋予你的权利。</string>
+
+    <string name="legal_t_indemnity_title">14. 赔偿</string>
+    <string name="legal_t_indemnity_body">在法律允许的最大范围内，你同意就因你违反本条款或故意滥用本应用（包括你违反本条款分享的内容）而产生的索赔、责任、损害、损失和合理律师费，向开发者及其关联方、管理人员、员工和代理人作出赔偿并使其免受损害。因开发者自身过失、违反本条款或违法导致的索赔不适用本条。若法律限制消费者赔偿，本条以法律允许的最大范围为限。</string>
+
+    <string name="legal_t_law_title">15. 适用法律与管辖</string>
+    <string name="legal_t_law_body">本条款受开发者设立地司法辖区的法律管辖，排除法律冲突规则，但强制性消费者保护法另有规定的除外。争议应提交依法有管辖权的法院。本条款不限制你依强制性法律向有管辖权的法院提起诉讼的权利。</string>
+
+    <string name="legal_t_misc_title">16. 可分割性与完整协议</string>
+    <string name="legal_t_misc_body">若任何条款被有管辖权的法院认定为无效、违法或不可执行，仅应在使其有效和可执行所必需的范围内修改，其余条款继续完全有效。本条款与隐私政策构成你与开发者之间关于本应用的完整协议，并取代此前的任何协议或谅解。</string>
+
+    <string name="legal_t_changes_title">17. 条款变更</string>
+    <string name="legal_t_changes_body">开发者可能不时更新本条款。当前版本始终随应用发布在本页面，并标注新的更新日期。开发者将通过在此发布新条款来通知你变更。如需旧版本，可发送邮件至 catsmoker.lab@gmail.com 索取。本条款自 2026-10-25 起生效。</string>
+
+    <string name="legal_t_contact_title">18. 联系方式</string>
+    <string name="legal_t_contact_body">如有疑问、举报违法内容或滥用行为，或请求复核审核决定，请联系 catsmoker.lab@gmail.com。开发者将在合理期限内回复。</string>
 
     <!-- Donate-screen voluntary-gift notice. -->
     <string name="donate_notice">捐赠为自愿赠与，不可退款。付款由 PayPal、Binance 或相应加密货币网络在外部处理——CatSmoker 不会看到你的支付信息。</string>
@@ -70,5 +133,5 @@
 
     <!-- Onboarding legal dialogs. -->
     <string name="core_terms_read_privacy">阅读隐私政策</string>
-    <string name="core_terms_read_terms">阅读服务条款</string>
+    <string name="core_terms_read_terms">阅读条款与条件</string>
 </resources>

@@ -110,6 +110,13 @@
     <string name="gf_applied_holds">Aplicado — el archivo ahora contiene: %1$s</string>
     <string name="gf_game_stopped_relaunch">Juego detenido — ejecútalo de nuevo para jugar con los nuevos ajustes.</string>
     <string name="gf_written_no_readback">Escrito, pero falló la relectura — revisa RESTAURAR COPIA si algo va mal.</string>
+    <string name="gf_save_verify_failed">No aplicado — el archivo no contiene los valores solicitados (%1$s). Los cambios siguen seleccionados para que puedas reintentar, y RESTAURAR COPIA conserva el guardado anterior.</string>
+    <string name="gf_backup_failed_refused">No se escribió nada — no se pudo hacer copia de seguridad del archivo actual, así que no habría forma de volver. Libera espacio e inténtalo de nuevo.</string>
+    <string name="gf_profile_patch_refused">No aplicado — no se pudo verificar la estructura del guardado para %1$s. No se escribió nada; usa LEER GUARDADO para ver qué contiene el archivo, o cambia el valor en el editor de guardado.</string>
+    <string name="gf_profile_nothing_to_apply">No se escribió nada — este perfil solo siembra un guardado que el juego aún no ha creado, y el archivo ya existe.</string>
+    <string name="gf_zarchiver_unavailable">Este perfil debe aplicarse desde dentro de la app, porque primero lee el archivo que ya está en el dispositivo. Usa Root, Shizuku o SAF.</string>
+    <string name="gf_existing_unreadable">No se cambió nada — el archivo actual existe pero no se pudo leer, así que no se pudo respaldar primero.</string>
+    <string name="gf_permissions_failed">El archivo se escribió, pero no se pudo establecer su propietario ni sus permisos (%1$s) — puede que el juego no pueda leerlo.</string>
     <string name="gf_save_not_created">%1$s no existe en %2$s — el juego aún no lo ha creado. Ejecuta el juego una vez para que escriba su propio guardado e inténtalo de nuevo.</string>
     <string name="gf_shizuku_channel_unavailable">Shizuku está en ejecución pero el canal de guardado no está disponible — comprueba que la app tenga permiso de Shizuku (app Shizuku → Apps → permitir) e inténtalo de nuevo con LEER.</string>
     <string name="gf_shizuku_channel_unavailable_short">Shizuku está en ejecución pero el canal de guardado no está disponible — comprueba que la app tenga permiso de Shizuku e inténtalo de nuevo.</string>

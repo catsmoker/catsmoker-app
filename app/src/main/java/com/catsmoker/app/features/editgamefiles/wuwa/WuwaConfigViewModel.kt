@@ -615,6 +615,10 @@ class WuwaConfigViewModel @Inject constructor(
                 val s = result.success
                 val verifiedCount = s.files.count { it.verified }
                 val failed = s.files.filter { !it.pushed }
+                // The success toast must agree with the detail line: a failed hash sync is a
+                // reported issue (the game may discard the new config), never a clean deploy.
+                val clean = failed.isEmpty() && s.files.isNotEmpty() &&
+                    s.files.all { it.verified } && s.hashSynced != false
                 val detail = buildString {
                     append(context.getString(R.string.gf_dep_files, s.files.size, verifiedCount))
                     if (failed.isNotEmpty()) append(context.getString(R.string.gf_dep_refused, failed.size, failed.joinToString { "${it.name} (${it.detail})" }))
@@ -644,7 +648,7 @@ class WuwaConfigViewModel @Inject constructor(
                 }
                 _events.emit(
                     WuwaEvent.Toast(
-                        context.getString(if (failed.isEmpty() && s.files.all { it.verified }) R.string.gf_deployed_ok else R.string.gf_deployed_issues),
+                        context.getString(if (clean) R.string.gf_deployed_ok else R.string.gf_deployed_issues),
                         true
                     )
                 )
@@ -661,7 +665,19 @@ class WuwaConfigViewModel @Inject constructor(
         viewModelScope.launch {
             when (val result = manager.restoreBackup(entry)) {
                 is WuwaConfigManager.DeployResult.Success -> {
-                    _events.emit(WuwaEvent.Toast(context.getString(R.string.gf_backup_restored_name, entry.file.name.substringAfter('_')), true))
+                    val s = result.success
+                    // A restore is not successful because the write call returned: only a
+                    // read-back that matches the backup may be announced as restored. The old
+                    // code emitted this first and then the deploy report, so an unverified
+                    // restore still showed "Backup restored".
+                    if (s.files.isNotEmpty() && s.files.all { it.pushed && it.verified }) {
+                        _events.emit(
+                            WuwaEvent.Toast(
+                                context.getString(R.string.gf_backup_restored_name, entry.file.name.substringAfter('_')),
+                                true
+                            )
+                        )
+                    }
                     handleDeployResult(result, "restore")
                 }
                 is WuwaConfigManager.DeployResult.Failure -> {

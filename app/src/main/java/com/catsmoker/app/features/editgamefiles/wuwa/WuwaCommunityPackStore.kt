@@ -44,8 +44,8 @@ class WuwaCommunityPackStore(private val storeFile: File) {
     private val gson = Gson()
     private val lock = Any()
 
-    fun add(pack: StoredPack) {
-        synchronized(lock) {
+    fun add(pack: StoredPack): Boolean {
+        return synchronized(lock) {
             val packs = loadLocked()
             packs.add(0, pack)
             while (packs.size > MAX_PACKS) packs.removeAt(packs.size - 1)
@@ -56,15 +56,12 @@ class WuwaCommunityPackStore(private val storeFile: File) {
     fun getAllPacks(): List<StoredPack> = synchronized(lock) { loadLocked().toList() }
 
     fun delete(id: String): Boolean {
-        val removed = synchronized(lock) {
+        return synchronized(lock) {
             val packs = loadLocked()
             val before = packs.size
             packs.removeAll { it.id == id }
-            val did = packs.size < before
-            if (did) saveLocked(packs)
-            did
+            if (packs.size == before) false else saveLocked(packs)
         }
-        return removed
     }
 
     /** A corrupt or absent file is an empty list, not a crash — the next save replaces it. */
@@ -78,12 +75,12 @@ class WuwaCommunityPackStore(private val storeFile: File) {
         }
     }
 
-    /** A failed save is swallowed, same choice as the history store: packs are not worth crashing an import over. */
-    private fun saveLocked(packs: List<StoredPack>) {
-        try {
-            storeFile.writeAtomicLocked(gson.toJson(packs))
-        } catch (_: Exception) {
-        }
+    /** A failed save is reported, not swallowed: the caller must not announce an imported pack that was never persisted. */
+    private fun saveLocked(packs: List<StoredPack>): Boolean = try {
+        storeFile.writeAtomicLocked(gson.toJson(packs))
+        true
+    } catch (_: Exception) {
+        false
     }
 
     private fun File.writeAtomicLocked(text: String) {

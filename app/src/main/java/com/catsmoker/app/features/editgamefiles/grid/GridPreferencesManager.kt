@@ -253,9 +253,17 @@ class GridPreferencesManager @Inject constructor(
         val prior = runCatching {
             context.contentResolver.openInputStream(target.uri)?.use { it.readBytes() }
         }.getOrNull()
-        val backup = prior?.takeIf { it.isNotEmpty() }
+        // `findFile` already proved the document exists, so a null read is a failure, not
+        // "nothing there". The old code fell through and overwrote without a backup.
+        if (prior == null) {
+            return@withContext WriteResult.Failure(
+                WriteResult.Stage.BACKUP_FAILED,
+                "could not read the current file to back it up — refusing to overwrite"
+            )
+        }
+        val backup = prior.takeIf { it.isNotEmpty() }
             ?.let { backupStore.save(GridPreferences.PACKAGE, GridPreferences.FILE_NAME, it) }
-        if (prior != null && prior.isNotEmpty() && backup == null) {
+        if (prior.isNotEmpty() && backup == null) {
             return@withContext WriteResult.Failure(
                 WriteResult.Stage.BACKUP_FAILED,
                 "could not store a backup of the current file — refusing to overwrite"
@@ -285,9 +293,14 @@ class GridPreferencesManager @Inject constructor(
 
     /** Restores the newest backup through whichever channel can reach the file. Null = none exists. */
     suspend fun restoreLatestBackup(): WriteResult? = withContext(Dispatchers.IO) {
-        val bytes = backupStore.list(GridPreferences.PACKAGE)
-            .firstOrNull()?.let { backupStore.readBytes(it) } ?: return@withContext null
-        pushBytes(bytes)
+        val entry = backupStore.list(GridPreferences.PACKAGE).firstOrNull()
+            ?: return@withContext null
+        val bytes = backupStore.readBytes(entry)
+            ?: return@withContext WriteResult.Failure(
+                WriteResult.Stage.READ_FAILED,
+                "the newest backup is unreadable"
+            )
+        pushBytes(bytes, restoring = true)
     }
 
     // ------------------------------------------------------------------ internals
@@ -307,7 +320,11 @@ class GridPreferencesManager @Inject constructor(
      * nothing to back up, or [backupFailed] when a storeable file could not be stored.
      */
     private suspend fun backupViaShell(): Any? {
-        val bytes = pullViaShell() ?: return null
+        // `pullViaShell` returns null both for "missing" and "could not read". Ask the channel
+        // first so they stay apart: a real file that cannot be read is a failed backup, not
+        // "no prior file" — treating it as the latter would overwrite with no way back.
+        if (!shellRunner.execSafeResult("test", "-f", absolutePath).isSuccess) return null
+        val bytes = pullViaShell() ?: return backupFailed
         if (bytes.isEmpty()) return null
         return backupStore.save(GridPreferences.PACKAGE, GridPreferences.FILE_NAME, bytes)
             ?: backupFailed
@@ -380,13 +397,28 @@ class GridPreferencesManager @Inject constructor(
     }
 
     /** Bytes up through root/Shizuku or SAF, for restores. */
-    private suspend fun pushBytes(bytes: ByteArray): WriteResult {
+    private suspend fun pushBytes(bytes: ByteArray, restoring: Boolean = false): WriteResult {
+        var backupEntry: ConfigBackupStore.Entry? = null
+        var gameStopped: Boolean? = null
         if (canUseShell()) {
+            // Restoring replaces the live file, so stop the game (it rewrites preferences on
+            // exit) and stash what is being replaced first — the same rule as applyEdits.
+            if (restoring) {
+                gameStopped = shellRunner.execSafeResult("am", "force-stop", GridPreferences.PACKAGE).isSuccess
+                val backup = backupViaShell()
+                if (backup === backupFailed) {
+                    return WriteResult.Failure(
+                        WriteResult.Stage.BACKUP_FAILED,
+                        "could not store a backup of the current file — refusing to overwrite"
+                    )
+                }
+                backupEntry = backup as? ConfigBackupStore.Entry
+            }
             val outcome = pushViaShell(bytes)
             if (outcome != null) {
                 return WriteResult.Success(
-                    backup = null, refused = emptyList(),
-                    verified = outcome, channelUsed = "root / Shizuku shell", gameStopped = null
+                    backup = backupEntry, refused = emptyList(),
+                    verified = outcome, channelUsed = "root / Shizuku shell", gameStopped = gameStopped
                 )
             }
         }
@@ -397,11 +429,31 @@ class GridPreferencesManager @Inject constructor(
             ?: return WriteResult.Failure(WriteResult.Stage.FILE_NOT_FOUND, "feral_app_support not found")
         val target = supportDir.findFile(GridPreferences.FILE_NAME)
             ?: return WriteResult.Failure(WriteResult.Stage.FILE_NOT_FOUND, "preferences not found")
+        if (restoring) {
+            val current = runCatching {
+                context.contentResolver.openInputStream(target.uri)?.use { it.readBytes() }
+            }.getOrNull()
+            // The document was found, so a null read means "exists but unreadable" — no backup
+            // is possible and the restore must not replace it.
+            if (current == null) {
+                return WriteResult.Failure(
+                    WriteResult.Stage.BACKUP_FAILED,
+                    "could not read the current file to back it up — refusing to overwrite"
+                )
+            }
+            if (current.isNotEmpty()) {
+                backupEntry = backupStore.save(GridPreferences.PACKAGE, GridPreferences.FILE_NAME, current)
+                    ?: return WriteResult.Failure(
+                        WriteResult.Stage.BACKUP_FAILED,
+                        "could not store a backup of the current file — refusing to overwrite"
+                    )
+            }
+        }
         return try {
             context.contentResolver.openOutputStream(target.uri, "w")?.use { it.write(bytes) }
             val readBack = context.contentResolver.openInputStream(target.uri)?.use { it.readBytes() }
             WriteResult.Success(
-                backup = null, refused = emptyList(),
+                backup = backupEntry, refused = emptyList(),
                 verified = readBack?.contentEquals(bytes) == true,
                 channelUsed = "SAF", gameStopped = null
             )

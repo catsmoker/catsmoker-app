@@ -69,6 +69,13 @@ class VectorActivationTest {
     }
 
     @Test
+    fun explicitNoRecordsParsesEmptyNotNull() {
+        // Vector prints this when the module has no scoped app; it is an actionable
+        // empty state, not an unreadable one.
+        assertEquals(emptySet<String>(), VectorActivation.parseScopeLs("No records found."))
+    }
+
+    @Test
     fun scopeErrorParsesNull() {
         assertNull(VectorActivation.parseScopeLs("module unknown"))
         assertNull(VectorActivation.parseScopeLs(""))
@@ -126,6 +133,48 @@ class VectorActivationTest {
     }
 
     @Test
+    fun logProofFromAPreviousInstallPathIsIgnored() {
+        // The daemon log survives reinstalls/updates. A load line names the base.apk
+        // Vector injected; after an update that path is gone, so neither the load nor
+        // the own-process line that follows it may keep this install "Active".
+        val current = "/data/app/~~current/com.catsmoker.app-abc/base.apk"
+        val out = "[ 2026-10-13T03:07:20.084  10222: 31041: 31041 V/VectorLegacyBridge ] " +
+            "Loading legacy module com.catsmoker.app from /data/app/~~old/com.catsmoker.app-xyz/base.apk\n" +
+            "[ 2026-10-13T03:07:21.570  10222: 31041: 31041 I/VectorLegacyBridge ] " +
+            "CatsmokerLSP: module loaded in own process, heartbeat recorded\n"
+        val proof = VectorActivation.parseLogCat(out, currentApkPath = current)
+        assertFalse(proof.ownLoad)
+        assertTrue(proof.loadUids.isEmpty())
+        assertTrue(proof.spoofTargets.isEmpty())
+    }
+
+    @Test
+    fun logProofFromTheCurrentInstallPathCounts() {
+        val current = "/data/app/~~current/com.catsmoker.app-abc/base.apk"
+        val out = "[ 2026-10-13T03:07:20.084  10222: 31041: 31041 V/VectorLegacyBridge ] " +
+            "Loading legacy module com.catsmoker.app from $current\n" +
+            "[ 2026-10-13T03:07:21.570  10222: 31041: 31041 I/VectorLegacyBridge ] " +
+            "CatsmokerLSP: module loaded in own process, heartbeat recorded\n" +
+            "[ 2026-10-13T03:07:22.000  10222: 31041: 31041 I/VectorLegacyBridge ] " +
+            "CatsmokerLSP: spoofing com.tencent.ig as GM45K\n"
+        val proof = VectorActivation.parseLogCat(out, currentApkPath = current)
+        assertTrue(proof.ownLoad)
+        assertEquals(setOf(10222), proof.loadUids)
+        assertEquals(mapOf("com.tencent.ig" to "GM45K"), proof.spoofTargets)
+    }
+
+    @Test
+    fun targetLoadsAreFilteredByInstallPath() {
+        val current = "/data/app/~~current/com.catsmoker.app-abc/base.apk"
+        val out = "[ 2026-10-13T03:07:20.084  10228: 31041: 31041 V/VectorLegacyBridge ] " +
+            "Loading legacy module com.catsmoker.app from $current\n" +
+            "[ 2026-10-13T03:07:20.084  10222: 31041: 31041 V/VectorLegacyBridge ] " +
+            "Loading legacy module com.catsmoker.app from /data/app/~~old/base.apk\n"
+        val proof = VectorActivation.parseLogCat(out, currentApkPath = current)
+        assertEquals(setOf(10228), proof.loadUids)
+    }
+
+    @Test
     fun logLoadsForOtherModulesAreIgnored() {
         val out = "[ 2026-10-10T23:58:02.249     1000:  6172:  6172 D/VectorModuleManager ] " +
             "Loading module com.strawing.duckusb\n"
@@ -152,7 +201,7 @@ class VectorActivationTest {
     }
 
     @Test
-    fun headlineDistinguishesAllSixStates() {
+    fun headlineDistinguishesEveryState() {
         val base = VectorActivation.Evidence()
         // No privilege / never probed: unknown, never absent.
         assertEquals(VectorActivation.Headline.UNKNOWN, VectorActivation.headline(base))
@@ -164,10 +213,18 @@ class VectorActivationTest {
         val vector = base.copy(framework = VectorActivation.Framework.VECTOR)
         // Manager state unknown: unknown, never disabled.
         assertEquals(VectorActivation.Headline.UNKNOWN, VectorActivation.headline(vector))
-        // Explicitly disabled: disabled.
+        // Explicitly disabled with no proof: disabled.
         assertEquals(
             VectorActivation.Headline.DISABLED,
             VectorActivation.headline(vector.copy(moduleEnabled = false))
+        )
+        // Disabled but a process still holds the injected code: its own state, never
+        // plain ACTIVE (the manager will not inject into new processes).
+        assertEquals(
+            VectorActivation.Headline.ACTIVE_DISABLED,
+            VectorActivation.headline(
+                vector.copy(moduleEnabled = false, heartbeatFresh = true)
+            )
         )
         // Enabled but nothing ever executed: enabled, never loaded.
         assertEquals(
@@ -184,5 +241,29 @@ class VectorActivationTest {
             VectorActivation.Headline.ACTIVE,
             VectorActivation.headline(vector.copy(moduleEnabled = true, heartbeatFresh = true))
         )
+    }
+
+    @Test
+    fun executionProofOverADisabledManagerRowIsItsOwnState() {
+        // A process started before the row was disabled keeps the injected code until it
+        // exits. Reporting DISABLED there contradicted the load the log/heartbeat shows;
+        // reporting ACTIVE contradicted the disabled row. ACTIVE_DISABLED says both.
+        val vector = VectorActivation.Evidence(
+            framework = VectorActivation.Framework.VECTOR,
+            moduleEnabled = false,
+            loadUids = setOf(10228)
+        )
+        assertEquals(
+            VectorActivation.Headline.ACTIVE_DISABLED,
+            VectorActivation.headline(vector)
+        )
+    }
+
+    @Test
+    fun executionProofWinsWhenTheFrameworkCannotBeInspected() {
+        // LSPosed has no Vector CLI: the framework probe stays UNKNOWN, but a fresh
+        // heartbeat still proves this module executed. That used to read as UNKNOWN.
+        val lsposed = VectorActivation.Evidence(heartbeatFresh = true)
+        assertEquals(VectorActivation.Headline.ACTIVE, VectorActivation.headline(lsposed))
     }
 }

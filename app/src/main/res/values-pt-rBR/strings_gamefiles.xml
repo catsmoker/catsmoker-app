@@ -112,6 +112,13 @@
     <string name="gf_applied_holds">Aplicado — o arquivo agora contém: %1$s</string>
     <string name="gf_game_stopped_relaunch">O jogo foi encerrado — abra-o novamente para jogar com os novos ajustes.</string>
     <string name="gf_written_no_readback">Gravado, mas a leitura de retorno falhou — confira RESTAURAR BACKUP se algo parecer errado.</string>
+    <string name="gf_save_verify_failed">Não aplicado — o arquivo não contém os valores solicitados (%1$s). As alterações continuam selecionadas para nova tentativa, e RESTAURAR BACKUP mantém o save anterior.</string>
+    <string name="gf_backup_failed_refused">Nada foi gravado — não foi possível fazer backup do arquivo atual, então não haveria como voltar. Libere espaço e tente novamente.</string>
+    <string name="gf_profile_patch_refused">Não aplicado — não foi possível verificar a estrutura do save para %1$s. Nada foi gravado; use LER SAVE para ver o que o arquivo contém, ou altere o valor no editor de save.</string>
+    <string name="gf_profile_nothing_to_apply">Nada foi gravado — este perfil apenas cria um save que o jogo ainda não gerou, e o arquivo já existe.</string>
+    <string name="gf_zarchiver_unavailable">Este perfil precisa ser aplicado dentro do app, porque ele lê primeiro o arquivo que já está no dispositivo. Use Root, Shizuku ou SAF.</string>
+    <string name="gf_existing_unreadable">Nada foi alterado — o arquivo atual existe, mas não pôde ser lido, então não foi possível fazer backup antes.</string>
+    <string name="gf_permissions_failed">O arquivo foi gravado, mas não foi possível definir o proprietário ou as permissões (%1$s) — o jogo pode não conseguir lê-lo.</string>
     <string name="gf_save_not_created">%1$s não existe em %2$s — o jogo ainda não o criou. Abra o jogo uma vez para que ele grave seu próprio save, depois tente novamente.</string>
     <string name="gf_shizuku_channel_unavailable">O Shizuku está em execução, mas o canal de save não está disponível — verifique se o app tem permissão do Shizuku (app Shizuku → Apps → permitir) e tente LER novamente.</string>
     <string name="gf_shizuku_channel_unavailable_short">O Shizuku está em execução, mas o canal de save não está disponível — verifique se o app tem permissão do Shizuku e tente novamente.</string>

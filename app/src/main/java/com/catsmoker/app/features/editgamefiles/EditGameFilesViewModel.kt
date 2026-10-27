@@ -23,8 +23,8 @@ import com.catsmoker.app.features.editgamefiles.pubg.NewStateIniTransform
 import com.catsmoker.app.features.editgamefiles.pubg.PubgSafAccess
 import com.catsmoker.app.features.editgamefiles.pubg.PubgSavePatcher
 import com.catsmoker.app.features.editgamefiles.pubg.PubgSaveSelection
+import com.catsmoker.app.features.editgamefiles.pubg.PubgSaveVerification
 import com.catsmoker.app.features.editgamefiles.pubg.PubgUploadPlan
-import com.catsmoker.app.features.editgamefiles.pubg.PubgUserCustom
 import com.catsmoker.app.features.editgamefiles.wuwa.WuwaConfigManager
 import com.catsmoker.app.shared.data.model.GameConfig
 import com.catsmoker.app.shared.data.model.GameProfile
@@ -97,12 +97,13 @@ class EditGameFilesViewModel @Inject constructor(
         val installedGames: Map<GameType, Boolean> = emptyMap(),
         val selectedProfile: Int = 0,
         /**
-         * True when the selected profile's push must keep the file's own
-         * `[BackUp DeviceProfile]` tail (PUBG's `UserCustom.ini`, TODO M190/M191). The method
-         * chooser hides ZARCHIVER while set: a manual copy cannot read the current file, so it
-         * could not preserve that section.
+         * True when the selected profile's push must read the device's file first — to keep its
+         * own `[BackUp DeviceProfile]` tail (PUBG's `UserCustom.ini`) or to patch the save's
+         * fields in place (`Active.sav` profiles). The method chooser hides ZARCHIVER while set:
+         * a manual copy cannot read the current file, so it could neither preserve that section
+         * nor patch the values the profile names (TODO M190/M191).
          */
-        val selectedProfilePreservesBackup: Boolean = false,
+        val selectedProfileNeedsExistingFile: Boolean = false,
         /** String-resource IDs of the selected game's profile labels — resolved in Compose so a language switch re-renders them (a resolved string cached here would survive `recreate()` in the old language). */
         val profileLabelResIds: List<Int> = emptyList(),
         /**
@@ -235,8 +236,20 @@ class EditGameFilesViewModel @Inject constructor(
             saveDir = PubgUploadPlan.saveDir(packageName),
             saveFile = "Active.sav",
             profiles = listOf(
-                GameProfile(R.string.gf_profile_unlock_120, "PUBG/MaxFPS/Active.sav"),
-                GameProfile(R.string.gf_profile_tablet, "PUBG/TabletView/Active.sav"),
+                // The bundled saves are whole saves from the reference tools, but a player's
+                // Active.sav already holds their own sensitivity and layout. What each profile
+                // is actually about is patchable in place (ProfilePushPlan), so these edit maps
+                // are its payload; the blob only seeds a save the game has not written yet.
+                GameProfile(
+                    R.string.gf_profile_unlock_120,
+                    "PUBG/MaxFPS/Active.sav",
+                    saveEdits = PubgSavePatcher.fpsEdits(120)
+                ),
+                GameProfile(
+                    R.string.gf_profile_tablet,
+                    "PUBG/TabletView/Active.sav",
+                    saveEdits = PubgSavePatcher.viewEdits(PubgSavePatcher.TABLET_VIEW)
+                ),
                 // The eu tool's own file (TODO M190/M191): `UserCustom.ini` sits in
                 // `Saved/Config/Android/`, not `SaveGames/`, so the profile carries its own
                 // target — and the game keeps its previous device profile in a
@@ -383,7 +396,8 @@ class EditGameFilesViewModel @Inject constructor(
             it.copy(
                 selectedGame = game,
                 selectedProfile = 0,
-                selectedProfilePreservesBackup = config?.profiles?.firstOrNull()?.preserveDeviceProfileBackup == true,
+                selectedProfileNeedsExistingFile =
+                    ProfilePushPlan.needsExistingFile(config?.profiles?.firstOrNull()),
                 profileLabelResIds = config?.profiles?.map(GameProfile::labelRes).orEmpty(),
                 configFileLabel = config?.resetFileLabel,
                 // The exact package the GAME NOT FOUND card should name — the one the probe
@@ -410,9 +424,10 @@ class EditGameFilesViewModel @Inject constructor(
         }
     }
     fun onProfileSelected(profile: Int) {
-        val preserves = gameConfigs[_uiState.value.selectedGame]
-            ?.profiles?.getOrNull(profile)?.preserveDeviceProfileBackup == true
-        _uiState.update { it.copy(selectedProfile = profile, selectedProfilePreservesBackup = preserves) }
+        val needsExisting = ProfilePushPlan.needsExistingFile(
+            gameConfigs[_uiState.value.selectedGame]?.profiles?.getOrNull(profile)
+        )
+        _uiState.update { it.copy(selectedProfile = profile, selectedProfileNeedsExistingFile = needsExisting) }
     }
 
     /**
@@ -520,17 +535,32 @@ class EditGameFilesViewModel @Inject constructor(
                     return@launchIoWithLoading true
                 }
             }
-            backupStore.save(config.packageName, config.saveFile, original)
-            if (!pushSaveBytes(config, patched.data)) return@launchIoWithLoading true
+            // No undo point means no write: the patched save is about to replace the only copy
+            // of the player's file, and ConfigBackupStore.save reports failure instead of
+            // pretending a backup exists.
+            if (backupStore.save(config.packageName, config.saveFile, original) == null) {
+                showSnackbar(context.getString(R.string.gf_backup_failed_refused))
+                return@launchIoWithLoading false
+            }
+            if (!pushSaveBytes(config, patched.data)) return@launchIoWithLoading false
 
-            // The push is not the report — read the file back and say what it holds now.
-            val readBack = pullSaveBytes(config)?.let { PubgSavePatcher.read(it) }
+            // The push is not the report: read the file back, then compare what it holds with
+            // what was requested. The old code printed the read-back summary next to "applied"
+            // even when the values were still the old ones, and cleared the chips as if the
+            // request had landed.
+            val outcome = pullSaveOutcome(config)
+            if (outcome is PullOutcome.NoChannel && Shizuku.pingBinder()) {
+                shellRunner.markShizukuServiceUnreachable()
+            }
+            val readBack = (outcome as? PullOutcome.Ok)?.bytes?.let { PubgSavePatcher.read(it) }
+            val mismatches = readBack?.let { PubgSaveVerification.mismatches(it, edits) }.orEmpty()
+            val verified = readBack != null && mismatches.isEmpty()
             // Cold-start choreography (the reference's push-then-start shape): PUBG reads
             // Active.sav at launch, so a running game would keep playing the old values —
             // and overwrite the file with them on exit. Stop it after a verified push; the
             // manual LAUNCH GAME button cold-starts it. Best-effort: a refused stop keeps
             // the applied values (reported below), it just needs a manual restart.
-            val stopped = if (readBack != null) {
+            val stopped = if (verified) {
                 shellRunner.execSafeResult("am", "force-stop", config.packageName).isSuccess
             } else {
                 false
@@ -539,22 +569,37 @@ class EditGameFilesViewModel @Inject constructor(
                 _uiState.update {
                     it.copy(
                         saveRead = readBack ?: it.saveRead,
-                        saveEdits = emptyMap(),
+                        // Only a verified apply clears the chips: a mismatch keeps the request
+                        // visible so it can be retried instead of silently lost.
+                        saveEdits = if (verified) emptyMap() else it.saveEdits,
                         savePatchReport = readBack?.summary()
                     )
                 }
-                val applied = if (readBack != null) {
-                    context.getString(R.string.gf_applied_holds, readBack.summary())
-                } else {
-                    context.getString(R.string.gf_written_no_readback)
-                }
-                showSnackbar(
-                    if (stopped) {
-                        "$applied ${context.getString(R.string.gf_game_stopped_relaunch)}"
-                    } else {
-                        applied
+                when {
+                    readBack == null -> showSnackbar(
+                        if (outcome is PullOutcome.Missing) {
+                            context.getString(R.string.gf_written_no_readback)
+                        } else {
+                            context.getString(R.string.gf_no_privileged_channel)
+                        }
+                    )
+                    mismatches.isNotEmpty() -> showSnackbar(
+                        context.getString(
+                            R.string.gf_save_verify_failed,
+                            mismatches.joinToString(" · ") { "${it.field}: ${it.actual ?: "—"} ≠ ${it.expected}" }
+                        )
+                    )
+                    else -> {
+                        val applied = context.getString(R.string.gf_applied_holds, readBack.summary())
+                        showSnackbar(
+                            if (stopped) {
+                                "$applied ${context.getString(R.string.gf_game_stopped_relaunch)}"
+                            } else {
+                                applied
+                            }
+                        )
                     }
-                )
+                }
             }
             true
         }
@@ -960,11 +1005,41 @@ class EditGameFilesViewModel @Inject constructor(
                 val destDir = Environment.getExternalStorageDirectory().path +
                     (profile?.targetDir ?: config.saveDir)
                 val destPath = destDir + targetName
-                shellRunner.execSafe("mkdir", "-p", destDir)
+                // The marker under the list promises the restore is reversible, so take the
+                // bytes being replaced first — a restore of the wrong generation is otherwise
+                // the end of the newer file.
+                val current = readCurrentFileForBackup(destPath)
+                if (current != null && backupStore.save(config.packageName, targetName, current) == null) {
+                    withContext(Dispatchers.Main) { showSnackbar(context.getString(R.string.gf_backup_failed_refused)) }
+                    return@launchIoWithLoading false
+                }
+                val mkdir = shellRunner.execSafeResult("mkdir", "-p", destDir)
+                if (!mkdir.isSuccess) {
+                    withContext(Dispatchers.Main) {
+                        showSnackbar(context.getString(R.string.gf_mkdir_failed, mkdir.exitCode, destDir))
+                    }
+                    return@launchIoWithLoading false
+                }
                 val result = shellRunner.execSafeResult("cp", "-f", tempFile.absolutePath, destPath)
+                // A copy that had to re-create the file is owned by the privileged shell; take
+                // the owner from the destination directory (the game's UID) so the game can
+                // still read it, exactly like the profile push.
+                if (result.isSuccess && current == null) {
+                    val owner = shellRunner.execSafe("stat", "-c", "%u:%g", destDir).trim()
+                    if (owner.matches(Regex("^\\d+:\\d+$"))) {
+                        shellRunner.execSafe("chown", owner, destPath)
+                    }
+                }
+                val readBack = if (result.isSuccess) readCurrentFileForBackup(destPath) else null
                 val message = when {
-                    result.isSuccess -> context.getString(R.string.gf_restored_backup, entry.formattedTimestamp())
-                    else -> context.getString(R.string.gf_cp_failed, result.exitCode, result.stderr.ifBlank { context.getString(R.string.gf_no_output) })
+                    !result.isSuccess -> context.getString(
+                        R.string.gf_cp_failed,
+                        result.exitCode,
+                        result.stderr.ifBlank { context.getString(R.string.gf_no_output) }
+                    )
+                    readBack == null || !readBack.contentEquals(bytes) ->
+                        context.getString(R.string.gf_written_no_readback)
+                    else -> context.getString(R.string.gf_restored_backup, entry.formattedTimestamp())
                 }
                 withContext(Dispatchers.Main) { showSnackbar(message) }
             } finally {
@@ -972,6 +1047,17 @@ class EditGameFilesViewModel @Inject constructor(
             }
             true
         }
+    }
+
+    /**
+     * The file a restore is about to replace, for the pre-restore backup — through the direct
+     * binder channel when it answers, else the root shell. Null means the file is missing or
+     * unreadable, never "no channel"; a missing file needs no backup.
+     */
+    private suspend fun readCurrentFileForBackup(path: String): ByteArray? {
+        val direct = shellRunner.readFileDirect(path, forceBind = true)
+        if (direct != null && direct.isNotEmpty()) return direct
+        return readRootFile(path)?.takeIf { it.isNotEmpty() }
     }
 
     private fun restoreViaSaf(entry: ConfigBackupStore.Entry) {
@@ -1004,7 +1090,27 @@ class EditGameFilesViewModel @Inject constructor(
                 withContext(Dispatchers.Main) { showSnackbar(context.getString(R.string.gf_provider_refused_folder)) }
                 return@launchIoWithLoading true
             }
-            val target = dir.findFile(targetName) ?: dir.createFile(MIME_BINARY, targetName)
+            // The marker under the backup list promises the restore is reversible, so the bytes
+            // being replaced are stashed first. `findFile` distinguishes "not created yet" from
+            // "present": a present file that cannot be read has no backup, and overwriting it
+            // would destroy the only copy without a way back.
+            val existing = dir.findFile(targetName)
+            val current = if (existing == null) {
+                null
+            } else {
+                runCatching {
+                    context.contentResolver.openInputStream(existing.uri)?.use { it.readBytes() }
+                }.getOrNull()
+            }
+            if (existing != null && current == null) {
+                withContext(Dispatchers.Main) { showSnackbar(context.getString(R.string.gf_existing_unreadable)) }
+                return@launchIoWithLoading false
+            }
+            if (current != null && current.isNotEmpty() && backupStore.save(config.packageName, targetName, current) == null) {
+                withContext(Dispatchers.Main) { showSnackbar(context.getString(R.string.gf_backup_failed_refused)) }
+                return@launchIoWithLoading false
+            }
+            val target = existing ?: dir.createFile(MIME_BINARY, targetName)
             if (target == null) {
                 withContext(Dispatchers.Main) { showSnackbar(context.getString(R.string.gf_provider_refused_create)) }
                 return@launchIoWithLoading true
@@ -1014,7 +1120,18 @@ class EditGameFilesViewModel @Inject constructor(
                     withContext(Dispatchers.Main) { showSnackbar(context.getString(R.string.gf_provider_refused_write)) }
                     true
                 }
-            withContext(Dispatchers.Main) { showSnackbar(context.getString(R.string.gf_restored_backup, entry.formattedTimestamp())) }
+            // The write call is not the verdict: read the provider's own bytes back and compare
+            // them with the backup being restored. A provider that accepts the stream but writes
+            // nothing or partially used to still produce "Restored ...".
+            val readBack = runCatching {
+                context.contentResolver.openInputStream(target.uri)?.use { it.readBytes() }
+            }.getOrNull()
+            val message = if (readBack == null || !readBack.contentEquals(bytes)) {
+                context.getString(R.string.gf_written_no_readback)
+            } else {
+                context.getString(R.string.gf_restored_backup, entry.formattedTimestamp())
+            }
+            withContext(Dispatchers.Main) { showSnackbar(message) }
             true
         }
     }
@@ -1061,7 +1178,13 @@ class EditGameFilesViewModel @Inject constructor(
                 withContext(Dispatchers.Main) { showSnackbar(context.getString(R.string.gf_newstate_already)) }
                 return@launchIoWithLoading true
             }
-            runCatching { backupStore.save(config.packageName, config.saveFile, original) }
+            // No undo point means no write: the transform is about to replace the only copy of
+            // the game's INI, and ConfigBackupStore.save reports failure instead of pretending
+            // a backup exists. The old code discarded that result and overwrote anyway.
+            if (backupStore.save(config.packageName, config.saveFile, original) == null) {
+                withContext(Dispatchers.Main) { showSnackbar(context.getString(R.string.gf_backup_failed_refused)) }
+                return@launchIoWithLoading false
+            }
             val pushFile = File.createTempFile("push_", "_" + config.saveFile, context.externalCacheDir ?: context.cacheDir)
             try {
                 pushFile.writeBytes(transform.bytes)
@@ -1075,7 +1198,16 @@ class EditGameFilesViewModel @Inject constructor(
                     }
                     return@launchIoWithLoading true
                 }
-                shellRunner.execSafeResult("chmod", "0440", path)
+                val chmod = shellRunner.execSafeResult("chmod", "0440", path)
+                if (!chmod.isSuccess) {
+                    withContext(Dispatchers.Main) {
+                        showSnackbar(context.getString(
+                            R.string.gf_permissions_failed,
+                            "chmod ${chmod.exitCode}: ${chmod.stderr.ifBlank { context.getString(R.string.gf_no_output) }}"
+                        ))
+                    }
+                    return@launchIoWithLoading false
+                }
                 val readBack = readRootFile(path)
                 withContext(Dispatchers.Main) {
                     showSnackbar(
@@ -1110,6 +1242,21 @@ class EditGameFilesViewModel @Inject constructor(
             try {
                 tempFile.writeBytes(bytes)
                 shellRunner.execSafeResult("am", "force-stop", config.packageName)
+                // The backup list promises a reversible restore, so stash the live file's bytes
+                // first. Existence first, so "the game never wrote it" stays distinct from "it
+                // exists but cannot be read" — that one has no backup and must not be replaced.
+                val exists = shellRunner.execSafeResult("test", "-f", path).isSuccess
+                if (exists) {
+                    val current = readRootFile(path)
+                    if (current == null) {
+                        withContext(Dispatchers.Main) { showSnackbar(context.getString(R.string.gf_existing_unreadable)) }
+                        return@launchIoWithLoading false
+                    }
+                    if (backupStore.save(config.packageName, config.saveFile, current) == null) {
+                        withContext(Dispatchers.Main) { showSnackbar(context.getString(R.string.gf_backup_failed_refused)) }
+                        return@launchIoWithLoading false
+                    }
+                }
                 val copy = shellRunner.execSafeResult("cp", "-f", tempFile.absolutePath, path)
                 if (!copy.isSuccess) {
                     withContext(Dispatchers.Main) {
@@ -1119,13 +1266,43 @@ class EditGameFilesViewModel @Inject constructor(
                 }
                 // `cp` over an existing file keeps its owner; a file that had to be re-created
                 // would otherwise stay root-owned and unreadable by the game, so the owner is
-                // taken from the app's own directory (whose owner is the app's UID).
-                val uid = shellRunner.execSafe("stat", "-c", "%u", NewStateIniTransform.CONFIG_DIR).trim()
-                if (uid.toLongOrNull() != null) {
-                    shellRunner.execSafe("chown", "$uid:$uid", path)
+                // taken from the app's own directory (whose owner is the app's UID). The result
+                // is checked: announcing "restored" over a file the game cannot read is exactly
+                // the failure this path exists to avoid.
+                if (!exists) {
+                    val uid = shellRunner.execSafe("stat", "-c", "%u", NewStateIniTransform.CONFIG_DIR).trim()
+                    if (uid.toLongOrNull() != null) {
+                        val chown = shellRunner.execSafeResult("chown", "$uid:$uid", path)
+                        if (!chown.isSuccess) {
+                            withContext(Dispatchers.Main) {
+                                showSnackbar(context.getString(
+                                    R.string.gf_permissions_failed,
+                                    "chown ${chown.exitCode}: ${chown.stderr.ifBlank { context.getString(R.string.gf_no_output) }}"
+                                ))
+                            }
+                            return@launchIoWithLoading false
+                        }
+                    }
                 }
-                shellRunner.execSafeResult("chmod", "0440", path)
-                withContext(Dispatchers.Main) { showSnackbar(context.getString(R.string.gf_restored_backup, entry.formattedTimestamp())) }
+                val chmod = shellRunner.execSafeResult("chmod", "0440", path)
+                if (!chmod.isSuccess) {
+                    withContext(Dispatchers.Main) {
+                        showSnackbar(context.getString(
+                            R.string.gf_permissions_failed,
+                            "chmod ${chmod.exitCode}: ${chmod.stderr.ifBlank { context.getString(R.string.gf_no_output) }}"
+                        ))
+                    }
+                    return@launchIoWithLoading false
+                }
+                // The copy is not the verdict either: compare the bytes the device now holds
+                // with the backup being restored.
+                val readBack = readRootFile(path)
+                val message = if (readBack == null || !readBack.contentEquals(bytes)) {
+                    context.getString(R.string.gf_written_no_readback)
+                } else {
+                    context.getString(R.string.gf_restored_backup, entry.formattedTimestamp())
+                }
+                withContext(Dispatchers.Main) { showSnackbar(message) }
                 true
             } finally {
                 tempFile.delete()
@@ -1237,30 +1414,54 @@ class EditGameFilesViewModel @Inject constructor(
             val profile = selectedProfileOf(config)
             val targetName = profile?.targetFile ?: config.saveFile
             val existingFile = pickedDir.findFile(targetName)
-            val existingBytes = if (existingFile != null && existingFile.length() > 0L) {
+            // `length() > 0` used to collapse "present but unreadable" into "absent", which
+            // made the plan seed the bundled asset over a file it had never read and never
+            // backed up. Only a genuinely absent file is a seed now.
+            val existingBytes = if (existingFile == null) {
+                null
+            } else {
                 runCatching {
                     context.contentResolver.openInputStream(existingFile.uri)?.use { it.readBytes() }
                 }.getOrNull()
-            } else null
-            // Safety backup before the overwrite — the bytes the device actually held, never
-            // the payload about to replace them. A file the game never wrote backs up nothing.
-            if (existingBytes != null && existingBytes.isNotEmpty()) {
-                backupStore.save(config.packageName, targetName, existingBytes)
             }
-            // A model-named template is always the thing to push: the file already sitting there is
-            // the game's stock config, and re-writing it would be a no-op dressed as success.
-            // PUBG keeps its existing behaviour — the game's current save is preferred, and a
-            // missing or unreadable save is a seed: the bundled profile's bytes re-add the file
-            // and the game takes over from its next launch (same rule as the Shizuku channel).
-            // A preserve profile merges instead of choosing a payload: the asset is only the
-            // active section, and the device's own `[BackUp DeviceProfile]` tail must survive
-            // (the eu tool's write shape, TODO M190/M191).
-            val inputBytes = when {
-                profile?.preserveDeviceProfileBackup == true ->
-                    PubgUserCustom.mergePreservingBackup(existingBytes, assetBytes(config, assetPath))
-                config.requiresDeviceModel || existingBytes == null || existingBytes.isEmpty() ->
-                    assetBytes(config, assetPath)
-                else -> existingBytes
+            if (existingFile != null && existingBytes == null) {
+                showSnackbar(context.getString(R.string.gf_existing_unreadable))
+                return@launchIoWithLoading false
+            }
+            // What the profile means on this device, decided once for every channel
+            // (ProfilePushPlan): seed a missing save, patch specific fields of an existing one,
+            // merge a preserve-tail INI, or refuse when the file's layout cannot be verified.
+            // Rewriting the device's own bytes was the old behaviour here and reported success
+            // while changing nothing.
+            val plan = ProfilePushPlan.resolve(
+                existing = existingBytes,
+                asset = assetBytes(config, assetPath),
+                profile = profile,
+                requiresDeviceModel = config.requiresDeviceModel
+            )
+            val inputBytes = when (plan) {
+                is ProfilePushPlan.Result.Bytes -> plan.bytes
+                is ProfilePushPlan.Result.Refused -> {
+                    showSnackbar(context.getString(
+                        R.string.gf_profile_patch_refused,
+                        plan.fieldReasons.entries.joinToString(" · ") { "${it.key} — ${it.value}" }
+                    ))
+                    return@launchIoWithLoading false
+                }
+                ProfilePushPlan.Result.NothingToApply -> {
+                    showSnackbar(context.getString(R.string.gf_profile_nothing_to_apply))
+                    return@launchIoWithLoading false
+                }
+            }
+            // Safety backup before the overwrite — the bytes the device actually held, never
+            // the payload about to replace them. A file the game never wrote backs up nothing;
+            // a backup that cannot be written aborts the push, because there would be no way
+            // back from the write (ConfigBackupStore.save reports failure for exactly this).
+            if (existingBytes != null && existingBytes.isNotEmpty()) {
+                if (backupStore.save(config.packageName, targetName, existingBytes) == null) {
+                    showSnackbar(context.getString(R.string.gf_backup_failed_refused))
+                    return@launchIoWithLoading false
+                }
             }
             val file = existingFile ?: pickedDir.createFile(MIME_BINARY, targetName) ?: throw IOException("Cannot create file")
             context.contentResolver.openOutputStream(file.uri, "w")?.use { it.write(inputBytes) }
@@ -1589,7 +1790,7 @@ class EditGameFilesViewModel @Inject constructor(
 
     private fun performShizukuCopy(config: GameConfig) {
         val assetPath = requireSelectedAssetPath() ?: return
-        launchIoWithLoading(BusyArea.PROFILE_PUSH) {
+        launchIoWithLoading(BusyArea.PROFILE_PUSH, successMessage = context.getString(R.string.gf_success_shizuku)) {
             var pushFile: File? = null
             try {
                 val cacheDir = context.externalCacheDir ?: context.cacheDir
@@ -1623,24 +1824,37 @@ class EditGameFilesViewModel @Inject constructor(
 
                 // Safety backup before the overwrite — the bytes the device actually held, not
                 // the payload about to replace them (see ConfigBackupStore). A file the game
-                // never wrote backs up nothing. A failed backup does not block the push: the
-                // user asked for the apply, and the restore path simply won't have this
-                // generation to return to.
-                existing?.let { bytes ->
-                    runCatching { backupStore.save(config.packageName, targetName, bytes) }
+                // never wrote backs up nothing. A backup that cannot be written aborts the
+                // push: without it the user has no way back from the write.
+                if (existing != null) {
+                    if (backupStore.save(config.packageName, targetName, existing) == null) {
+                        showSnackbar(context.getString(R.string.gf_backup_failed_refused))
+                        return@launchIoWithLoading false
+                    }
                 }
 
-                // PUBG prefers the game's current save — the bundled asset only seeds a first
-                // apply; a model-named template is always the payload, because the file already
-                // on the device is the stock one the push exists to replace. A preserve
-                // profile merges instead: the asset is only the active section, and the
-                // device's own `[BackUp DeviceProfile]` tail must survive the push (the eu
-                // tool's write shape, TODO M190/M191).
-                val inputBytes: ByteArray = when {
-                    profile?.preserveDeviceProfileBackup == true ->
-                        PubgUserCustom.mergePreservingBackup(existing, assetBytes(config, assetPath))
-                    !config.requiresDeviceModel && existing != null -> existing
-                    else -> assetBytes(config, assetPath)
+                // What the profile means on this device — the same decision every channel makes
+                // (ProfilePushPlan). Patching the fields the profile names replaced the old
+                // "prefer the file already there" branch, which rewrote the device's bytes with
+                // themselves and reported success without changing anything.
+                val inputBytes: ByteArray = when (val plan = ProfilePushPlan.resolve(
+                    existing = existing,
+                    asset = assetBytes(config, assetPath),
+                    profile = profile,
+                    requiresDeviceModel = config.requiresDeviceModel
+                )) {
+                    is ProfilePushPlan.Result.Bytes -> plan.bytes
+                    is ProfilePushPlan.Result.Refused -> {
+                        showSnackbar(context.getString(
+                            R.string.gf_profile_patch_refused,
+                            plan.fieldReasons.entries.joinToString(" · ") { "${it.key} — ${it.value}" }
+                        ))
+                        return@launchIoWithLoading false
+                    }
+                    ProfilePushPlan.Result.NothingToApply -> {
+                        showSnackbar(context.getString(R.string.gf_profile_nothing_to_apply))
+                        return@launchIoWithLoading false
+                    }
                 }
 
                 // The push file is created and written by this app alone, under a fresh name on
@@ -1648,12 +1862,46 @@ class EditGameFilesViewModel @Inject constructor(
                 pushFile = File.createTempFile("push_", "_" + config.saveFile, cacheDir)
                 pushFile.writeBytes(inputBytes)
 
-                shellRunner.execSafe("mkdir", "-p", destDir)
-                shellRunner.execSafe("cp", "-f", pushFile.absolutePath, destPath)
-
-                withContext(Dispatchers.Main) {
-                    showSnackbar(context.getString(R.string.gf_success_shizuku))
+                // Every step reports its own verdict. The old code discarded both results and
+                // announced success unconditionally, so a failed mkdir or a refused copy still
+                // produced "Success via Shizuku!".
+                val mkdir = shellRunner.execSafeResult("mkdir", "-p", destDir)
+                if (!mkdir.isSuccess) {
+                    showSnackbar(context.getString(
+                        R.string.gf_cp_failed,
+                        mkdir.exitCode,
+                        mkdir.stderr.ifBlank { context.getString(R.string.gf_no_output) }
+                    ))
+                    return@launchIoWithLoading false
                 }
+                val copy = shellRunner.execSafeResult("cp", "-f", pushFile.absolutePath, destPath)
+                if (!copy.isSuccess) {
+                    showSnackbar(context.getString(
+                        R.string.gf_cp_failed,
+                        copy.exitCode,
+                        copy.stderr.ifBlank { context.getString(R.string.gf_no_output) }
+                    ))
+                    return@launchIoWithLoading false
+                }
+                // A seed has no game-written file to inherit ownership from: `cp` creates it as
+                // the shell's UID, and the game must still be able to read and rewrite it. Take
+                // the owner from the destination directory, which belongs to the game (the same
+                // move the New State restore makes). Best-effort: over an existing file `cp`
+                // keeps the original owner, which is already correct.
+                if (existing == null) {
+                    val owner = shellRunner.execSafe("stat", "-c", "%u:%g", destDir).trim()
+                    if (owner.matches(Regex("^\\d+:\\d+$"))) {
+                        shellRunner.execSafe("chown", owner, destPath)
+                    }
+                }
+
+                // The copy is not the verdict either: read the device's file back and compare it
+                // with the bytes that were meant to land.
+                val readBack = shellRunner.readFileDirect(destPath, forceBind = true)
+                if (readBack == null || !readBack.contentEquals(inputBytes)) {
+                    throw IOException("read-back at $destPath does not match the written bytes")
+                }
+
                 true
             } catch (e: Exception) {
                 throw e
@@ -1667,6 +1915,12 @@ class EditGameFilesViewModel @Inject constructor(
         if (!checkStoragePermission()) return
         val config = gameConfigs[_uiState.value.selectedGame] ?: return
         val assetPath = requireSelectedAssetPath() ?: return
+        // Defense in depth for the chooser's hidden row: this profile's payload depends on the
+        // file already on the device, which a manual copy cannot read.
+        if (ProfilePushPlan.needsExistingFile(selectedProfileOf(config))) {
+            showSnackbar(context.getString(R.string.gf_zarchiver_unavailable))
+            return
+        }
         launchIoWithLoading(BusyArea.PROFILE_PUSH) {
             pasteFileToDownloads(config, assetPath)
             withContext(Dispatchers.Main) { _events.tryEmit(EditEvent.ShowZArchiverDialog) }

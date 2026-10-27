@@ -184,6 +184,34 @@ not silently rewrite history.
   config replaces (disposable/generated files only, with verified behavior),
   fake telemetry, remote catalogs, non-gaming utilities, and FPS caps of any
   kind.
+- **Execution proof outranks a manager row, but only for *this* install and
+  process** (2026-10-26, amended same day after on-device evidence). The status
+  card reports a load only when the proof is bound to the current installation:
+  daemon log lines carry the injected `base.apk`, so loads from a previous
+  install/update (the path changes) are ignored, and a heartbeat counts only if
+  it was written at or after the current process started — a 21-hour-old
+  heartbeat survived `install -r` and made the card say Active while `modules ls`
+  read disabled. A disabled row with proof in a process that already started is
+  its own `ACTIVE_DISABLED` state ("loaded — manager disabled"), never plain
+  ACTIVE and never plain DISABLED; plain ACTIVE means proof without a disabled
+  row. A missing `vector-cli` resolves to UNKNOWN, never ABSENT (LSPosed has no
+  CLI; the old order produced the false "No Xposed framework found" on every
+  LSPosed phone). The manager scope is rendered (count or an actionable empty
+  state, including Vector's explicit "No records found.") rather than probed and
+  discarded, and "Target loads observed" is reserved for actual target
+  processes — an own-process load gets its own line.
+- **A provider version command alone does not name the active root**
+  (2026-10-26). `magisk -V` answers from a residual binary on a
+  KernelSU-rooted device, which made the card claim both providers. A provider
+  is named only when its private data directory exists and either its version
+  command or its manager package agrees. The directory keeps hidden-manager
+  installs detectable; the manager package alone still proves nothing.
+- **"No root" never hides Shizuku** (2026-10-26). Spoofing needs root, but the
+  app's game tools can use Shizuku, so the spoof hub shows a separate Shizuku
+  row with three states (not running / running without the grant / granted)
+  instead of collapsing the device into "No root access detected". The
+  permissions screen uses the same tri-state and reports a refused root request
+  instead of leaving the row off silently.
 
 ## Gaming engine
 
@@ -213,6 +241,16 @@ not silently rewrite history.
   once meant the opposite of the feature's name; it was renamed with the
   meaning so old installs start empty. Reinterpreting the gap was the bug —
   do not "fix" it.
+- **The Gaming Mode bar is an operation indicator, not decoration**
+  (2026-10-27). It used to render unconditionally and "relax to a line" when
+  idle, which read as a finished or decorative element. It is now composed
+  only for `Enabling`/`Disabling` (`GamingModeProgress`): enabling keeps the
+  engine's own progress sequence unchanged, disabling runs the same bar
+  backward from full (`Animatable`, 1.5 s), and the bar leaves with the
+  operation state — including failure and interruption. The keep-running
+  picker follows the compact-list rule: distinct count badge, collapsed
+  summary, bounded scrolling when expanded; folding never edits
+  `SuspendExemptStore`.
 - **Notification suppression is cancel-only** (2026-09-20): self-reversing by
   construction, so deactivation needs no restore path.
 - **Scheduled dexopt recurrence is app-owned** (2026-09-20): the `art`
@@ -495,6 +533,39 @@ not silently rewrite history.
   design, no network client is instrumented, and the manual screenshot remains
   the user-visible capture. The bundle is built only when the user exports it -
   no background capture beyond the crash record itself.
+
+- **Legal text is adapted to the app, never pasted from a generator**
+  (2026-10-25): the Terms & Conditions were rewritten from a generated
+  template into the app's real surface. The UGC/DSA boilerplate (posting
+  rules, EU representative, transparency reports, out-of-court settlement) was
+  dropped because there are no accounts, no hosted content and no moderation
+  queue, and the template's "we advise against rooting" paragraph was replaced
+  with an honest root/Shizuku risk clause — the original directly contradicts
+  a product whose advanced features require those privileges. Third-party
+  services are listed per flavor (Google Play Services + Firebase Analytics in
+  both; AdMob + Play Billing in Play; Start.io in Full). "Termination" ends
+  the name/branding permission only, because the CC BY-NC-SA licence on code
+  already received is irrevocable. Section lists live in
+  `legalTermsSections()` / `legalPrivacySections()` and are shared by the full
+  screens and the onboarding dialogs, so the two surfaces cannot drift.
+  The Privacy Policy keeps the template's rights, CCPA/CPRA, transfers,
+  retention, children, security, consent and changes sections but drops the
+  template's unverifiable promises: "only aggregated, anonymized data is
+  transmitted" (Firebase sends per-install identifiers and can read the
+  advertising identifier; the project cannot describe Google's aggregation),
+  fixed 12/24-month retention promises (retention belongs to Google, not the
+  project) and "physical safeguards" (the project runs no server). The
+  analytics section names Firebase Analytics truthfully in both flavours: the
+  SDK is bundled and initialises before app code, collection is on by default,
+  the app logs no custom events of its own, and the Settings switch is wired to
+  `FirebaseAnalytics.setAnalyticsCollectionEnabled` through
+  `system/config/AnalyticsConsent` (persisted in `app_prefs` as
+  `analytics_enabled`, re-applied in `CatsmokerApp.onCreate`). An earlier
+  revision of this entry claimed the dependency was POM-only and that no
+  analytics SDK was bundled — both were wrong: `firebase-analytics:24.0.0`
+  contributes classes and `FirebaseInitProvider` to the merged manifest in
+  both flavours. The ad SDK starts with the app even when ads are turned off
+  or removed.
 
 ## Backlog closure (2026-10-19)
 

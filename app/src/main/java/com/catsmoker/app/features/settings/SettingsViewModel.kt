@@ -10,6 +10,7 @@ import com.catsmoker.app.R
 import com.catsmoker.app.system.VariantCapabilities
 import com.catsmoker.app.system.ads.AdManager
 import com.catsmoker.app.system.ads.RemoveAdsRepository
+import com.catsmoker.app.system.config.AnalyticsConsent
 import com.catsmoker.app.system.config.AppearanceStore
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -49,6 +50,8 @@ class SettingsViewModel @Inject constructor(
         val themeMode: AppearanceStore.ThemeMode = AppearanceStore.ThemeMode.SYSTEM,
         /** BCP-47 tag, or "" for system default. Endonyms stay native — never localized. */
         val languageTag: String = AppearanceStore.LANGUAGE_SYSTEM,
+        /** Whether Firebase Analytics collection is enabled (persisted in app_prefs). Defaults on. */
+        val analyticsEnabled: Boolean = AnalyticsConsent.DEFAULT_ENABLED,
     )
 
     data class UpdateDialog(
@@ -95,6 +98,8 @@ class SettingsViewModel @Inject constructor(
         // Full build checks for GitHub releases by default; Play keeps its
         // store-owned policy (section hidden, stub static) whatever this reads.
         val autoOn = prefs.getBoolean(PREF_AUTO_CHECK, VariantCapabilities.HAS_SELF_UPDATE)
+        // Honor the persisted analytics choice: defaults to enabled on first run.
+        val analyticsOn = AnalyticsConsent.isEnabled(context)
         _uiState.update {
             it.copy(
                 adsEnabled = adsOn,
@@ -103,7 +108,8 @@ class SettingsViewModel @Inject constructor(
                 autoCheck = autoOn,
                 isPreRelease = prefs.getBoolean(PREF_PRERELEASE, false),
                 themeMode = AppearanceStore.themeModeSync(context),
-                languageTag = AppearanceStore.languageTag(context)
+                languageTag = AppearanceStore.languageTag(context),
+                analyticsEnabled = analyticsOn
             )
         }
         checkPendingUpdateResult()
@@ -190,6 +196,17 @@ class SettingsViewModel @Inject constructor(
     fun onPreReleaseToggled(enabled: Boolean) {
         prefs.edit { putBoolean(PREF_PRERELEASE, enabled) }
         _uiState.update { it.copy(isPreRelease = enabled) }
+    }
+
+    /**
+     * Persists the user's analytics collection choice and applies it to the bundled
+     * Firebase SDK through [AnalyticsConsent] — the same object `CatsmokerApp` uses to
+     * re-apply the choice at startup, so the switch and the SDK cannot disagree.
+     * Defaults to enabled; the legal text states that.
+     */
+    fun onAnalyticsToggled(enabled: Boolean) {
+        AnalyticsConsent.setEnabled(context, enabled)
+        _uiState.update { it.copy(analyticsEnabled = enabled) }
     }
 
     /**

@@ -13,31 +13,43 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.res.stringResource
 import com.catsmoker.app.R
 import com.catsmoker.app.features.gamingtools.engine.GamingModeNotice
 import com.catsmoker.app.features.gamingtools.engine.GamingModeReport
 import com.catsmoker.app.features.gamingtools.engine.GamingModeState
+import com.catsmoker.app.shared.data.model.GameInfo
 import com.catsmoker.app.shared.ui.components.SectionCard
-import com.catsmoker.app.shared.ui.components.SquigglyProgressBar
 
 /**
- * The Gaming Mode card.
+ * The Gaming Mode card: activation, automatic mode, the keep list and the read-back report.
+ *
+ * The card is deliberately one surface rather than four. Automatic Gaming Mode arms the same engine
+ * as the power button, the keep list is the exception the same engine's suspend sweep honors, and
+ * the result rows are that engine's read-back. Splitting them into separate cards made three parts
+ * of one lifecycle look like unrelated features.
  *
  * @param canActivate whether root or Shizuku is available. Every optimization Gaming Mode applies is a
  *   privileged command, so without one of those channels the whole feature can do nothing at all. The
  *   power button is disabled and the reason is stated on the card rather than letting the user press a
  *   live button and watch it fail. It goes live on its own as soon as either channel appears, because
  *   the state comes from the privilege flow the screen re-reads on every sync.
+ * @param keptPackages packages the suspend sweep must leave running. This is a list, not a switch:
+ *   the store keeps a set and the next activation reads it.
+ * @param keepCandidateApps the picker's name source for [keptPackages]. A package missing from it
+ *   still renders as its package name.
+ * @param onAddKeptApp opens the app picker. The picker dialog stays screen-level because it needs
+ *   the full app list.
+ * @param onRemoveKeptApp removes one pick. It only edits this app's own list, so it needs no
+ *   privilege.
  */
 @Composable
 fun GamingModeCard(
     gamingState: GamingModeState,
     report: GamingModeReport,
-    animatedProgress: Float,
     canActivate: Boolean,
     isActive: Boolean,
     isBusy: Boolean,
@@ -47,7 +59,13 @@ fun GamingModeCard(
     // row above the library made the relationship look like two unrelated features.
     sessionActive: Boolean,
     sessionEnabled: Boolean,
-    onToggleSession: (Boolean) -> Unit
+    onToggleSession: (Boolean) -> Unit,
+    // The keep list is the suspend sweep's user exception list. It used to sit under Background
+    // Apps, away from the switch that decides whether the sweep runs at all.
+    keptPackages: Set<String>,
+    keepCandidateApps: List<GameInfo>,
+    onAddKeptApp: () -> Unit,
+    onRemoveKeptApp: (String) -> Unit
 ) {
     SectionCard(
         modifier = Modifier.fillMaxWidth()
@@ -139,6 +157,21 @@ fun GamingModeCard(
                 )
             }
 
+            // The progress indicator belongs to the action above it. It is composed only while the
+            // engine is actually enabling or disabling, so an idle card has no decorative line and
+            // no reserved empty space for one.
+            if (GamingModeProgress.isVisible(gamingState)) {
+                Spacer(modifier = Modifier.height(16.dp))
+                GamingModeProgressBar(state = gamingState)
+            }
+
+            // Activation failures stay outside every disclosure. A collapsed details section can
+            // never hide the reason the operation failed.
+            if (gamingState is GamingModeState.Error) {
+                Spacer(modifier = Modifier.height(16.dp))
+                NoticeBlock(text = gamingState.message, tint = MaterialTheme.colorScheme.error)
+            }
+
             Spacer(modifier = Modifier.height(16.dp))
             HorizontalDivider(color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.12f))
             Spacer(modifier = Modifier.height(12.dp))
@@ -170,261 +203,20 @@ fun GamingModeCard(
                 )
             }
 
-            Spacer(modifier = Modifier.height(24.dp))
-
-            // Render scale and touch speed live as subsections of the Resolution card
-            // now (same state and lock rule) — this card stays on its own switch
-            // and report.
-
-            // Android 13 media-player squiggle: the played stretch waves while the
-            // engine is working and relaxes to a line when idle, like a paused track.
-            SquigglyProgressBar(
-                progress = animatedProgress.coerceIn(0f, 1f),
-                animate = isBusy,
-                modifier = Modifier.fillMaxWidth()
+            Spacer(modifier = Modifier.height(16.dp))
+            HorizontalDivider(color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.12f))
+            Spacer(modifier = Modifier.height(12.dp))
+            GamingModeKeepRunningSection(
+                picked = keptPackages,
+                apps = keepCandidateApps,
+                canEdit = canActivate,
+                onAdd = onAddKeptApp,
+                onRemove = onRemoveKeptApp
             )
 
-            if (gamingState is GamingModeState.Error) {
-                Spacer(modifier = Modifier.height(16.dp))
-                NoticeBlock(text = gamingState.message, tint = MaterialTheme.colorScheme.error)
-            }
-
             if (isActive) {
-                Spacer(modifier = Modifier.height(24.dp))
-                // Every row below is a value the engine read back from the device after writing it,
-                // so a change the ROM refused shows as refused instead of as a success.
-                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                    GamingModeResultRow(
-                        label = "PowerHAL",
-                        value = if (report.fixedPerformance) stringResource(R.string.gt_gm_fixed) else stringResource(R.string.gt_gm_not_applied),
-                        applied = report.fixedPerformance
-                    )
-                    // Null means the device carries no vendor GPU mode property at all — every
-                    // non-Qualcomm SoC — so the row stays visible but grayed out with the reason,
-                    // instead of disappearing entirely.
-                    if (report.gpuPerformanceMode != null) {
-                        GamingModeResultRow(
-                            label = stringResource(R.string.gt_gm_label_gpu),
-                            value = if (report.gpuPerformanceMode) stringResource(R.string.gt_gm_qc_perf) else stringResource(R.string.gt_gm_not_applied),
-                            applied = report.gpuPerformanceMode
-                        )
-                    } else {
-                        GamingModeResultRow(
-                            label = stringResource(R.string.gt_gm_label_gpu),
-                            value = stringResource(R.string.gt_gm_na_value),
-                            applied = false,
-                            reason = stringResource(R.string.gt_gm_na_qualcomm)
-                        )
-                    }
-                    // Same null rule — grayed out on non-Qualcomm silicon. The value shown is the
-                    // measured panel peak the hint carries, read back from the property.
-                    if (report.qtiGameFps != null) {
-                        GamingModeResultRow(
-                            label = stringResource(R.string.gt_gm_label_fps_hint),
-                            value = if (report.qtiGameFps) stringResource(R.string.gt_gm_qc_peak) else stringResource(R.string.gt_gm_not_applied),
-                            applied = report.qtiGameFps
-                        )
-                    } else {
-                        GamingModeResultRow(
-                            label = stringResource(R.string.gt_gm_label_fps_hint),
-                            value = stringResource(R.string.gt_gm_na_value),
-                            applied = false,
-                            reason = stringResource(R.string.gt_gm_na_qualcomm)
-                        )
-                    }
-                    // Same null rule — grayed out where the GED/PPM nodes do not exist. The row
-                    // reports the read-back verdict, never the write request.
-                    if (report.mediaTekGameMode != null) {
-                        GamingModeResultRow(
-                            label = stringResource(R.string.gt_gm_label_mtk),
-                            value = if (report.mediaTekGameMode) stringResource(R.string.gt_gm_mtk_on) else stringResource(R.string.gt_gm_not_applied),
-                            applied = report.mediaTekGameMode
-                        )
-                    } else {
-                        GamingModeResultRow(
-                            label = stringResource(R.string.gt_gm_label_mtk),
-                            value = stringResource(R.string.gt_gm_na_value),
-                            applied = false,
-                            reason = stringResource(R.string.gt_gm_na_mediatek)
-                        )
-                    }
-                    // Same null rule — grayed out where no Snapdragon policy has
-                    // headroom and no game cpuset is narrow. The row reports the
-                    // read-back verdict, never the write request.
-                    if (report.snapdragonCpuMode != null) {
-                        GamingModeResultRow(
-                            label = stringResource(R.string.gt_gm_label_snap),
-                            value = if (report.snapdragonCpuMode) stringResource(R.string.gt_gm_snap_on) else stringResource(R.string.gt_gm_not_applied),
-                            applied = report.snapdragonCpuMode
-                        )
-                    } else {
-                        GamingModeResultRow(
-                            label = stringResource(R.string.gt_gm_label_snap),
-                            value = stringResource(R.string.gt_gm_na_value),
-                            applied = false,
-                            reason = stringResource(R.string.gt_gm_na_snapdragon)
-                        )
-                    }
-                    // The five SmartPack-derived kernel levers. Same nullable contract: a kernel
-                    // without the interface gets a grayed row with the reason, a refused write
-                    // reads "Not applied" (with the refusal also in the unavailable list), and an
-                    // applied lever reports the value the device read back — never the request.
-                    GamingModeResultRow(
-                        label = stringResource(R.string.gt_gm_label_input_boost),
-                        value = when (report.cpuInputBoost) {
-                            true -> stringResource(R.string.gt_gm_touch_boost)
-                            false -> stringResource(R.string.gt_gm_not_applied)
-                            null -> stringResource(R.string.gt_gm_na_value)
-                        },
-                        applied = report.cpuInputBoost == true,
-                        reason = if (report.cpuInputBoost == null) stringResource(R.string.gt_gm_na_kernel) else null
-                    )
-                    GamingModeResultRow(
-                        label = stringResource(R.string.gt_gm_label_governor),
-                        value = when (report.cpuGovernor) {
-                            true -> stringResource(R.string.gt_gm_governor_perf)
-                            false -> stringResource(R.string.gt_gm_not_applied)
-                            null -> stringResource(R.string.gt_gm_na_value)
-                        },
-                        applied = report.cpuGovernor == true,
-                        reason = if (report.cpuGovernor == null) stringResource(R.string.gt_gm_na_kernel) else null
-                    )
-                    GamingModeResultRow(
-                        label = stringResource(R.string.gt_gm_label_spectrum),
-                        value = when (report.spectrumProfile) {
-                            3 -> stringResource(R.string.gt_gm_spectrum_gaming)
-                            2 -> stringResource(R.string.gt_gm_spectrum_perf)
-                            else -> stringResource(R.string.gt_gm_na_value)
-                        },
-                        applied = report.spectrumProfile != null,
-                        reason = if (report.spectrumProfile == null) stringResource(R.string.gt_gm_na_kernel) else null
-                    )
-                    GamingModeResultRow(
-                        label = stringResource(R.string.gt_gm_label_readahead),
-                        value = when {
-                            report.storageTuning == true && report.storageReadAheadKb != null ->
-                                stringResource(R.string.gt_gm_kb, report.storageReadAheadKb!!)
-                            report.storageTuning == false -> stringResource(R.string.gt_gm_not_applied)
-                            else -> stringResource(R.string.gt_gm_na_value)
-                        },
-                        applied = report.storageTuning == true,
-                        reason = if (report.storageTuning == null) stringResource(R.string.gt_gm_na_kernel) else null
-                    )
-                    GamingModeResultRow(
-                        label = stringResource(R.string.gt_gm_label_mem),
-                        value = when {
-                            report.memoryTuning == true && report.memoryMinFreeKb != null ->
-                                stringResource(R.string.gt_gm_kb, report.memoryMinFreeKb!!)
-                            report.memoryTuning == false -> stringResource(R.string.gt_gm_not_applied)
-                            else -> stringResource(R.string.gt_gm_na_value)
-                        },
-                        applied = report.memoryTuning == true,
-                        reason = if (report.memoryTuning == null) stringResource(R.string.gt_gm_na_kernel) else null
-                    )
-                    GamingModeResultRow(
-                        label = stringResource(R.string.gt_gm_label_display),
-                        value = report.lockedRefreshHz?.let { stringResource(R.string.gt_gm_locked_hz, it) } ?: stringResource(R.string.gt_gm_rate_unlocked),
-                        applied = report.lockedRefreshHz != null
-                    )
-                    GamingModeResultRow(
-                        label = stringResource(R.string.gt_gm_label_touch),
-                        value = (if (report.touchResponseBoost) stringResource(R.string.gt_gm_touch_boost) else stringResource(R.string.gt_gm_touch_na)) +
-                            (report.pointerSpeed?.let { " · ${formatPointerSpeed(it)}" } ?: ""),
-                        applied = report.touchResponseBoost
-                    )
-                    GamingModeResultRow(
-                        label = stringResource(R.string.gt_gm_label_bg_apps),
-                        value = when {
-                            report.suspendedPackages > 0 && report.suspendFailures > 0 ->
-                                stringResource(R.string.gt_gm_susp_both, report.suspendedPackages, report.suspendFailures)
-                            report.suspendedPackages > 0 -> stringResource(R.string.gt_gm_susp_some, report.suspendedPackages)
-                            report.suspendFailures > 0 -> stringResource(R.string.gt_gm_susp_refused, report.suspendFailures)
-                            else -> stringResource(R.string.gt_gm_susp_none)
-                        },
-                        applied = report.suspendedPackages > 0
-                    )
-                    GamingModeResultRow(
-                        label = stringResource(R.string.gt_gm_label_dnd),
-                        value = if (report.dndEngaged) stringResource(R.string.gt_gm_dnd_on) else stringResource(R.string.gt_gm_dnd_off),
-                        applied = report.dndEngaged
-                    )
-                    // Null means notification access was never granted, so the second layer was
-                    // never switchable on this run — grayed out with the reason instead of omitted.
-                    if (report.notificationSuppression != null) {
-                        GamingModeResultRow(
-                            label = stringResource(R.string.gt_gm_label_notif),
-                            value = if (report.notificationSuppression) stringResource(R.string.gt_gm_notif_on) else stringResource(R.string.gt_gm_notif_off),
-                            applied = report.notificationSuppression
-                        )
-                    } else {
-                        GamingModeResultRow(
-                            label = stringResource(R.string.gt_gm_label_notif),
-                            value = stringResource(R.string.gt_gm_na_value),
-                            applied = false,
-                            reason = stringResource(R.string.gt_gm_na_notif)
-                        )
-                    }
-                    if (report.networkWhitelisted != null) {
-                        GamingModeResultRow(
-                            label = stringResource(R.string.gt_gm_label_net),
-                            value = if (report.networkWhitelisted) stringResource(R.string.gt_gm_net_ok) else stringResource(R.string.gt_gm_net_no),
-                            applied = report.networkWhitelisted
-                        )
-                    } else {
-                        GamingModeResultRow(
-                            label = stringResource(R.string.gt_gm_label_net),
-                            value = stringResource(R.string.gt_gm_na_value),
-                            applied = false,
-                            reason = stringResource(R.string.gt_gm_na_nogame)
-                        )
-                    }
-                    // Null means no game was targeted or the device predates game interventions
-                    // (Android 12) — not applicable, so the row stays visible but grayed out with
-                    // the reason, exactly like the chipset rows above.
-                    if (report.gameInterventionApplied != null) {
-                        GamingModeResultRow(
-                            label = stringResource(R.string.gt_gm_label_cap),
-                            value = if (report.gameInterventionApplied) {
-                                stringResource(R.string.gt_gm_cap_raised) +
-                                    (report.gameInterventionDownscale?.let { " · ${formatDownscale(it)}" } ?: "")
-                            } else {
-                                stringResource(R.string.gt_gm_cap_no)
-                            },
-                            applied = report.gameInterventionApplied
-                        )
-                    } else {
-                        GamingModeResultRow(
-                            label = stringResource(R.string.gt_gm_label_cap),
-                            value = stringResource(R.string.gt_gm_na_value),
-                            applied = false,
-                            reason = stringResource(R.string.gt_gm_na_intervention)
-                        )
-                    }
-                    // Reported from the read-back of always_finish_activities, so "Applied" means the
-                    // setting holds 1 right now rather than that the command was sent.
-                    GamingModeResultRow(
-                        label = stringResource(R.string.gt_gm_label_discard),
-                        value = if (report.discardActivities) stringResource(R.string.gt_gm_discard_on) else stringResource(R.string.gt_gm_not_applied),
-                        applied = report.discardActivities
-                    )
-                    GamingModeResultRow(
-                        label = stringResource(R.string.gt_gm_label_limit),
-                        value = if (report.processLimit) stringResource(R.string.gt_gm_limit) else stringResource(R.string.gt_gm_not_applied),
-                        applied = report.processLimit
-                    )
-                    GamingModeResultRow(
-                        label = stringResource(R.string.gt_gm_label_other_data),
-                        value = when (report.backgroundDataRestricted) {
-                            // null means the user's own switch was already on, so this run left it
-                            // alone — saying "not applied" would misreport a deliberate decision.
-                            null -> stringResource(R.string.gt_gm_left_as_set)
-                            true -> stringResource(R.string.gt_gm_blocked_metered)
-                            false -> stringResource(R.string.gt_gm_not_blocked)
-                        },
-                        applied = report.backgroundDataRestricted != false
-                    )
-                }
-
+                // Refused optimizations stay visible above the folded list: the summary can say
+                // how many landed, but the reasons must be readable without opening anything.
                 if (report.unavailable.isNotEmpty()) {
                     Spacer(modifier = Modifier.height(16.dp))
                     val reasons = report.unavailable.map { resolveNotice(it) }
@@ -434,6 +226,11 @@ fun GamingModeCard(
                         tint = Color(0xFFFFB300)
                     )
                 }
+
+                Spacer(modifier = Modifier.height(16.dp))
+                // Collapsed by default. Opening it is review only: the section receives the report
+                // and has no activation callback, so expanding or collapsing can never run one.
+                GamingModeDetailsSection(report = report)
             }
 
             // Revert problems live in this same list, so they must not hide behind isActive:

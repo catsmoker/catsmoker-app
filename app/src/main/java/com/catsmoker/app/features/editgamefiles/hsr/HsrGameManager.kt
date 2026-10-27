@@ -303,13 +303,29 @@ class HsrGameManager @Inject constructor(
             ?: return@withContext HsrWriteResult.Failure(HsrWriteResult.Stage.GAME_NOT_INSTALLED, "no HSR package found")
         val path = findPrefsPath()
             ?: return@withContext HsrWriteResult.Failure(HsrWriteResult.Stage.PREFS_NOT_FOUND, "playerprefs.xml not found in any known location")
-        val bytes = backupStore.list(pkg).firstOrNull()?.let { backupStore.readBytes(it) }
-            ?: return@withContext null
+        val entry = backupStore.list(pkg).firstOrNull() ?: return@withContext null
+        val bytes = backupStore.readBytes(entry)
+            ?: return@withContext HsrWriteResult.Failure(
+                HsrWriteResult.Stage.READ_FAILED,
+                "the newest backup is unreadable"
+            )
+
+        // A running game rewrites its settings on exit; stop it before reading the live file so
+        // the pre-restore backup is the state the game actually left, and the restored file is
+        // not clobbered a moment later.
+        shellRunner.execSafeResult("am", "force-stop", pkg)
 
         // Keep the state being replaced. Without this, "restore" had no inverse and a mis-tap
-        // permanently discarded the live file.
-        readPrefsBytes(path)?.takeIf { it.isNotEmpty() }?.let { live ->
-            backupStore.save(pkg, File(path).name, live)
+        // permanently discarded the live file. A live file that cannot be backed up aborts the
+        // restore: replacing it would leave no way back.
+        val live = readPrefsBytes(path)
+        if (live != null && live.isNotEmpty()) {
+            if (backupStore.save(pkg, File(path).name, live) == null) {
+                return@withContext HsrWriteResult.Failure(
+                    HsrWriteResult.Stage.BACKUP_FAILED,
+                    "could not store a backup of the current file — refusing to overwrite"
+                )
+            }
         }
 
         val tempFile = File.createTempFile("hsr_restore_", ".xml", context.cacheDir)
@@ -422,7 +438,16 @@ class HsrGameManager @Inject constructor(
             ?: return@withContext null to HsrWriteResult.Failure(HsrWriteResult.Stage.PREFS_NOT_FOUND, "playerprefs.xml not found in any known location")
 
         val currentBytes = readPrefsBytes(path)
-        val backup = if (currentBytes != null && currentBytes.isNotEmpty()) {
+        // The path was found and read moments ago, so a null here is a failed read, not a file
+        // that never existed. Proceeding would overwrite it with no backup (the KDoc above
+        // promises the opposite).
+        if (currentBytes == null) {
+            return@withContext null to HsrWriteResult.Failure(
+                HsrWriteResult.Stage.BACKUP_FAILED,
+                "could not read $path to back it up — refusing to overwrite"
+            )
+        }
+        val backup = if (currentBytes.isNotEmpty()) {
             backupStore.save(pkg, File(path).name, currentBytes)
                 ?: return@withContext null to HsrWriteResult.Failure(
                     HsrWriteResult.Stage.BACKUP_FAILED,
@@ -470,18 +495,26 @@ class HsrGameManager @Inject constructor(
     ): Pair<Boolean, String> {
         val encoded = (map[HsrGraphicsSettings.PREFS_KEY] as? HsrPlayerPrefsXml.Value.StringValue)?.value
             ?: return false to "GraphicsSettings_Model missing after write"
-        val readBack = HsrGraphicsSettings.fromEncoded(encoded)
+        HsrGraphicsSettings.fromEncoded(encoded)
             ?: return false to "GraphicsSettings_Model no longer parses after write"
+        // Compare the whole encoded blob and every sibling key that was written — the old
+        // check looked at FPS/AA/render-scale/VSync/resolution only, so a partial write that
+        // lost quality tiers, PSO warmup or the hidden upscaler toggles still verified clean.
         val mismatches = buildList {
-            if (readBack.fps != settings.fps) add("FPS ${readBack.fps}")
-            if (readBack.aaMode != settings.aaMode) add("AAMode ${readBack.aaMode}")
-            if (readBack.renderScale != settings.renderScale) add("RenderScale ${readBack.renderScale}")
-            if (readBack.enableVSync != settings.enableVSync) add("VSync ${readBack.enableVSync}")
-            if ((map["Screenmanager%20Resolution%20Width"] as? HsrPlayerPrefsXml.Value.IntValue)?.value != settings.screenWidth) {
-                add("Width ${(map["Screenmanager%20Resolution%20Width"] as? HsrPlayerPrefsXml.Value.IntValue)?.value}")
-            }
-            if ((map["Screenmanager%20Resolution%20Height"] as? HsrPlayerPrefsXml.Value.IntValue)?.value != settings.screenHeight) {
-                add("Height ${(map["Screenmanager%20Resolution%20Height"] as? HsrPlayerPrefsXml.Value.IntValue)?.value}")
+            if (encoded != settings.toEncoded()) add("GraphicsSettings_Model differs from what was written")
+            for ((field, key) in HsrGraphicsSettings.SIBLING_INT_KEYS) {
+                val expected = when (field) {
+                    "screenWidth" -> settings.screenWidth
+                    "screenHeight" -> settings.screenHeight
+                    "fullscreenMode" -> settings.fullscreenMode
+                    "graphicsQuality" -> settings.graphicsQuality
+                    "enablePsoShaderWarmup" -> if (settings.enablePsoShaderWarmup) 1 else 0
+                    "isUserSave" -> settings.isUserSave
+                    "version" -> settings.version
+                    else -> null
+                }
+                val actual = (map[key] as? HsrPlayerPrefsXml.Value.IntValue)?.value
+                if (actual != expected) add("$key $actual")
             }
         }
         return if (mismatches.isEmpty()) true to "read-back matches" else false to "device holds: ${mismatches.joinToString(", ")}"
@@ -518,6 +551,12 @@ class HsrGameManager @Inject constructor(
             val audio = (map[HsrGamePreferences.KEY_AUDIO_LANGUAGE] as? HsrPlayerPrefsXml.Value.StringValue)?.value
             val expectedAudio = HsrGamePreferences.audioLanguageCode(prefs.audioLanguage)
             if (audio != expectedAudio) add("audio language $audio")
+            val videoBlacklist = (map[HsrGamePreferences.KEY_VIDEO_BLACKLIST] as? HsrPlayerPrefsXml.Value.StringValue)?.value
+            val expectedVideoBlacklist = HsrGamePreferences.encodeBlacklist(prefs.videoBlacklist)
+            if (videoBlacklist != expectedVideoBlacklist) add("video blacklist $videoBlacklist")
+            val audioBlacklist = (map[HsrGamePreferences.KEY_AUDIO_BLACKLIST] as? HsrPlayerPrefsXml.Value.StringValue)?.value
+            val expectedAudioBlacklist = HsrGamePreferences.encodeBlacklist(prefs.audioBlacklist)
+            if (audioBlacklist != expectedAudioBlacklist) add("audio blacklist $audioBlacklist")
             prefs.autoBattleOpen?.let {
                 val actual = (map[HsrGamePreferences.KEY_AUTO_BATTLE] as? HsrPlayerPrefsXml.Value.IntValue)?.value
                 if (actual != it) add("auto battle $actual")

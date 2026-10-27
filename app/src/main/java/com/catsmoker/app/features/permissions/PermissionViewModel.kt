@@ -52,6 +52,8 @@ class PermissionViewModel @Inject constructor(
         val overlayGranted: Boolean = false,
         val usageGranted: Boolean = false,
         val shizukuGranted: Boolean = false,
+        /** Shizuku's binder answers, whether or not this app holds the grant. */
+        val shizukuRunning: Boolean = false,
         val micGranted: Boolean = false,
         val bluetoothGranted: Boolean = false,
     )
@@ -59,6 +61,8 @@ class PermissionViewModel @Inject constructor(
     /** One-shot UI actions the screen itself must perform (process restart for locale). */
     sealed interface UiEvent {
         data object RestartApp : UiEvent
+        /** The root request did not produce a grant; the row must not silently stay off. */
+        data object RootRequestFailed : UiEvent
     }
 
     private val _uiState = MutableStateFlow(UiState())
@@ -160,6 +164,7 @@ class PermissionViewModel @Inject constructor(
                 overlayGranted = checkOverlayPermission(),
                 usageGranted = checkUsagePermission(),
                 shizukuGranted = shellRunner.shizukuHasPermission.value,
+                shizukuRunning = shellRunner.isShizukuRunning(),
                 micGranted = checkMicPermission(),
                 bluetoothGranted = checkBluetoothPermission()
             )
@@ -176,8 +181,10 @@ class PermissionViewModel @Inject constructor(
 
     fun requestRootPermission() {
         viewModelScope.launch(Dispatchers.IO) {
-            // Trigger root request
-            Shell.cmd("id").exec()
+            // Ask for a root shell and keep the answer: a denied or failed request used
+            // to be discarded, leaving the row off with no explanation of what happened.
+            val granted = runCatching { Shell.cmd("id").exec().isSuccess }.getOrDefault(false)
+            if (!granted) _events.tryEmit(UiEvent.RootRequestFailed)
             refreshStates()
         }
     }

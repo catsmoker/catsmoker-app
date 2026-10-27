@@ -4,7 +4,11 @@
     <string name="spoof_home_subtitle">Device identity and root masking suite.</string>
     <string name="spoof_home_status">Environment Status</string>
     <string name="spoof_home_root">Root Access</string>
-    <string name="spoof_root_provider_none">No root access detected.</string>
+    <string name="spoof_home_shizuku">Shizuku</string>
+    <string name="spoof_home_shizuku_granted">Running and granted — game tools can use it; spoofing still needs root.</string>
+    <string name="spoof_home_shizuku_not_granted">Running — permission not granted yet.</string>
+    <string name="spoof_home_shizuku_stopped">Not running.</string>
+    <string name="spoof_root_provider_none">Root not available — Xposed and the Magisk module both need it.</string>
     <string name="spoof_root_provider_unknown">Root access available, provider not identified.</string>
     <string name="spoof_root_provider_magisk">Magisk root detected.</string>
     <string name="spoof_root_provider_kernelsu">KernelSU root detected.</string>
@@ -14,22 +18,30 @@
     <string name="spoof_root_name_kernelsu">KernelSU</string>
     <string name="spoof_root_name_apatch">APatch</string>
     <string name="spoof_home_lsposed_on">Xposed Module Active</string>
-    <string name="spoof_home_lsposed_off">Xposed Module Not Loaded</string>
+    <string name="spoof_home_lsposed_disabled">Xposed Module Disabled</string>
+    <string name="spoof_home_lsposed_loaded_disabled">Xposed Module Loaded — Manager Disabled</string>
+    <string name="spoof_home_lsposed_absent">No Xposed Framework Detected</string>
+    <string name="spoof_home_lsposed_unknown">Xposed Status Unknown</string>
     <!-- Vector activation evidence (framework, manager state, observed load). -->
     <string name="spoof_home_xposed_active_detail">%1$s enabled for apps in scope</string>
     <string name="spoof_home_xposed_disabled_detail">%1$s disabled</string>
     <string name="spoof_home_xposed_unknown_detail">%1$s manager state unknown</string>
+    <string name="spoof_home_xposed_loaded_nopriv">Execution observed — framework details need root to inspect</string>
+    <string name="spoof_home_xposed_disabled_but_loaded">%1$s is disabled in the manager, but a load was observed — a process started before the change may still be hooked.</string>
     <string name="spoof_home_xposed_nopriv">Framework check needs root — nothing below was verified</string>
     <string name="spoof_home_xposed_nofw">No Xposed framework found</string>
     <string name="spoof_home_lsposed_unverified">Enabled — load not verified</string>
     <string name="spoof_home_xposed_loads_seen">Target loads observed</string>
+    <string name="spoof_home_xposed_own_load_seen">Own-process load observed</string>
     <string name="spoof_home_xposed_load_pending">No target load observed yet</string>
+    <string name="spoof_home_xposed_scope_count">Apps in manager scope: %1$d</string>
+    <string name="spoof_home_xposed_scope_empty">Manager scope is empty — no app is enabled for the module.</string>
     <string name="spoof_home_management">Management</string>
     <string name="spoof_home_advanced">Advanced Tools</string>
     <string name="spoof_menu_profiles">Profiles</string>
     <string name="spoof_menu_identities">%1$d Identities</string>
     <string name="spoof_menu_apps">Apps</string>
-    <string name="spoof_menu_hooked">%1$d Hooked</string>
+    <string name="spoof_menu_hooked">%1$d Apps Assigned</string>
     <string name="spoof_menu_safe">Safe Mode</string>
     <string name="spoof_menu_apps_count">%1$d Apps</string>
     <string name="spoof_menu_diag">Diagnostics</string>
@@ -169,6 +181,8 @@
     <string name="spoof_diag_unknown">Unknown</string>
     <string name="spoof_diag_native_title">Native bridge</string>
     <string name="spoof_diag_native_bridge">In-app bridge</string>
+    <string name="spoof_diag_soc">SoC</string>
+    <string name="spoof_diag_abi">Supported ABIs</string>
     <!-- ViewModel toasts -->
     <string name="spoof_error_save">Could not save profiles: %1$s</string>
     <string name="spoof_error_write_failed">write failed</string>

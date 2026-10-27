@@ -109,8 +109,15 @@ object VectorActivation {
         /** A privileged probe found no Vector installation. */
         FRAMEWORK_ABSENT,
 
-        /** The framework is there and our module row reads disabled. */
+        /** The framework is there and our module row reads disabled, with no load proof. */
         DISABLED,
+
+        /**
+         * A load is proven in a process that started before the module was disabled.
+         * The injected code stays until that process dies, but the manager will not
+         * inject it into new ones — a separate state, never plain ACTIVE.
+         */
+        ACTIVE_DISABLED,
 
         /** The framework is there, our module reads enabled, but no load was observed. */
         ENABLED_UNVERIFIED,
@@ -120,15 +127,21 @@ object VectorActivation {
     }
 
     /** Resolves one [Headline] from [evidence]; see each enum entry for the contract. */
-    fun headline(evidence: Evidence): Headline = when {
-        evidence.framework != Framework.VECTOR -> when (evidence.framework) {
-            Framework.ABSENT -> Headline.FRAMEWORK_ABSENT
+    fun headline(evidence: Evidence): Headline {
+        // Execution proof wins over the manager row: a module that provably loaded is
+        // active in the processes it loaded into, even if the framework has no queryable
+        // CLI (LSPosed has none — treating that as "absent" was the false "No Xposed
+        // framework found" report). A disabled row plus proof is its own state: still
+        // loaded where it already was, but no new process will receive it.
+        val proof = evidence.loadedProof || evidence.logSpoofTargets.isNotEmpty()
+        return when {
+            proof && evidence.moduleEnabled == false -> Headline.ACTIVE_DISABLED
+            proof -> Headline.ACTIVE
+            evidence.moduleEnabled == false -> Headline.DISABLED
+            evidence.moduleEnabled == true -> Headline.ENABLED_UNVERIFIED
+            evidence.framework == Framework.ABSENT -> Headline.FRAMEWORK_ABSENT
             else -> Headline.UNKNOWN
         }
-        evidence.moduleEnabled == false -> Headline.DISABLED
-        evidence.loadedProof || evidence.logSpoofTargets.isNotEmpty() -> Headline.ACTIVE
-        evidence.moduleEnabled == true -> Headline.ENABLED_UNVERIFIED
-        else -> Headline.UNKNOWN
     }
 
     /**
@@ -168,6 +181,9 @@ object VectorActivation {
         for (line in output.lineSequence()) {
             val trimmed = line.trim()
             if (trimmed.isEmpty()) continue
+            // An explicit empty answer differs from an unreadable one: Vector prints
+            // this when the module has no scoped app, which is an actionable state.
+            if (trimmed.equals("No records found.", ignoreCase = true)) return emptySet()
             if (trimmed.startsWith("APP_PACKAGE")) {
                 tableSeen = true
                 continue
@@ -200,18 +216,51 @@ object VectorActivation {
         val spoofTargets: Map<String, String>
     )
 
-    fun parseLogCat(output: String, ownPackage: String = OWN_PACKAGE): LogProof {
+    /**
+     * Load and hook-execution proof from `cli log cat` output.
+     *
+     * [currentApkPath] binds the proof to *this* installation: a load line names the
+     * APK Vector injected, so a line from a previous install (the path changes on every
+     * reinstall/update) must not keep the card Active forever. The own-process and spoof
+     * lines carry no path of their own, so they only count when their UID previously saw
+     * a matching load line. Null keeps the old unfiltered behaviour for callers/tests
+     * that already scoped the log.
+     */
+    fun parseLogCat(
+        output: String,
+        ownPackage: String = OWN_PACKAGE,
+        currentApkPath: String? = null
+    ): LogProof {
         var ownLoad = false
         val uids = LinkedHashSet<Int>()
         val targets = LinkedHashMap<String, String>()
+        val currentInstallUids = HashSet<Int>()
         for (line in output.lineSequence()) {
-            if (line.contains("CatsmokerLSP: module loaded in own process")) ownLoad = true
+            val lineUid = LOG_UID.find(line)?.groupValues?.get(1)?.toIntOrNull()
             LOADING_LINE.find(line)?.let { match ->
-                if (match.groupValues[2] == ownPackage) {
-                    match.groupValues[1].toIntOrNull()?.let { uids += it }
+                val loadUid = match.groupValues[1].toIntOrNull()
+                val loadedPath = match.groupValues[3].takeIf { it.isNotEmpty() }
+                if (match.groupValues[2] == ownPackage && loadUid != null) {
+                    if (currentApkPath == null || loadedPath == currentApkPath) {
+                        uids += loadUid
+                        currentInstallUids += loadUid
+                    }
                 }
             }
-            SPOOF_LINE.find(line)?.let { targets[it.groupValues[1]] = it.groupValues[2] }
+            if (line.contains("CatsmokerLSP: module loaded in own process")) {
+                if (currentApkPath == null ||
+                    (lineUid != null && lineUid in currentInstallUids)
+                ) {
+                    ownLoad = true
+                }
+            }
+            SPOOF_LINE.find(line)?.let { match ->
+                if (currentApkPath == null ||
+                    (lineUid != null && lineUid in currentInstallUids)
+                ) {
+                    targets[match.groupValues[1]] = match.groupValues[2]
+                }
+            }
         }
         return LogProof(ownLoad, uids, targets)
     }
@@ -241,7 +290,12 @@ object VectorActivation {
      * Loading legacy module com.catsmoker.app from …`.
      */
     private val LOADING_LINE =
-        Regex("""^\[\s*\S+\s+(\d+):\s*\d+:\s*\d+\s+\S+\s*\].*Loading legacy module (\S+)""")
+        Regex(
+            """^\[\s*\S+\s+(\d+):\s*\d+:\s*\d+\s+\S+\s*\].*Loading legacy module (\S+)(?:\s+from\s+(\S+))?"""
+        )
+
+    /** UID at the start of a daemon log line: `[ timestamp uid: pid: tid level/tag ]`. */
+    private val LOG_UID = Regex("""^\[\s*\S+\s+(\d+):\s*\d+:\s*\d+\s+\S+\s*\]""")
 
     /** Matches our own `XposedBridge.log("$TAG: spoofing <pkg> as <model>")` daemon lines. */
     private val SPOOF_LINE = Regex("""CatsmokerLSP: spoofing (\S+) as (\S+)""")

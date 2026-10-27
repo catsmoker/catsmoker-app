@@ -467,12 +467,7 @@ fun GamingToolsScreen(
 ) {
     val isActive = gamingState is GamingModeState.Active
     val isBusy = (gamingState is GamingModeState.Enabling) || (gamingState is GamingModeState.Disabling)
-    val progressTarget = when (gamingState) {
-        is GamingModeState.Enabling -> gamingState.progress
-        is GamingModeState.Disabling -> 0.5f
-        else -> 0f
-    }
-    
+
     LaunchedEffect(Unit) { onSync() }
 
     val hasPrivilege = uiState.isRooted || uiState.isShizukuActive
@@ -574,7 +569,6 @@ fun GamingToolsScreen(
             GamingModeCard(
                 gamingState = gamingState,
                 report = gamingReport,
-                animatedProgress = progressTarget,
                 // Every optimization behind this switch is a `settings put`, a `cmd`, or `pm suspend`,
                 // and Android refuses all of them to an ordinary app. With neither channel the button
                 // used to be live and the activation simply failed — so it is disabled instead, and
@@ -587,7 +581,13 @@ fun GamingToolsScreen(
                 onDeactivate = onDeactivateGamingMode,
                 sessionActive = uiState.isGameSessionActive,
                 sessionEnabled = uiState.games.isNotEmpty(),
-                onToggleSession = onToggleGameSession
+                onToggleSession = onToggleGameSession,
+                // The keep list travels with the engine it modifies: the next activation (manual
+                // or automatic) reads this same store.
+                keptPackages = uiState.suspendExemptPackages,
+                keepCandidateApps = uiState.suspendExemptCandidateApps,
+                onAddKeptApp = onShowSuspendExemptPicker,
+                onRemoveKeptApp = onRemoveSuspendExemptPackage
             )
             Spacer(modifier = Modifier.height(12.dp))
             FixedPerformanceModeCard(
@@ -816,20 +816,9 @@ fun GamingToolsScreen(
                         onRemove = onRemoveExtraSuspendPackage
                     )
                 }
-                // Keep list: the exception to the sweep above — packages it must leave running.
-                ExpandableToolCard(
-                    title = stringResource(R.string.gt_keep_title),
-                    subtitle = stringResource(R.string.gt_keep_sub),
-                    icon = Icons.Default.PlayArrow
-                ) {
-                    KeepListContent(
-                        picked = uiState.suspendExemptPackages,
-                        apps = uiState.suspendExemptCandidateApps,
-                        hasPrivilege = hasPrivilege,
-                        onAdd = onShowSuspendExemptPicker,
-                        onRemove = onRemoveSuspendExemptPackage
-                    )
-                }
+                // The keep list moved into the Gaming Mode card: it is the suspend sweep's
+                // exception list, not a second Background Apps feature. Its ViewModel wiring and
+                // store stay unchanged; the screen only hosts the picker dialog.
             }
 
             Spacer(modifier = Modifier.height(24.dp))
@@ -1602,28 +1591,6 @@ fun AutoForceStopContent(
                 }
             }
         }
-    }
-}
-
-/**
- * The one-line "this needs something you do not have" banner.
- *
- * Item 8's rule in a single place: a feature that cannot run says so where the user is looking, in
- * ordinary words, and it is never hidden behind a dropdown.
- */
-@Composable
-private fun RequirementNotice(text: String) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(10.dp))
-            .background(Color(0xFFFFB300).copy(alpha = 0.12f))
-            .padding(horizontal = 12.dp, vertical = 10.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Icon(Icons.Default.Lock, contentDescription = null, tint = Color(0xFFFFB300), modifier = Modifier.size(16.dp))
-        Spacer(modifier = Modifier.width(8.dp))
-        Text(text, fontSize = 11.sp, color = Color(0xFFFFB300), lineHeight = 15.sp)
     }
 }
 
@@ -2507,37 +2474,10 @@ private fun SuspendListContent(
 )
 
 /**
- * The keep list: packages the Gaming Mode suspend sweep must leave running, shown with a remove
- * button plus an add button that opens the app picker. Its copy states the two rules the engine
- * enforces — an app is either kept or frozen, and the active game and Catsmoker itself are
- * always kept — rather than hiding the overlap cases.
- */
-@Composable
-private fun KeepListContent(
-    picked: Set<String>,
-    apps: List<GameInfo>,
-    hasPrivilege: Boolean,
-    onAdd: () -> Unit,
-    onRemove: (String) -> Unit
-) = PickedAppsContent(
-    picked = picked,
-    apps = apps,
-    hasPrivilege = hasPrivilege,
-    what1 = R.string.gt_keep_what_1,
-    what2 = R.string.gt_keep_what_2,
-    none = R.string.gt_keep_none,
-    some = R.string.gt_keep_some,
-    add = R.string.gt_keep_add,
-    remove = R.string.gt_keep_remove,
-    onAdd = onAdd,
-    onRemove = onRemove
-)
-
-/**
- * Shared body of the two user-picked package lists (freeze and keep): an explainer, the count
- * line, one removable row per pick, and the add button. Only the copy differs, so the layout,
- * privilege gate and name-resolution rule stay in one place — a picked package renders as its
- * app name when the picker source has it, and as the package name otherwise (never hidden).
+ * Shared body of the extra-suspend package list: an explainer, the count line, one removable row
+ * per pick, and the add button. The layout, privilege gate and name-resolution rule stay in one
+ * place — a picked package renders as its app name when the picker source has it, and as the
+ * package name otherwise (never hidden).
  */
 @Composable
 private fun PickedAppsContent(

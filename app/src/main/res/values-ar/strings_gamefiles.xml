@@ -110,6 +110,13 @@
     <string name="gf_applied_holds">تم التطبيق — الملف يحتوي الآن: %1$s</string>
     <string name="gf_game_stopped_relaunch">توقفت اللعبة — شغّلها مجدداً للعب على الإعدادات الجديدة.</string>
     <string name="gf_written_no_readback">تمت الكتابة لكن فشلت إعادة القراءة — تحقق من استعادة نسخة احتياطية إذا بدا شيء غريبا.</string>
+    <string name="gf_save_verify_failed">لم يُطبَّق — الملف لا يحتوي على القيم المطلوبة (%1$s). يبقى التعديل محددًا لتتمكن من إعادة المحاولة، ولا تزال استعادة النسخة الاحتياطية تحتفظ بالحفظ السابق.</string>
+    <string name="gf_backup_failed_refused">لم يُكتب شيء — تعذّر نسخ الملف الحالي احتياطيًا، لذا لن تكون هناك طريقة للتراجع. حرّر بعض المساحة وحاول مرة أخرى.</string>
+    <string name="gf_profile_patch_refused">لم يُطبَّق — تعذّر التحقق من بنية ملف الحفظ بالنسبة إلى %1$s. لم يُكتب شيء؛ استخدم قراءة الحفظ لمعرفة ما يحتويه الملف، أو غيّر القيمة في محرر الحفظ.</string>
+    <string name="gf_profile_nothing_to_apply">لم يُكتب شيء — هذا الملف التعريفي يهيّئ فقط ملف حفظ لم تنشئه اللعبة بعد، والملف موجود بالفعل.</string>
+    <string name="gf_zarchiver_unavailable">يجب تطبيق هذا الملف التعريفي من داخل التطبيق، لأنه يقرأ الملف الموجود على الجهاز أولًا. استخدم Root أو Shizuku أو SAF.</string>
+    <string name="gf_existing_unreadable">لم يتغيّر شيء — الملف الحالي موجود لكن تعذّرت قراءته، لذا تعذّر نسخه احتياطيًا أولًا.</string>
+    <string name="gf_permissions_failed">تمت كتابة الملف، لكن تعذّر ضبط مالكه أو أذوناته (%1$s) — قد لا تتمكن اللعبة من قراءته.</string>
     <string name="gf_save_not_created">%1$s غير موجود في %2$s — اللعبة لم تنشئه بعد. شغّل اللعبة مرة واحدة لتكتب حفظها الخاص ثم أعد المحاولة.</string>
     <string name="gf_shizuku_channel_unavailable">Shizuku يعمل لكن قناة الحفظ غير متاحة — تحقق من حصول التطبيق على إذن Shizuku (تطبيق Shizuku ← التطبيقات ← سماح)، ثم أعد المحاولة مع قراءة.</string>
     <string name="gf_shizuku_channel_unavailable_short">Shizuku يعمل لكن قناة الحفظ غير متاحة — تحقق من حصول التطبيق على إذن Shizuku ثم أعد المحاولة.</string>

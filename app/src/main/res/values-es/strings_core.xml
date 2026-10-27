@@ -47,7 +47,7 @@
     <string name="core_terms_prefix">Lee la\u0020</string>
     <string name="core_terms_link">licencia CC BY-NC-SA 4.0</string>
     <string name="core_terms_suffix">\u0020antes de usar la app.</string>
-    <string name="core_terms_title">Términos del servicio</string>
+    <string name="core_terms_title">Términos y condiciones</string>
     <string name="core_terms_agree">Acepto los términos.</string>
     <string name="core_continue">CONTINUAR</string>
 
@@ -58,6 +58,9 @@
     <string name="core_perm_root_sub">Necesario para optimizaciones avanzadas.</string>
     <string name="core_perm_shizuku_title">Acceso Shizuku</string>
     <string name="core_perm_shizuku_sub">Alternativa a root para ajustes del sistema.</string>
+    <string name="core_perm_root_denied">No se concedió root. Revisa el aviso o tu gestor de root.</string>
+    <string name="core_perm_shizuku_not_running">Shizuku no está en ejecución: inícialo primero en la app Shizuku.</string>
+    <string name="core_perm_shizuku_not_granted">Shizuku está en ejecución: pulsa Conceder para permitir Catsmoker.</string>
     <string name="core_perm_storage_title">Acceso al almacenamiento</string>
     <string name="core_perm_storage_sub">Para leer y modificar archivos de configuración de juegos.</string>
     <string name="core_perm_battery_title">Optimización de batería</string>

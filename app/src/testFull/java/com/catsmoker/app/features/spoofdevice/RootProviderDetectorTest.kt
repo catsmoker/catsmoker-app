@@ -9,25 +9,44 @@ import org.junit.Test
  * Pins the provider naming on the Device Spoofing status card.
  *
  * The user-visible failure this guards against is claiming "Magisk" from a leftover manager
- * APK (or from a single directory) when KernelSU is the provider actually granting root. A
- * package alone is never evidence; a version answer or the package-plus-private-directory
- * pair is.
+ * APK, a residual `magisk -V` binary, or a single directory when KernelSU is the provider
+ * actually granting root. A version answer or a package is only evidence together with the
+ * provider's own private directory.
  */
 class RootProviderDetectorTest {
 
     @Test
-    fun versionAnswerNamesTheProvider() {
+    fun versionAnswerAloneIsNotAProviderClaim() {
+        assertTrue(
+            RootProviderDetector.detect(RootProviderSignals(magiskVersion = true)).isEmpty()
+        )
+        assertTrue(
+            RootProviderDetector.detect(RootProviderSignals(kernelsuVersion = true)).isEmpty()
+        )
+        assertTrue(
+            RootProviderDetector.detect(RootProviderSignals(apatchVersion = true)).isEmpty()
+        )
+    }
+
+    @Test
+    fun versionAndPrivateDirectoryNameTheProvider() {
         assertEquals(
             setOf(RootProvider.MAGISK),
-            RootProviderDetector.detect(RootProviderSignals(magiskVersion = true))
+            RootProviderDetector.detect(
+                RootProviderSignals(magiskVersion = true, magiskDir = true)
+            )
         )
         assertEquals(
             setOf(RootProvider.KERNELSU),
-            RootProviderDetector.detect(RootProviderSignals(kernelsuVersion = true))
+            RootProviderDetector.detect(
+                RootProviderSignals(kernelsuVersion = true, kernelsuDir = true)
+            )
         )
         assertEquals(
             setOf(RootProvider.APATCH),
-            RootProviderDetector.detect(RootProviderSignals(apatchVersion = true))
+            RootProviderDetector.detect(
+                RootProviderSignals(apatchVersion = true, apatchDir = true)
+            )
         )
     }
 
@@ -81,11 +100,24 @@ class RootProviderDetectorTest {
         val detected = RootProviderDetector.detect(
             RootProviderSignals(
                 magiskVersion = true,
+                magiskDir = true,
                 kernelsuVersion = true,
                 kernelsuManager = true,
                 kernelsuDir = true
             )
         )
         assertEquals(setOf(RootProvider.MAGISK, RootProvider.KERNELSU), detected)
+    }
+
+    @Test
+    fun aResidualMagiskBinaryDoesNotClaimMagiskAlongsideKernelSU() {
+        val detected = RootProviderDetector.detect(
+            RootProviderSignals(
+                magiskVersion = true,
+                kernelsuVersion = true,
+                kernelsuDir = true
+            )
+        )
+        assertEquals(setOf(RootProvider.KERNELSU), detected)
     }
 }

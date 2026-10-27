@@ -115,7 +115,14 @@ fun LogsScreen(
         trailingContent = {
             Box {
                 IconButton(onClick = { overflowOpen = true }) {
-                    Icon(Icons.Default.MoreVert, contentDescription = null, tint = MaterialTheme.colorScheme.onSurface)
+                    // Icon-only control: without a description TalkBack announces just
+                    // "button". The copy lives in strings_legal.xml with the other shared
+                    // descriptions and is translated in every shipped locale.
+                    Icon(
+                        Icons.Default.MoreVert,
+                        contentDescription = stringResource(R.string.core_desc_more),
+                        tint = MaterialTheme.colorScheme.onSurface
+                    )
                 }
                 DropdownMenu(expanded = overflowOpen, onDismissRequest = { overflowOpen = false }) {
                     DropdownMenuItem(

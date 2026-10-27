@@ -472,6 +472,11 @@
     <string name="gt_gm_what_3">Tudo o que seu celular recusar aparece neste cartão como recusado. Nada é afirmado sem que seu celular confirme.</string>
     <string name="gt_gm_unavailable_title">Indisponível neste dispositivo:</string>
     <string name="gt_gm_revert_leftovers">Desativar deixou algumas coisas para trás:</string>
+    <!-- Folded read-back report: collapsed by default; expanding is review only. -->
+    <string name="gt_gm_details_show">Ver detalhes das otimizações</string>
+    <string name="gt_gm_details_hide">Ocultar detalhes das otimizações</string>
+    <string name="gt_gm_details_summary">%1$d de %2$d alterações confirmadas</string>
+    <string name="gt_gm_details_empty">Nenhuma alteração registrada nesta execução.</string>
     <string name="gt_gm_label_gpu">Modo GPU</string>
     <string name="gt_gm_label_fps_hint">Sugestão de FPS do jogo</string>
     <string name="gt_gm_label_display">Tela</string>
@@ -764,7 +769,10 @@
     <string name="gt_keep_what_1">A varredura automática congela apps em segundo plano quando o Modo Jogo inicia. Os apps escolhidos aqui são mantidos em execução — eles continuam utilizáveis enquanto você joga. As alterações valem na próxima vez que o Modo Jogo iniciar.</string>
     <string name="gt_keep_what_2">Um app pode ser mantido ou congelado, nunca os dois: escolher um aqui o remove de Apps suspensos extras, e vice-versa. O jogo ativo e o próprio Catsmoker são sempre mantidos, não importa o que você escolha.</string>
     <string name="gt_keep_none">Sem exceções — a varredura automática decide</string>
-    <string name="gt_keep_some">%1$d app(s) mantido(s) em execução</string>
+    <string name="gt_keep_some">%1$d app(s) mantenido(s) em execução</string>
+    <string name="gt_keep_summary_more">%1$s e mais %2$d</string>
+    <string name="gt_keep_show_list">Mostrar lista</string>
+    <string name="gt_keep_hide_list">Ocultar lista</string>
     <string name="gt_keep_add">Adicionar um app</string>
     <string name="gt_keep_remove">Remover</string>
     <!-- Auto game session: watch the foreground app, start Gaming Mode for library games. -->

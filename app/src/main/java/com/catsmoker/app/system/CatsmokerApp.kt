@@ -6,6 +6,7 @@ import androidx.hilt.work.HiltWorkerFactory
 import androidx.work.Configuration
 import com.catsmoker.app.features.logs.CrashLogStore
 import com.catsmoker.app.features.main.engine.MetricsEngine
+import com.catsmoker.app.system.config.AnalyticsConsent
 import com.catsmoker.app.system.config.AppearanceStore
 import com.catsmoker.app.system.config.LocaleHelper
 import com.catsmoker.app.system.shell.ShellRunner
@@ -72,6 +73,11 @@ class CatsmokerApp : Application(), Configuration.Provider {
                 shellRunner.get()
             } catch (_: Exception) {}
         }
+
+        // Firebase Analytics is bundled in both flavours and its provider starts collecting
+        // before this method runs. Apply the user's persisted choice immediately so a switch
+        // flipped in a previous session is honoured for this one too (see AnalyticsConsent).
+        AnalyticsConsent.sync(this)
 
         // Live app-log collection starts with the process (own-UID logcat, no
         // privilege, nothing on disk). Off the main thread: first start blocks

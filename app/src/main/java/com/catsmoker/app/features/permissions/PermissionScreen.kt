@@ -4,6 +4,7 @@ import android.Manifest
 import android.content.Intent
 import android.os.Build
 import android.provider.Settings
+import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.clickable
@@ -40,6 +41,9 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import com.catsmoker.app.R
+import com.catsmoker.app.features.about.LegalDialog
+import com.catsmoker.app.features.about.legalPrivacySections
+import com.catsmoker.app.features.about.legalTermsSections
 import com.catsmoker.app.shared.ui.components.CatsmokerButton
 import com.catsmoker.app.shared.ui.components.LanguageOptions
 import com.catsmoker.app.shared.ui.components.ScreenScaffold
@@ -69,11 +73,15 @@ fun PermissionRoute(onDone: () -> Unit) {
     }
 
     // A newly picked language restarts the process — the ViewModel asks, the screen
-    // obeys. The chosen flag survives it (committed prefs + init resume).
+    // obeys. The chosen flag survives it (committed prefs + init resume). A refused root
+    // request is named instead of leaving the row off with no explanation.
+    val rootDeniedMessage = stringResource(R.string.core_perm_root_denied)
     LaunchedEffect(Unit) {
         viewModel.events.collect { event ->
-            if (event == PermissionViewModel.UiEvent.RestartApp) {
-                LocaleHelper.restartApp(context)
+            when (event) {
+                PermissionViewModel.UiEvent.RestartApp -> LocaleHelper.restartApp(context)
+                PermissionViewModel.UiEvent.RootRequestFailed ->
+                    Toast.makeText(context, rootDeniedMessage, Toast.LENGTH_SHORT).show()
             }
         }
     }
@@ -212,7 +220,7 @@ fun AgreementStepScreen(
     onContinue: () -> Unit
 ) {
     // The linked license text names the open-source license (not the app terms): the full
-    // Privacy Policy and Terms of Service open as dialogs below, from the same string
+    // Privacy Policy and Terms & Conditions open as dialogs below, from the same string
     // resources the About/Settings legal screens render.
     var showPrivacy by remember { mutableStateOf(false) }
     var showTerms by remember { mutableStateOf(false) }
@@ -296,36 +304,20 @@ fun AgreementStepScreen(
     }
 
     if (showPrivacy) {
-        com.catsmoker.app.features.about.LegalDialog(
+        LegalDialog(
             title = stringResource(R.string.legal_privacy_title),
             intro = stringResource(R.string.legal_p_intro),
-            sections = listOf(
-                stringResource(R.string.legal_p_local_title) to stringResource(R.string.legal_p_local_body),
-                stringResource(R.string.legal_p_ads_title) to stringResource(R.string.legal_p_ads_body),
-                stringResource(R.string.legal_p_updates_title) to stringResource(R.string.legal_p_updates_body),
-                stringResource(R.string.legal_p_sharing_title) to stringResource(R.string.legal_p_sharing_body),
-                stringResource(R.string.legal_p_external_title) to stringResource(R.string.legal_p_external_body),
-                stringResource(R.string.legal_p_permissions_title) to stringResource(R.string.legal_p_permissions_body),
-                stringResource(R.string.legal_p_vpn_title) to stringResource(R.string.legal_p_vpn_body),
-                stringResource(R.string.legal_p_contact_title) to stringResource(R.string.legal_p_contact_body)
-            ),
+            sections = legalPrivacySections(),
             dismissLabel = stringResource(R.string.sys_later),
             onDismiss = { showPrivacy = false }
         )
     }
 
     if (showTerms) {
-        com.catsmoker.app.features.about.LegalDialog(
+        LegalDialog(
             title = stringResource(R.string.legal_terms_title),
             intro = stringResource(R.string.legal_t_intro),
-            sections = listOf(
-                stringResource(R.string.legal_t_license_title) to stringResource(R.string.legal_t_license_body),
-                stringResource(R.string.legal_t_games_title) to stringResource(R.string.legal_t_games_body),
-                stringResource(R.string.legal_t_risk_title) to stringResource(R.string.legal_t_risk_body),
-                stringResource(R.string.legal_t_donations_title) to stringResource(R.string.legal_t_donations_body),
-                stringResource(R.string.legal_t_use_title) to stringResource(R.string.legal_t_use_body),
-                stringResource(R.string.legal_t_changes_title) to stringResource(R.string.legal_t_changes_body)
-            ),
+            sections = legalTermsSections(),
             dismissLabel = stringResource(R.string.sys_later),
             onDismiss = { showTerms = false }
         )
@@ -384,7 +376,21 @@ fun PermissionsListScreen(
             CompositionLocalProvider(LocalMinimumInteractiveComponentSize provides 24.dp) {
                 SectionCard {
                     PermissionRow(stringResource(R.string.core_perm_root_title), stringResource(R.string.core_perm_root_sub), uiState.rootGranted) { onRequestRoot() }
-                    PermissionRow(stringResource(R.string.core_perm_shizuku_title), stringResource(R.string.core_perm_shizuku_sub), uiState.shizukuGranted) { onRequestShizuku() }
+                    PermissionRow(
+                        stringResource(R.string.core_perm_shizuku_title),
+                        stringResource(R.string.core_perm_shizuku_sub),
+                        uiState.shizukuGranted,
+                        // A stopped Shizuku cannot receive a request: disable the button and
+                        // say why. Running-but-denied stays actionable and explains the state
+                        // instead of showing the same bare "off" as "not running".
+                        enabled = uiState.shizukuRunning || uiState.shizukuGranted,
+                        note = when {
+                            uiState.shizukuGranted -> null
+                            uiState.shizukuRunning ->
+                                stringResource(R.string.core_perm_shizuku_not_granted)
+                            else -> stringResource(R.string.core_perm_shizuku_not_running)
+                        }
+                    ) { onRequestShizuku() }
                     PermissionRow(stringResource(R.string.core_perm_storage_title), stringResource(R.string.core_perm_storage_sub), uiState.storageGranted) {
                         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
                             try {
@@ -507,7 +513,7 @@ private fun PermissionRow(
                 }
             }
         }
-        if (!enabled && note != null) {
+        if (note != null) {
             Text(
                 text = note,
                 fontSize = 10.sp,

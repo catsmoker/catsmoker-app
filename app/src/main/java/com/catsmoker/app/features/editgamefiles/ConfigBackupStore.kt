@@ -53,9 +53,15 @@ class ConfigBackupStore(context: Context) {
             val dir = File(rootDir, packageName)
             if (!dir.exists() && !dir.mkdirs()) return null
             // The timestamp is both the name and the sort key, so "newest first" survives the
-            // directory listing without a stat per file.
-            val timestamp = System.currentTimeMillis()
-            val file = File(dir, "${timestamp}_${saveFile.replace('/', '_')}")
+            // directory listing without a stat per file. Two saves in the same millisecond
+            // would otherwise land on the same name and silently overwrite the first backup;
+            // walking forward one millisecond keeps the name format and the sort order.
+            var timestamp = System.currentTimeMillis()
+            var file = File(dir, backupName(timestamp, saveFile))
+            while (file.exists()) {
+                timestamp += 1
+                file = File(dir, backupName(timestamp, saveFile))
+            }
             file.writeBytes(bytes)
             prune(dir)
             Entry(file, timestamp, bytes.size.toLong())
@@ -91,6 +97,9 @@ class ConfigBackupStore(context: Context) {
         if (files.size <= MAX_PER_GAME) return
         files.sortedBy { it.name }.take(files.size - MAX_PER_GAME).forEach { it.delete() }
     }
+
+    private fun backupName(timestamp: Long, saveFile: String): String =
+        "${timestamp}_${saveFile.replace('/', '_')}"
 
     private companion object {
         private const val MAX_PER_GAME = 10

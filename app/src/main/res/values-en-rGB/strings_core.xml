@@ -46,7 +46,7 @@
     <string name="core_terms_prefix">Please read our\u0020</string>
     <string name="core_terms_link">Terms and Conditions</string>
     <string name="core_terms_suffix">\u0020before using the app.</string>
-    <string name="core_terms_title">Terms of Service</string>
+    <string name="core_terms_title">Terms &amp; Conditions</string>
     <string name="core_terms_agree">I agree to the terms.</string>
     <string name="core_continue">CONTINUE</string>
 
@@ -57,6 +57,9 @@
     <string name="core_perm_root_sub">Required for advanced optimizations.</string>
     <string name="core_perm_shizuku_title">Shizuku Access</string>
     <string name="core_perm_shizuku_sub">Alternative to Root for system tweaks.</string>
+    <string name="core_perm_root_denied">Root was not granted. Check the prompt or your root manager.</string>
+    <string name="core_perm_shizuku_not_running">Shizuku is not running — start it in the Shizuku app first.</string>
+    <string name="core_perm_shizuku_not_granted">Shizuku is running — tap Grant to allow Catsmoker.</string>
     <string name="core_perm_storage_title">Storage Access</string>
     <string name="core_perm_storage_sub">To read/modify game configuration files.</string>
     <string name="core_perm_battery_title">Battery Optimization</string>

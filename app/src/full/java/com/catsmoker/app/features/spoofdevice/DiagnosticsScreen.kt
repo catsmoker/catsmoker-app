@@ -1,5 +1,6 @@
 package com.catsmoker.app.features.spoofdevice
 
+import android.annotation.SuppressLint
 import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
@@ -30,7 +31,13 @@ import com.catsmoker.app.shared.ui.components.SectionCard
  * in the shipped scope). They are not a `getprop` dump and cannot observe another
  * process's hooked reads — the copy action exists so the report can be attached
  * to a bug report instead of retyped.
+ *
+ * `Settings.Secure.ANDROID_ID` is read on purpose: per-app identity spoofs derive
+ * from it, so the real value is what makes a spoofed report checkable. It is shown
+ * only to the device owner, is never transmitted, and is not used to identify the
+ * user — hence the targeted lint suppression instead of dropping the row.
  */
+@SuppressLint("HardwareIds")
 @Composable
 fun DiagnosticsScreen(onBack: () -> Unit) {
     val context = LocalContext.current
@@ -38,6 +45,10 @@ fun DiagnosticsScreen(onBack: () -> Unit) {
     // while this screen is retained, and a click-time resource read would keep the old locale.
     val copiedMessage = stringResource(R.string.spoof_diag_copied)
 
+    val androidId = android.provider.Settings.Secure.getString(
+        context.contentResolver,
+        android.provider.Settings.Secure.ANDROID_ID
+    ) ?: stringResource(R.string.spoof_diag_unknown)
     val hardware = listOf(
         stringResource(R.string.spoof_field_brand) to Build.BRAND,
         stringResource(R.string.spoof_field_manufacturer) to Build.MANUFACTURER,
@@ -45,14 +56,27 @@ fun DiagnosticsScreen(onBack: () -> Unit) {
         stringResource(R.string.spoof_diag_product) to Build.PRODUCT,
         stringResource(R.string.spoof_diag_device) to Build.DEVICE,
         stringResource(R.string.spoof_field_board) to Build.BOARD,
-        stringResource(R.string.spoof_field_hardware) to Build.HARDWARE
+        stringResource(R.string.spoof_field_hardware) to Build.HARDWARE,
+        // SoC and ABI are part of the identity a target app can read, and they are
+        // separate from the Build strings above. API 31 added the SoC fields; older
+        // devices report unknown rather than this app guessing.
+        stringResource(R.string.spoof_diag_soc) to if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            "${Build.SOC_MANUFACTURER} ${Build.SOC_MODEL}"
+        } else {
+            stringResource(R.string.spoof_diag_unknown)
+        },
+        stringResource(R.string.spoof_diag_abi) to Build.SUPPORTED_ABIS.joinToString(", ")
     )
     val software = listOf(
         stringResource(R.string.spoof_diag_release) to Build.VERSION.RELEASE,
         stringResource(R.string.spoof_field_sdk) to Build.VERSION.SDK_INT.toString(),
         stringResource(R.string.spoof_field_build_id) to Build.ID,
         stringResource(R.string.spoof_field_incremental) to Build.VERSION.INCREMENTAL,
-        stringResource(R.string.spoof_field_fingerprint) to Build.FINGERPRINT
+        stringResource(R.string.spoof_field_security_patch) to Build.VERSION.SECURITY_PATCH,
+        stringResource(R.string.spoof_field_fingerprint) to Build.FINGERPRINT,
+        // The per-app identifier spoofs derive from this value, so showing the real
+        // one makes an assigned-profile report checkable instead of guesswork.
+        stringResource(R.string.spoof_field_android_id) to androidId
     )
     val system = listOf(
         stringResource(R.string.spoof_field_bootloader) to Build.BOOTLOADER,

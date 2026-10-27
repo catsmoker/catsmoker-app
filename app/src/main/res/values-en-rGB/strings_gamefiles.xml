@@ -104,6 +104,13 @@
     <string name="gf_save_changed">The save changed under us: %1$s</string>
     <string name="gf_applied_holds">Applied — the file now holds: %1$s</string>
     <string name="gf_written_no_readback">Written, but the read-back failed — check RESTORE BACKUP if anything looks wrong.</string>
+    <string name="gf_save_verify_failed">Not applied — the file does not hold the requested values (%1$s). The edits stay selected so you can retry, and RESTORE BACKUP still has the previous save.</string>
+    <string name="gf_backup_failed_refused">Nothing was written — the current file could not be backed up, so there would be no way back. Free some storage and try again.</string>
+    <string name="gf_profile_patch_refused">Not applied — the layout of the save could not be verified for %1$s. Nothing was written; use READ SAVE to see what the file holds, or change the value in the save editor.</string>
+    <string name="gf_profile_nothing_to_apply">Nothing was written — this profile only seeds a save the game has not created yet, and the file already exists.</string>
+    <string name="gf_zarchiver_unavailable">This profile must be applied from inside the app, because it reads the file already on the device first. Use Root, Shizuku or SAF.</string>
+    <string name="gf_existing_unreadable">Nothing was changed — the current file exists but could not be read, so it could not be backed up first.</string>
+    <string name="gf_permissions_failed">The file was written, but its owner or permissions could not be set (%1$s) — the game may not be able to read it.</string>
     <string name="gf_save_not_created">%1$s does not exist at %2$s — the game has not created it yet. Launch the game once so it writes its own save, then retry.</string>
     <string name="gf_shizuku_channel_unavailable">Shizuku is running but the save channel is unavailable — check the app has Shizuku permission (Shizuku app → Apps → allow), then retry READ.</string>
     <string name="gf_shizuku_channel_unavailable_short">Shizuku is running but the save channel is unavailable — check the app has Shizuku permission, then retry.</string>

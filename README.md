@@ -217,7 +217,7 @@ and `:app:assemblePlaystoreRelease`.
 - **Update checks** query the public GitHub releases API only when you ask (automatic checks are opt-in and off by default).
 - **Logs and session recordings** leave the device only when you explicitly share them.
 - **Donations** (PayPal, Binance, crypto) are voluntary gifts processed entirely by those external services.
-- The full **Privacy Policy** and **Terms of Service** ship inside the app (About → Legal, also linked from Settings and the first-run agreement).
+- The full **Privacy Policy** and **Terms & Conditions** ship inside the app (About → Legal, also linked from Settings and the first-run agreement).
 
 ---
 

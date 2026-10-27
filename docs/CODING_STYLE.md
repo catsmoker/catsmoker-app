@@ -67,6 +67,17 @@ These recur across the codebase — a reviewer will expect them:
    cards and the GRID detected-install card (its status text stays as a line
    under Apply). Live-metric dashboard cards are monitoring surfaces, not
    this pattern.
+3. **Operation indicators exist only while operating.** A progress bar is
+   composed only for the state that represents real work — no idle "relaxed"
+   track, empty line, or reserved space. Visibility derives from the engine
+   state (`GamingModeProgress`), and the bar leaves with the operation,
+   including failure and interruption. Forward progress is the engine's own
+   read-back values; a phase without progress (disabling) runs the same bar
+   backward from full.
+4. **Long pickers stay compact.** A configured count badge at the heading, a
+   collapsed summary by default, and a bounded internally scrolling list when
+   expanded (precedent: Apps kept running). Folding changes only what is
+   drawn — it never edits the stored set.
 
 ## Visual system (charcoal + crimson + glass)
 

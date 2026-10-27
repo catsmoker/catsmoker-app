@@ -100,7 +100,9 @@ fun SettingsRoute(
         onOpenLogs = onOpenLogs,
         onBack = onBack,
         onCheckUpdates = viewModel::onCheckUpdates,
-        onCancelDownload = viewModel::cancelUpdateDownload
+        onCancelDownload = viewModel::cancelUpdateDownload,
+        analyticsEnabled = uiState.analyticsEnabled,
+        onAnalyticsToggled = viewModel::onAnalyticsToggled
     )
 
     uiState.updateDialog?.let { dialog ->
@@ -148,7 +150,9 @@ fun SettingsScreen(
     onOpenLogs: () -> Unit,
     onBack: () -> Unit,
     onCheckUpdates: () -> Unit,
-    onCancelDownload: () -> Unit
+    onCancelDownload: () -> Unit,
+    analyticsEnabled: Boolean,
+    onAnalyticsToggled: (Boolean) -> Unit
 ) {
     var themeDialog by remember { mutableStateOf(false) }
     var languageDialog by remember { mutableStateOf(false) }
@@ -189,6 +193,15 @@ fun SettingsScreen(
 
             Spacer(modifier = Modifier.height(24.dp))
             Text(stringResource(R.string.sys_section_general), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(start = 4.dp, bottom = 8.dp))
+            SectionCard {
+                SettingsToggle(stringResource(R.string.sys_analytics_title), analyticsEnabled, onAnalyticsToggled)
+                Text(
+                    stringResource(R.string.sys_analytics_sub),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(top = 4.dp)
+                )
+            }
             // Full keeps the free toggle; Play sells removal via Google Play
             // Billing instead, so the free switch must not appear there.
             if (VariantCapabilities.HAS_FREE_ADS_TOGGLE) {
@@ -434,7 +447,9 @@ fun SettingsPreview() {
             onOpenLogs = {},
             onBack = {},
             onCheckUpdates = {},
-            onCancelDownload = {}
+            onCancelDownload = {},
+            analyticsEnabled = true,
+            onAnalyticsToggled = {}
         )
     }
 }

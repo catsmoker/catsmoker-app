@@ -38,7 +38,24 @@ data class GameProfile(
      * performs (TODO M190/M191). ZARCHIVER is never offered for these profiles: a manual copy
      * cannot read the current file, so it could not preserve that section.
      */
-    val preserveDeviceProfileBackup: Boolean = false
+    val preserveDeviceProfileBackup: Boolean = false,
+    /**
+     * Int32 fields this profile rewrites *inside the save already on the device*, by the name the
+     * file spells them (`BattleFPS`, `TpViewValue`, …). Empty for whole-file templates.
+     *
+     * The PUBG `Active.sav` profiles are the reason this exists. Their bundled blobs are whole
+     * saves from the reference tools (one author's sensitivity, one author's iPad layout), so
+     * pushing them over a player's own save would replace every setting the profile does not
+     * name — while *keeping* the player's file, as the old code did, applied nothing at all and
+     * still reported success. Patching the handful of ints the profile is about is the reference
+     * tools' own mechanism (`savedit.sh`'s sed rewrite) and leaves the rest of the save alone.
+     * A file the game has not written yet is still seeded with the bundled asset — there is
+     * nothing else to base a patch on.
+     *
+     * ZARCHIVER is never offered for these profiles either: a manual copy cannot read the
+     * current file to patch it.
+     */
+    val saveEdits: Map<String, Int> = emptyMap()
 )
 
 /**

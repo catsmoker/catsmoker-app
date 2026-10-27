@@ -47,7 +47,7 @@
     <string name="core_terms_prefix">يرجى قراءة\u0020</string>
     <string name="core_terms_link">رخصة CC BY-NC-SA 4.0</string>
     <string name="core_terms_suffix">\u0020قبل استخدام التطبيق.</string>
-    <string name="core_terms_title">شروط الخدمة</string>
+    <string name="core_terms_title">الشروط والأحكام</string>
     <string name="core_terms_agree">أوافق على الشروط.</string>
     <string name="core_continue">متابعة</string>
 
@@ -58,6 +58,9 @@
     <string name="core_perm_root_sub">مطلوب لتحسينات متقدمة.</string>
     <string name="core_perm_shizuku_title">وصول Shizuku</string>
     <string name="core_perm_shizuku_sub">بديل للجذر لتعديلات النظام.</string>
+    <string name="core_perm_root_denied">لم يُمنح Root. تحقّق من النافذة أو مدير Root.</string>
+    <string name="core_perm_shizuku_not_running">Shizuku لا يعمل — شغّله من تطبيق Shizuku أولًا.</string>
+    <string name="core_perm_shizuku_not_granted">Shizuku يعمل — اضغط منح للسماح لـ Catsmoker.</string>
     <string name="core_perm_storage_title">الوصول إلى التخزين</string>
     <string name="core_perm_storage_sub">لقراءة ملفات إعدادات الألعاب وتعديلها.</string>
     <string name="core_perm_battery_title">تحسين البطارية</string>

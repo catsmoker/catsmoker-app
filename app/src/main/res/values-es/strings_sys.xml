@@ -9,6 +9,8 @@
     <string name="sys_remove_ads_sub">Compra única. Paga una vez y navega sin anuncios para siempre.</string>
     <string name="sys_ads_removed_title">Anuncios eliminados</string>
     <string name="sys_ads_removed_sub">Gracias por tu apoyo: navegas sin anuncios.</string>
+    <string name="sys_analytics_title">Enviar datos de análisis</string>
+    <string name="sys_analytics_sub">Google Firebase recibe datos de uso (inicios de la app, duración de la sesión, modelo del dispositivo, versión de la app, dirección IP). Desactívalo para detener la recopilación; desinstalar la app también la detiene. Consulta la Política de privacidad.</string>
     <string name="sys_billing_unavailable">La facturación de Google Play no está disponible. Revisa tu conexión e inténtalo de nuevo.</string>
     <string name="sys_remove_ads_pending">Tu compra está pendiente. Los anuncios se desactivarán cuando Google Play la confirme.</string>
     <string name="sys_remove_ads_failed">No se pudo completar la compra: %1$s</string>

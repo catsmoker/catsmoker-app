@@ -41,14 +41,16 @@ data class RootProviderSignals(
 )
 
 /**
- * Names the active root provider without guessing from a single file or package.
+ * Names the active root provider without guessing from a single file, package or version.
  *
- * A provider is reported when either its version command answered or both its manager package
- * and its private data directory are present. The second rule exists because hidden Magisk
- * stubs (`com.topjohnwu.magisk` replaced by a random package) and non-PATH `ksud`/`apd`
- * binaries can hide the command while the manager and its directory still prove the install.
- * An APK alone is deliberately *not* enough: a user may keep a root-manager APK installed
- * after switching providers, and naming that stale package would misattribute root.
+ * A provider is reported only when its private data directory exists *and* at least one
+ * independent signal agrees: its version command answered or its manager package is present.
+ * The directory alone is not enough (a leftover install), a manager APK alone is not enough
+ * (a user may keep the old manager after switching providers), and a version command alone is
+ * not enough either — a residual `magisk -V` binary answers on a KernelSU-rooted device and
+ * used to make the screen claim both providers were active. Requiring the directory for the
+ * command keeps the hidden-manager case working, since every provider keeps its directory
+ * regardless of whether its manager is hidden.
  *
  * Empty means "root answered, but no known provider could be named" — the caller must say
  * that instead of inventing one.
@@ -56,13 +58,13 @@ data class RootProviderSignals(
 object RootProviderDetector {
 
     fun detect(signals: RootProviderSignals): Set<RootProvider> = buildSet {
-        if (signals.magiskVersion || (signals.magiskManager && signals.magiskDir)) {
+        if (signals.magiskDir && (signals.magiskVersion || signals.magiskManager)) {
             add(RootProvider.MAGISK)
         }
-        if (signals.kernelsuVersion || (signals.kernelsuManager && signals.kernelsuDir)) {
+        if (signals.kernelsuDir && (signals.kernelsuVersion || signals.kernelsuManager)) {
             add(RootProvider.KERNELSU)
         }
-        if (signals.apatchVersion || (signals.apatchManager && signals.apatchDir)) {
+        if (signals.apatchDir && (signals.apatchVersion || signals.apatchManager)) {
             add(RootProvider.APATCH)
         }
     }

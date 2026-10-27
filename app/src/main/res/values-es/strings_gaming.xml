@@ -471,6 +471,11 @@
     <string name="gt_gm_what_3">Todo lo que tu teléfono rechace se lista en esta tarjeta como rechazado. Nada se afirma sin que tu teléfono lo confirme.</string>
     <string name="gt_gm_unavailable_title">No disponible en este dispositivo:</string>
     <string name="gt_gm_revert_leftovers">Apagarlo dejó algunas cosas atrás:</string>
+    <!-- Folded read-back report: collapsed by default; expanding is review only. -->
+    <string name="gt_gm_details_show">Ver detalles de las optimizaciones</string>
+    <string name="gt_gm_details_hide">Ocultar detalles de las optimizaciones</string>
+    <string name="gt_gm_details_summary">%1$d de %2$d cambios confirmados</string>
+    <string name="gt_gm_details_empty">No se registraron cambios en esta ejecución.</string>
     <string name="gt_gm_label_gpu">Modo GPU</string>
     <string name="gt_gm_label_fps_hint">Sugerencia de FPS</string>
     <string name="gt_gm_label_display">Pantalla</string>
@@ -764,6 +769,9 @@
     <string name="gt_keep_what_2">Una app puede conservarse o pausarse, nunca ambas: elegir una aquí la quita de Apps extra en pausa, y al revés. El juego activo y Catsmoker siempre se conservan, elijas lo que elijas.</string>
     <string name="gt_keep_none">Sin excepciones — decide el barrido automático</string>
     <string name="gt_keep_some">%1$d app(s) siguen activas</string>
+    <string name="gt_keep_summary_more">%1$s y %2$d más</string>
+    <string name="gt_keep_show_list">Mostrar lista</string>
+    <string name="gt_keep_hide_list">Ocultar lista</string>
     <string name="gt_keep_add">Añadir una app</string>
     <string name="gt_keep_remove">Quitar</string>
     <!-- Auto game session: watch the foreground app, start Gaming Mode for library games. -->

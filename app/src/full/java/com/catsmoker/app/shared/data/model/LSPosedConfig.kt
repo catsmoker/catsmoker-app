@@ -42,22 +42,39 @@ object LSPosedConfig {
     const val KEY_MODULE_HEARTBEAT_ELAPSED = "module_heartbeat_elapsed"
 
     /**
-     * Whether a stored heartbeat proves the module loaded recently.
+     * Whether a stored heartbeat proves the module loaded into *this* process.
      *
      * Absent/non-positive never counts, greater-than-now means a reboot happened since the
-     * write, and older than [MAX_HEARTBEAT_AGE_MS] means no own-process load for over a day —
-     * which on-device evidence showed can happen while the card still claims Active (stale
-     * module path after an app reinstall: nothing loads, the old heartbeat lingers). The
-     * bound is safe because reading the status card runs inside our own freshly-started
-     * process: a working module refreshes the heartbeat on that very start, so only a
-     * genuinely unloaded module keeps reading stale. Reopen the app; still stale means the
-     * module is not loading (disabled, out of scope, or a stale install).
+     * write, and older than [MAX_HEARTBEAT_AGE_MS] means no own-process load for over a day.
+     * Age alone was not enough: a heartbeat written by a previous process (before an install,
+     * an update, or a disable) is still recent, yet the current process was never injected —
+     * on-device a 21-hour-old heartbeat kept the card Active while Vector reported our module
+     * disabled. The process-start bound closes that: only a heartbeat written at or after
+     * [processStartElapsed] can come from this process. The small clock tolerance covers
+     * elapsedRealtime reading between the module's write and the framework's start stamp.
+     *
+     * Reading the status card runs inside our own freshly-started process, so a working
+     * module refreshes the heartbeat on that very start; a heartbeat from before the process
+     * can only belong to an older process.
      */
-    fun isHeartbeatFresh(storedElapsed: Long, nowElapsed: Long): Boolean =
-        storedElapsed in maxOf(1L, nowElapsed - MAX_HEARTBEAT_AGE_MS)..nowElapsed
+    fun isHeartbeatFresh(
+        storedElapsed: Long,
+        nowElapsed: Long,
+        processStartElapsed: Long = 0L
+    ): Boolean {
+        val earliest = maxOf(
+            1L,
+            nowElapsed - MAX_HEARTBEAT_AGE_MS,
+            processStartElapsed - HEARTBEAT_CLOCK_TOLERANCE_MS
+        )
+        return storedElapsed in earliest..nowElapsed
+    }
 
     /** Heartbeats older than this prove nothing (see [isHeartbeatFresh]). */
     const val MAX_HEARTBEAT_AGE_MS = 24L * 60L * 60L * 1000L
+
+    /** Allowed skew between a heartbeat write and the process-start timestamp. */
+    const val HEARTBEAT_CLOCK_TOLERANCE_MS = 2_000L
 
     /** Key inside a rendered profile listing packages the user opted out of spoofing. */
     const val KEY_SAFE_MODE_PACKAGES = "safe_mode.packages"

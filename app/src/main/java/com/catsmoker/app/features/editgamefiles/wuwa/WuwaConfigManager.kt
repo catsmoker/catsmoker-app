@@ -323,7 +323,11 @@ class WuwaConfigManager @Inject constructor(
             variants = parsed.variants,
             unknownFiles = parsed.unknownFiles
         )
-        communityPackStore.add(pack)
+        if (!communityPackStore.add(pack)) {
+            return PackImportResult.Failure(
+                "The pack was read, but it could not be saved to the app's storage. Free some storage and try again."
+            )
+        }
         return PackImportResult.Read(pack)
     }
 
@@ -430,6 +434,16 @@ class WuwaConfigManager @Inject constructor(
     private suspend fun deployOver(
         channel: DeviceChannel,
         configs: Map<String, String>
+    ): DeployResult = deployBytesOver(channel, configs.mapValues { it.value.toByteArray() })
+
+    /**
+     * The byte-exact deploy. A restore carries the backup's own bytes, which must never round-trip
+     * through a String: invalid UTF-8 would turn into U+FFFD and the "restored" file would differ
+     * from the backup. Text deploys ([deployOver]) are just the UTF-8 special case.
+     */
+    private suspend fun deployBytesOver(
+        channel: DeviceChannel,
+        configs: Map<String, ByteArray>
     ): DeployResult {
         val mkdir = channel.run("mkdir", "-p", CONFIG_DIR)
         if (!mkdir.isSuccess) {
@@ -457,7 +471,18 @@ class WuwaConfigManager @Inject constructor(
                 backup = backupStore.save(PACKAGE, name, priorBytes)
                 backupFailed = backup == null
             }
-            val outcome = channel.writeBytes(destPath, content.toByteArray())
+            // No undo point means no write: replacing the device's file with its backup failed
+            // leaves nothing to roll back to. The file is reported, not skipped silently.
+            if (backupFailed) {
+                results.add(
+                    FileDeployResult(
+                        name, backup, backupFailed, pushed = false, verified = false,
+                        detail = "the current file could not be backed up, so it was left untouched"
+                    )
+                )
+                continue
+            }
+            val outcome = channel.writeBytes(destPath, content)
             val digest = if (outcome.pushed) md5OfFile(channel, destPath) else ""
             results.add(
                 FileDeployResult(
@@ -484,7 +509,11 @@ class WuwaConfigManager @Inject constructor(
         )
     }
 
-    suspend fun deployViaSaf(configs: Map<String, String>): DeployResult = withContext(Dispatchers.IO) {
+    suspend fun deployViaSaf(configs: Map<String, String>): DeployResult =
+        deployBytesViaSaf(configs.mapValues { it.value.toByteArray() })
+
+    /** [deployViaSaf]'s byte-exact form, shared with the restore path. */
+    private suspend fun deployBytesViaSaf(configs: Map<String, ByteArray>): DeployResult = withContext(Dispatchers.IO) {
         val dir = safConfigDir()
             ?: return@withContext DeployResult.Failure(
                 "saf-folder",
@@ -495,33 +524,57 @@ class WuwaConfigManager @Inject constructor(
         for ((name, content) in configs) {
             try {
                 val existing = dir.findFile(name)
-                // Backup before delete-and-recreate, which would otherwise leave the old
-                // generation unreachable through the provider.
-                var backup: ConfigBackupStore.Entry? = null
-                var backupFailed = false
-                if (existing != null) {
-                    val bytes = runCatching {
+                // Present is not the same as readable. The old code deleted an unreadable file
+                // and re-created it, destroying the live config without a backup; only an
+                // absent file may be created from scratch.
+                val priorBytes = if (existing == null) {
+                    null
+                } else {
+                    runCatching {
                         context.contentResolver.openInputStream(existing.uri)?.use { it.readBytes() }
                     }.getOrNull()
-                    if (bytes != null && bytes.isNotEmpty()) {
-                        backup = backupStore.save(PACKAGE, name, bytes)
-                        backupFailed = backup == null
-                    }
                 }
-                existing?.delete()
-                val target = dir.createFile(MIME_BINARY, name)
+                if (existing != null && priorBytes == null) {
+                    results.add(FileDeployResult(name, null, false, pushed = false, verified = false,
+                        detail = "the existing file could not be read, so it was left untouched"))
+                    continue
+                }
+                // Backup before the overwrite. A failed backup aborts this file: replacing the
+                // only copy with no way back is worse than a file that was not deployed.
+                var backup: ConfigBackupStore.Entry? = null
+                var backupFailed = false
+                if (priorBytes != null && priorBytes.isNotEmpty()) {
+                    backup = backupStore.save(PACKAGE, name, priorBytes)
+                    backupFailed = backup == null
+                }
+                if (backupFailed) {
+                    results.add(FileDeployResult(name, backup, backupFailed, pushed = false, verified = false,
+                        detail = "the current file could not be backed up, so it was left untouched"))
+                    continue
+                }
+                // Write through the existing document rather than delete-then-create: a refused
+                // create left no config at all, and the provider keeps the document's identity.
+                val target = existing ?: dir.createFile(MIME_BINARY, name)
                     ?: run {
                         results.add(FileDeployResult(name, backup, backupFailed, pushed = false, verified = false,
                             detail = "the provider refused to create the file"))
                         continue
                     }
-                val bytes = content.toByteArray()
-                context.contentResolver.openOutputStream(target.uri, "w")?.use { it.write(bytes) }
-                    ?: run {
-                        results.add(FileDeployResult(name, backup, backupFailed, pushed = false, verified = false,
-                            detail = "the provider refused to open the file for writing"))
-                        continue
-                    }
+                val bytes = content
+                val stream = runCatching { context.contentResolver.openOutputStream(target.uri, "wt") }
+                    .getOrNull()
+                    ?: runCatching { context.contentResolver.openOutputStream(target.uri, "w") }.getOrNull()
+                if (stream == null) {
+                    results.add(FileDeployResult(name, backup, backupFailed, pushed = false, verified = false,
+                        detail = "the provider refused to open the file for writing"))
+                    continue
+                }
+                val write = runCatching { stream.use { it.write(bytes) } }
+                if (write.isFailure) {
+                    results.add(FileDeployResult(name, backup, backupFailed, pushed = false, verified = false,
+                        detail = "the provider refused the write: ${write.exceptionOrNull()?.message ?: "unknown error"}"))
+                    continue
+                }
                 val verified = runCatching {
                     context.contentResolver.openInputStream(target.uri)?.use { it.readBytes() }
                 }.getOrNull()?.contentEquals(bytes) == true
@@ -573,11 +626,11 @@ class WuwaConfigManager @Inject constructor(
         if (name.isBlank() || '/' in name || name !in monitoredFiles) {
             return@withContext DeployResult.Failure("backup", "that backup's file name is not a known config file")
         }
-        val configs = mapOf(name to bytes.toString(Charsets.UTF_8))
+        val configs = mapOf(name to bytes)
         if (canDeployViaShell()) {
-            deployViaShell(configs)
+            deployBytesOver(ShellChannel(), configs)
         } else {
-            deployViaSaf(configs)
+            deployBytesViaSaf(configs)
         }
     }
 
@@ -872,6 +925,11 @@ class WuwaConfigManager @Inject constructor(
                 val updates = mutableMapOf<String, Map<String, String>>()
                 for (name in monitoredFiles) {
                     val hash = md5OfFile(channel, "$CONFIG_DIR/$name")
+                    // No verified digest (missing file, failed md5sum) means there is nothing
+                    // honest to record. Writing `Hash=` for a file that exists but could not be
+                    // hashed — a failed push, a refused read — used to replace a usable section
+                    // with an empty one.
+                    if (hash.isBlank()) continue
                     var prevCount: Int? = null
                     var prevTime = ""
                     var inSection = false
@@ -896,6 +954,12 @@ class WuwaConfigManager @Inject constructor(
                         "ModifyCount" to displayCount.toString(),
                         "LastModifiedTime" to (prevTime.ifBlank { now })
                     )
+                }
+
+                if (updates.isEmpty()) {
+                    // Nothing could be hashed, so there is no section worth writing. Reporting
+                    // "synced" here would vouch for a refresh that touched no verified file.
+                    return@withLock false to "hash refresh skipped — no config file could be hashed"
                 }
 
                 val patched = mutableListOf<String>()
@@ -937,7 +1001,7 @@ class WuwaConfigManager @Inject constructor(
                         }
                     }
                 } else {
-                    for (name in monitoredFiles) {
+                    for (name in updates.keys) {
                         patched.add("[$name]")
                         for (key in HASH_KEYS) patched.add("$key=${updates[name]?.get(key) ?: ""}")
                         patched.add("")
@@ -958,7 +1022,9 @@ class WuwaConfigManager @Inject constructor(
                 }
                 val readBack = readFileViaChannel(channel)
                 if (readBack.isBlank()) {
-                    return@withLock true to "hash synced (could not verify — read-back empty)"
+                    // An empty read-back is not a match: it means the verification could not
+                    // see the file at all, and the old code reported that as "synced".
+                    return@withLock false to "hash synced? no — read-back was empty, so it could not be verified"
                 }
                 if (readBack.trim() == newContent.trim()) {
                     return@withLock true to "hash monitor synced and verified"
