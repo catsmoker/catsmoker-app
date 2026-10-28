@@ -88,4 +88,7 @@
     <string name="core_read_parse">غير مقروء</string>
     <string name="core_read_privilege">يتطلب روت أو Shizuku</string>
     <string name="core_read_unsupported">غير مدعوم</string>
+    <!-- أسماء الوصول لزر المعلومات المشترك ولوحته السفلية. -->
+    <string name="info_more_about">مزيد من المعلومات حول %1$s</string>
+    <string name="info_close">إغلاق</string>
 </resources>

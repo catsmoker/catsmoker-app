@@ -25,6 +25,7 @@ import com.catsmoker.app.features.gamingtools.engine.GamingModeRestoreResult
 import com.catsmoker.app.features.gamingtools.engine.GamingModeState
 import com.catsmoker.app.shared.data.model.GameInfo
 import com.catsmoker.app.shared.ui.components.CatsmokerButton
+import com.catsmoker.app.shared.ui.components.InfoButton
 import com.catsmoker.app.shared.ui.components.SectionCard
 
 /**
@@ -132,6 +133,8 @@ fun GamingModeCard(
                     )
                 }
 
+                InfoButton(InfoTopics.gamingMode)
+
                 IconButton(
                     onClick = { if (isSessionOpen) onDeactivate() else onActivate() },
                     enabled = !isBusy && canActivate,
@@ -178,15 +181,6 @@ fun GamingModeCard(
                 NoticeBlock(
                     text = stringResource(R.string.gt_gm_need),
                     tint = Color(0xFFFFB300)
-                )
-                Spacer(modifier = Modifier.height(8.dp))
-                CollapsibleExplainer(
-                    title = stringResource(R.string.gt_gm_what_title),
-                    lines = listOf(
-                        stringResource(R.string.gt_gm_what_1),
-                        stringResource(R.string.gt_gm_what_2),
-                        stringResource(R.string.gt_gm_what_3)
-                    )
                 )
             }
 

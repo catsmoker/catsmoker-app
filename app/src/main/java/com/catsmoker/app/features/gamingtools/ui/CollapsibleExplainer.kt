@@ -32,18 +32,22 @@ import androidx.compose.ui.unit.sp
 import com.catsmoker.app.R
 
 /**
- * One collapsed-by-default explanation, used for every "what is this?" text in Gaming Tools.
+ * One collapsed-by-default block for a **data disclosure** in Gaming Tools.
+ *
+ * This is not the feature explainer. Every "what is this?" / "is it safe?" question now lives in
+ * [InfoTopics] and opens from the small [com.catsmoker.app.shared.ui.components.InfoButton] beside
+ * the feature's title. What stays here is content that is *data the device produced* and has no
+ * single feature attached — the booster's run history, a pack's README, a skipped-scene list, a
+ * deploy report. Collapsing it keeps a long list from burying the controls above it.
  *
  * The whole header is the tap target, not just the arrow, so it works the way a phone user expects a
- * dropdown to. Nothing is shown until it is opened, which is what keeps a card with five explanations
- * on it readable.
+ * dropdown to.
  *
- * The [title] should be a plain question the user might actually ask — "What is this?", "Do I need
- * root?" — and [lines] should answer it in short, ordinary sentences. Technical names belong in the
- * body with a plain-words gloss next to them, never in the title.
+ * The [title] should name the data — "Run history", "Skipped scenes" — and [lines] should carry the
+ * rows themselves. If the text answers "what does this switch do", it belongs in [InfoTopics] instead.
  *
- * @param title the always-visible question.
- * @param lines the answer, one paragraph per entry, revealed on tap.
+ * @param title the always-visible heading.
+ * @param lines the content, one paragraph per entry, revealed on tap.
  * @param accent the colour of the title and the tint of the background. Amber and red are used for
  *   "this has a cost" and "this will not work here".
  * @param initiallyExpanded left false everywhere by design. It exists for the rare case where the

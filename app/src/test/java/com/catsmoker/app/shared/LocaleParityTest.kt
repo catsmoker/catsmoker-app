@@ -80,6 +80,10 @@ class LocaleParityTest {
         "gt_gm_details_hide",
         "gt_gm_details_summary",
         "gt_gm_details_empty",
+        // Feature info button (accessible name) and its sheet's close control. Shown from every
+        // card header, so a missing translation would surface on the main Gaming Tools screen.
+        "info_more_about",
+        "info_close",
         // Theme option added by the Dynamic-color pick (once absent from en-rGB).
         "sys_theme_dynamic",
         // Support dialog "Do not show again" checkbox (shown from the 2nd appearance).

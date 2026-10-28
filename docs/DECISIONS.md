@@ -698,3 +698,19 @@ deliberately not ported, or blocked by hardware/field evidence.
   `Checking`/`Interrupted`, and offers **Restore apps** separately from the
   full power-off revert. A deactivation that cannot verify every wake no
   longer claims success. See `docs/GAMING_MODE.md`.
+
+## Feature explainers moved into info sheets (2026-10-28)
+
+- **Every "What is this?" / "Is it safe?" accordion is now an info-button sheet.** The
+  expandable Q&A rows inside Gaming Tools card bodies made the cards tall and kept the
+  answers where the switch was, not where the question came up. Each feature now has one
+  small `InfoButton` beside its title that opens a `ModalBottomSheet`; a feature with
+  several questions still has one button and one sheet, with the questions as sections.
+  Wording is unchanged, carried as `@StringRes` ids in `InfoTopics` and resolved at
+  composition so a language switch repaints the sheet. The button is a neutral info icon,
+  or an amber warning triangle when the topic contains a cost/risk answer.
+- **Rejected: inline expandable Q&A for feature explanations.** `CollapsibleExplainer`
+  survives only for data the device produced (booster run history, pack README, skipped
+  scene/voice lists, deploy report, measured rounds), where there is no single feature title
+  to attach an icon to. Do not add new feature explainers back into card bodies; add an
+  `InfoTopic` instead. Permanent rule: `docs/CODING_STYLE.md` UI rule 5.

@@ -36,6 +36,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.catsmoker.app.R
 import com.catsmoker.app.shared.ui.components.CatsmokerOutlinedButton
+import com.catsmoker.app.shared.ui.components.InfoButton
+import com.catsmoker.app.shared.ui.components.InfoTopic
 
 /** One picked app in either Gaming Mode app picker, resolved to its display label. */
 data class GamingModePickedApp(
@@ -99,10 +101,11 @@ internal object GamingModeAppPicker {
  * The one layout both Gaming Mode app lists use.
  *
  * "Apps kept running" and "Extra suspended apps" edit two sides of the same suspend sweep, so they
- * must read as one control: a heading with its configured count, a fixed subtitle, an empty/status
- * line, a short collapsed name preview, one Show/Hide disclosure, one full-width Add button, one
- * privilege notice and one explanation. The only per-list content is the optional [rowBadge], which
- * the freeze list uses to say whether a configured app has actually been suspended this session.
+ * must read as one control: a heading with its info button and configured count, a fixed subtitle,
+ * an empty/status line, a short collapsed name preview, one Show/Hide disclosure, one full-width Add
+ * button, one privilege notice and one info sheet. The only per-list content is the optional
+ * [rowBadge], which the freeze list uses to say whether a configured app has actually been suspended
+ * this session.
  *
  * The body starts collapsed and the expanded rows live in a bounded scrolling area, so a large list
  * cannot make the Gaming Mode card indefinitely tall. Folding or unfolding never edits a stored set.
@@ -132,7 +135,7 @@ internal fun GamingModeAppPickerSection(
     onAdd: () -> Unit,
     onRemove: (String) -> Unit,
     canEdit: Boolean,
-    explainerLines: List<String>,
+    info: InfoTopic,
     modifier: Modifier = Modifier,
     statusText: String? = null,
     rowBadge: (@Composable (GamingModePickedApp) -> Unit)? = null
@@ -151,6 +154,7 @@ internal fun GamingModeAppPickerSection(
                 color = MaterialTheme.colorScheme.onSurface,
                 modifier = Modifier.weight(1f)
             )
+            InfoButton(info)
             // The count belongs to the stored set, not to the rows currently on screen. The
             // localized "N app(s) ..." description is the accessibility label for this badge.
             Box(
@@ -264,10 +268,5 @@ internal fun GamingModeAppPickerSection(
             Spacer(modifier = Modifier.height(8.dp))
             RequirementNotice(stringResource(R.string.gt_needs_root_shizuku_close))
         }
-        Spacer(modifier = Modifier.height(8.dp))
-        CollapsibleExplainer(
-            title = stringResource(R.string.gt_explainer_what),
-            lines = explainerLines
-        )
     }
 }

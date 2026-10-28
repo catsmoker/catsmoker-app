@@ -137,14 +137,24 @@ class GamingModeUiPlacementTest {
         assertTrue(keep.contains("GamingModeAppPickerSection("))
         assertTrue(suspension.contains("GamingModeAppPickerSection("))
         assertTrue(picker.contains("CatsmokerOutlinedButton("))
-        assertTrue(picker.contains("CollapsibleExplainer("))
-        assertTrue(picker.contains("R.string.gt_explainer_what"))
+        assertTrue(picker.contains("InfoButton(info)"))
         assertTrue(suspension.contains("GamingModeAppPicker.count(picked)"))
         assertTrue(suspension.contains("GamingModeAppPicker.DEFAULT_EXPANDED"))
         assertTrue(suspension.contains("R.string.gt_suspend_none"))
         assertTrue(suspension.contains("R.string.gt_suspend_some"))
-        assertTrue(suspension.contains("R.string.gt_suspend_what_1"))
-        assertTrue(suspension.contains("R.string.gt_suspend_what_2"))
+        assertTrue("the freeze list must point at its own info topic", suspension.contains("InfoTopics.extraSuspend"))
+    }
+
+    @Test
+    fun appPickerQuestionsLiveInTheInfoCatalog() {
+        // The Q&A left the card body; the wording still has to exist, exactly once, in the catalog.
+        val catalog = source("ui/InfoTopics.kt")
+        assertTrue(catalog.contains("R.string.gt_keep_what_1"))
+        assertTrue(catalog.contains("R.string.gt_keep_what_2"))
+        assertTrue(catalog.contains("R.string.gt_suspend_what_1"))
+        assertTrue(catalog.contains("R.string.gt_suspend_what_2"))
+        assertTrue(keep.contains("InfoTopics.keepRunning"))
+        assertFalse("the picker must not render an inline explainer", picker.contains("CollapsibleExplainer("))
     }
 
     @Test

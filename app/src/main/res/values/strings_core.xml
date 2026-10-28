@@ -88,4 +88,7 @@
     <string name="core_read_parse">unreadable</string>
     <string name="core_read_privilege">needs root/Shizuku</string>
     <string name="core_read_unsupported">unsupported</string>
+    <!-- Accessible names for the shared info (i) button and its bottom sheet. -->
+    <string name="info_more_about">More info about %1$s</string>
+    <string name="info_close">Close</string>
 </resources>

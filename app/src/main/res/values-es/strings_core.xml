@@ -88,4 +88,7 @@
     <string name="core_read_parse">ilegible</string>
     <string name="core_read_privilege">necesita root o Shizuku</string>
     <string name="core_read_unsupported">no compatible</string>
+    <!-- Nombres accesibles del botón de información compartido y su hoja inferior. -->
+    <string name="info_more_about">Más información sobre %1$s</string>
+    <string name="info_close">Cerrar</string>
 </resources>

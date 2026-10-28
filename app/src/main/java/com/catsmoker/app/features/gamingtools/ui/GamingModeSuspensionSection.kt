@@ -73,10 +73,7 @@ fun GamingModeSuspensionSection(
         onAdd = onAdd,
         onRemove = onRemove,
         canEdit = canEdit,
-        explainerLines = listOf(
-            stringResource(R.string.gt_suspend_what_1),
-            stringResource(R.string.gt_suspend_what_2)
-        ),
+        info = InfoTopics.extraSuspend,
         rowBadge = { row ->
             GamingModeSuspendBadge(isFrozen = row.packageName in suspended)
         }

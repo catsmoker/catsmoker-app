@@ -87,4 +87,7 @@
     <!-- Mirrored from values/ (en-GB uses the same English copy). -->
     <string name="core_perm_need_13">Requires Android 13 or newer.</string>
     <string name="core_perm_need_12">Requires Android 12 or newer.</string>
+    <!-- Accessible names for the shared info (i) button and its bottom sheet. -->
+    <string name="info_more_about">More info about %1$s</string>
+    <string name="info_close">Close</string>
 </resources>

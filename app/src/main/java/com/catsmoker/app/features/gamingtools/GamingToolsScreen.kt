@@ -619,7 +619,7 @@ fun GamingToolsScreen(
 
             SectionLabel(stringResource(R.string.gt_section_performance))
             Column(verticalArrangement = Arrangement.spacedBy(CatsmokerSpacing.CardGap)) {
-                ExpandableToolCard(title = stringResource(R.string.gt_tool_sound_title), subtitle = stringResource(R.string.gt_tool_sound_sub), icon = Icons.AutoMirrored.Filled.VolumeUp) {
+                ExpandableToolCard(title = stringResource(R.string.gt_tool_sound_title), subtitle = stringResource(R.string.gt_tool_sound_sub), icon = Icons.AutoMirrored.Filled.VolumeUp, info = InfoTopics.boost) {
                     BoostContent(uiState.boostLevel, uiState.audioOutput, onBoostChange)
                 }
                 ExpandableToolCard(
@@ -627,7 +627,8 @@ fun GamingToolsScreen(
                     subtitle = stringResource(R.string.gt_tool_booster_sub),
                     icon = Icons.Default.RocketLaunch,
                     enabled = hasPrivilege,
-                    requirementNote = stringResource(R.string.gt_tool_booster_need)
+                    requirementNote = stringResource(R.string.gt_tool_booster_need),
+                    info = InfoTopics.appBooster
                 ) {
                     AppBoosterContent(
                         state = boosterState,
@@ -685,10 +686,9 @@ fun GamingToolsScreen(
             Spacer(modifier = Modifier.height(CatsmokerSpacing.SectionGap))
             SectionLabel(stringResource(R.string.gt_section_graphics))
             Column(verticalArrangement = Arrangement.spacedBy(CatsmokerSpacing.CardGap)) {
-                ExpandableToolCard(title = stringResource(R.string.gt_tool_screen_title), subtitle = stringResource(R.string.gt_tool_screen_sub), icon = Icons.Default.AspectRatio) {
+                ExpandableToolCard(title = stringResource(R.string.gt_tool_screen_title), subtitle = stringResource(R.string.gt_tool_screen_sub), icon = Icons.Default.AspectRatio, info = InfoTopics.resolution(source = uiState.nativeResolution?.let { uiState.resolutionSource } ?: stringResource(R.string.gt_res_safe_source_phone))) {
                     ResolutionChangerContent(
                         native = uiState.nativeResolution,
-                        source = uiState.resolutionSource,
                         activeOverride = uiState.activeOverride,
                         options = uiState.resolutionOptions,
                         selectedOptionId = uiState.selectedResolutionId,
@@ -755,7 +755,8 @@ fun GamingToolsScreen(
                 ExpandableToolCard(
                     title = stringResource(R.string.gt_tool_net_title),
                     subtitle = stringResource(R.string.gt_tool_net_sub),
-                    icon = Icons.Default.VpnLock
+                    icon = Icons.Default.VpnLock,
+                    info = InfoTopics.backgroundData
                 ) {
                     BackgroundDataContent(
                         status = uiState.backgroundDataStatus,
@@ -771,7 +772,16 @@ fun GamingToolsScreen(
                 ExpandableToolCard(
                     title = stringResource(R.string.gt_tool_dns_title),
                     subtitle = stringResource(R.string.gt_tool_dns_sub),
-                    icon = Icons.Default.Dns
+                    icon = Icons.Default.Dns,
+                    info = InfoTopics.dns(
+                        provider = uiState.dnsStatus?.let { status ->
+                            if (status.mode == DnsFeature.Mode.PROVIDER) {
+                                DnsFeature.PROVIDERS.firstOrNull { it.hostname == status.hostname }
+                            } else {
+                                null
+                            }
+                        }
+                    )
                 ) {
                     DnsContent(
                         status = uiState.dnsStatus,
@@ -798,12 +808,13 @@ fun GamingToolsScreen(
                     isToggled = uiState.isAutoForceStopActive,
                     onToggleChange = onToggleAutoForceStop,
                     enabled = hasPrivilege,
-                    requirementNote = stringResource(R.string.gt_tool_afs_need)
-                ) {
-                    AutoForceStopContent(
-                        hasPrivilege = hasPrivilege
-                    )
-                }
+                    requirementNote = stringResource(R.string.gt_tool_afs_need),
+                    info = InfoTopics.autoForceStop,
+                    notice = { AutoForceStopUsageNotice() },
+                    // No body of its own: the Q&A moved to the info sheet and the remaining
+                    // Usage-access warning stays visible above the fold.
+                    expandable = false
+                )
                 // The extra suspend list moved into the Gaming Mode card: it is the same suspend
                 // sweep's second input, not a Background Apps feature. Keeping it here as well
                 // meant two surfaces could edit one list and only one of them showed whether a
@@ -816,7 +827,7 @@ fun GamingToolsScreen(
             Spacer(modifier = Modifier.height(CatsmokerSpacing.SectionGap))
             SectionLabel(stringResource(R.string.gt_section_memory))
             Column(verticalArrangement = Arrangement.spacedBy(CatsmokerSpacing.CardGap)) {
-                ExpandableToolCard(title = stringResource(R.string.gt_tool_cleaner_title), subtitle = stringResource(R.string.gt_tool_cleaner_sub), icon = Icons.Default.DeleteSweep) {
+                ExpandableToolCard(title = stringResource(R.string.gt_tool_cleaner_title), subtitle = stringResource(R.string.gt_tool_cleaner_sub), icon = Icons.Default.DeleteSweep, info = InfoTopics.cleaning) {
                     CleaningContent(
                         isRooted = uiState.isRooted,
                         isShizukuActive = uiState.isShizukuActive,
@@ -973,23 +984,34 @@ fun FeatureToggleCard(title: String, subtitle: String, icon: ImageVector, checke
  * @param requirementNote what to say when [enabled] is false. A disabled card that gives no reason is
  *   just a dead card, and its body — where the explanation would normally live — cannot be opened, so
  *   the reason has to sit on the outside of it.
+ * @param info the feature's questions. The icon sits beside the title, outside the expand target, so
+ *   reading the explanation never opens or closes the card, and stays available even when the card is
+ *   disabled.
+ * @param notice content shown under the row whether the card is open or closed, for a card whose only
+ *   body would be an actionable warning (Auto Force Stop's missing Usage access grant).
+ * @param expandable false for a card with no body of its own: the row is then just its switch and the
+ *   title no longer pretends to open anything.
  */
 @Composable
-fun ExpandableToolCard(title: String, subtitle: String, icon: ImageVector, isToggleable: Boolean = false, isToggled: Boolean = false, enabled: Boolean = true, requirementNote: String? = null, onToggleChange: (Boolean) -> Unit = {}, forceExpand: Boolean = false, content: @Composable () -> Unit) {
+fun ExpandableToolCard(title: String, subtitle: String, icon: ImageVector, isToggleable: Boolean = false, isToggled: Boolean = false, enabled: Boolean = true, requirementNote: String? = null, onToggleChange: (Boolean) -> Unit = {}, forceExpand: Boolean = false, info: InfoTopic? = null, notice: (@Composable () -> Unit)? = null, expandable: Boolean = true, content: @Composable () -> Unit = {}) {
     var expanded by remember { mutableStateOf(false) }
     LaunchedEffect(forceExpand) { if (forceExpand) expanded = true }
+    val opens = enabled && expandable
     SectionCard(enabled = enabled) {
         Column(modifier = Modifier.fillMaxWidth()) {
             Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                Box(modifier = Modifier.size(40.dp).clip(RoundedCornerShape(10.dp)).background(if (enabled) MaterialTheme.colorScheme.surfaceVariant else Color.Gray.copy(alpha = 0.1f)).clickable(enabled = enabled) { expanded = !expanded }, contentAlignment = Alignment.Center) { Icon(icon, null, tint = if (enabled) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(20.dp)) }
+                Box(modifier = Modifier.size(40.dp).clip(RoundedCornerShape(10.dp)).background(if (enabled) MaterialTheme.colorScheme.surfaceVariant else Color.Gray.copy(alpha = 0.1f)).clickable(enabled = opens) { expanded = !expanded }, contentAlignment = Alignment.Center) { Icon(icon, null, tint = if (enabled) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(20.dp)) }
                 Spacer(modifier = Modifier.width(16.dp))
-                Column(modifier = Modifier.weight(1f).clickable(enabled = enabled) { expanded = !expanded }) {
+                Column(modifier = Modifier.weight(1f).clickable(enabled = opens) { expanded = !expanded }) {
                     Text(title, fontWeight = FontWeight.Bold, color = if (enabled) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 15.sp)
                     Text(subtitle, color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 12.sp)
                 }
+                if (info != null) {
+                    InfoButton(topic = info)
+                }
                 if (isToggleable) {
                     Switch(checked = isToggled, onCheckedChange = onToggleChange, enabled = enabled)
-                } else {
+                } else if (expandable) {
                     IconButton(onClick = { expanded = !expanded }, enabled = enabled) { Icon(if (expanded) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown, null, tint = if (enabled) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.onSurfaceVariant) }
                 }
             }
@@ -997,7 +1019,11 @@ fun ExpandableToolCard(title: String, subtitle: String, icon: ImageVector, isTog
                 Spacer(modifier = Modifier.height(12.dp))
                 RequirementNotice(requirementNote)
             }
-            if (expanded && enabled) {
+            if (notice != null) {
+                Spacer(modifier = Modifier.height(12.dp))
+                notice()
+            }
+            if (expandable && expanded && enabled) {
                 HorizontalDivider(modifier = Modifier.padding(vertical = 12.dp), color = MaterialTheme.colorScheme.outlineVariant)
                 content()
             }
@@ -1023,7 +1049,6 @@ fun ExpandableToolCard(title: String, subtitle: String, icon: ImageVector, isTog
 @Composable
 fun ResolutionChangerContent(
     native: DisplayMetricsProvider.Snapshot?,
-    source: String,
     activeOverride: DisplayMetricsProvider.Snapshot?,
     options: List<GamingToolsViewModel.ResolutionOption>,
     selectedOptionId: String?,
@@ -1080,35 +1105,6 @@ fun ResolutionChangerContent(
             text = activeOverride?.let { stringResource(R.string.gt_res_changed_to, it.label) } ?: stringResource(R.string.gt_res_not_changed),
             fontSize = 11.sp,
             color = if (activeOverride != null) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
-        )
-
-        Spacer(modifier = Modifier.height(10.dp))
-        ExplainerBox(
-            title = stringResource(R.string.gt_explainer_what),
-            lines = listOf(
-                stringResource(R.string.gt_res_what_1),
-                stringResource(R.string.gt_res_what_2),
-                stringResource(R.string.gt_res_what_3)
-            )
-        )
-        Spacer(modifier = Modifier.height(6.dp))
-        ExplainerBox(
-            title = stringResource(R.string.gt_res_safe_title),
-            accent = Color(0xFFFFB300),
-            lines = listOf(
-                stringResource(R.string.gt_res_safe_1),
-                stringResource(R.string.gt_res_safe_2),
-                stringResource(R.string.gt_res_safe_3, native?.let { source } ?: stringResource(R.string.gt_res_safe_source_phone))
-            )
-        )
-        Spacer(modifier = Modifier.height(6.dp))
-        // Graphics is three independent layers (F11): this card's display override,
-        // the render-scale subsection below (per-game internal rendering), and the
-        // ANGLE driver table. Stating the stack here keeps a lower resolution from
-        // reading as a device-wide performance cap.
-        ExplainerBox(
-            title = stringResource(R.string.gt_graphics_layers_title),
-            lines = listOf(stringResource(R.string.gt_graphics_layers))
         )
 
         if (options.isNotEmpty()) {
@@ -1383,16 +1379,16 @@ fun OverlayPositionContent(
 }
 
 /**
- * Auto Force Stop explains itself and reports the two grants it needs.
+ * The one grant Auto Force Stop cannot work without, reported where the switch is.
  *
  * There is deliberately no app list here: the feature closes every app the user leaves. The
  * service keeps its own code-level protections (home screen, keyboard, this app, system
- * packages), which are not user exceptions and cannot be edited.
+ * packages), which are not user exceptions and cannot be edited. The root/Shizuku requirement is
+ * stated by the card itself; this notice covers the "Usage access" appop, which no permission
+ * dialog can ask for.
  */
 @Composable
-fun AutoForceStopContent(
-    hasPrivilege: Boolean
-) {
+fun AutoForceStopUsageNotice() {
     val context = LocalContext.current
     // The service reads foreground app changes from UsageStatsManager, which needs the "Usage access"
     // appop — a grant no permission dialog can ask for. Without it the poll loop runs and finds
@@ -1413,40 +1409,7 @@ fun AutoForceStopContent(
     }
 
     Column(modifier = Modifier.fillMaxWidth()) {
-        ExplainerBox(
-            title = stringResource(R.string.gt_explainer_what),
-            lines = listOf(
-                stringResource(R.string.gt_afs_what_1),
-                stringResource(R.string.gt_afs_what_2),
-                stringResource(R.string.gt_afs_what_3)
-            )
-        )
-        Spacer(modifier = Modifier.height(8.dp))
-        ExplainerBox(
-            title = stringResource(R.string.gt_afs_perm_title),
-            lines = listOf(
-                stringResource(R.string.gt_afs_perm_1),
-                stringResource(R.string.gt_afs_perm_2),
-                stringResource(R.string.gt_afs_perm_3)
-            ),
-            accent = Color(0xFFFFB300)
-        )
-        Spacer(modifier = Modifier.height(8.dp))
-        ExplainerBox(
-            title = stringResource(R.string.gt_afs_should_title),
-            accent = Color(0xFFFFB300),
-            lines = listOf(
-                stringResource(R.string.gt_afs_should_1),
-                stringResource(R.string.gt_afs_should_2),
-                stringResource(R.string.gt_afs_should_3)
-            )
-        )
-        if (!hasPrivilege) {
-            Spacer(modifier = Modifier.height(8.dp))
-            RequirementNotice(stringResource(R.string.gt_needs_root_shizuku_close))
-        }
         if (!hasUsageAccess) {
-            Spacer(modifier = Modifier.height(8.dp))
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -1472,23 +1435,6 @@ fun AutoForceStopContent(
             }
         }
     }
-}
-
-/**
- * A titled explanation, collapsed until tapped.
- *
- * Several cards drive commands whose effect is not guessable from a switch label — closing apps in the
- * background, locking the processor speed, blocking the network. Each of those says what it does and
- * what it costs, and none of it is on screen until the user asks for it. All of them render through
- * [CollapsibleExplainer] so the behaviour is identical everywhere.
- */
-@Composable
-private fun ExplainerBox(
-    title: String,
-    lines: List<String>,
-    accent: Color = Color(0xFF64B5F6)
-) {
-    CollapsibleExplainer(title = title, lines = lines, accent = accent)
 }
 
 @Composable
@@ -1657,23 +1603,13 @@ fun CleaningContent(
 
         // Review and clean are one disclosure: the category checkboxes decide what Clean
         // removes, so separating them into "review here, clean there" was two steps for one
-        // decision. The safe explainer sits with the aggressive rows it explains.
+        // decision.
         AnimatedVisibility(
             visible = reviewExpanded,
             enter = fadeIn(tween(motionMs)) + expandVertically(tween(motionMs)),
             exit = fadeOut(tween(motionMs)) + shrinkVertically(tween(motionMs))
         ) {
             Column(modifier = Modifier.fillMaxWidth()) {
-                Spacer(modifier = Modifier.height(8.dp))
-                ExplainerBox(
-                    title = stringResource(R.string.gt_cleaner_safe_title),
-                    accent = Color(0xFFFFB300),
-                    lines = listOf(
-                        stringResource(R.string.gt_cleaner_safe_1),
-                        stringResource(R.string.gt_cleaner_safe_2),
-                        stringResource(R.string.gt_cleaner_safe_3)
-                    )
-                )
                 CleaningFeature.Category.entries.forEach { category ->
                     Row(
                         modifier = Modifier
@@ -1772,8 +1708,8 @@ fun CleaningContent(
             }
         }
 
-        // Schedule, rule editing and the two explainers sit behind one disclosure. None of them
-        // is needed to scan once, and all of them were permanently on screen before.
+        // Schedule and rule editing sit behind one disclosure. Neither is needed to scan once,
+        // and both were permanently on screen before.
         Spacer(modifier = Modifier.height(4.dp))
         TextButton(onClick = { advancedExpanded = !advancedExpanded }) {
             Text(
@@ -1788,15 +1724,6 @@ fun CleaningContent(
             exit = fadeOut(tween(motionMs)) + shrinkVertically(tween(motionMs))
         ) {
             Column(modifier = Modifier.fillMaxWidth()) {
-                ExplainerBox(
-                    title = stringResource(R.string.gt_explainer_what),
-                    lines = listOf(
-                        stringResource(R.string.gt_cleaner_what_1),
-                        stringResource(R.string.gt_cleaner_what_2),
-                        stringResource(R.string.gt_cleaner_what_3)
-                    )
-                )
-                Spacer(modifier = Modifier.height(8.dp))
                 CleanerScheduleSection(
                     enabled = scheduleEnabled,
                     intervalHours = scheduleIntervalHours,
@@ -2068,16 +1995,7 @@ fun BackgroundDataContent(
     onSetVpn: (Boolean) -> Unit
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-        ExplainerBox(
-            title = stringResource(R.string.gt_explainer_what),
-            lines = listOf(
-                stringResource(R.string.gt_net_what_1),
-                stringResource(R.string.gt_net_what_2)
-            )
-        )
-
         // ---------- Switch 1: the local VPN ----------
-        HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
         NetworkBlockSwitch(
             title = stringResource(R.string.gt_net_vpn_title),
             // Never called a firewall: it is a local VPN, and saying otherwise would misdescribe what
@@ -2103,15 +2021,6 @@ fun BackgroundDataContent(
         vpnState.lastError?.let { error ->
             Text(stringResource(R.string.gt_net_vpn_error, error), fontSize = 11.sp, color = Color(0xFFEF9A9A), lineHeight = 15.sp)
         }
-        ExplainerBox(
-            title = stringResource(R.string.gt_net_vpn_how_title),
-            lines = listOf(
-                stringResource(R.string.gt_net_vpn_how_1),
-                stringResource(R.string.gt_net_vpn_how_2),
-                stringResource(R.string.gt_net_vpn_how_3),
-                stringResource(R.string.gt_net_vpn_how_4)
-            )
-        )
 
         // ---------- Switch 2: Android's own Data Saver ----------
         HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
@@ -2191,24 +2100,6 @@ fun BackgroundDataContent(
                 }
             }
         }
-        ExplainerBox(
-            title = stringResource(R.string.gt_net_ds_how_title),
-            lines = listOf(
-                stringResource(R.string.gt_net_ds_how_1),
-                stringResource(R.string.gt_net_ds_how_2),
-                stringResource(R.string.gt_net_ds_how_3)
-            )
-        )
-        ExplainerBox(
-            title = stringResource(R.string.gt_net_which_title),
-            accent = Color(0xFFFFB300),
-            lines = listOf(
-                stringResource(R.string.gt_net_which_1),
-                stringResource(R.string.gt_net_which_2),
-                stringResource(R.string.gt_net_which_3),
-                stringResource(R.string.gt_net_which_4)
-            )
-        )
     }
 }
 
@@ -2293,14 +2184,16 @@ fun DeveloperOptionsContent(
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
         // --- Animation scales ---
-        Text(stringResource(R.string.gt_dev_anim), fontSize = 13.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
-        ExplainerBox(
-            title = stringResource(R.string.gt_explainer_what),
-            lines = listOf(
-                stringResource(R.string.gt_dev_anim_what_1),
-                stringResource(R.string.gt_dev_anim_what_2)
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text(
+                stringResource(R.string.gt_dev_anim),
+                fontSize = 13.sp,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onSurface,
+                modifier = Modifier.weight(1f)
             )
-        )
+            InfoButton(InfoTopics.animationScales)
+        }
         if (!canWriteGlobalSettings) {
             RequirementNotice(
                 stringResource(R.string.gt_dev_anim_need)
@@ -2318,10 +2211,7 @@ fun DeveloperOptionsContent(
             checked = backgroundProcessLimit,
             enabled = hasPrivilege,
             onCheckedChange = onToggleBackgroundLimit,
-            explanation = listOf(
-                stringResource(R.string.gt_dev_keep_1),
-                stringResource(R.string.gt_dev_keep_2)
-            )
+            info = InfoTopics.keepFewerApps
         )
 
         HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
@@ -2331,10 +2221,7 @@ fun DeveloperOptionsContent(
             checked = alwaysFinishActivities,
             enabled = hasPrivilege,
             onCheckedChange = onToggleAlwaysFinish,
-            explanation = listOf(
-                stringResource(R.string.gt_dev_close_1),
-                stringResource(R.string.gt_dev_close_2)
-            )
+            info = InfoTopics.closeOnLeave
         )
 
         HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
@@ -2344,10 +2231,7 @@ fun DeveloperOptionsContent(
             state = gameDevOptions.forcePeakRefreshRate,
             onCheckedChange = onSetForcePeakRefreshRate,
             onOpenDeveloperOptions = onOpenDeveloperOptions,
-            explanation = listOf(
-                stringResource(R.string.gt_dev_peak_1),
-                stringResource(R.string.gt_dev_peak_2)
-            )
+            info = InfoTopics.peakRefresh
         )
 
         HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
@@ -2357,10 +2241,7 @@ fun DeveloperOptionsContent(
             state = gameDevOptions.gameDefaultFrameRateDisabled,
             onCheckedChange = onSetGameDefaultFrameRateDisabled,
             onOpenDeveloperOptions = onOpenDeveloperOptions,
-            explanation = listOf(
-                stringResource(R.string.gt_dev_game_speed_1),
-                stringResource(R.string.gt_dev_game_speed_2)
-            )
+            info = InfoTopics.gameDefaultFrameRate
         )
 
         HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
@@ -2408,15 +2289,16 @@ private fun AngleDriverSection(
     val pickedName = games.firstOrNull { it.packageName == anglePkg }?.appName
 
     Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-        Text(stringResource(R.string.gt_angle_title), fontSize = 13.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
-        ExplainerBox(
-            title = stringResource(R.string.gt_explainer_what),
-            lines = listOf(
-                stringResource(R.string.gt_graphics_layers),
-                stringResource(R.string.gt_angle_1),
-                stringResource(R.string.gt_angle_2)
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text(
+                stringResource(R.string.gt_angle_title),
+                fontSize = 13.sp,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onSurface,
+                modifier = Modifier.weight(1f)
             )
-        )
+            InfoButton(InfoTopics.angleDriver)
+        }
         if (games.isEmpty()) {
             RequirementNotice(stringResource(R.string.gt_no_games_detected))
         } else {
@@ -2493,7 +2375,7 @@ private fun DevSwitchRow(
     label: String,
     checked: Boolean,
     enabled: Boolean,
-    explanation: List<String>,
+    info: InfoTopic,
     onCheckedChange: (Boolean) -> Unit
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
@@ -2511,12 +2393,12 @@ private fun DevSwitchRow(
                     color = if (checked) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
+            InfoButton(info)
             Switch(checked = checked, onCheckedChange = onCheckedChange, enabled = enabled)
         }
         if (!enabled) {
             RequirementNotice(stringResource(R.string.gt_needs_root_shizuku_change))
         }
-        ExplainerBox(title = stringResource(R.string.gt_explainer_what), lines = explanation)
     }
 }
 
@@ -2536,7 +2418,7 @@ private fun DevSwitchRow(
 private fun DevOptionSwitchRow(
     label: String,
     state: GameDeveloperOptions.ToggleState,
-    explanation: List<String>,
+    info: InfoTopic,
     onCheckedChange: (Boolean) -> Unit,
     onOpenDeveloperOptions: () -> Unit
 ) {
@@ -2565,6 +2447,7 @@ private fun DevOptionSwitchRow(
                     }
                 )
             }
+            InfoButton(info)
             Switch(
                 checked = state.enabled == true,
                 onCheckedChange = onCheckedChange,
@@ -2589,7 +2472,6 @@ private fun DevOptionSwitchRow(
                 fontSize = 11.sp, color = Color(0xFFFFB74D)
             )
         }
-        ExplainerBox(title = stringResource(R.string.gt_explainer_what), lines = explanation)
     }
 }
 
@@ -2747,19 +2629,8 @@ fun DnsContent(
                     onDisable = onDisable
                 )
 
-                val selected = DnsFeature.PROVIDERS.firstOrNull { it.hostname == status.hostname }
-                if (selected != null && status.mode == DnsFeature.Mode.PROVIDER) {
-                    ExplainerBox(
-                        title = stringResource(R.string.gt_dns_about, selected.label),
-                        lines = listOf(
-                            dnsProviderNote(selected),
-                            stringResource(
-                                R.string.gt_dns_about_proof,
-                                selected.addresses.joinToString()
-                            )
-                        )
-                    )
-                }
+                // The selected provider's note and proof addresses live in the card's info sheet,
+                // which builds the same section for the provider currently in use.
 
                 // Measured reply times, one line per provider — the numbers behind "usually
                 // the fastest". Never measured reads as no rows at all; a provider whose
@@ -2787,27 +2658,6 @@ fun DnsContent(
                 }
             }
         }
-
-        HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
-
-        ExplainerBox(
-            title = stringResource(R.string.gt_explainer_what),
-            lines = listOf(
-                stringResource(R.string.gt_dns_what_1),
-                stringResource(R.string.gt_dns_what_2),
-                stringResource(R.string.gt_dns_what_3)
-            )
-        )
-
-        ExplainerBox(
-            title = stringResource(R.string.gt_dns_ping_title),
-            accent = Color(0xFFFFB300),
-            lines = listOf(
-                stringResource(R.string.gt_dns_ping_1),
-                stringResource(R.string.gt_dns_ping_2),
-                stringResource(R.string.gt_dns_ping_3)
-            )
-        )
     }
 }
 
@@ -2821,20 +2671,6 @@ private fun dnsModeLabel(mode: DnsFeature.Mode): String = stringResource(
         DnsFeature.Mode.OFF -> R.string.gt_dns_off
         DnsFeature.Mode.AUTOMATIC -> R.string.gt_dns_auto
         DnsFeature.Mode.PROVIDER -> R.string.gt_dns_mode_provider
-    }
-)
-
-/**
- * Localized provider note, keyed by provider id. Hostnames, addresses and operator names stay
- * exactly as published (Private DNS validates the certificate against the hostname).
- */
-@Composable
-private fun dnsProviderNote(provider: DnsFeature.Provider): String = stringResource(
-    when (provider.id) {
-        "google" -> R.string.gt_dns_note_google
-        "quad9" -> R.string.gt_dns_note_quad9
-        "adguard" -> R.string.gt_dns_note_adguard
-        else -> R.string.gt_dns_note_cloudflare
     }
 )
 
@@ -2859,21 +2695,6 @@ fun BoostContent(level: Int, outputDevice: String?, onLevelChange: (Int) -> Unit
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
-        ExplainerBox(
-            title = stringResource(R.string.gt_explainer_what),
-            lines = listOf(
-                stringResource(R.string.gt_boost_what_1),
-                stringResource(R.string.gt_boost_what_2)
-            )
-        )
-        ExplainerBox(
-            title = stringResource(R.string.gt_boost_safe_title),
-            accent = Color(0xFFFFB300),
-            lines = listOf(
-                stringResource(R.string.gt_boost_safe_1),
-                stringResource(R.string.gt_boost_safe_2)
-            )
-        )
     }
 }
 
@@ -2979,35 +2800,6 @@ fun AppBoosterContent(
 ) {
     var force by remember { mutableStateOf(false) }
     Column {
-        ExplainerBox(
-            title = stringResource(R.string.gt_explainer_what),
-            lines = listOf(
-                stringResource(R.string.gt_booster_what_1),
-                stringResource(R.string.gt_booster_what_2),
-                stringResource(R.string.gt_booster_what_3)
-            )
-        )
-        Spacer(modifier = Modifier.height(6.dp))
-        ExplainerBox(
-            title = stringResource(R.string.gt_booster_cost_title),
-            accent = Color(0xFFFFB300),
-            lines = listOf(
-                stringResource(R.string.gt_booster_cost_1),
-                stringResource(R.string.gt_booster_cost_2),
-                stringResource(R.string.gt_booster_cost_3)
-            )
-        )
-        Spacer(modifier = Modifier.height(6.dp))
-        ExplainerBox(
-            title = stringResource(R.string.gt_booster_why_title),
-            lines = listOf(
-                stringResource(R.string.gt_booster_why_1),
-                stringResource(R.string.gt_booster_why_2),
-                stringResource(R.string.gt_booster_why_3)
-            )
-        )
-        Spacer(modifier = Modifier.height(8.dp))
-
         // One backend, two scopes (F8): the all-games sweep (`speed`, minutes) and the
         // single-game pre-compile (`speed-profile`, seconds). The library PRE-COMPILE
         // button deep-links here through the same scope state, so both entries run one
@@ -3157,7 +2949,7 @@ fun AppBoosterContent(
         }
 
         // The recurring version of the same sweep, driven by WorkManager while the app is closed.
-        // Its stated limits are in the section's own explainer — rough intervals, skipped (not
+        // Its stated limits are in the section's info sheet — rough intervals, skipped (not
         // failed) runs without privilege, and WorkManager's estimate rather than a promised time.
         Spacer(modifier = Modifier.height(12.dp))
         HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
@@ -3205,6 +2997,7 @@ private fun CleanerScheduleSection(
                     color = if (enabled) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
+            InfoButton(InfoTopics.cleaningSchedule)
             Switch(checked = enabled, onCheckedChange = onEnabledChange)
         }
 
@@ -3219,15 +3012,6 @@ private fun CleanerScheduleSection(
                 }
             }
         }
-
-        ExplainerBox(
-            title = stringResource(R.string.gt_booster_sched_what_title),
-            lines = listOf(
-                stringResource(R.string.gt_cleaner_sched_1),
-                stringResource(R.string.gt_cleaner_sched_2),
-                stringResource(R.string.gt_cleaner_sched_3)
-            )
-        )
     }
 }
 
@@ -3264,6 +3048,7 @@ private fun DexoptScheduleSection(
                     color = if (enabled) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
+            InfoButton(InfoTopics.dexoptSchedule)
             Switch(checked = enabled, onCheckedChange = onEnabledChange)
         }
 
@@ -3281,16 +3066,6 @@ private fun DexoptScheduleSection(
                 }
             }
         }
-
-        ExplainerBox(
-            title = stringResource(R.string.gt_booster_sched_what_title),
-            lines = listOf(
-                stringResource(R.string.gt_booster_sched_1),
-                stringResource(R.string.gt_booster_sched_2),
-                stringResource(R.string.gt_booster_sched_3),
-                stringResource(R.string.gt_booster_sched_4)
-            )
-        )
     }
 }
 

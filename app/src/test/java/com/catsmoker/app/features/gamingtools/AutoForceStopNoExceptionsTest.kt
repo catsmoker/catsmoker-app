@@ -23,8 +23,8 @@ class AutoForceStopNoExceptionsTest {
     @Test
     fun cardHasNoExceptionList() {
         val content = screen
-            .substringAfter("fun AutoForceStopContent(")
-            .substringBefore("private fun ExplainerBox(")
+            .substringAfter("fun AutoForceStopUsageNotice(")
+            .substringBefore("fun CleaningContent(")
         assertFalse("the card still lists tickable apps", content.contains("LazyColumn"))
         assertFalse("the card still draws checkboxes", content.contains("Checkbox("))
         assertFalse("the card still shows the tick hint", content.contains("gt_afs_tick_hint"))

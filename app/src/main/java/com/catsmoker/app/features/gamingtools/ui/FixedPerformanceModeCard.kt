@@ -17,6 +17,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.res.stringResource
 import com.catsmoker.app.R
+import com.catsmoker.app.shared.ui.components.InfoButton
 import com.catsmoker.app.shared.ui.components.SectionCard
 import com.catsmoker.app.shared.util.DeviceCapabilities
 
@@ -25,8 +26,9 @@ import com.catsmoker.app.shared.util.DeviceCapabilities
  *
  * The card used to say only "Locks CPU/GPU frequencies to max for consistent FPS", which is both
  * vague and slightly wrong — the vendor's power HAL picks the operating point, and on most SoCs it is
- * a *sustainable* one rather than the boost ceiling. The explanations are now collapsed by default and
- * written in plain words, but they still say who chooses the clocks and what the switch cannot promise.
+ * a *sustainable* one rather than the boost ceiling. Both answers now live behind the card's info
+ * button and are written in plain words, but they still say who chooses the clocks and what the
+ * switch cannot promise.
  *
  * The Android 11 requirement is checked here rather than assumed: on older builds `cmd power` has no
  * `set-fixed-performance-mode-enabled` sub-command at all, so the switch is disabled and says why
@@ -84,6 +86,8 @@ fun FixedPerformanceModeCard(
                     )
                 }
 
+                InfoButton(InfoTopics.fixedPerformance)
+
                 Switch(
                     checked = enabled && supported,
                     onCheckedChange = onToggle,
@@ -130,27 +134,6 @@ fun FixedPerformanceModeCard(
                     )
                 }
             }
-
-            Spacer(modifier = Modifier.height(12.dp))
-            CollapsibleExplainer(
-                title = stringResource(R.string.gt_explainer_what),
-                lines = listOf(
-                    stringResource(R.string.gt_fp_what_1),
-                    stringResource(R.string.gt_fp_what_2),
-                    stringResource(R.string.gt_fp_what_3)
-                )
-            )
-
-            Spacer(modifier = Modifier.height(10.dp))
-            CollapsibleExplainer(
-                title = stringResource(R.string.gt_fp_should_title),
-                accent = Color(0xFFFFB300),
-                lines = listOf(
-                    stringResource(R.string.gt_fp_should_1),
-                    stringResource(R.string.gt_fp_should_2),
-                    stringResource(R.string.gt_fp_should_3)
-                )
-            )
         }
     }
 }

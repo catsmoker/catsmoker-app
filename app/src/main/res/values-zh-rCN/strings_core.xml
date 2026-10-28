@@ -88,4 +88,7 @@
     <string name="core_read_parse">无法读取</string>
     <string name="core_read_privilege">需要 root 或 Shizuku</string>
     <string name="core_read_unsupported">不支持</string>
+    <!-- 共用信息按钮及其底部面板的无障碍名称。 -->
+    <string name="info_more_about">关于%1$s的更多信息</string>
+    <string name="info_close">关闭</string>
 </resources>

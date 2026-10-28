@@ -57,10 +57,7 @@ fun GamingModeKeepRunningSection(
         onAdd = onAdd,
         onRemove = onRemove,
         canEdit = canEdit,
-        explainerLines = listOf(
-            stringResource(R.string.gt_keep_what_1),
-            stringResource(R.string.gt_keep_what_2)
-        ),
+        info = InfoTopics.keepRunning,
         modifier = modifier
     )
 }

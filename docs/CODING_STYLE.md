@@ -79,6 +79,18 @@ These recur across the codebase — a reviewer will expect them:
    expanded (precedent: both Gaming Mode app pickers,
    `GamingModeAppPickerSection`). Folding changes only what is drawn - it never
    edits the stored set.
+5. **Feature questions live in an info sheet, never in the card body.** Every
+   "What is this?" / "Is it safe?" / "Should I turn it on?" answer belongs to
+   the feature's `InfoTopic` in `features/gamingtools/ui/InfoTopics.kt` and
+   opens from the small `InfoButton` beside that feature's title (20 dp glyph,
+   48 dp touch target, neutral info icon, amber warning triangle when the
+   topic carries a risk/cost answer). Several questions for one feature stay in
+   one topic and therefore one sheet. The wording is stored as `@StringRes`
+   ids and resolved at composition so a language switch repaints it. Inline
+   expandable Q&A rows are not used for feature explanations any more;
+   `CollapsibleExplainer` is reserved for **data disclosures** the device
+   produced (e.g. booster run history, a pack README, skipped-scene lists,
+   a deploy report), which have no single feature to attach an icon to.
 
 ## Visual system (charcoal + crimson + glass)
 
