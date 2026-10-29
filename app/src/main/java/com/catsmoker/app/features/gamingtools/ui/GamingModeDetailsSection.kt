@@ -55,7 +55,7 @@ data class GamingModeDetailsSummary(
  * The result list's fold rule and summary, kept pure so both can be tested without a device.
  *
  * The section starts collapsed on purpose: after a successful activation the card already says
- * "System Locked", and the twenty-odd read-back rows were the tallest thing on the screen. Folding
+ * "Active", and the twenty-odd read-back rows were the tallest thing on the screen. Folding
  * them never changes the report — the list is rendered from [GamingModeReport] every time the
  * section is composed.
  */

@@ -4,6 +4,13 @@
     <string name="sys_settings_subtitle">App configuration and preferences.</string>
     <string name="sys_section_general">General</string>
     <string name="sys_ads_title">Enable Ads</string>
+    <!-- Guilt-trip dialog when the free "Enable Ads" switch is turned off. -->
+    <string name="sys_ads_guilt_title">Please don\'t leave me</string>
+    <string name="sys_ads_guilt_message">Ads are how I feed my cats. Without them, they just stare at me sadly. A small donation works too.</string>
+    <string name="sys_ads_guilt_donate">Donate</string>
+    <string name="sys_ads_guilt_keep">Keep ads</string>
+    <string name="sys_ads_guilt_turn_off_anyway">Turn off ads anyway</string>
+    <string name="sys_ads_guilt_cat_desc">Sad cat</string>
     <!-- Play-variant paid ad removal (Google Play Billing one-time product remove_ads). -->
     <string name="sys_remove_ads_title">Remove Ads</string>
     <string name="sys_remove_ads_sub">One-time purchase. Pay once and browse ad-free forever.</string>
@@ -11,6 +18,9 @@
     <string name="sys_ads_removed_sub">Thanks for your support — you are browsing ad-free.</string>
     <string name="sys_analytics_title">Send Analytics Data</string>
     <string name="sys_analytics_sub">Google Firebase receives usage data (app launches, session length, device model, app version, IP address). Turn this off to stop collection; uninstalling the app also stops it. See the Privacy Policy.</string>
+    <!-- Nothing Glyph Interface mirror (Settings > General, shown only where the GDK works). -->
+    <string name="sys_glyph_sync_title">Sync Gaming Mode with Glyph</string>
+    <string name="sys_glyph_sync_sub">Shows the Gaming Mode loading bar on the Glyph Interface. Nothing phones only.</string>
     <string name="sys_billing_unavailable">Play Billing is unavailable. Check your connection and try again.</string>
     <string name="sys_remove_ads_pending">Your purchase is pending. Ads will turn off once Google Play confirms it.</string>
     <string name="sys_remove_ads_failed">The purchase could not be completed: %1$s</string>

@@ -4,6 +4,13 @@
     <string name="sys_settings_subtitle">إعدادات التطبيق وتفضيلاته.</string>
     <string name="sys_section_general">عام</string>
     <string name="sys_ads_title">تفعيل الإعلانات</string>
+    <!-- Guilt-trip dialog when the free "Enable Ads" switch is turned off. -->
+    <string name="sys_ads_guilt_title">لا تتركني، أرجوك</string>
+    <string name="sys_ads_guilt_message">الإعلانات هي كيف أطعم قططي. بدونها، يحدّقون بي بحزن. والتبرع الصغير يساعد أيضًا.</string>
+    <string name="sys_ads_guilt_donate">تبرّع</string>
+    <string name="sys_ads_guilt_keep">أبقِ الإعلانات</string>
+    <string name="sys_ads_guilt_turn_off_anyway">أوقف الإعلانات رغم ذلك</string>
+    <string name="sys_ads_guilt_cat_desc">قطة حزينة</string>
     <!-- Play-variant paid ad removal (Google Play Billing one-time product remove_ads). -->
     <string name="sys_remove_ads_title">إزالة الإعلانات</string>
     <string name="sys_remove_ads_sub">عملية شراء لمرة واحدة. ادفع مرة واحدة وتصفح بدون إعلانات للأبد.</string>
@@ -11,6 +18,9 @@
     <string name="sys_ads_removed_sub">شكرًا لدعمك — أنت تتصفح الآن بدون إعلانات.</string>
     <string name="sys_analytics_title">إرسال بيانات التحليلات</string>
     <string name="sys_analytics_sub">تتلقى Google Firebase بيانات الاستخدام (إطلاق التطبيقات، وطول الجلسة، وطراز الجهاز، وإصدار التطبيق، وعنوان IP). أوقف هذا لإيقاف التجميع؛ وإلغاء تثبيت التطبيق يوقفه أيضًا. راجع سياسة الخصوصية.</string>
+    <!-- Nothing Glyph Interface mirror (Settings > General, shown only where the GDK works). -->
+    <string name="sys_glyph_sync_title">مزامنة وضع الألعاب مع Glyph</string>
+    <string name="sys_glyph_sync_sub">يعرض شريط تحميل وضع الألعاب على واجهة Glyph. على هواتف Nothing فقط.</string>
     <string name="sys_billing_unavailable">خدمة فوترة Google Play غير متاحة. تحقق من اتصالك وحاول مجددًا.</string>
     <string name="sys_remove_ads_pending">عملية الشراء قيد الانتظار. ستتوقف الإعلانات فور تأكيد Google Play.</string>
     <string name="sys_remove_ads_failed">تعذر إتمام عملية الشراء: %1$s</string>

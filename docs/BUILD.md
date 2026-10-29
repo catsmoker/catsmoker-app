@@ -85,6 +85,11 @@ still run it explicitly:
   the playstore variant come from `ADMOB_APP_ID` / `ADMOB_BANNER_ID` /
   `ADMOB_INTERSTITIAL_ID` in `local.properties`, defaulting to Google's
   sample test ids.
+- Nothing's Glyph Developer Kit API key comes from `NOTHING_API_KEY` in
+  `local.properties` (both variants; falls back to a dummy that only makes the
+  GDK refuse registration). Nothing stopped requiring it from Android 16, so a
+  missing key is not a build failure. Nothing publishes no licence text for the
+  vendored `app/libs/glyph-matrix-sdk-2.0.aar` — see `GAMING_MODE.md`.
 
 ## Troubleshooting
 

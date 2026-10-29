@@ -26,6 +26,8 @@ local.properties
 *.aab
 *.ap_
 *.aar
+# Exception: the vendored Nothing Glyph Developer Kit is a dependency, not an artifact.
+!app/libs/glyph-matrix-sdk-2.0.aar
 *.dex
 *.class
 output.json

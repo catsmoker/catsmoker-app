@@ -44,6 +44,21 @@
         </intent>
     </queries>
 
+    <!--
+        Nothing's Glyph Developer Kit AAR declares minSdkVersion 33. This app runs from 27, so
+        the library's lower bound must be waived for the merge to pass; GlyphController gates
+        every GDK call on SDK_INT >= 34 before a single class is touched, so an older device
+        never reaches the code the waiver admits.
+    -->
+    <uses-sdk tools:overrideLibrary="com.nothing.thirdparty" />
+
+    <!--
+        Granted by Nothing's Glyph service to third-party GDK clients (normal protection, no
+        dialog). It is what lets GlyphController's proxy bind and drive the LEDs; without it
+        register() is refused and the loading bar simply stays unmirrored.
+    -->
+    <uses-permission android:name="com.nothing.ketchum.permission.ENABLE" />
+
     <uses-permission android:name="android.permission.BLUETOOTH_CONNECT" />
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
@@ -89,6 +104,15 @@
         android:theme="@style/Theme.Catsmoker">
 
         <meta-data android:name="moe.shizuku.client.V3_SUPPORT" android:value="true" />
+
+        <!--
+            Nothing reads this at registration time. Supplied by a manifest placeholder so the
+            real key stays in the git-ignored local.properties; the fallback dummy only makes
+            the GDK refuse registration, which turns the feature into a silent no-op.
+        -->
+        <meta-data
+            android:name="NothingKey"
+            android:value="${NOTHING_API_KEY}" />
 
         <activity
             android:name=".system.MainActivity"

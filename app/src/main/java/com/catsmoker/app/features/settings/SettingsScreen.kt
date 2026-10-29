@@ -42,7 +42,8 @@ import com.catsmoker.app.system.config.LocaleHelper
 fun SettingsRoute(
     onBack: () -> Unit,
     onOpenPermissions: () -> Unit,
-    onOpenLogs: () -> Unit
+    onOpenLogs: () -> Unit,
+    onOpenDonate: () -> Unit
 ) {
     val viewModel: SettingsViewModel = hiltViewModel()
     val uiState by viewModel.uiState.collectAsState()
@@ -105,8 +106,23 @@ fun SettingsRoute(
         onCheckUpdates = viewModel::onCheckUpdates,
         onCancelDownload = viewModel::cancelUpdateDownload,
         analyticsEnabled = uiState.analyticsEnabled,
-        onAnalyticsToggled = viewModel::onAnalyticsToggled
+        onAnalyticsToggled = viewModel::onAnalyticsToggled,
+        glyphSupported = uiState.glyphSupported,
+        glyphSyncEnabled = uiState.glyphSyncEnabled,
+        onGlyphSyncToggled = viewModel::onGlyphSyncToggled
     )
+
+    if (uiState.showAdsDonationDialog) {
+        AdsDonationDialog(
+            onDonate = {
+                // Ads stay ON: donating must never double as a hidden turn-off shortcut.
+                viewModel.onAdsDonationDismissed()
+                onOpenDonate()
+            },
+            onKeepAds = viewModel::onAdsDonationDismissed,
+            onTurnOffAnyway = viewModel::onAdsTurnOffAnyway
+        )
+    }
 
     uiState.updateDialog?.let { dialog ->
         AlertDialog(
@@ -155,7 +171,10 @@ fun SettingsScreen(
     onCheckUpdates: () -> Unit,
     onCancelDownload: () -> Unit,
     analyticsEnabled: Boolean,
-    onAnalyticsToggled: (Boolean) -> Unit
+    onAnalyticsToggled: (Boolean) -> Unit,
+    glyphSupported: Boolean,
+    glyphSyncEnabled: Boolean,
+    onGlyphSyncToggled: (Boolean) -> Unit
 ) {
     var themeDialog by remember { mutableStateOf(false) }
     var languageDialog by remember { mutableStateOf(false) }
@@ -205,6 +224,24 @@ fun SettingsScreen(
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier.padding(top = 4.dp)
                     )
+                }
+                // Nothing phones only: the Glyph Interface is driven by Nothing's own service,
+                // which no other OEM exposes. Hidden rather than disabled, because no setting
+                // here could ever make it work on a phone without the hardware.
+                if (glyphSupported) {
+                    SectionCard {
+                        SettingsToggle(
+                            stringResource(R.string.sys_glyph_sync_title),
+                            glyphSyncEnabled,
+                            onGlyphSyncToggled
+                        )
+                        Text(
+                            stringResource(R.string.sys_glyph_sync_sub),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.padding(top = 4.dp)
+                        )
+                    }
                 }
                 // Full keeps the free toggle; Play sells removal via Google Play
                 // Billing instead, so the free switch must not appear there.
@@ -454,7 +491,10 @@ fun SettingsPreview() {
             onCheckUpdates = {},
             onCancelDownload = {},
             analyticsEnabled = true,
-            onAnalyticsToggled = {}
+            onAnalyticsToggled = {},
+            glyphSupported = true,
+            glyphSyncEnabled = true,
+            onGlyphSyncToggled = {}
         )
     }
 }

@@ -26,10 +26,12 @@ In order:
    never gets the AppOps restriction below, and is spared by RAM Reclaim's
    force-stop pass. The **extra suspended apps** list adds packages; if a
    package ever appears on both lists, `SuspendSweep.resolveTargets` lets the
-   keep list win. That list lives inside the Gaming Mode card (the same sweep's
-   second input, not a separate Background Apps feature) and marks each pick
-   **selected** or **frozen now** from this session's verified `pm suspend`
-   results, so a configured app is never presented as an already-frozen one.
+   keep list win. Both lists live inside the Gaming Mode card (the same sweep's
+   second input, not a separate Background Apps feature), behind one collapsed
+   **Advanced** disclosure that remembers whether it is open; the freeze list
+   marks each pick **selected** or **frozen now** from this session's verified
+   `pm suspend` results, so a configured app is never presented as an
+   already-frozen one.
    Every package this sweep attempts additionally gets
    `cmd appops set <pkg> RUN_IN_BACKGROUND ignore`, its prior mode recorded
    first and restored by deactivation.
@@ -296,6 +298,113 @@ hidden and refused while Gaming Mode is `Active`/`Enabling`/`Disabling`/
 `Checking`; its result is reported as restored / still-suspended / app-op
 counts, never as a bare success. A session whose settings still need reverting
 stays Interrupted until the power button runs the full revert.
+
+## Who runs a toggle, and the auto game session
+
+**The toggle never runs on a screen's scope.** `GamingModeJobRunner` (a `@Singleton`) owns one
+`SupervisorJob` scope for the app process, and the card's power button goes through it. Activation
+writes system settings for about a minute and a half — snapshot, ~100 suspends each read back,
+panel/touch/kernel levers — so a phone that closes the activity mid-run (screen off, or an OEM that
+finishes activities aggressively, `always_finish_activities`) used to cancel the job. The engine's
+own holding service (`GamingModeService`, notification 102) starts only once the engine reports
+`Active`, so at that moment nothing was keeping the process alive either. Now:
+
+- a completed activation still starts that service, which keeps the process alive while settings
+  are held and reverts them in `onTaskRemoved`;
+- a **cancelled** activation is published as `Interrupted` (with the packages and app-ops the
+  device actually accepted, so **Restore apps** works), and the engine rethrows
+  `CancellationException` instead of reporting it as "Activation failed: Job was cancelled";
+- a cancellation that arrived before `is_active` was written leaves `Idle` — there is no session to
+  recover, and offering a restore with nothing to wake would be a claim, not evidence;
+- a process kill is still covered by the persisted session record, exactly as before.
+
+**`GameSessionService`** (notification 106) is the auto session behind the card's "Automatic Gaming
+Mode" switch: it polls the foreground package every 3 s and starts, stops or switches Gaming Mode
+for the games in the library. Ownership is the **recorded package**, not "the engine is busy":
+
+| Engine | Recorded package | Meaning | What the monitor does |
+| --- | --- | --- | --- |
+| busy | the game it started | its own session | normal start/stop/switch behaviour |
+| busy | none | a **manual** session (card button, notification Stop+Start) | hands off: never records over it, never reverts it |
+| idle | one | the session ended some other way (the user turned it off) | drops the stale record, and **vetoes** that game |
+| any | any, foreground unknown | usage access missing or the query failed | nothing |
+
+The middle two rows are the ones that were wrong before 2026-10-28. Reading *every* busy engine as
+"manual" released the record of the session the monitor had just started, so the next tick
+re-labelled its own session, posted "Manual Gaming Mode active — watch released", and never reverted
+it when the game was left: apps stayed frozen with nothing watching them. The stale-record row is
+the other half of the same fix — without it, a user who switched Gaming Mode off by hand and on
+again would have that manual session reverted on the way out of the game.
+
+**The veto.** Dropping a stale record leaves "a library game is in the foreground and nothing is
+recorded", which is exactly the state that starts a session — so the first device run of the
+ownership fix switched Gaming Mode straight back on for the game the user had just turned it off
+in, every 3 s. `GameSessionDecider.isUserStopped(foreground, veto)` therefore suppresses that one
+game until the foreground moves elsewhere (`GameSessionManager.releaseByUser()` records the package,
+`setEnabled(false)` clears it). Leaving the game lifts the veto, so going back in later starts a
+session again — a return visit is a new intent, not a continuation of the suppressed one. An
+unreadable foreground neither raises nor lifts the veto: a failed usage read is never evidence that
+the user left the game. `GameSessionVetoWiringTest` pins the two call sites the rule needs, because
+a pure rule nobody calls changes nothing.
+
+## Glyph Interface mirror (Nothing phones)
+
+`GlyphController` mirrors the Gaming Mode loading bar onto Nothing's Glyph
+Interface through the official Glyph Developer Kit (GDK, the vendored
+`app/libs/glyph-matrix-sdk-2.0.aar`). It is a **display mirror only**: it reads
+`GamingEngine.state` and never writes a setting, so it cannot change what
+Gaming Mode applies.
+
+- **What the user sees.** While `Enabling(progress)` is live, the strip fills
+  toward the engine's own percentage (0–100, clamped before it reaches the SDK)
+  or, on matrix models, the percentage is printed on the matrix. `Active` runs
+  a short blink at 100 % and then clears. `Disabling` runs the reverse: the
+  lights start at 100 % and drain to 0 % over the card's own 1.5 s tween
+  (`GamingModeProgress.REVERSE_DURATION_MS`, passed in so the two cannot
+  drift), then `turnOff()` and a clean session close. `Interrupted` and
+  `Error` clear immediately; so does leaving or closing the screen
+  (`ON_STOP`/dispose), which cancels a drain in progress. A drain already
+  running is allowed to finish if the engine reaches `Idle` first — a fast
+  revert would otherwise cut the unwind in half.
+- **Requirements.** Nothing only. Every call is gated on `Build.MANUFACTURER`/
+  `BRAND` containing "Nothing" plus `SDK_INT >= 34`, and every method is a
+  silent no-op elsewhere — no service binding, no permission, no crash. It
+  needs no root, Shizuku or ADB.
+- **Model table.** `GlyphHardware.forModel(Build.MODEL)` maps each code to the
+  GDK's own constants: `A063` (Phone 1, D1), `A065`/`AIN065` (Phone 2, C1),
+  `A142` (Phone 2a, C), `A142P` (Phone 2a Plus — own registration id, 2a's C
+  array, no `displayProgress` branch in the SDK so the channel is simply lit
+  for the run), `A059…` (Phone 3a/3a Pro, C), `A024…` (Phone 3, 25×25
+  **matrix**), `A069` (Phone 4a, A), `A069P` (Phone 4a Pro, 13×13 **matrix**),
+  `A009P…` (Phone 4b, A). Anything else resolves to `null`, which is what makes
+  the feature absent rather than broken. `GlyphHardwareTest` pins the table.
+- **Permission / key.** The manifest declares Nothing's
+  `com.nothing.ketchum.permission.ENABLE` and a `NothingKey` meta-data fed by
+  the `NOTHING_API_KEY` manifest placeholder (git-ignored `local.properties`;
+  dummy fallback). The AAR declares `minSdkVersion 33`, so `<uses-sdk
+  tools:overrideLibrary="com.nothing.thirdparty">` waives the merge for this
+  app's minSdk 27 — the runtime gate keeps older devices out.
+- **Toggle.** Settings → General → "Sync Gaming Mode with Glyph", stored in
+  `glyph_prefs` (`sync_gaming_mode`, default on) via `GlyphSyncStore`, and
+  shown only where `GlyphController.isSupported`. Turning it off clears a live
+  strip.
+- **Lifecycle.** The service is bound only when a run starts, the session is
+  closed and `unInit()` called on completion/cancel/`onCleared`, and the screen
+  also drops the lights on `ON_STOP`. `unInit()` unbinds unconditionally in the
+  AAR, so it is only called after a successful `init()`, always in a try/catch.
+- **Revert.** Turn the toggle off, or stop using Gaming Mode; the Glyph
+  Interface lights nothing else on its own. No setting, file or module is left
+  behind, and nothing survives a reboot.
+- **Licence caveat.** Nothing publishes no licence text with the GDK; the AAR
+  is vendored byte-for-byte from
+  `Nothing-Developer-Programme/Glyph-Developer-Kit` (avoid re-hosting it as our
+  own work). `.gitignore` excludes `*.aar` globally and re-includes exactly
+  this file.
+- **Debug switch.** Dev builds whose `NothingKey` is not registered fall back to
+  `adb shell settings put global nt_glyph_interface_debug_enable 1` (the
+  `NothingKey` meta-data may be the literal `test` while debugging; the switch
+  self-clears after 48 h). The GDK refuses registration otherwise and the
+  controller tears the binding down instead of pretending a session exists.
 
 ## Engineering contract (adding a lever)
 

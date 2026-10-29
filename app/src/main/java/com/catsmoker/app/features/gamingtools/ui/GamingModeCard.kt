@@ -29,12 +29,13 @@ import com.catsmoker.app.shared.ui.components.InfoButton
 import com.catsmoker.app.shared.ui.components.SectionCard
 
 /**
- * The Gaming Mode card: activation, automatic mode, the keep list and the read-back report.
+ * The Gaming Mode card: activation, automatic mode, the two app lists and the read-back report.
  *
  * The card is deliberately one surface rather than four. Automatic Gaming Mode arms the same engine
  * as the power button, the keep list is the exception the same engine's suspend sweep honors, and
  * the result rows are that engine's read-back. Splitting them into separate cards made three parts
- * of one lifecycle look like unrelated features.
+ * of one lifecycle look like unrelated features. The two app lists are configuration, not status,
+ * so they live behind one "Advanced" fold that starts closed.
  *
  * @param canActivate whether root or Shizuku is available. Every optimization Gaming Mode applies is a
  *   privileged command, so without one of those channels the whole feature can do nothing at all. The
@@ -83,7 +84,12 @@ fun GamingModeCard(
     suspendedPackages: Set<String>,
     suspendCandidateApps: List<GameInfo>,
     onAddExtraSuspend: () -> Unit,
-    onRemoveExtraSuspend: (String) -> Unit
+    onRemoveExtraSuspend: (String) -> Unit,
+    // Both app lists now sit behind one "Advanced" disclosure: they are configuration the user
+    // sets once, while the power button, the automatic switch and the read-back stay on the card.
+    /** Whether the Advanced group is open. Persisted by the caller, so it survives a restart. */
+    advancedExpanded: Boolean,
+    onToggleAdvanced: () -> Unit
 ) {
     SectionCard(
         modifier = Modifier.fillMaxWidth()
@@ -315,27 +321,32 @@ fun GamingModeCard(
             Spacer(modifier = Modifier.height(16.dp))
             HorizontalDivider(color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.12f))
             Spacer(modifier = Modifier.height(12.dp))
-            GamingModeKeepRunningSection(
-                picked = keptPackages,
-                apps = keepCandidateApps,
-                canEdit = canActivate,
-                onAdd = onAddKeptApp,
-                onRemove = onRemoveKeptApp
-            )
+            // One fold for both pickers. Their data, callbacks and privilege gates are unchanged —
+            // only where they are drawn changed, and the fold's flag is the caller's persisted
+            // preference rather than a second copy of any package list.
+            GamingModeAdvancedSection(
+                expanded = advancedExpanded,
+                onToggle = onToggleAdvanced
+            ) {
+                GamingModeKeepRunningSection(
+                    picked = keptPackages,
+                    apps = keepCandidateApps,
+                    canEdit = canActivate,
+                    onAdd = onAddKeptApp,
+                    onRemove = onRemoveKeptApp
+                )
 
-            Spacer(modifier = Modifier.height(16.dp))
-            HorizontalDivider(color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.12f))
-            Spacer(modifier = Modifier.height(12.dp))
-            GamingModeSuspensionSection(
-                picked = extraSuspendPackages,
-                apps = suspendCandidateApps,
-                // Only this session's confirmed suspends count as frozen. An app the device froze
-                // through another tool is not claimed by this app's badge.
-                suspended = suspendedPackages,
-                canEdit = canActivate,
-                onAdd = onAddExtraSuspend,
-                onRemove = onRemoveExtraSuspend
-            )
+                GamingModeSuspensionSection(
+                    picked = extraSuspendPackages,
+                    apps = suspendCandidateApps,
+                    // Only this session's confirmed suspends count as frozen. An app the device froze
+                    // through another tool is not claimed by this app's badge.
+                    suspended = suspendedPackages,
+                    canEdit = canActivate,
+                    onAdd = onAddExtraSuspend,
+                    onRemove = onRemoveExtraSuspend
+                )
+            }
 
             if (isActive) {
                 // Refused optimizations stay visible above the folded list: the summary can say

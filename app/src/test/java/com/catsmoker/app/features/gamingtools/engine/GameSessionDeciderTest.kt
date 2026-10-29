@@ -1,6 +1,8 @@
 package com.catsmoker.app.features.gamingtools.engine
 
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 /**
@@ -84,6 +86,60 @@ class GameSessionDeciderTest {
             GameSessionDecider.Action.Noop,
             GameSessionDecider.decide(foregroundPkg = null, games = setOf("com.game.a"), activePkg = null)
         )
+    }
+
+    @Test
+    fun aSessionThisMonitorStartedIsItsOwn() {
+        assertEquals(
+            GameSessionDecider.Ownership.Self,
+            GameSessionDecider.ownership(engineBusy = true, recordedPkg = "com.game.a")
+        )
+    }
+
+    @Test
+    fun anActiveEngineWithNoRecordedSessionIsAManualOne() {
+        assertEquals(
+            GameSessionDecider.Ownership.Manual,
+            GameSessionDecider.ownership(engineBusy = true, recordedPkg = null)
+        )
+    }
+
+    @Test
+    fun anIdleEngineWithNoRecordedSessionOwnsNothing() {
+        assertEquals(
+            GameSessionDecider.Ownership.Self,
+            GameSessionDecider.ownership(engineBusy = false, recordedPkg = null)
+        )
+    }
+
+    @Test
+    fun aRecordWhoseEngineAlreadyStoppedIsStale() {
+        // The user turned the session off by hand: the engine is idle while the monitor still
+        // remembers the game. Keeping that record would make the next manual activation look
+        // like the monitor's own, and leaving the game would then revert it.
+        assertEquals(
+            GameSessionDecider.Ownership.Stale,
+            GameSessionDecider.ownership(engineBusy = false, recordedPkg = "com.game.a")
+        )
+    }
+
+    @Test
+    fun theGameTheUserSwitchedOffIsNotStartedAgain() {
+        // Dropping the stale record must not read as "this game has no session yet, start one".
+        // The user's stop is a veto until they leave that game.
+        assertTrue(GameSessionDecider.isUserStopped("com.game.a", "com.game.a"))
+    }
+
+    @Test
+    fun leavingThatGameLiftsTheVeto() {
+        assertFalse(GameSessionDecider.isUserStopped("com.game.b", "com.game.a"))
+        assertFalse(GameSessionDecider.isUserStopped("com.launcher", "com.game.a"))
+    }
+
+    @Test
+    fun withNoVetoNothingIsSuppressed() {
+        assertFalse(GameSessionDecider.isUserStopped("com.game.a", null))
+        assertFalse(GameSessionDecider.isUserStopped(null, "com.game.a"))
     }
 
     @Test

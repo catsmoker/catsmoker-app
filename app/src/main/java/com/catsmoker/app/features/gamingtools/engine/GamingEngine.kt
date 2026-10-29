@@ -1249,19 +1249,50 @@ class GamingEngine(
                 unavailable = unavailable
             )
             _state.value = GamingModeState.Active
+        } catch (e: CancellationException) {
+            // A cancelled activation is not a refused one: nothing said no, the job simply
+            // stopped. It must never surface as "Activation failed" — the old broad catch below
+            // turned a screen-off cancel into "Job was cancelled" while apps were already frozen.
+            // What is on record stays on record and the card shows the interrupted session, so
+            // the recovery control is offered from evidence instead of being hidden behind an
+            // error message. The cancellation travels on: swallowing it would report a run this
+            // coroutine did not finish.
+            if (_sessionOpen.value) {
+                val remaining = pendingSuspendedPackages()
+                publishRecoveryEvidence(remaining)
+                _state.value = GamingModeState.Interrupted(remaining.size)
+            } else {
+                // Nothing was written yet (cancelled during the snapshot read): there is no
+                // session to recover, and claiming one would offer a restore with nothing to wake.
+                _state.value = GamingModeState.Idle
+            }
+            throw e
         } catch (e: Exception) {
             // Whatever was written before the failure stays on record. Reporting only the error
             // would hide the packages that may be frozen right now, so the recovery evidence is
             // rebuilt from the persisted record and the card offers Restore Apps immediately.
-            val remaining = prefs.getStringSet("affected_pkgs", emptySet())?.sorted().orEmpty()
-            _suspendedPackages.value = remaining.toSet()
-            _recovery.value = GamingModeRecovery(
-                pendingPackages = remaining,
-                pendingAppOps = recordedAppOpsPackages(),
-                verified = false
-            )
+            val remaining = pendingSuspendedPackages()
+            publishRecoveryEvidence(remaining)
             _state.value = GamingModeState.Error(e.message ?: context.getString(R.string.gt_eng_activation_fail))
         }
+    }
+
+    /** Packages the persisted session recorded as suspended, in the order the card lists them. */
+    private fun pendingSuspendedPackages(): List<String> =
+        prefs.getStringSet("affected_pkgs", emptySet())?.sorted().orEmpty()
+
+    /**
+     * Publishes the app half of a session that stopped before reaching Active: the packages and
+     * app-ops the device actually accepted stay on record (they may be frozen right now), and the
+     * card's Restore Apps control reads them from here.
+     */
+    private fun publishRecoveryEvidence(remaining: List<String>) {
+        _suspendedPackages.value = remaining.toSet()
+        _recovery.value = GamingModeRecovery(
+            pendingPackages = remaining,
+            pendingAppOps = recordedAppOpsPackages(),
+            verified = false
+        )
     }
 
     /**

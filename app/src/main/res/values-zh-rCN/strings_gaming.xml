@@ -413,7 +413,7 @@
 
     <!-- Gaming mode card -->
     <string name="gt_gm_title">游戏模式</string>
-    <string name="gt_gm_active">系统已锁定</string>
+    <string name="gt_gm_active">已开启</string>
     <string name="gt_gm_reverting">正在还原…</string>
     <string name="gt_gm_failed">激活失败</string>
     <string name="gt_gm_ready">优化已就绪</string>
@@ -761,6 +761,11 @@
     <string name="gt_suspend_hide">隐藏应用</string>
     <string name="gt_suspend_badge_frozen">已冻结</string>
     <string name="gt_suspend_badge_selected">未冻结</string>
+    <!-- Advanced fold holding both Gaming Mode app lists (collapsed by default). -->
+    <string name="gt_advanced_title">高级</string>
+    <string name="gt_advanced_sub">冻结清理的应用列表</string>
+    <string name="gt_advanced_expand">展开高级设置</string>
+    <string name="gt_advanced_collapse">收起高级设置</string>
     <string name="gt_cleaner_review">查看并清理</string>
     <string name="gt_cleaner_review_hide">隐藏项目</string>
     <string name="gt_cleaner_advanced">计划与规则</string>

@@ -78,7 +78,11 @@ These recur across the codebase — a reviewer will expect them:
    collapsed summary by default, and a bounded internally scrolling list when
    expanded (precedent: both Gaming Mode app pickers,
    `GamingModeAppPickerSection`). Folding changes only what is drawn - it never
-   edits the stored set.
+   edits the stored set. Configuration-only pickers that are set once may also
+   live behind one collapsed **Advanced** fold that remembers whether it is
+   open (precedent: `GamingModeAdvancedSection` in the Gaming Mode card,
+   persisted by `GamingModeAdvancedStore`); errors and refusals stay outside
+   every fold.
 5. **Feature questions live in an info sheet, never in the card body.** Every
    "What is this?" / "Is it safe?" / "Should I turn it on?" answer belongs to
    the feature's `InfoTopic` in `features/gamingtools/ui/InfoTopics.kt` and

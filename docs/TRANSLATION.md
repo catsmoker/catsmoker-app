@@ -92,6 +92,16 @@ Update `resConfigs` (`app/build.gradle.kts`), `res/xml/locales_config.xml`,
 and `LocaleParityTest.localeDirs` to match. Full-only copy goes in the
 mirrored `src/full/res/values-*/strings_spoof.xml` instead.
 
+**Partial locales are a deliberate exception, not the norm.** `values-fr/`
+carries only the "Enable Ads" guilt-trip dialog (`strings_sys.xml`): French is
+in `resConfigs` so those six strings resolve on a French device, but it is
+*not* in `locales_config.xml`, `AppearanceStore`'s language picker, or
+`LocaleParityTest.localeDirs` — the rest of the app is untranslated, and
+offering French in the switcher would show a mostly-English UI. Expect
+`MissingTranslation` lint warnings from it; they are accepted
+(`lint.abortOnError = false`). Promote French to a full locale (mirror every
+key, add it to all three lists) before adding any further French copy.
+
 Rules:
 
 - **Same keys, same placeholders.** Translation values must keep `%1$s`

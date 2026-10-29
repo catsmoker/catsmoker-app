@@ -7,6 +7,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.catsmoker.app.BuildConfig
 import com.catsmoker.app.R
+import com.catsmoker.app.features.gamingtools.tools.glyph.GlyphController
+import com.catsmoker.app.features.gamingtools.tools.glyph.GlyphSyncStore
 import com.catsmoker.app.system.VariantCapabilities
 import com.catsmoker.app.system.ads.AdManager
 import com.catsmoker.app.system.ads.RemoveAdsRepository
@@ -32,10 +34,14 @@ class SettingsViewModel @Inject constructor(
     @ApplicationContext private val context: Context,
     private val adManager: AdManager,
     private val removeAdsRepository: RemoveAdsRepository,
+    private val glyphController: GlyphController,
+    private val glyphSyncStore: GlyphSyncStore
 ) : ViewModel() {
 
     data class UiState(
         val adsEnabled: Boolean = true,
+        /** True while the "don't turn ads off" guilt dialog is on screen (full variant only). */
+        val showAdsDonationDialog: Boolean = false,
         /** Play variant only: true while the verified remove_ads purchase is on record. */
         val isAdFree: Boolean = false,
         /** Play variant only: localized Play price of remove_ads, null until Play answers. */
@@ -52,6 +58,13 @@ class SettingsViewModel @Inject constructor(
         val languageTag: String = AppearanceStore.LANGUAGE_SYSTEM,
         /** Whether Firebase Analytics collection is enabled (persisted in app_prefs). Defaults on. */
         val analyticsEnabled: Boolean = AnalyticsConsent.DEFAULT_ENABLED,
+        /**
+         * Whether the "Sync Gaming Mode with Glyph" card is offered. False on every phone the
+         * Glyph Developer Kit cannot drive, so the control is absent rather than shown dead.
+         */
+        val glyphSupported: Boolean = false,
+        /** Persisted in glyph_prefs; defaults on so a Nothing phone works without a first trip. */
+        val glyphSyncEnabled: Boolean = true
     )
 
     data class UpdateDialog(
@@ -109,7 +122,9 @@ class SettingsViewModel @Inject constructor(
                 isPreRelease = prefs.getBoolean(PREF_PRERELEASE, false),
                 themeMode = AppearanceStore.themeModeSync(context),
                 languageTag = AppearanceStore.languageTag(context),
-                analyticsEnabled = analyticsOn
+                analyticsEnabled = analyticsOn,
+                glyphSupported = glyphController.isSupported,
+                glyphSyncEnabled = glyphSyncStore.isEnabled()
             )
         }
         checkPendingUpdateResult()
@@ -163,8 +178,30 @@ class SettingsViewModel @Inject constructor(
         // The Play variant has no free toggle: ignore so that path can never
         // reach the ad gate there (its AdManager ignores setEnabled anyway).
         if (!VariantCapabilities.HAS_FREE_ADS_TOGGLE) return
-        adManager.setEnabled(enabled)
-        _uiState.update { it.copy(adsEnabled = enabled) }
+        if (!enabled) {
+            // Guilt-trip gate: the switch stays ON and the preference is untouched. Only the
+            // dialog's explicit "turn off anyway" action applies the change, so a mis-tap can
+            // never cost the developer the ads that keep the app free.
+            _uiState.update { it.copy(showAdsDonationDialog = true) }
+            return
+        }
+        adManager.setEnabled(true)
+        _uiState.update { it.copy(adsEnabled = true) }
+    }
+
+    /** Dismissal — button, back press or outside tap — counts as "Keep ads". */
+    fun onAdsDonationDismissed() {
+        _uiState.update { it.copy(showAdsDonationDialog = false) }
+    }
+
+    /**
+     * The only path that actually writes ads-off. The dialog hides this action when
+     * [ALLOW_TURN_OFF_ANYWAY] is false, making a donation the sole way to stop ads.
+     */
+    fun onAdsTurnOffAnyway() {
+        if (!VariantCapabilities.HAS_FREE_ADS_TOGGLE) return
+        adManager.setEnabled(false)
+        _uiState.update { it.copy(adsEnabled = false, showAdsDonationDialog = false) }
     }
 
     /** Play variant only: opens the Google Play sheet for the remove_ads product. */
@@ -207,6 +244,19 @@ class SettingsViewModel @Inject constructor(
     fun onAnalyticsToggled(enabled: Boolean) {
         AnalyticsConsent.setEnabled(context, enabled)
         _uiState.update { it.copy(analyticsEnabled = enabled) }
+    }
+
+    /**
+     * Turns the Gaming Mode → Glyph mirror on or off.
+     *
+     * The same store the Gaming Tools screen reads, so the next run obeys this immediately.
+     * Turning it off while a run is lit clears the strip rather than waiting for the engine:
+     * "off" must mean nothing is on the Glyph Interface because of this app.
+     */
+    fun onGlyphSyncToggled(enabled: Boolean) {
+        glyphSyncStore.setEnabled(enabled)
+        _uiState.update { it.copy(glyphSyncEnabled = enabled) }
+        if (!enabled) glyphController.cancel()
     }
 
     /**

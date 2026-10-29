@@ -15,8 +15,8 @@ import androidx.lifecycle.viewModelScope
 import com.catsmoker.app.R
 import com.catsmoker.app.features.gamingtools.engine.AnimationScaleKind
 import com.catsmoker.app.features.gamingtools.engine.GamingEngine
+import com.catsmoker.app.features.gamingtools.engine.GamingModeJobRunner
 import com.catsmoker.app.features.gamingtools.engine.GamingModeRestoreResult
-import com.catsmoker.app.features.gamingtools.engine.GamingModeService
 import com.catsmoker.app.features.gamingtools.engine.GamingModeState
 import com.catsmoker.app.features.gamingtools.engine.GameSessionManager
 import com.catsmoker.app.features.gamingtools.engine.GameSessionService
@@ -41,8 +41,12 @@ import com.catsmoker.app.features.gamingtools.tools.dns.DnsFeature
 import com.catsmoker.app.features.gamingtools.tools.dns.PingParser
 import com.catsmoker.app.features.gamingtools.tools.firewall.BackgroundDataRestrictor
 import com.catsmoker.app.features.gamingtools.tools.firewall.VpnFirewall
+import com.catsmoker.app.features.gamingtools.tools.GamingModeAdvancedStore
+import com.catsmoker.app.features.gamingtools.tools.glyph.GlyphController
+import com.catsmoker.app.features.gamingtools.tools.glyph.GlyphSyncStore
 import com.catsmoker.app.features.gamingtools.tools.overlay.PerformanceOverlayPositionStore
 import com.catsmoker.app.features.gamingtools.tools.overlay.PerformanceOverlayService
+import com.catsmoker.app.features.gamingtools.ui.GamingModeProgress
 import com.catsmoker.app.system.shell.ShellRunner
 import com.catsmoker.app.shared.util.DisplayMetricsProvider
 import com.catsmoker.app.shared.util.formatBytes
@@ -64,12 +68,14 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 import kotlin.math.abs
+import kotlin.math.roundToInt
 import javax.inject.Inject
 
 @HiltViewModel
 class GamingToolsViewModel @Inject constructor(
     @ApplicationContext private val context: Context,
     private val gamingEngine: GamingEngine,
+    private val gamingModeJobs: GamingModeJobRunner,
     private val gameSessionManager: GameSessionManager,
     private val shellRunner: ShellRunner,
     private val gameDeveloperOptions: GameDeveloperOptions,
@@ -88,7 +94,11 @@ class GamingToolsViewModel @Inject constructor(
     private val dexoptScheduleStore: DexoptScheduleStore,
     private val dexoptSweepScheduler: DexoptSweepScheduler,
     private val cleanerScheduleStore: CleanerScheduleStore,
-    private val cleanerSweepScheduler: CleanerSweepScheduler
+    private val cleanerSweepScheduler: CleanerSweepScheduler,
+    private val glyphController: GlyphController,
+    private val glyphSyncStore: GlyphSyncStore,
+    /** Remembers whether the Gaming Mode card's Advanced group is open. */
+    private val gamingModeAdvancedStore: GamingModeAdvancedStore
 ) : ViewModel() {
 
     data class UiState(
@@ -224,6 +234,11 @@ class GamingToolsViewModel @Inject constructor(
         val suspendExemptCandidateApps: List<GameInfo> = emptyList(),
         /** True while the keep-list app picker is open. */
         val isPickingSuspendExemptPackage: Boolean = false,
+        /**
+         * Whether the Gaming Mode card's "Advanced" group (both app pickers) is open. Read at
+         * construction from the store, so a restart shows the shape the user left.
+         */
+        val isGamingModeAdvancedExpanded: Boolean = false,
 
         // Resolution Changer State
         /**
@@ -376,6 +391,7 @@ class GamingToolsViewModel @Inject constructor(
                 boostLevel = appPrefs.getInt("boost_level", 0),
                 extraSuspendPackages = suspendListStore.getSuspendPackages(),
                 suspendExemptPackages = suspendExemptStore.getExemptPackages(),
+                isGamingModeAdvancedExpanded = gamingModeAdvancedStore.isExpanded(),
                 dexoptScheduleEnabled = dexoptScheduleStore.isEnabled(),
                 dexoptIntervalHours = dexoptScheduleStore.getIntervalHours(),
                 cleanScheduleEnabled = cleanerScheduleStore.isEnabled(),
@@ -435,7 +451,67 @@ class GamingToolsViewModel @Inject constructor(
             }
         }
 
+        viewModelScope.launch {
+            // The Glyph strip is a mirror of the loading bar above, nothing more: the engine's own
+            // state decides what the LEDs show, so the two can never disagree about how far along
+            // the run is. Collecting here (rather than at the start button) also catches the first
+            // emission after the screen reopens mid-run.
+            gamingEngine.state.collect { state -> mirrorOnGlyph(state) }
+        }
+
         refreshResolutionState()
+    }
+
+    /**
+     * Mirrors one Gaming Mode state onto the Glyph Interface.
+     *
+     * Pure display: nothing here can fail the run, and on a non-Nothing phone every controller
+     * call is a silent no-op. [GamingModeState.Active] deliberately maps to `complete()` rather
+     * than starting a new animation — the controller ignores a completion it did not see the
+     * start of, so opening this screen while a session is already active does not blink.
+     *
+     * Every deactivation path (power button, notification, game-session auto-off, `onTaskRemoved`
+     * revert) funnels through `GamingEngine.toggleGamingMode(false)` and therefore through this
+     * one `Disabling` emission. Mirroring that state is what makes the reverse work from all of
+     * them, not just the button — no per-entry-point hook is needed, and none can be forgotten.
+     */
+    private fun mirrorOnGlyph(state: GamingModeState) {
+        if (!glyphSyncStore.isEnabled()) {
+            // The user turned the mirror off while a run was live: clear what is already lit.
+            glyphController.cancel()
+            return
+        }
+        when (state) {
+            is GamingModeState.Enabling -> {
+                glyphController.start()
+                glyphController.setProgress((state.progress * 100f).roundToInt())
+            }
+            GamingModeState.Active -> glyphController.complete()
+            // The shutdown bar: `Disabling` carries no per-step progress, so the drain runs on the
+            // same 1.5 s clock as the card's own reverse tween. Clearing here instead (what this
+            // used to do) is why the lights vanished the instant Gaming Mode was switched off.
+            GamingModeState.Disabling ->
+                // REVERSE_DURATION_MS is Int because Compose's `tween` takes Int; the controller
+                // works in millis-on-uptime, hence the widening at this single conversion point.
+                glyphController.startReverse(GamingModeProgress.REVERSE_DURATION_MS.toLong())
+            // The revert often completes before the 1.5 s tween does; letting the drain finish
+            // (it closes its own session at 0 %) avoids cutting the lights mid-unwind, which is
+            // the same abrupt pop the reverse exists to replace.
+            GamingModeState.Idle -> if (!glyphController.isDraining) glyphController.cancel()
+            // Checking, Interrupted and Error all mean "no run to show". Error can arrive after
+            // Enabling has already lit the strip, so this must actively clear it.
+            else -> glyphController.cancel()
+        }
+    }
+
+    /**
+     * Called by the screen when it leaves the foreground.
+     *
+     * The Glyph bar stands for a bar the user can no longer see, so leaving the screen drops the
+     * lights instead of leaving an ownerless progress ring running behind another app.
+     */
+    fun onHostStopped() {
+        glyphController.cancel()
     }
 
     override fun onCleared() {
@@ -446,6 +522,9 @@ class GamingToolsViewModel @Inject constructor(
         try {
             context.unregisterReceiver(serviceStateReceiver)
         } catch (_: Exception) {}
+        // The Glyph binding is process-wide and holds a service connection: it must not outlive
+        // the screen that owns it. cancel() closes the session, turns the LEDs off and unbinds.
+        glyphController.release()
     }
 
     // ---- Privilege / Shizuku ----
@@ -1059,24 +1138,19 @@ class GamingToolsViewModel @Inject constructor(
     // GamingEngine snapshots the settings it later restores, so nothing may write them first:
     // anything applied before captureAndSaveSnapshot() gets recorded as the "original" value and
     // survives deactivation. It already covers every command the old esports pass ran.
-    fun activateGamingMode() = viewModelScope.launch {
+    //
+    // Both toggles run on the app-scoped GamingModeJobRunner, never on viewModelScope: activation
+    // takes about a minute and a half, and a phone that closes the activity mid-run (screen off,
+    // aggressive OEM activity finishing) used to cancel it and report the cancellation as a
+    // failure with some levers already written. The card's own state comes from the engine's
+    // flow, so the screen still shows the truth when it reopens.
+    fun activateGamingMode() {
         _uiState.update { it.copy(restoreResult = null) }
-        gamingEngine.toggleGamingMode(true)
-        // The foreground service is what keeps the process alive while gaming mode holds system
-        // settings, and its onTaskRemoved is the safety net that reverts them if the app is swiped
-        // away. Start it only when the engine actually reached Active: an activation refused by
-        // the recovery guard used to leave an "active" notification over an idle engine.
-        if (gamingEngine.state.value is GamingModeState.Active) {
-            ContextCompat.startForegroundService(context, Intent(context, GamingModeService::class.java))
-        }
-        // Gaming mode writes the refresh-rate keys itself, so the standalone switch has to follow
-        // the device rather than keep showing what it read before activation.
-        gameDeveloperOptions.refresh()
+        gamingModeJobs.activate()
     }
-    fun deactivateGamingMode() = viewModelScope.launch {
-        gamingEngine.toggleGamingMode(false)
-        context.stopService(Intent(context, GamingModeService::class.java))
-        gameDeveloperOptions.refresh()
+
+    fun deactivateGamingMode() {
+        gamingModeJobs.deactivate()
     }
 
     /**
@@ -1532,6 +1606,19 @@ class GamingToolsViewModel @Inject constructor(
 
     fun dismissSuspendExemptPicker() {
         _uiState.update { it.copy(isPickingSuspendExemptPackage = false) }
+    }
+
+    /**
+     * Opens or closes the Gaming Mode card's "Advanced" group and remembers the choice.
+     *
+     * This is presentation only: it never touches [SuspendExemptStore] or [SuspendListStore], so
+     * folding the group cannot change which apps are kept or frozen. The flag is written before the
+     * state update so a process death right after the tap keeps the shape the user just chose.
+     */
+    fun toggleGamingModeAdvanced() {
+        val expanded = !_uiState.value.isGamingModeAdvancedExpanded
+        gamingModeAdvancedStore.setExpanded(expanded)
+        _uiState.update { it.copy(isGamingModeAdvancedExpanded = expanded) }
     }
 
     /**

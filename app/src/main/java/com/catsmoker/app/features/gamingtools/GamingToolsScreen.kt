@@ -44,6 +44,9 @@ import androidx.compose.ui.unit.sp
 import androidx.core.graphics.drawable.toBitmap
 import androidx.core.net.toUri
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.LifecycleOwner
 import com.catsmoker.app.R
 import com.catsmoker.app.features.gamingtools.engine.AnimationScaleKind
 import com.catsmoker.app.features.gamingtools.engine.BoosterOutcome
@@ -90,6 +93,22 @@ fun GamingToolsRoute(onBack: () -> Unit) {
     val uiState by viewModel.uiState.collectAsState()
     val context = LocalContext.current
     val noDevOptions = stringResource(R.string.gt_dialog_no_dev_options)
+
+    // The Glyph strip mirrors the loading bar on this screen. Once the screen is no longer
+    // visible there is nothing left to mirror, so the LEDs are dropped rather than left running
+    // behind the game the user just switched to. A service connection must never outlive the
+    // surface it belongs to.
+    DisposableEffect(context) {
+        val owner = context as? LifecycleOwner
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_STOP) viewModel.onHostStopped()
+        }
+        if (owner != null) owner.lifecycle.addObserver(observer)
+        onDispose {
+            if (owner != null) owner.lifecycle.removeObserver(observer)
+            viewModel.onHostStopped()
+        }
+    }
 
     val gamingState by viewModel.gamingState.collectAsState()
     val gamingReport by viewModel.gamingReport.collectAsState()
@@ -278,6 +297,7 @@ fun GamingToolsRoute(onBack: () -> Unit) {
         onShowSuspendExemptPicker = viewModel::showSuspendExemptPicker,
         onRemoveSuspendExemptPackage = viewModel::removeSuspendExemptPackage,
         onToggleGameSession = viewModel::toggleGameSession,
+        onToggleGamingModeAdvanced = viewModel::toggleGamingModeAdvanced,
         
         onResWidthChange = viewModel::onResWidthChange,
         onResHeightChange = viewModel::onResHeightChange,
@@ -432,6 +452,8 @@ fun GamingToolsScreen(
     onShowSuspendExemptPicker: () -> Unit,
     onRemoveSuspendExemptPackage: (String) -> Unit,
     onToggleGameSession: (Boolean) -> Unit,
+    /** Opens or closes the Gaming Mode card's Advanced group (both app pickers). */
+    onToggleGamingModeAdvanced: () -> Unit,
     
     onResWidthChange: (String) -> Unit,
     onResHeightChange: (String) -> Unit,
@@ -607,7 +629,11 @@ fun GamingToolsScreen(
                 suspendedPackages = suspendedPackages,
                 suspendCandidateApps = uiState.allApps,
                 onAddExtraSuspend = onShowSuspendPicker,
-                onRemoveExtraSuspend = onRemoveExtraSuspendPackage
+                onRemoveExtraSuspend = onRemoveExtraSuspendPackage,
+                // Both pickers live behind one fold now; where the fold is open is a remembered
+                // preference, not a second copy of either package list.
+                advancedExpanded = uiState.isGamingModeAdvancedExpanded,
+                onToggleAdvanced = onToggleGamingModeAdvanced
             )
             Spacer(modifier = Modifier.height(CatsmokerSpacing.CardGap))
             FixedPerformanceModeCard(
@@ -3285,6 +3311,7 @@ fun GamingToolsPreview() {
             onShowSuspendExemptPicker = {},
             onRemoveSuspendExemptPackage = {},
             onToggleGameSession = {},
+            onToggleGamingModeAdvanced = {},
             onResWidthChange = {},
             onResHeightChange = {},
             onResDpiChange = {},

@@ -36,6 +36,50 @@ object GameSessionDecider {
                 Action.Switch(from = activePkg, to = foregroundPkg)            else -> Action.Noop
         }
     }
+
+    /**
+     * What the engine's current state says about the session this monitor recorded.
+     *
+     * Gaming Mode has more than one caller: this monitor, the card's power button, and the
+     * notification's Stop action. "The engine is busy" therefore does not mean "the monitor
+     * started it" — the recorded package is the only evidence of ownership.
+     */
+    enum class Ownership {
+        /** The engine and the record agree: nothing to reconcile before the foreground is read. */
+        Self,
+
+        /**
+         * The engine is running a session this monitor never recorded — a manual activation.
+         * Hands off: recording over it and reverting it on the way out of a game would undo the
+         * user's own mode.
+         */
+        Manual,
+
+        /**
+         * A record survives an engine that is already idle — the user turned the session off by
+         * hand. Dropping it matters: kept, the next manual activation would look like the
+         * monitor's own and be reverted when its game is left.
+         */
+        Stale
+    }
+
+    fun ownership(engineBusy: Boolean, recordedPkg: String?): Ownership = when {
+        engineBusy && recordedPkg == null -> Ownership.Manual
+        !engineBusy && recordedPkg != null -> Ownership.Stale
+        else -> Ownership.Self
+    }
+
+    /**
+     * Whether the game in the foreground is the one the user switched Gaming Mode off for.
+     *
+     * Dropping a [Ownership.Stale] record leaves "a library game is foreground with no recorded
+     * session", which is exactly the state that starts one. Without this veto the monitor would
+     * switch the mode straight back on for the game the user just turned it off in, every 3 s.
+     * The veto lifts when the user leaves that game (a later visit is a fresh intent) and when
+     * automatic Gaming Mode itself is switched off.
+     */
+    fun isUserStopped(foregroundPkg: String?, vetoPkg: String?): Boolean =
+        foregroundPkg != null && foregroundPkg == vetoPkg
 }
 
 /**
@@ -58,11 +102,17 @@ class GameSessionManager @Inject constructor(
     /** Package holding the auto session, or null when none is active. */
     val sessionActivePkg: StateFlow<String?> = _sessionActivePkg.asStateFlow()
 
+    /** The game whose session the user ended by hand; suppressed until they leave it. */
+    private var userStoppedPkg: String? = null
+
     fun isEnabled(): Boolean = prefs.getBoolean(KEY_ENABLED, false)
 
     fun setEnabled(enabled: Boolean) {
         prefs.edit { putBoolean(KEY_ENABLED, enabled) }
-        if (!enabled) _sessionActivePkg.value = null
+        if (!enabled) {
+            _sessionActivePkg.value = null
+            userStoppedPkg = null
+        }
     }
 
     fun getGames(): Set<String> = prefs.getStringSet(KEY_GAMES, emptySet()) ?: emptySet()
@@ -87,12 +137,39 @@ class GameSessionManager @Inject constructor(
     }
 
     /**
-     * Drops the recorded session without acting — the monitor calls this when Gaming Mode is
-     * already active for another reason (a manual activation), so leaving the game later does
-     * not revert a session this monitor never started.
+     * Drops the recorded session without acting.
+     *
+     * Called by the monitor when the engine is already idle — the session the record describes
+     * ended some other way (the card's power button, or a manual revert) — and by its own shutdown
+     * after the revert it owes. It never touches Gaming Mode itself: the engine is the only
+     * writer, and a record is book-keeping, not a lever.
      */
     fun release() {
         _sessionActivePkg.value = null
+    }
+
+    /**
+     * Drops the record because the user ended the session themselves, and remembers the game so
+     * the next poll does not start the mode again for it.
+     */
+    fun releaseByUser() {
+        userStoppedPkg = _sessionActivePkg.value
+        _sessionActivePkg.value = null
+    }
+
+    /**
+     * Whether this foreground sighting is inside the game the user switched the mode off for.
+     *
+     * Answers no (and lifts the veto) as soon as the foreground moves elsewhere: coming back to
+     * the game later is a new decision, not a continuation of the suppressed one. An unreadable
+     * foreground neither lifts nor triggers the veto — a failed read must not restart the mode.
+     */
+    fun isUserStopped(foregroundPkg: String?): Boolean {
+        if (!GameSessionDecider.isUserStopped(foregroundPkg, userStoppedPkg)) {
+            if (foregroundPkg != null) userStoppedPkg = null
+            return false
+        }
+        return true
     }
 
     private companion object {

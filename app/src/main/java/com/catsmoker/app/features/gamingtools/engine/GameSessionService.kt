@@ -33,11 +33,13 @@ import javax.inject.Inject
  * instead of 2 (game switches are slower than app switches, and the cheaper cadence is free
  * battery), and this service never touches other apps — it only drives the engine.
  *
- * Ownership rule: this service starts Gaming Mode only when the engine is Idle, and stops
- * only a session it started. A manual activation in between releases the recorded session,
- * so leaving the game later cannot revert the user's own mode. Gaming Mode also runs its
- * own foreground service while active, so a session shows two notifications by design —
- * this one (watching) and that one (holding settings).
+ * Ownership rule: this service starts Gaming Mode only when the engine is Idle, and stops it
+ * only while the package it recorded is the one the engine is running. A manual activation —
+ * the engine busy with no recorded session — is left alone entirely, so leaving the game later
+ * cannot revert the user's own mode. Gaming Mode also runs its own foreground service while
+ * active, so a manual session shows two notifications by design (this one watching, that one
+ * holding settings); an auto session shows this one, and the in-app engine keeps it alive
+ * through the same process.
  */
 @AndroidEntryPoint
 class GameSessionService : Service() {
@@ -126,10 +128,34 @@ class GameSessionService : Service() {
             val current = queryLatestForegroundPackage(usageStatsManager, lastEventTime, now)
             lastEventTime = now
 
-            // A manual activation owns the engine: never record over it, and never revert it.
-            if (gamingEngine.state.value !is GamingModeState.Idle) {
-                sessionManager.release()
-                postStatus(getString(R.string.gt_svc_session_manual))
+            // Whose session the engine is running decides what this tick may do. A session this
+            // monitor started keeps the engine busy on purpose; the old "any non-idle engine is a
+            // manual one" rule released the monitor's own record on the very next tick, so the
+            // game it had just started for was re-labelled manual, logged as "watch released", and
+            // never stopped when the game was left. Ownership is the recorded package, not the
+            // engine being busy.
+            when (
+                GameSessionDecider.ownership(
+                    engineBusy = gamingEngine.state.value !is GamingModeState.Idle,
+                    recordedPkg = sessionManager.sessionActivePkg.value
+                )
+            ) {
+                GameSessionDecider.Ownership.Manual -> {
+                    postStatus(getString(R.string.gt_svc_session_manual))
+                    continue
+                }
+                // The user turned the session off by hand; the record outlived the engine. Left
+                // in place, the next manual activation would look like the monitor's own and be
+                // reverted when its game is left.
+                GameSessionDecider.Ownership.Stale -> sessionManager.releaseByUser()
+                GameSessionDecider.Ownership.Self -> Unit
+            }
+
+            // With the stale record gone, "library game in the foreground, nothing recorded" is
+            // the state that starts a session — so the game the user just switched the mode off
+            // for would be switched back on every 3 s. The veto holds until they leave it.
+            if (sessionManager.isUserStopped(current)) {
+                postStatus(getString(R.string.gt_svc_session_watching))
                 continue
             }
 

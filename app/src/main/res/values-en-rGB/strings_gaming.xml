@@ -384,7 +384,7 @@
 
     <!-- Gaming mode card -->
     <string name="gt_gm_title">GAMING MODE</string>
-    <string name="gt_gm_active">System Locked</string>
+    <string name="gt_gm_active">Active</string>
     <string name="gt_gm_reverting">Reverting…</string>
     <string name="gt_gm_failed">Activation failed</string>
     <string name="gt_gm_ready">Optimizations Ready</string>
@@ -755,6 +755,11 @@
     <string name="gt_suspend_hide">Hide apps</string>
     <string name="gt_suspend_badge_frozen">frozen</string>
     <string name="gt_suspend_badge_selected">not frozen</string>
+    <!-- Advanced fold holding both Gaming Mode app lists (collapsed by default). -->
+    <string name="gt_advanced_title">Advanced</string>
+    <string name="gt_advanced_sub">App lists for the freeze sweep</string>
+    <string name="gt_advanced_expand">Expand advanced settings</string>
+    <string name="gt_advanced_collapse">Collapse advanced settings</string>
     <string name="gt_cleaner_review">Review &amp; clean</string>
     <string name="gt_cleaner_review_hide">Hide items</string>
     <string name="gt_cleaner_advanced">Schedule &amp; rules</string>

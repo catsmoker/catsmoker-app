@@ -1,0 +1,9 @@
+<resources>
+    <!-- Guilt-trip dialog when the free "Enable Ads" switch is turned off. -->
+    <string name="sys_ads_guilt_title">Ne me laisse pas, s\'il te plaît</string>
+    <string name="sys_ads_guilt_message">Les publicités, c\'est ce qui nourrit mes chats. Sans elles, ils me fixent tristement. Un petit don marche aussi.</string>
+    <string name="sys_ads_guilt_donate">Faire un don</string>
+    <string name="sys_ads_guilt_keep">Garder les pubs</string>
+    <string name="sys_ads_guilt_turn_off_anyway">Désactiver les pubs quand même</string>
+    <string name="sys_ads_guilt_cat_desc">Chat triste</string>
+</resources>

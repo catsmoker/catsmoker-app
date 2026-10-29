@@ -83,6 +83,9 @@ Application entry point and Compose host. A Hilt module provides
 ### Engines
 - `MetricsEngine` — telemetry/overlay data (see `METRICS_ENGINE.md`).
 - `GamingEngine` — Gaming Mode + booster services (see `GAMING_MODE.md`).
+- `GamingModeJobRunner` — the app-scoped job that activates/reverts Gaming Mode. A screen never
+  launches that toggle itself: the write takes ~90 s and must survive the activity closing
+  (see `GAMING_MODE.md`, "Who runs a toggle").
 
 ### Overlay & background services
 Several long-running `Service` implementations live under
@@ -95,6 +98,11 @@ offset from screen centre, the performance readout absolute top-left pixels
 (`PerformanceOverlayPositionStore`), each clamped against the live display on
 read. Services broadcast their own start/stop/mode changes and the ViewModel
 follows those reports rather than the request that caused them.
+
+`gamingtools/tools/glyph/` is the one exception to that pattern: `GlyphController`
+binds Nothing's GDK proxy only to *display* something, mirrors
+`GamingEngine.state` onto the LEDs, writes nothing, and no-ops on every other
+phone (see `GAMING_MODE.md`).
 
 ## Key data flows
 

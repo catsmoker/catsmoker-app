@@ -4,6 +4,13 @@
     <string name="sys_settings_subtitle">Configuração e preferências do app.</string>
     <string name="sys_section_general">Geral</string>
     <string name="sys_ads_title">Ativar anúncios</string>
+    <!-- Guilt-trip dialog when the free "Enable Ads" switch is turned off. -->
+    <string name="sys_ads_guilt_title">Por favor, não me deixe</string>
+    <string name="sys_ads_guilt_message">Os anúncios são como eu alimento meus gatos. Sem eles, eles ficam me encarando com tristeza. Uma pequena doação também ajuda.</string>
+    <string name="sys_ads_guilt_donate">Doar</string>
+    <string name="sys_ads_guilt_keep">Manter anúncios</string>
+    <string name="sys_ads_guilt_turn_off_anyway">Desligar anúncios mesmo assim</string>
+    <string name="sys_ads_guilt_cat_desc">Gato triste</string>
     <!-- Play-variant paid ad removal (Google Play Billing one-time product remove_ads). -->
     <string name="sys_remove_ads_title">Remover anúncios</string>
     <string name="sys_remove_ads_sub">Compra única. Pague uma vez e navegue sem anúncios para sempre.</string>
@@ -11,6 +18,9 @@
     <string name="sys_ads_removed_sub">Obrigado pelo apoio — você está navegando sem anúncios.</string>
     <string name="sys_analytics_title">Enviar dados de análise</string>
     <string name="sys_analytics_sub">O Google Firebase recebe dados de uso (inicializações do app, duração da sessão, modelo do dispositivo, versão do app, endereço IP). Desative para interromper a coleta; desinstalar o app também a interrompe. Consulte a Política de Privacidade.</string>
+    <!-- Nothing Glyph Interface mirror (Settings > General, shown only where the GDK works). -->
+    <string name="sys_glyph_sync_title">Sincronizar o Modo Jogo com o Glyph</string>
+    <string name="sys_glyph_sync_sub">Mostra a barra de carregamento do Modo Jogo na interface Glyph. Apenas em celulares Nothing.</string>
     <string name="sys_billing_unavailable">O Google Play Faturamento não está disponível. Verifique sua conexão e tente novamente.</string>
     <string name="sys_remove_ads_pending">Sua compra está pendente. Os anúncios serão desativados quando o Google Play confirmar.</string>
     <string name="sys_remove_ads_failed">Não foi possível concluir a compra: %1$s</string>

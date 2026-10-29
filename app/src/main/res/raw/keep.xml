@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Nothing's Glyph Matrix SDK draws text by looking its glyph tables up by name
+    (`Resources.getIdentifier("letter_a" ...)`) instead of by R.string reference. The release
+    build shrinks resources, and a reflective lookup is invisible to it, so without this the
+    percentage on a Glyph Matrix (Phone 3 / 4a Pro) could resolve to nothing. This file itself
+    is never packaged.
+-->
+<resources xmlns:tools="http://schemas.android.com/tools"
+    tools:keep="@string/letter_*" />

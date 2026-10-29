@@ -28,11 +28,24 @@ android {
         // dozens of transitive locales dragged in by material/ads/splashscreen/work.
         // Shrinking alone cannot do this. Qualifiers match res/values-* dirs exactly;
         // in-app tags are en/ar/es/zh-CN/pt-BR (AppearanceStore), en-GB is a mirror.
-        resConfigs("en", "en-rGB", "ar", "es", "zh-rCN", "pt-rBR")
+        resConfigs("en", "en-rGB", "ar", "es", "zh-rCN", "pt-rBR", "fr")
 
         vectorDrawables {
             useSupportLibrary = true
         }
+
+        // Nothing's Glyph Developer Kit API key, from the git-ignored local.properties.
+        // Nothing stopped requiring it from Android 16, but the meta-data stays for the
+        // Android 14/15 phones that still check it. The fallback is a dummy: registration
+        // then simply fails and the LEDs stay dark, which is the same no-op as a
+        // non-Nothing device — never a build failure.
+        val nothingProps = Properties()
+        val nothingPropsFile = project.rootProject.file("local.properties")
+        if (nothingPropsFile.exists()) {
+            nothingProps.load(nothingPropsFile.inputStream())
+        }
+        manifestPlaceholders["NOTHING_API_KEY"] =
+            nothingProps.getProperty("NOTHING_API_KEY") ?: "test"
 
         // No per-variant IDs here: full declares STARTIO_APP_ID, playstore declares
         // ADMOB_* + the ADMOB_APP_ID manifest placeholder in their flavor blocks.
@@ -236,6 +249,15 @@ dependencies {
     // --- Shizuku ---
     implementation(libs.shizuku.api)
     implementation(libs.provider)
+
+    // --- Nothing Glyph Interface (GDK) ---
+    // Nothing's official Glyph Developer Kit, vendored from
+    // Nothing-Developer-Programme/Glyph-Developer-Kit (sdk/glyph-matrix-sdk-2.0.aar).
+    // `.gitignore` ignores *.aar globally; this one path has an explicit ! exception so the
+    // same bytes ship in both flavors. Nothing publishes no licence file for it — see
+    // docs/GAMING_MODE.md. Every call is gated on Build.MANUFACTURER, so other phones never
+    // touch the service.
+    implementation(files("libs/glyph-matrix-sdk-2.0.aar"))
 
     // --- Testing ---
     testImplementation(libs.junit)

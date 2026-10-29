@@ -414,7 +414,7 @@
 
     <!-- Gaming mode card -->
     <string name="gt_gm_title">MODO JOGO</string>
-    <string name="gt_gm_active">Sistema travado</string>
+    <string name="gt_gm_active">Ativo</string>
     <string name="gt_gm_reverting">Revertendo…</string>
     <string name="gt_gm_failed">Falha na ativação</string>
     <string name="gt_gm_ready">Otimizações prontas</string>
@@ -762,6 +762,11 @@
     <string name="gt_suspend_hide">Ocultar apps</string>
     <string name="gt_suspend_badge_frozen">congelado</string>
     <string name="gt_suspend_badge_selected">não congelado</string>
+    <!-- Advanced fold holding both Gaming Mode app lists (collapsed by default). -->
+    <string name="gt_advanced_title">Avançado</string>
+    <string name="gt_advanced_sub">Listas de apps da varredura de congelamento</string>
+    <string name="gt_advanced_expand">Expandir configurações avançadas</string>
+    <string name="gt_advanced_collapse">Recolher configurações avançadas</string>
     <string name="gt_cleaner_review">Revisar e limpar</string>
     <string name="gt_cleaner_review_hide">Ocultar itens</string>
     <string name="gt_cleaner_advanced">Agenda e regras</string>

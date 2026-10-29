@@ -103,6 +103,9 @@ class LocaleParityTest {
         // Settings analytics toggle — verifies the opt-out is a real switch, not cosmetic.
         "sys_analytics_title",
         "sys_analytics_sub",
+        // Settings Glyph mirror toggle (Nothing phones only; the copy still ships translated).
+        "sys_glyph_sync_title",
+        "sys_glyph_sync_sub",
         // Legal screens (Privacy Policy + Terms & Conditions, incl. onboarding dialogs).
         "legal_section_title",
         "legal_website_title",
@@ -193,6 +196,13 @@ class LocaleParityTest {
         "core_desc_random",
         // Ads-toggle explanation (names the Start.io provider).
         "sys_ads_sub",
+        // Guilt-trip dialog shown when the free toggle is turned off (title, body, all actions).
+        "sys_ads_guilt_title",
+        "sys_ads_guilt_message",
+        "sys_ads_guilt_donate",
+        "sys_ads_guilt_keep",
+        "sys_ads_guilt_turn_off_anyway",
+        "sys_ads_guilt_cat_desc",
         // Play-variant paid ad removal (Settings purchase row + status + notices).
         "sys_remove_ads_title",
         "sys_remove_ads_sub",
@@ -537,6 +547,11 @@ class LocaleParityTest {
         "gt_suspend_hide",
         "gt_suspend_badge_frozen",
         "gt_suspend_badge_selected",
+        // Advanced fold that holds both Gaming Mode app lists (title, caption, a11y expand/collapse).
+        "gt_advanced_title",
+        "gt_advanced_sub",
+        "gt_advanced_expand",
+        "gt_advanced_collapse",
         // Merged cleaner card: review/clean disclosure and the advanced schedule/rules fold.
         "gt_cleaner_review",
         "gt_cleaner_review_hide",

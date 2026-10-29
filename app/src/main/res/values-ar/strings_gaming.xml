@@ -413,7 +413,7 @@
 
     <!-- Gaming mode card -->
     <string name="gt_gm_title">وضع الألعاب</string>
-    <string name="gt_gm_active">النظام مقفل</string>
+    <string name="gt_gm_active">نشط</string>
     <string name="gt_gm_reverting">جارٍ التراجع…</string>
     <string name="gt_gm_failed">فشل التفعيل</string>
     <string name="gt_gm_ready">التحسينات جاهزة</string>
@@ -761,6 +761,11 @@
     <string name="gt_suspend_hide">إخفاء التطبيقات</string>
     <string name="gt_suspend_badge_frozen">مجمّد</string>
     <string name="gt_suspend_badge_selected">غير مجمّد</string>
+    <!-- Advanced fold holding both Gaming Mode app lists (collapsed by default). -->
+    <string name="gt_advanced_title">متقدم</string>
+    <string name="gt_advanced_sub">قوائم التطبيقات لمسح التجميد</string>
+    <string name="gt_advanced_expand">توسيع الإعدادات المتقدمة</string>
+    <string name="gt_advanced_collapse">طي الإعدادات المتقدمة</string>
     <string name="gt_cleaner_review">مراجعة وتنظيف</string>
     <string name="gt_cleaner_review_hide">إخفاء العناصر</string>
     <string name="gt_cleaner_advanced">الجدولة والقواعد</string>

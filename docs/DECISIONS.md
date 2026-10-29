@@ -714,3 +714,62 @@ deliberately not ported, or blocked by hardware/field evidence.
   scene/voice lists, deploy report, measured rounds), where there is no single feature title
   to attach an icon to. Do not add new feature explainers back into card bodies; add an
   `InfoTopic` instead. Permanent rule: `docs/CODING_STYLE.md` UI rule 5.
+
+## Gaming Mode "Advanced" fold for the two app lists (2026-10-28)
+
+- **"Apps kept running" and "Extra suspended apps" moved behind one collapsed "Advanced"
+  disclosure.** Both are configuration the user sets once and then leaves alone, yet together they
+  were the tallest part of the Gaming Mode card and pushed the read-back report and the Recovery
+  block off a phone screen. The power button, the automatic-mode switch, the progress bar and every
+  error/refusal stay outside the fold — a collapsed section must never hide why something failed,
+  the same rule the read-back fold follows. Neither picker's data, callbacks, privilege gate nor
+  `GamingModeAppPickerSection` layout changed; only where they are drawn did.
+- **The fold is remembered, and starts closed.** `GamingModeAdvancedStore` (own prefs file
+  `gaming_mode_advanced_prefs`) holds one boolean, read once at ViewModel construction, so the group
+  reopens in the shape the user left it after a screen change or a restart. A fresh install reads
+  `DEFAULT_EXPANDED = false`. Folding writes only that flag: it can never add, remove, keep or
+  freeze an app.
+- **One header row, one chevron, 200 ms.** `GamingModeAdvancedSection` uses the same tinted
+  disclosure shape as the read-back fold, rotates a single `ExpandMore` glyph 180° while the body
+  animates (`expandVertically`/`shrinkVertically` + fade, `tween(200)`), and names the tap for
+  screen readers ("Expand advanced settings" / "Collapse advanced settings") on the icon and as the
+  click label.
+
+## Gaming Mode toggle ownership (2026-10-28, found while testing on Nothing Phone 2a)
+
+- **The Gaming Mode toggle runs on an app-scoped job, never on `viewModelScope`.**
+  `GamingModeJobRunner` owns one `SupervisorJob` scope for the process, and both the power button
+  and its revert go through it. Activation takes ~90 s of privileged writes; on a phone that closed
+  the activity mid-run (screen off, `always_finish_activities=1`) the ViewModel scope cancelled it,
+  the engine reported "Activation failed — Job was cancelled", and the suspends already written
+  stayed applied with no foreground service up yet (that service only starts once the engine
+  reports `Active`). Precedent: the dexopt sweep moved to `AppBoosterService` for the same reason.
+  Rejected: a second foreground service just for the activation — the auto-session monitor already
+  runs one on that path, and a third shade row that exists for a few seconds says nothing new.
+- **A cancelled activation is an interrupted session, not a failure.** `enableGamingMode` catches
+  `CancellationException` separately: it publishes the persisted record as pending packages/app-ops
+  (so **Restore apps** is offered from evidence), sets `Interrupted`, and rethrows. The broad
+  `catch (e: Exception)` must never turn a cancellation into a message — `CancellationException` is
+  an `Exception`, which is exactly how "Job was cancelled" reached the card. A cancel before
+  `is_active` was written leaves `Idle`: there is no session and nothing to restore.
+- **The auto session owns the engine by its recorded package, not by "the engine is busy".**
+  `GameSessionDecider.ownership(engineBusy, recordedPkg)` returns `Manual` only when the engine is
+  busy with nothing recorded. The old guard released the record on any non-idle engine, so the tick
+  after its own activation re-labelled the monitor's session as manual, posted "watch released", and
+  never reverted it when the game was left — 103 apps stayed frozen more than two minutes after the
+  game was force-stopped. `Stale` (idle engine, live record) drops a record whose session the user
+  ended by hand, so the next manual activation cannot be mistaken for the monitor's own.
+- **Dropping a stale record vetoes that one game until the user leaves it.** A record drop leaves
+  the state that starts a session ("library game in the foreground, nothing recorded"), so the
+  first device run of the ownership fix restarted Gaming Mode for the game it had just been
+  switched off in, every 3 s. `GameSessionDecider.isUserStopped` answers that one question;
+  `GameSessionManager.releaseByUser()` remembers the package, the poll loop skips while it holds,
+  and leaving the game (or switching automatic Gaming Mode off) lifts it. Rejected: persisting the
+  veto — it is a within-visit intent, and a stored one would survive a reboot as a game that never
+  auto-starts again.
+- **The card's running state reads "Active", not "System Locked".** Nothing is locked when a
+  session holds its optimizations; the old title read like a restriction on the phone. The distinct
+  "Locked" wording stays for the state it describes (the device has no root/Shizuku, so Gaming Mode
+  cannot run), and `GamingModeActiveCopyTest` keeps the two from collapsing into one phrase in any
+  locale.
+
