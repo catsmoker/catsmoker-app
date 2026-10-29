@@ -127,22 +127,52 @@ fun SettingsRoute(
     uiState.updateDialog?.let { dialog ->
         AlertDialog(
             onDismissRequest = viewModel::dismissUpdateDialog,
-            title = { Text(stringResource(R.string.sys_update_available, dialog.tagName)) },
+            title = {
+                Text(
+                    text = stringResource(R.string.sys_update_available, dialog.tagName),
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = androidx.compose.ui.text.font.FontWeight.Bold
+                )
+            },
             text = {
-                Column {
-                    Text(stringResource(R.string.sys_update_prompt))
+                Column(modifier = Modifier.fillMaxWidth()) {
+                    Text(
+                        text = stringResource(R.string.sys_update_prompt),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
                     dialog.notes?.takeIf { it.isNotBlank() }?.let { notes ->
-                        Spacer(modifier = Modifier.height(8.dp))
-                        Text(
-                            notes,
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
+                        Spacer(modifier = Modifier.height(10.dp))
+                        Surface(
+                            color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.35f),
+                            shape = RoundedCornerShape(12.dp),
+                            border = androidx.compose.foundation.BorderStroke(
+                                1.dp,
+                                MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f)
+                            ),
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            UpdateNotesPreview(
+                                notes = notes,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .heightIn(max = 340.dp)
+                                    .padding(horizontal = 12.dp, vertical = 10.dp)
+                            )
+                        }
                     }
                 }
             },
-            confirmButton = { TextButton(onClick = viewModel::startUpdateDownload) { Text(stringResource(R.string.sys_download)) } },
-            dismissButton = { TextButton(onClick = viewModel::dismissUpdateDialog) { Text(stringResource(R.string.sys_later)) } }
+            confirmButton = {
+                TextButton(onClick = viewModel::startUpdateDownload) {
+                    Text(stringResource(R.string.sys_download))
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = viewModel::dismissUpdateDialog) {
+                    Text(stringResource(R.string.sys_later))
+                }
+            }
         )
     }
 }

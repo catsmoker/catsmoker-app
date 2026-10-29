@@ -2,7 +2,10 @@ package com.catsmoker.app.features.settings
 
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageInfo
 import android.content.pm.PackageManager
+import android.content.pm.Signature
+import android.os.Build
 import androidx.core.content.FileProvider
 import java.io.File
 import java.io.FileOutputStream
@@ -235,18 +238,44 @@ object SelfUpdater {
     fun isCompatibleApk(context: Context, file: File): Boolean {
         return try {
             val pm = context.packageManager
-            val archive = pm.getPackageArchiveInfo(file.absolutePath, PackageManager.GET_SIGNATURES)
+            val flags = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+                PackageManager.GET_SIGNING_CERTIFICATES
+            } else {
+                @Suppress("DEPRECATION")
+                PackageManager.GET_SIGNATURES
+            }
+            val archive = pm.getPackageArchiveInfo(file.absolutePath, flags)
                 ?: return false
             if (archive.packageName != context.packageName) return false
-            @Suppress("DEPRECATION")
-            val archiveSigs = archive.signatures?.map { it.toByteArray() }?.toSet() ?: return false
-            @Suppress("DEPRECATION")
-            val installedSigs = pm.getPackageInfo(
-                context.packageName, PackageManager.GET_SIGNATURES
-            ).signatures?.map { it.toByteArray() }?.toSet() ?: return false
+
+            val installedPackage = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+                pm.getPackageInfo(context.packageName, PackageManager.GET_SIGNING_CERTIFICATES)
+            } else {
+                @Suppress("DEPRECATION")
+                pm.getPackageInfo(context.packageName, PackageManager.GET_SIGNATURES)
+            }
+
+            val archiveSigs = extractSignatures(archive)
+            val installedSigs = extractSignatures(installedPackage)
+
             archiveSigs.isNotEmpty() && archiveSigs == installedSigs
         } catch (_: Exception) {
             false
+        }
+    }
+
+    private fun extractSignatures(packageInfo: PackageInfo): Set<Signature> {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+            val signingInfo = packageInfo.signingInfo ?: return emptySet()
+            val signatures = if (signingInfo.hasMultipleSigners()) {
+                signingInfo.apkContentsSigners
+            } else {
+                signingInfo.signingCertificateHistory
+            }
+            return signatures?.toSet() ?: emptySet()
+        } else {
+            @Suppress("DEPRECATION")
+            return packageInfo.signatures?.toSet() ?: emptySet()
         }
     }
 
