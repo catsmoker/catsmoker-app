@@ -228,6 +228,18 @@ fun ProfileEditorScreen(
                 EditorField(stringResource(R.string.spoof_field_gl_version), profile.gpuVersion, switch = fieldSwitch(ProfileToggleFields.GPU)) { profile = profile.copy(gpuVersion = it) }
                 EditorField(stringResource(R.string.spoof_field_gl_extensions), profile.gpuExtensions, switch = fieldSwitch(ProfileToggleFields.GPU)) { profile = profile.copy(gpuExtensions = it) }
                 EditorField(stringResource(R.string.spoof_field_vulkan_model), profile.vulkanModel, switch = fieldSwitch(ProfileToggleFields.GPU)) { profile = profile.copy(vulkanModel = it) }
+                EditorField(stringResource(R.string.spoof_field_vulkan_version), profile.vulkanVersion, switch = fieldSwitch(ProfileToggleFields.GPU)) { profile = profile.copy(vulkanVersion = it) }
+                EditorField(stringResource(R.string.spoof_field_vulkan_vendor_id), if (profile.vulkanVendorId != 0) profile.vulkanVendorId.toString() else "", numeric = true, switch = fieldSwitch(ProfileToggleFields.GPU)) { profile = profile.copy(vulkanVendorId = it.toIntOrNull() ?: 0) }
+                EditorField(stringResource(R.string.spoof_field_vulkan_device_id), if (profile.vulkanDeviceId != 0) profile.vulkanDeviceId.toString() else "", numeric = true, switch = fieldSwitch(ProfileToggleFields.GPU)) { profile = profile.copy(vulkanDeviceId = it.toIntOrNull() ?: 0) }
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(stringResource(R.string.spoof_disable_vulkan))
+                    }
+                    Switch(
+                        checked = profile.disableVulkanSpoof,
+                        onCheckedChange = { profile = profile.copy(disableVulkanSpoof = it) }
+                    )
+                }
             }
 
             EditorGroup(title = stringResource(R.string.spoof_group_facts)) {

@@ -250,7 +250,22 @@ class SpoofRepository @Inject constructor(
         val list = mutableListOf<DevicePreset>()
         list.add(createCurrentDevicePreset())
 
-        list.addAll(listOf(
+        list.addAll(staticPresets())
+        return list
+    }
+
+    /**
+     * Renders a profile into the document every channel distributes (Settings.Global sections,
+     * provider prefs, previews). Delegates to [ProfileRenderer] — a pure object, so the render
+     * contract (including the [DeviceProfile.disabledFields] kill switches) is asserted on the
+     * real output in unit tests; this class cannot be instantiated there because of its Android
+     * dependencies.
+     */
+    fun renderConfig(profile: DeviceProfile, globalProps: Map<String, String>): String =
+        ProfileRenderer.render(profile, globalProps)
+
+    companion object {
+        fun staticPresets(): List<DevicePreset> = listOf(
             DevicePreset(
                 "pixel_11_pro", "Google", "Pixel 11 Pro", "Tensor G6 - Android 17",
                 DeviceProfile(
@@ -258,7 +273,9 @@ class SpoofRepository @Inject constructor(
                     productName = "lynx", deviceCode = "lynx", board = "lynx",
                     hardware = "google", boardPlatform = "gs401",
                     buildRelease = "17", buildSdk = 37,
-                    buildId = "UP1A.260805.001", securityPatch = "2026-08-05"
+                    buildId = "UP1A.260805.001", securityPatch = "2026-08-05",
+                    hwCpuCores = 7, hwRamMb = 12288,
+                    vulkanVendorId = 0
                 ).apply { applyFallbacks() }
             ),
             DevicePreset(
@@ -269,7 +286,11 @@ class SpoofRepository @Inject constructor(
                     hardware = "qcom", boardPlatform = "titan",
                     buildRelease = "16", buildSdk = 36,
                     buildId = "AP4A.260105.001", securityPatch = "2026-01-01",
-                    screenWidth = 1440, screenHeight = 3120, screenDensity = 500
+                    screenWidth = 1440, screenHeight = 3120, screenDensity = 500,
+                    hwCpuCores = 8, hwRamMb = 12288,
+                    gpuVendor = "Qualcomm", gpuRenderer = "Adreno (TM) 840",
+                    vulkanModel = "Adreno (TM) 840",
+                    vulkanVersion = "1.4.295", vulkanVendorId = 0x5143
                 ).apply { applyFallbacks() }
             ),
             DevicePreset(
@@ -280,7 +301,11 @@ class SpoofRepository @Inject constructor(
                     hardware = "qcom", boardPlatform = "titan",
                     buildRelease = "16", buildSdk = 36,
                     buildId = "AQ4A.260912.001", securityPatch = "2026-01-01",
-                    screenWidth = 1440, screenHeight = 3200, screenDensity = 522
+                    screenWidth = 1440, screenHeight = 3200, screenDensity = 522,
+                    hwCpuCores = 8, hwRamMb = 12288,
+                    gpuVendor = "Qualcomm", gpuRenderer = "Adreno (TM) 840",
+                    vulkanModel = "Adreno (TM) 840",
+                    vulkanVendorId = 0x5143
                 ).apply { applyFallbacks() }
             ),
             DevicePreset(
@@ -290,7 +315,12 @@ class SpoofRepository @Inject constructor(
                     productName = "OnePlus15", deviceCode = "OnePlus15", board = "OnePlus15",
                     hardware = "qcom", boardPlatform = "sun",
                     buildRelease = "15", buildSdk = 35,
-                    buildId = "UKQ1.240917.001", securityPatch = "2025-02-05"
+                    buildId = "UKQ1.240917.001", securityPatch = "2025-02-05",
+                    hwCpuCores = 8, hwRamMb = 12288,
+                    gpuVendor = "Qualcomm", gpuRenderer = "Adreno (TM) 840",
+                    gpuVersion = "OpenGL ES 3.2 V@0842.8 (GIT@008a698cf0, I622757abef, 1757677684) (Date:09/12/25)",
+                    vulkanModel = "Adreno (TM) 840",
+                    vulkanVersion = "1.4.295", vulkanVendorId = 0x5143
                 ).apply { applyFallbacks() }
             ),
             DevicePreset(
@@ -302,7 +332,9 @@ class SpoofRepository @Inject constructor(
                     buildRelease = "16", buildSdk = 36,
                     buildId = "AP4A.260105.001", securityPatch = "2026-02-01",
                     buildCharacteristics = "tablet",
-                    screenWidth = 1848, screenHeight = 2960, screenDensity = 320
+                    screenWidth = 1848, screenHeight = 2960, screenDensity = 320,
+                    hwCpuCores = 8, hwRamMb = 12288,
+                    vulkanVendorId = 0
                 ).apply { applyFallbacks() }
             ),
 
@@ -331,7 +363,11 @@ class SpoofRepository @Inject constructor(
                     hardware = "qcom",
                     buildRelease = "16", buildSdk = 36,
                     buildId = "AP4A.260105.001", securityPatch = "2026-01-01",
-                    screenWidth = 1440, screenHeight = 3168, screenDensity = 510
+                    screenWidth = 1440, screenHeight = 3168, screenDensity = 510,
+                    hwCpuCores = 8, hwRamMb = 12288,
+                    gpuVendor = "Qualcomm", gpuRenderer = "Adreno (TM) 840",
+                    vulkanModel = "Adreno (TM) 840",
+                    vulkanVendorId = 0x5143
                 ).apply { applyFallbacks() }
             ),
             DevicePreset(
@@ -341,7 +377,12 @@ class SpoofRepository @Inject constructor(
                     hardware = "qcom",
                     buildRelease = "15", buildSdk = 35,
                     buildId = "UKQ1.240917.001", securityPatch = "2025-02-05",
-                    screenWidth = 1080, screenHeight = 2400, screenDensity = 400
+                    screenWidth = 1080, screenHeight = 2400, screenDensity = 400,
+                    hwCpuCores = 8, hwRamMb = 16384,
+                    gpuVendor = "Qualcomm",
+                    gpuRenderer = "Adreno (TM) 830",
+                    vulkanModel = "Adreno (TM) 830",
+                    vulkanVendorId = 0x5143
                 ).apply { applyFallbacks() }
             ),
             DevicePreset(
@@ -351,24 +392,16 @@ class SpoofRepository @Inject constructor(
                     hardware = "qcom",
                     buildRelease = "15", buildSdk = 35,
                     buildId = "UKQ1.240917.001", securityPatch = "2025-02-05",
-                    screenWidth = 1216, screenHeight = 2688, screenDensity = 440
+                    screenWidth = 1216, screenHeight = 2688, screenDensity = 440,
+                    hwCpuCores = 8, hwRamMb = 16384,
+                    gpuVendor = "Qualcomm",
+                    gpuRenderer = "Adreno (TM) 830",
+                    vulkanModel = "Adreno (TM) 830",
+                    vulkanVendorId = 0x5143
                 ).apply { applyFallbacks() }
             )
-        ))
-        return list
-    }
+        )
 
-    /**
-     * Renders a profile into the document every channel distributes (Settings.Global sections,
-     * provider prefs, previews). Delegates to [ProfileRenderer] — a pure object, so the render
-     * contract (including the [DeviceProfile.disabledFields] kill switches) is asserted on the
-     * real output in unit tests; this class cannot be instantiated there because of its Android
-     * dependencies.
-     */
-    fun renderConfig(profile: DeviceProfile, globalProps: Map<String, String>): String =
-        ProfileRenderer.render(profile, globalProps)
-
-    companion object {
         /** Fixed name of the undeletable, unrenamable seeded profile. */
         const val DEFAULT_PROFILE_NAME = "Default Profile"
 

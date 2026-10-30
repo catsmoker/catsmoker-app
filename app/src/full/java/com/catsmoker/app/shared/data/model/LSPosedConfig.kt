@@ -201,6 +201,15 @@ object LSPosedConfig {
     /** Vulkan physical-device name (`VkPhysicalDeviceProperties.deviceName`), spoofed for Vulkan-based tier checks. */
     const val KEY_VULKAN_MODEL = "vulkan.model"
 
+    /** Vulkan API version (`VkPhysicalDeviceProperties.apiVersion`), spoofed alongside the device name. */
+    const val KEY_VULKAN_VERSION = "vulkan.version"
+
+    /** Vulkan vendor ID (`VkPhysicalDeviceProperties.vendorID`). */
+    const val KEY_VULKAN_VENDOR_ID = "vulkan.vendor_id"
+
+    /** Vulkan device ID (`VkPhysicalDeviceProperties.deviceID`). */
+    const val KEY_VULKAN_DEVICE_ID = "vulkan.device_id"
+
     /**
      * Refresh rate in Hz the profile should answer `Display.getRefreshRate()` with, when set.
      *

@@ -63,6 +63,9 @@ class ProfileRendererTest {
         gpuVersion = "OpenGL ES 3.2",
         gpuExtensions = "GL_OES_EGL_image",
         vulkanModel = "Adreno (TM) 750",
+        vulkanVersion = "1.3.256",
+        vulkanVendorId = 0x5143,
+        vulkanDeviceId = 0x44050A31,
         imei = "358240051111110",
         meid = "A1000001234567",
         subscriberId = "310260123456789",
@@ -175,6 +178,14 @@ class ProfileRendererTest {
         val disabled = keysIn(render(filledProfile().copy(disabledFields = setOf(ProfileToggleFields.GPU))))
         assertFalse(LSPosedConfig.KEY_GPU_VENDOR in disabled)
         assertFalse(LSPosedConfig.KEY_GPU_RENDERER in disabled)
+    }
+
+    @Test
+    fun vulkanIdsNotSpoofedWithoutVulkanModel() {
+        val profile = filledProfile().copy(vulkanModel = "", vulkanVendorId = 0x5143, vulkanDeviceId = 0x44050A31)
+        val rendered = keysIn(render(profile))
+        assertFalse(LSPosedConfig.KEY_VULKAN_VENDOR_ID in rendered)
+        assertFalse(LSPosedConfig.KEY_VULKAN_DEVICE_ID in rendered)
     }
 
     @Test

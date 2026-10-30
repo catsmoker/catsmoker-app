@@ -96,6 +96,10 @@
     <string name="spoof_field_gl_version">GL Version</string>
     <string name="spoof_field_gl_extensions">GL Extensions</string>
     <string name="spoof_field_vulkan_model">Vulkan Model</string>
+    <string name="spoof_field_vulkan_version">Vulkan Version</string>
+    <string name="spoof_disable_vulkan">Disable Vulkan spoof</string>
+    <string name="spoof_field_vulkan_vendor_id">Vulkan Vendor ID</string>
+    <string name="spoof_field_vulkan_device_id">Vulkan Device ID</string>
     <string name="spoof_group_facts">بيانات العتاد (جهازك)</string>
     <string name="spoof_field_facts_cores">أنوية المعالج</string>
     <string name="spoof_field_facts_ram">الذاكرة العشوائية (MB)</string>

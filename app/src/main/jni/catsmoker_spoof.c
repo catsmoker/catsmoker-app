@@ -28,6 +28,7 @@
 #include <pthread.h>
 #include <stdint.h>
 #include <string.h>
+#include <stdio.h>
 
 #include <android/log.h>
 
@@ -91,6 +92,9 @@ static char g_gpu_renderer[CS_VALUE_MAX];
 static char g_gpu_version[CS_VALUE_MAX];
 static char g_gpu_extensions[CS_VALUE_MAX];
 static char g_vulkan_model[CS_VALUE_MAX];
+static uint32_t g_vulkan_version = 0;
+static uint32_t g_vulkan_vendor_id = 0;
+static uint32_t g_vulkan_device_id = 0;
 
 static cs_hook_f g_hook;
 static uint32_t g_api_version;
@@ -110,6 +114,7 @@ static pthread_mutex_t g_lock = PTHREAD_MUTEX_INITIALIZER;
 #define CS_STATE_GL_GLES2 16
 #define CS_STATE_CONFIGURED 32
 #define CS_STATE_GL_GLES1 64
+#define CS_STATE_VULKAN 128
 
 /* ------------------------------------------------------------------------- helpers */
 
@@ -328,6 +333,8 @@ static void cs_install_property_hooks(void) {
  * does there, and Dobby patches memory rather than loading anything. */
 static void cs_hook_gl_library(void *handle, int gles1) {
     if (handle == NULL || g_hook == NULL || !cs_is_configured()) return;
+    if (gles1 && (g_state & CS_STATE_GL_GLES1) != 0) return;
+    if (!gles1 && (g_state & CS_STATE_GL_GLES2) != 0) return;
     void *symbol = dlsym(handle, "glGetString");
     if (symbol == NULL) {
         LOGD("%s has no glGetString", gles1 ? "libGLESv1_CM.so" : "libGLESv2.so");
@@ -367,8 +374,12 @@ static void cs_vk_get_physical_device_properties(void *physicalDevice, void *pro
     if (g_real_vk_get_physical_device_properties != NULL)
         g_real_vk_get_physical_device_properties(physicalDevice, properties);
     pthread_mutex_lock(&g_lock);
-    if (g_vulkan_model[0] != 0 && properties != NULL) {
-        cs_copy((char *)properties + CS_VK_DEVICE_NAME_OFFSET, CS_VK_DEVICE_NAME_SIZE, g_vulkan_model);
+    if (properties != NULL) {
+        if (g_vulkan_version != 0) *(uint32_t *)properties = g_vulkan_version;
+        if (g_vulkan_vendor_id != 0) *(uint32_t *)((char *)properties + 8) = g_vulkan_vendor_id;
+        if (g_vulkan_device_id != 0) *(uint32_t *)((char *)properties + 12) = g_vulkan_device_id;
+        if (g_vulkan_model[0] != 0)
+            cs_copy((char *)properties + CS_VK_DEVICE_NAME_OFFSET, CS_VK_DEVICE_NAME_SIZE, g_vulkan_model);
     }
     pthread_mutex_unlock(&g_lock);
 }
@@ -384,8 +395,12 @@ static void cs_vk_get_physical_device_properties2(void *physicalDevice, void *pr
     if (g_vulkan_model[0] != 0 && properties != NULL) {
         uint32_t sType = *(uint32_t *)properties;
         if (sType == CS_VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2) {
-            cs_copy((char *)properties + 16 + CS_VK_DEVICE_NAME_OFFSET,
-                    CS_VK_DEVICE_NAME_SIZE, g_vulkan_model);
+            if (g_vulkan_version != 0) *(uint32_t *)((char *)properties + 16) = g_vulkan_version;
+            if (g_vulkan_vendor_id != 0) *(uint32_t *)((char *)properties + 16 + 8) = g_vulkan_vendor_id;
+            if (g_vulkan_device_id != 0) *(uint32_t *)((char *)properties + 16 + 12) = g_vulkan_device_id;
+            if (g_vulkan_model[0] != 0)
+                cs_copy((char *)properties + 16 + CS_VK_DEVICE_NAME_OFFSET,
+                        CS_VK_DEVICE_NAME_SIZE, g_vulkan_model);
         }
     }
     pthread_mutex_unlock(&g_lock);
@@ -407,6 +422,7 @@ static void *cs_vk_get_instance_proc_addr(void *instance, const char *pName) {
 
 static void cs_hook_vulkan_library(void *handle) {
     if (handle == NULL || g_hook == NULL || !cs_is_configured()) return;
+    if (g_real_vk_get_instance_proc_addr != NULL) return;
     void *symbol = dlsym(handle, "vkGetPhysicalDeviceProperties");
     if (symbol != NULL && cs_hook_install(symbol, (void *)cs_vk_get_physical_device_properties,
                                           (void **)&g_real_vk_get_physical_device_properties)) {
@@ -420,7 +436,32 @@ static void cs_hook_vulkan_library(void *handle) {
     symbol = dlsym(handle, "vkGetInstanceProcAddr");
     if (symbol != NULL && cs_hook_install(symbol, (void *)cs_vk_get_instance_proc_addr,
                                           (void **)&g_real_vk_get_instance_proc_addr)) {
+        g_state |= CS_STATE_VULKAN;
         LOGD("vkGetInstanceProcAddr hooked in libvulkan.so");
+    }
+    /* Also set state bit if the direct property entry point was hooked. */
+    if (g_real_vk_get_physical_device_properties != NULL) g_state |= CS_STATE_VULKAN;
+}
+
+static int g_early_libs_hooked = 0;
+
+/* Hook libraries that were already mapped before the module attached (the do_dlopen callback
+ * only fires for late loads). Uses RTLD_NOLOAD so no loading happens; safe on API 24+. */
+static void cs_hook_already_loaded_libs(void) {
+    if (g_early_libs_hooked) return;
+    g_early_libs_hooked = 1;
+    if (g_hook == NULL) return;
+    const char *libs[3] = {"libGLESv2.so", "libGLESv1_CM.so", "libvulkan.so"};
+    for (int i = 0; i < 3; i++) {
+        void *handle = dlopen(libs[i], RTLD_NOLOAD | RTLD_NOW);
+        if (handle == NULL) {
+            LOGD("early-load: %s not mapped", libs[i]);
+            continue;
+        }
+        LOGD("early-load: %s already mapped, hooking", libs[i]);
+        if (strcmp(libs[i], "libGLESv2.so") == 0) cs_hook_gl_library(handle, 0);
+        else if (strcmp(libs[i], "libGLESv1_CM.so") == 0) cs_hook_gl_library(handle, 1);
+        else if (strcmp(libs[i], "libvulkan.so") == 0) cs_hook_vulkan_library(handle);
     }
 }
 
@@ -499,6 +540,7 @@ Java_com_catsmoker_app_features_spoofdevice_root_NativeSpoofChannel_nativeSetSpo
     pthread_mutex_unlock(&g_lock);
     if (text != NULL) (*env)->ReleaseStringUTFChars(env, blob, text);
     if (count > 0) cs_install_property_hooks();
+    cs_hook_already_loaded_libs();
     return count;
 }
 
@@ -562,6 +604,7 @@ Java_com_catsmoker_app_features_spoofdevice_root_NativeSpoofChannel_nativeSetGpu
     cs_copy(g_gpu_extensions, CS_VALUE_MAX, extensions_text);
     if (g_gpu_vendor[0] != 0 || g_gpu_renderer[0] != 0 || g_gpu_version[0] != 0 || g_gpu_extensions[0] != 0) g_configured = 1;
     pthread_mutex_unlock(&g_lock);
+    cs_hook_already_loaded_libs();
     if (vendor_text != NULL) (*env)->ReleaseStringUTFChars(env, vendor, vendor_text);
     if (renderer_text != NULL) (*env)->ReleaseStringUTFChars(env, renderer, renderer_text);
     if (version_text != NULL) (*env)->ReleaseStringUTFChars(env, version, version_text);
@@ -578,7 +621,41 @@ Java_com_catsmoker_app_features_spoofdevice_root_NativeSpoofChannel_nativeSetVul
     cs_copy(g_vulkan_model, CS_VALUE_MAX, text);
     if (g_vulkan_model[0] != 0) g_configured = 1;
     pthread_mutex_unlock(&g_lock);
+    cs_hook_already_loaded_libs();
     if (text != NULL) (*env)->ReleaseStringUTFChars(env, model, text);
+}
+
+/* Sets the spoofed Vulkan API version from a "major.minor.patch" string. */
+JNIEXPORT void JNICALL
+Java_com_catsmoker_app_features_spoofdevice_root_NativeSpoofChannel_nativeSetVulkanVersion(
+    JNIEnv *env, jclass clazz, jstring version) {
+    (void)clazz;
+    const char *text = version != NULL ? (*env)->GetStringUTFChars(env, version, NULL) : NULL;
+    uint32_t v = 0;
+    if (text != NULL) {
+        int major = 0, minor = 0, patch = 0;
+        if (sscanf(text, "%d.%d.%d", &major, &minor, &patch) >= 2) {
+            v = ((uint32_t)major << 22) | ((uint32_t)minor << 12) | ((uint32_t)patch & 0xFFFu);
+        }
+    }
+    pthread_mutex_lock(&g_lock);
+    g_vulkan_version = v;
+    if (v != 0) g_configured = 1;
+    pthread_mutex_unlock(&g_lock);
+    if (text != NULL) (*env)->ReleaseStringUTFChars(env, version, text);
+}
+
+/* Sets the spoofed Vulkan vendor/device IDs; 0 leaves them to the device. */
+JNIEXPORT void JNICALL
+Java_com_catsmoker_app_features_spoofdevice_root_NativeSpoofChannel_nativeSetVulkanIds(
+    JNIEnv *env, jclass clazz, jint vendorId, jint deviceId) {
+    (void)env;
+    (void)clazz;
+    pthread_mutex_lock(&g_lock);
+    g_vulkan_vendor_id = (uint32_t)vendorId;
+    g_vulkan_device_id = (uint32_t)deviceId;
+    if (vendorId != 0 || deviceId != 0) g_configured = 1;
+    pthread_mutex_unlock(&g_lock);
 }
 
 /* The state bitmask; the Kotlin side mirrors the bit names (NativeSpoofChannel). */

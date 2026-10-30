@@ -118,8 +118,19 @@ object ProfileRenderer {
         if (profile.gpuExtensions.isNotBlank()) {
             addProp(LSPosedConfig.KEY_GPU_EXTENSIONS, profile.gpuExtensions)
         }
-        if (profile.vulkanModel.isNotBlank()) {
-            addProp(LSPosedConfig.KEY_VULKAN_MODEL, profile.vulkanModel)
+        if (!profile.disableVulkanSpoof) {
+            if (profile.vulkanModel.isNotBlank()) {
+                addProp(LSPosedConfig.KEY_VULKAN_MODEL, profile.vulkanModel)
+            }
+            if (profile.vulkanVersion.isNotBlank()) {
+                addProp(LSPosedConfig.KEY_VULKAN_VERSION, profile.vulkanVersion)
+            }
+            if (profile.vulkanModel.isNotBlank() && profile.vulkanVendorId != 0) {
+                addProp(LSPosedConfig.KEY_VULKAN_VENDOR_ID, profile.vulkanVendorId.toString())
+            }
+            if (profile.vulkanModel.isNotBlank() && profile.vulkanDeviceId != 0) {
+                addProp(LSPosedConfig.KEY_VULKAN_DEVICE_ID, profile.vulkanDeviceId.toString())
+            }
         }
 
         PARTITIONS.forEach { p ->

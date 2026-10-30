@@ -57,6 +57,9 @@ internal object NativeSpoofChannel {
     /** Native `glGetString` in `libGLESv1_CM.so` is hooked. */
     const val STATE_GL_GLES1 = 64
 
+    /** Native Vulkan physical-device properties hooked in `libvulkan.so`. */
+    const val STATE_VULKAN = 128
+
     /**
      * Pushes the resolved profile into this process's native half.
      *
@@ -84,6 +87,11 @@ internal object NativeSpoofChannel {
             props[LSPosedConfig.KEY_GPU_EXTENSIONS]
         )
         nativeSetVulkanModel(props[LSPosedConfig.KEY_VULKAN_MODEL])
+        nativeSetVulkanVersion(props[LSPosedConfig.KEY_VULKAN_VERSION])
+        nativeSetVulkanIds(
+            props[LSPosedConfig.KEY_VULKAN_VENDOR_ID]?.toIntOrNull() ?: 0,
+            props[LSPosedConfig.KEY_VULKAN_DEVICE_ID]?.toIntOrNull() ?: 0
+        )
         val dropped = if (applied < table.size) " (dropped ${table.size - applied})" else ""
         log("state=${describe(nativeChannelState())} props=$applied/${table.size}$dropped")
 
@@ -112,6 +120,7 @@ internal object NativeSpoofChannel {
         if (state and STATE_PROP_READ != 0) names.add("prop_read")
         if (state and STATE_GL_GLES2 != 0) names.add("gl_gles2")
         if (state and STATE_GL_GLES1 != 0) names.add("gl_gles1")
+        if (state and STATE_VULKAN != 0) names.add("vulkan")
         if (state and STATE_CONFIGURED != 0) names.add("configured")
         return if (names.isEmpty()) "none" else names.joinToString("+")
     }
@@ -127,6 +136,12 @@ internal object NativeSpoofChannel {
 
     /** Sets the spoofed Vulkan physical-device name; null leaves it to the device. */
     private external fun nativeSetVulkanModel(model: String?)
+
+    /** Sets the spoofed Vulkan API version (parsed from "major.minor.patch"); null/blank leaves it. */
+    private external fun nativeSetVulkanVersion(version: String?)
+
+    /** Sets the spoofed Vulkan vendor/device IDs; 0 leaves them to the device. */
+    private external fun nativeSetVulkanIds(vendorId: Int, deviceId: Int)
 
     /** The state bitmask above, read from the library itself. */
     private external fun nativeChannelState(): Int

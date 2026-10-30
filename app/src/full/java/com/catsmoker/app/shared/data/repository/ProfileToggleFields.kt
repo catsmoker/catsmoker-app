@@ -111,7 +111,7 @@ object ProfileToggleFields {
         HW_RAM_MB -> setOf(LSPosedConfig.KEY_HW_RAM_MB)
         HW_HEAP_MB -> setOf(LSPosedConfig.KEY_HW_HEAP_MB)
         HW_LARGE_HEAP_MB -> setOf(LSPosedConfig.KEY_HW_LARGE_HEAP_MB)
-        GPU -> setOf(LSPosedConfig.KEY_GPU_VENDOR, LSPosedConfig.KEY_GPU_RENDERER, LSPosedConfig.KEY_GPU_VERSION, LSPosedConfig.KEY_GPU_EXTENSIONS, LSPosedConfig.KEY_VULKAN_MODEL)
+        GPU -> setOf(LSPosedConfig.KEY_GPU_VENDOR, LSPosedConfig.KEY_GPU_RENDERER, LSPosedConfig.KEY_GPU_VERSION, LSPosedConfig.KEY_GPU_EXTENSIONS, LSPosedConfig.KEY_VULKAN_MODEL, LSPosedConfig.KEY_VULKAN_VERSION, LSPosedConfig.KEY_VULKAN_VENDOR_ID, LSPosedConfig.KEY_VULKAN_DEVICE_ID)
         BUILD_RELEASE -> setOf("ro.build.version.release")
         BUILD_SDK -> setOf("ro.build.version.sdk")
         BUILD_ID -> setOf("ro.build.id", "ro.build.display.id")
