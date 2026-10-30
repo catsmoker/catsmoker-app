@@ -97,6 +97,9 @@
     <string name="spoof_group_gpu">GPU Identity</string>
     <string name="spoof_field_gl_vendor">GL Vendor</string>
     <string name="spoof_field_gl_renderer">GL Renderer</string>
+    <string name="spoof_field_gl_version">GL Version</string>
+    <string name="spoof_field_gl_extensions">GL Extensions</string>
+    <string name="spoof_field_vulkan_model">Vulkan Model</string>
     <string name="spoof_group_facts">Hardware Facts (Your Device)</string>
     <string name="spoof_field_facts_cores">CPU Cores</string>
     <string name="spoof_field_facts_ram">RAM (MB)</string>

@@ -5,7 +5,9 @@ import android.content.Intent
 import android.content.pm.PackageInfo
 import android.content.pm.PackageManager
 import android.content.pm.Signature
+import android.net.Uri
 import android.os.Build
+import android.provider.Settings
 import androidx.core.content.FileProvider
 import java.io.File
 import java.io.FileOutputStream
@@ -31,7 +33,9 @@ import org.json.JSONObject
  * is numeric on the code, never lexicographic on the name; APK assets carry a
  * `digest: "sha256:..."` plus size. Drafts never appear in the listing;
  * prereleases are skipped unless explicitly wanted (an all-prerelease listing
- * means no update, not the first entry). Nothing is ever downgraded.
+ * means no update, not the first entry). Nothing is ever downgraded. Releases
+ * publish per-ABI splits next to the universal APK; the updater always takes
+ * the universal one.
  *
  * Network work runs on Dispatchers.IO internally — safe to call from any dispatcher.
  * Progress callbacks inherit the IO context; StateFlow.update is thread-safe, but
@@ -121,38 +125,41 @@ object SelfUpdater {
         return isNameNewer(tag.name, currentName)
     }
 
-    private fun pickApkUrl(release: JSONObject): String? {
-        val assets = release.optJSONArray("assets") ?: return null
-        for (i in 0 until assets.length()) {
-            val asset = assets.optJSONObject(i) ?: continue
-            if (asset.optString("name").endsWith(".apk")) {
-                return asset.optString("browser_download_url").takeIf { it.isNotBlank() }
-            }
-        }
-        return null
-    }
+    private fun pickApkUrl(release: JSONObject): String? =
+        pickApkAsset(release)?.optString("browser_download_url")?.takeIf { it.isNotBlank() }
 
     private fun pickApkDigest(release: JSONObject): String? {
-        val assets = release.optJSONArray("assets") ?: return null
-        for (i in 0 until assets.length()) {
-            val asset = assets.optJSONObject(i) ?: continue
-            if (!asset.optString("name").endsWith(".apk")) continue
-            // API shape is "sha256:<hex>"; anything else is not a checksum we verify.
-            return asset.optString("digest").removePrefix("sha256:").takeIf {
-                it.length == 64 && it.all { c -> c in '0'..'9' || c in 'a'..'f' || c in 'A'..'F' }
-            }
+        // API shape is "sha256:<hex>"; anything else is not a checksum we verify.
+        return pickApkAsset(release)?.optString("digest")?.removePrefix("sha256:")?.takeIf {
+            it.length == 64 && it.all { c -> c in '0'..'9' || c in 'a'..'f' || c in 'A'..'F' }
         }
-        return null
     }
 
-    private fun pickApkSize(release: JSONObject): Long? {
+    private fun pickApkSize(release: JSONObject): Long? =
+        pickApkAsset(release)?.optLong("size", -1L)?.takeIf { it > 0 }
+
+    /**
+     * The one APK asset the download, its expected checksum and its size all come
+     * from — they must describe the same file or the read-back check would reject
+     * an honest download.
+     *
+     * Release pages publish per-ABI splits (`app-full-arm64-v8a-release.apk`)
+     * beside the universal `app-full-release.apk`, and asset order is upload order,
+     * so "the first .apk" hands a 32-bit or x86 device an APK it cannot install.
+     * Prefer the asset with no ABI qualifier; fall back to the first APK only for
+     * listings that carry splits alone.
+     */
+    private fun pickApkAsset(release: JSONObject): JSONObject? {
         val assets = release.optJSONArray("assets") ?: return null
+        var firstApk: JSONObject? = null
         for (i in 0 until assets.length()) {
             val asset = assets.optJSONObject(i) ?: continue
-            if (!asset.optString("name").endsWith(".apk")) continue
-            return asset.optLong("size", -1L).takeIf { it > 0 }
+            val name = asset.optString("name")
+            if (!name.endsWith(".apk")) continue
+            if (firstApk == null) firstApk = asset
+            if (ABI_QUALIFIERS.none { name.contains(it) }) return asset
         }
-        return null
+        return firstApk
     }
 
     suspend fun checkForUpdate(isPreRelease: Boolean, versionCode: Int, versionName: String): CheckResult {
@@ -280,6 +287,16 @@ object SelfUpdater {
     }
 
     fun installUpdate(context: Context, file: File) {
+        if (!context.packageManager.canRequestPackageInstalls()) {
+            val settingsIntent = Intent(
+                Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES,
+                Uri.parse("package:${context.packageName}")
+            ).apply {
+                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            }
+            context.startActivity(settingsIntent)
+            return
+        }
         val uri = FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", file)
         val intent = Intent(Intent.ACTION_VIEW).apply {
             setDataAndType(uri, "application/vnd.android.package-archive")
@@ -331,6 +348,13 @@ object SelfUpdater {
 
     /** Headroom above the APK size demanded before downloading. */
     private const val DOWNLOAD_HEADROOM_BYTES = 20L * 1024 * 1024
+
+    /**
+     * ABI markers AGP puts in split APK names (`app-full-arm64-v8a-release.apk`).
+     * An APK without one is the universal build and installs on every device.
+     */
+    private val ABI_QUALIFIERS =
+        listOf("arm64-v8a", "armeabi-v7a", "armeabi", "x86_64", "x86", "mips")
 
     /** Release notes kept for the dialog; bodies run to kilobytes. */
     private const val NOTES_MAX_CHARS = 2000

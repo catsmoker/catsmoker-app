@@ -112,6 +112,15 @@ object ProfileRenderer {
             addProp(LSPosedConfig.KEY_GPU_VENDOR, profile.gpuVendor)
             addProp(LSPosedConfig.KEY_GPU_RENDERER, profile.gpuRenderer)
         }
+        if (profile.gpuVersion.isNotBlank()) {
+            addProp(LSPosedConfig.KEY_GPU_VERSION, profile.gpuVersion)
+        }
+        if (profile.gpuExtensions.isNotBlank()) {
+            addProp(LSPosedConfig.KEY_GPU_EXTENSIONS, profile.gpuExtensions)
+        }
+        if (profile.vulkanModel.isNotBlank()) {
+            addProp(LSPosedConfig.KEY_VULKAN_MODEL, profile.vulkanModel)
+        }
 
         PARTITIONS.forEach { p ->
             addProp("ro.$p.build.fingerprint", profile.buildFingerprint)

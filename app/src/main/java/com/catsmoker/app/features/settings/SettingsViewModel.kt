@@ -2,18 +2,18 @@ package com.catsmoker.app.features.settings
 
 import android.app.Activity
 import android.content.Context
+import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.edit
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.catsmoker.app.BuildConfig
 import com.catsmoker.app.R
-import com.catsmoker.app.features.gamingtools.tools.glyph.GlyphController
-import com.catsmoker.app.features.gamingtools.tools.glyph.GlyphSyncStore
 import com.catsmoker.app.system.VariantCapabilities
 import com.catsmoker.app.system.ads.AdManager
 import com.catsmoker.app.system.ads.RemoveAdsRepository
 import com.catsmoker.app.system.config.AnalyticsConsent
 import com.catsmoker.app.system.config.AppearanceStore
+import com.catsmoker.app.system.config.LocaleHelper
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
@@ -33,9 +33,7 @@ import javax.inject.Inject
 class SettingsViewModel @Inject constructor(
     @ApplicationContext private val context: Context,
     private val adManager: AdManager,
-    private val removeAdsRepository: RemoveAdsRepository,
-    private val glyphController: GlyphController,
-    private val glyphSyncStore: GlyphSyncStore
+    private val removeAdsRepository: RemoveAdsRepository
 ) : ViewModel() {
 
     data class UiState(
@@ -59,12 +57,20 @@ class SettingsViewModel @Inject constructor(
         /** Whether Firebase Analytics collection is enabled (persisted in app_prefs). Defaults on. */
         val analyticsEnabled: Boolean = AnalyticsConsent.DEFAULT_ENABLED,
         /**
-         * Whether the "Sync Gaming Mode with Glyph" card is offered. False on every phone the
-         * Glyph Developer Kit cannot drive, so the control is absent rather than shown dead.
+         * Whether Android currently lets this app post notifications. Re-read on resume, because
+         * the card sends the user to the system page and the answer can change while away.
          */
-        val glyphSupported: Boolean = false,
-        /** Persisted in glyph_prefs; defaults on so a Nothing phone works without a first trip. */
-        val glyphSyncEnabled: Boolean = true
+        val notificationsEnabled: Boolean = true,
+        /**
+         * Version name of a release the last check found, null when up to date. Drives the
+         * "New" badge on the Updates card; the dialog may already have been dismissed.
+         */
+        val availableUpdateName: String? = null,
+        /**
+         * True while the installed APK is being copied into the cache for the share sheet.
+         * The card shows a spinner instead of its chevron; a second tap is ignored.
+         */
+        val isSharingApk: Boolean = false
     )
 
     data class UpdateDialog(
@@ -123,8 +129,7 @@ class SettingsViewModel @Inject constructor(
                 themeMode = AppearanceStore.themeModeSync(context),
                 languageTag = AppearanceStore.languageTag(context),
                 analyticsEnabled = analyticsOn,
-                glyphSupported = glyphController.isSupported,
-                glyphSyncEnabled = glyphSyncStore.isEnabled()
+                notificationsEnabled = notificationsEnabled()
             )
         }
         checkPendingUpdateResult()
@@ -247,17 +252,33 @@ class SettingsViewModel @Inject constructor(
     }
 
     /**
-     * Turns the Gaming Mode → Glyph mirror on or off.
+     * Shares the installed APK through the system share sheet (Bluetooth, Nearby Share,
+     * messaging apps). The copy runs off the main thread and [UiState.isSharingApk] drives
+     * the card's spinner; a second tap while it runs is ignored.
      *
-     * The same store the Gaming Tools screen reads, so the next run obeys this immediately.
-     * Turning it off while a run is lit clears the strip rather than waiting for the engine:
-     * "off" must mean nothing is on the Glyph Interface because of this app.
+     * A split build (App Bundle or per-ABI release) shares its base APK only — the intent
+     * carries one stream and receivers handle a single attachment — so the user is told the
+     * file may need the splits beside it to install. Failures report instead of crashing.
      */
-    fun onGlyphSyncToggled(enabled: Boolean) {
-        glyphSyncStore.setEnabled(enabled)
-        _uiState.update { it.copy(glyphSyncEnabled = enabled) }
-        if (!enabled) glyphController.cancel()
+    fun onShareApp() {
+        if (_uiState.value.isSharingApk) return
+        _uiState.update { it.copy(isSharingApk = true) }
+        viewModelScope.launch {
+            val outcome = AppApkSharer.share(context, context.getString(R.string.sys_share_app_title))
+            _uiState.update { it.copy(isSharingApk = false) }
+            when (outcome) {
+                is ApkShareOutcome.Shared -> if (outcome.splitApks) {
+                    _toasts.tryEmit(context.getString(R.string.sys_share_app_split_note))
+                }
+                ApkShareOutcome.Failed ->
+                    _toasts.tryEmit(context.getString(R.string.sys_share_app_failed))
+            }
+        }
     }
+
+    /** Android's own answer to "may this app post notifications?". */
+    private fun notificationsEnabled(): Boolean =
+        NotificationManagerCompat.from(context).areNotificationsEnabled()
 
     /**
      * Silent automatic check, once per process: shows the dialog only for a
@@ -282,7 +303,9 @@ class SettingsViewModel @Inject constructor(
         prefs.edit { remove(PREF_PENDING_TAG) }
         if (!SelfUpdater.SUPPORTED) return
         if (SelfUpdater.isTagInstalled(pending, BuildConfig.VERSION_CODE, BuildConfig.VERSION_NAME)) {
-            _toasts.tryEmit(context.getString(R.string.sys_update_installed, pending))
+            // Say the version name, not the raw `11-2.0.5` tag.
+            val installedName = SelfUpdater.parseTagVersion(pending).name
+            _toasts.tryEmit(context.getString(R.string.sys_update_installed, installedName))
         }
     }
 
@@ -297,7 +320,8 @@ class SettingsViewModel @Inject constructor(
     /**
      * Records the dismissed tag so neither recomposition, activity recreation
      * nor the next silent auto-check re-prompts for the same release. Only a
-     * strictly newer tag prompts again.
+     * strictly newer tag prompts again — and an explicit "Check for Updates"
+     * always answers, because that tap is the user asking right now.
      */
     fun dismissUpdateDialog() {
         _uiState.value.updateDialog?.let { prefs.edit { putString(PREF_DISMISSED_TAG, it.tagName) } }
@@ -340,6 +364,9 @@ class SettingsViewModel @Inject constructor(
                         if (!silent) _toasts.tryEmit(context.getString(R.string.sys_no_releases))
                     }
                     is SelfUpdater.CheckResult.UpToDate -> {
+                        // The badge is a claim about the latest check; an up-to-date answer
+                        // retires it even when the check was silent.
+                        _uiState.update { it.copy(availableUpdateName = null) }
                         if (!silent) {
                             _toasts.tryEmit(
                                 context.getString(R.string.sys_up_to_date, BuildConfig.VERSION_NAME)
@@ -347,8 +374,11 @@ class SettingsViewModel @Inject constructor(
                         }
                     }
                     is SelfUpdater.CheckResult.Available -> {
+                        // "Later" mutes the silent auto-check only. A manual tap is an
+                        // explicit question and must always be answered, or the button
+                        // looks dead for the rest of that release's life.
                         val dismissed = prefs.getString(PREF_DISMISSED_TAG, null)
-                        if (dismissed != result.info.tagName) {
+                        if (!silent || dismissed != result.info.tagName) {
                             _uiState.update {
                                 it.copy(
                                     updateDialog = UpdateDialog(
@@ -356,7 +386,10 @@ class SettingsViewModel @Inject constructor(
                                         result.info.downloadUrl,
                                         result.info.notes,
                                         result.info.sha256Hex
-                                    )
+                                    ),
+                                    // Name the version, not the raw `11-2.0.5` tag.
+                                    availableUpdateName =
+                                        SelfUpdater.parseTagVersion(result.info.tagName).name
                                 )
                             }
                         }

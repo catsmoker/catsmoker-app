@@ -622,6 +622,8 @@ class LSPosedModule : IXposedHookLoadPackage {
                 when (param.args.getOrNull(0) as? Int) {
                     GL_VENDOR -> props[LSPosedConfig.KEY_GPU_VENDOR]?.let { param.result = it }
                     GL_RENDERER -> props[LSPosedConfig.KEY_GPU_RENDERER]?.let { param.result = it }
+                    GL_VERSION -> props[LSPosedConfig.KEY_GPU_VERSION]?.let { param.result = it }
+                    GL_EXTENSIONS -> props[LSPosedConfig.KEY_GPU_EXTENSIONS]?.let { param.result = it }
                 }
             }
         }
@@ -1390,6 +1392,8 @@ class LSPosedModule : IXposedHookLoadPackage {
         /** GL enums, inlined so the hook file needs no android.opengl import. */
         const val GL_VENDOR = 0x1F00
         const val GL_RENDERER = 0x1F01
+        const val GL_VERSION = 0x1F02
+        const val GL_EXTENSIONS = 0x1F03
 
         val VERSION_CLASS: Class<*> = Build.VERSION::class.java
 

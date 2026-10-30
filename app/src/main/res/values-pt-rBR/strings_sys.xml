@@ -34,9 +34,7 @@
     <string name="sys_update_prompt">Uma nova versão está disponível. Baixar e instalar agora?</string>
     <string name="sys_download">BAIXAR</string>
     <string name="sys_later">MAIS TARDE</string>
-    <string name="sys_section_management">Gerenciamento</string>
     <string name="sys_permissions_title">Permissões do app</string>
-    <string name="sys_permissions_subtitle">Gerencie as permissões concedidas.</string>
     <string name="sys_logs_title">Logs do sistema</string>
     <string name="sys_logs_subtitle">Ver diagnósticos do app e do sistema.</string>
     <string name="sys_section_appearance">Aparência</string>
@@ -77,4 +75,31 @@
     <string name="sys_first_run_title">Boas-vindas ao CatSmoker</string>
     <string name="sys_first_run_subtitle">Escolha a aparência do app e o idioma que ele fala. Você pode mudar isso depois nas Configurações.</string>
     <string name="sys_continue">CONTINUAR</string>
+
+    <!-- Redesigned Settings: section headers, one-line values, info sheets. -->
+    <string name="sys_section_privacy">Privacidade e dados</string>
+    <string name="sys_section_help">Ajuda e informações</string>
+    <string name="sys_section_about">Sobre</string>
+    <string name="sys_appearance_summary">Tema: %1$s</string>
+    <string name="sys_language_summary">Idioma: %1$s</string>
+    <string name="sys_notifications_title">Notificações</string>
+    <string name="sys_notifications_allowed">Permitidas</string>
+    <string name="sys_notifications_blocked">Bloqueadas</string>
+    <string name="sys_updates_summary">Versão %1$s</string>
+    <string name="sys_updates_available">Atualização %1$s disponível</string>
+    <string name="sys_updates_badge">Nova</string>
+    <string name="sys_state_on">Ativado</string>
+    <string name="sys_state_off">Desativado</string>
+    <string name="sys_remove_ads_summary">Compra única</string>
+    <string name="sys_permissions_all_granted">Todas concedidas</string>
+    <string name="sys_permissions_some_granted">%1$d de %2$d concedidas</string>
+    <string name="sys_permissions_open_system">Abrir configurações do sistema</string>
+    <string name="sys_about_summary">Versão %1$s · CC BY-NC-SA 4.0</string>
+    <string name="sys_info_what_title">O que faz</string>
+    <string name="sys_rate_app_title">Avaliar App</string>
+    <string name="sys_rate_app_summary">Avaliar no Google Play</string>
+    <string name="sys_share_app_title">Compartilhar App</string>
+    <string name="sys_share_app_summary">Compartilhar o APK</string>
+    <string name="sys_share_app_failed">Não foi possível compartilhar o app</string>
+    <string name="sys_share_app_split_note">Esta versão usa APKs divididos — o arquivo compartilhado pode não instalar sozinho</string>
 </resources>

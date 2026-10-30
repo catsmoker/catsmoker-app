@@ -24,6 +24,27 @@ object SelfUpdater {
         val notes: String? = null
     )
 
+    /** Mirrors the full variant's parsed `{versionCode}-{versionName}` tag. */
+    data class TagVersion(val code: Int?, val name: String)
+
+    /**
+     * Pure tag parsing mirrored for the shared caller that shows the post-install
+     * "Updated to …" toast ([SettingsViewModel]). It reads no state and performs no
+     * install, so the identical implementation is honest here; the Play variant
+     * never reaches that caller, because [SUPPORTED] is false and [isTagInstalled]
+     * is always false.
+     */
+    fun parseTagVersion(tag: String): TagVersion {
+        val dash = tag.indexOf('-')
+        if (dash > 0) {
+            val code = tag.substring(0, dash).toIntOrNull()
+            if (code != null && dash + 1 < tag.length) {
+                return TagVersion(code, tag.substring(dash + 1))
+            }
+        }
+        return TagVersion(null, tag)
+    }
+
     sealed interface CheckResult {
         data object NoReleases : CheckResult
         data object UpToDate : CheckResult

@@ -23,11 +23,25 @@
 
     <!-- About screen. -->
     <string name="core_about_subtitle">معلومات التطبيق والمجتمع.</string>
-    <string name="core_about_description">CatSmoker أداة أداء مفتوحة المصدر لنظام Android. مهمتنا هي منح اللاعبين أفضل تجربة ممكنة من خلال تحسين موارد النظام وإطلاق الإمكانات الخفية.</string>
-    <string name="core_about_dev_title">لا يزال قيد التطوير</string>
-    <string name="core_about_dev_body">بعض الميزات لا تزال قيد التطوير وقد لا تعمل. إذا حدث خطأ، يرجى حفظ السجلات والإبلاغ عنه على GitHub.</string>
-    <string name="core_about_dev_logs">عرض السجلات</string>
-    <string name="core_about_dev_report">الإبلاغ على GitHub</string>
+    <string name="core_about_description">CatSmoker أداة مفتوحة المصدر لنظام Android تجعل الألعاب أسرع وأكثر سلاسة واستجابة.</string>
+    <string name="about_read_more">قراءة المزيد</string>
+    <string name="about_read_less">عرض أقل</string>
+    <string name="about_read_more_body">يحسّن CatSmoker موارد النظام لتحافظ الألعاب على معدل إطارات أعلى وأكثر ثباتًا مع استجابة أسرع للمس. بعض الميزات لا تزال قيد التطوير وقد لا تعمل على كل جهاز. إذا حدث خطأ، افتح سجلات النظام من الإعدادات، قسم المساعدة والمعلومات، وأبلغ عنه على GitHub.</string>
+
+    <!-- About section labels and rows. -->
+    <string name="about_section_contact">المطور والتواصل</string>
+    <string name="about_section_links">الروابط</string>
+    <string name="about_report_issue">الإبلاغ عن مشكلة</string>
+    <string name="about_version">الإصدار %1$s (%2$d)</string>
+    <string name="about_copied">تم النسخ</string>
+    <string name="about_copy_version">نسخ الإصدار</string>
+    <string name="about_licenses_title">تراخيص مفتوحة المصدر</string>
+    <string name="about_licenses_summary">تراخيص جهات خارجية</string>
+    <string name="about_licenses_subtitle">البرامج التي بُني بها CatSmoker.</string>
+    <string name="about_licenses_intro">يعتمد CatSmoker على المكتبات مفتوحة المصدر التالية. يوضح كل بند الترخيص الذي تُوزَّع به المكتبة.</string>
+    <string name="about_license_cc">الترخيص (CC BY-NC-SA 4.0)</string>
+    <string name="about_copyright">© 2026 CatSmoker. جميع الحقوق محفوظة.</string>
+
 
     <!-- About screen community-button titles (brand names stay verbatim). -->
     <string name="about_social_github">GitHub</string>

@@ -88,6 +88,9 @@ static struct cs_rule g_rules[CS_MAX_RULES];
 static int g_rule_count;
 static char g_gpu_vendor[CS_VALUE_MAX];
 static char g_gpu_renderer[CS_VALUE_MAX];
+static char g_gpu_version[CS_VALUE_MAX];
+static char g_gpu_extensions[CS_VALUE_MAX];
+static char g_vulkan_model[CS_VALUE_MAX];
 
 static cs_hook_f g_hook;
 static uint32_t g_api_version;
@@ -239,6 +242,8 @@ static int cs_prop_read(const void *pi, char *name, char *value) {
 
 #define CS_GL_VENDOR 0x1F00u
 #define CS_GL_RENDERER 0x1F01u
+#define CS_GL_VERSION 0x1F02u
+#define CS_GL_EXTENSIONS 0x1F03u
 
 typedef const unsigned char *(*cs_gl_get_string_f)(unsigned int name);
 
@@ -253,6 +258,8 @@ static const unsigned char *cs_gpu_string(unsigned int name) {
     pthread_mutex_lock(&g_lock);
     if (name == CS_GL_VENDOR && g_gpu_vendor[0] != 0) value = g_gpu_vendor;
     else if (name == CS_GL_RENDERER && g_gpu_renderer[0] != 0) value = g_gpu_renderer;
+    else if (name == CS_GL_VERSION && g_gpu_version[0] != 0) value = g_gpu_version;
+    else if (name == CS_GL_EXTENSIONS && g_gpu_extensions[0] != 0) value = g_gpu_extensions;
     pthread_mutex_unlock(&g_lock);
     return (const unsigned char *)value;
 }
@@ -341,6 +348,82 @@ static void cs_hook_gl_library(void *handle, int gles1) {
     }
 }
 
+/* ------------------------------------------------------------------------- Vulkan hooks
+ * Spoofs VkPhysicalDeviceProperties.deviceName (the GPU name modern games and Vulkan-based
+ * tier checks read). The Vulkan entry points are resolved per-instance through
+ * vkGetInstanceProcAddr, so we hook both the exported symbol and the resolver. */
+typedef void (*cs_vk_get_physical_device_properties_t)(void *, void *);
+typedef void *(*cs_vk_get_instance_proc_addr_t)(void *, const char *);
+static cs_vk_get_physical_device_properties_t g_real_vk_get_physical_device_properties = NULL;
+static cs_vk_get_physical_device_properties_t g_real_vk_get_physical_device_properties2 = NULL;
+static cs_vk_get_instance_proc_addr_t g_real_vk_get_instance_proc_addr = NULL;
+
+/* VkPhysicalDeviceProperties.deviceName sits at offset 20 (5 uint32 fields before it) and is
+ * VK_MAX_PHYSICAL_DEVICE_NAME_SIZE = 256 bytes. */
+#define CS_VK_DEVICE_NAME_OFFSET 20
+#define CS_VK_DEVICE_NAME_SIZE 256
+
+static void cs_vk_get_physical_device_properties(void *physicalDevice, void *properties) {
+    if (g_real_vk_get_physical_device_properties != NULL)
+        g_real_vk_get_physical_device_properties(physicalDevice, properties);
+    pthread_mutex_lock(&g_lock);
+    if (g_vulkan_model[0] != 0 && properties != NULL) {
+        cs_copy((char *)properties + CS_VK_DEVICE_NAME_OFFSET, CS_VK_DEVICE_NAME_SIZE, g_vulkan_model);
+    }
+    pthread_mutex_unlock(&g_lock);
+}
+
+/* VkPhysicalDeviceProperties2 has the same VkPhysicalDeviceProperties embedded at offset 16
+ * (sType uint32 + padding + pNext pointer). Overwrite deviceName there too when the sType
+ * matches VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2 (1000059000). */
+#define CS_VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2 1000059000u
+static void cs_vk_get_physical_device_properties2(void *physicalDevice, void *properties) {
+    if (g_real_vk_get_physical_device_properties2 != NULL)
+        g_real_vk_get_physical_device_properties2(physicalDevice, properties);
+    pthread_mutex_lock(&g_lock);
+    if (g_vulkan_model[0] != 0 && properties != NULL) {
+        uint32_t sType = *(uint32_t *)properties;
+        if (sType == CS_VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2) {
+            cs_copy((char *)properties + 16 + CS_VK_DEVICE_NAME_OFFSET,
+                    CS_VK_DEVICE_NAME_SIZE, g_vulkan_model);
+        }
+    }
+    pthread_mutex_unlock(&g_lock);
+}
+
+static void *cs_vk_get_instance_proc_addr(void *instance, const char *pName) {
+    void *real = g_real_vk_get_instance_proc_addr != NULL
+                     ? g_real_vk_get_instance_proc_addr(instance, pName)
+                     : NULL;
+    if (pName == NULL) return real;
+    if (strcmp(pName, "vkGetPhysicalDeviceProperties") == 0)
+        return (void *)cs_vk_get_physical_device_properties;
+    if (strcmp(pName, "vkGetPhysicalDeviceProperties2") == 0)
+        return (void *)cs_vk_get_physical_device_properties2;
+    if (strcmp(pName, "vkGetPhysicalDeviceProperties2KHR") == 0)
+        return (void *)cs_vk_get_physical_device_properties2;
+    return real;
+}
+
+static void cs_hook_vulkan_library(void *handle) {
+    if (handle == NULL || g_hook == NULL || !cs_is_configured()) return;
+    void *symbol = dlsym(handle, "vkGetPhysicalDeviceProperties");
+    if (symbol != NULL && cs_hook_install(symbol, (void *)cs_vk_get_physical_device_properties,
+                                          (void **)&g_real_vk_get_physical_device_properties)) {
+        LOGD("vkGetPhysicalDeviceProperties hooked in libvulkan.so");
+    }
+    symbol = dlsym(handle, "vkGetPhysicalDeviceProperties2");
+    if (symbol != NULL && cs_hook_install(symbol, (void *)cs_vk_get_physical_device_properties2,
+                                          (void **)&g_real_vk_get_physical_device_properties2)) {
+        LOGD("vkGetPhysicalDeviceProperties2 hooked in libvulkan.so");
+    }
+    symbol = dlsym(handle, "vkGetInstanceProcAddr");
+    if (symbol != NULL && cs_hook_install(symbol, (void *)cs_vk_get_instance_proc_addr,
+                                          (void **)&g_real_vk_get_instance_proc_addr)) {
+        LOGD("vkGetInstanceProcAddr hooked in libvulkan.so");
+    }
+}
+
 /* The framework calls this for every library loaded after the module registered, our own load
  * included. Only the two GL wrappers are interesting; everything else returns immediately. */
 static void cs_on_module_loaded(const char *name, void *handle) {
@@ -349,6 +432,8 @@ static void cs_on_module_loaded(const char *name, void *handle) {
         cs_hook_gl_library(handle, 0);
     } else if (cs_ends_with(name, "libGLESv1_CM.so")) {
         cs_hook_gl_library(handle, 1);
+    } else if (cs_ends_with(name, "libvulkan.so")) {
+        cs_hook_vulkan_library(handle);
     }
 }
 
@@ -461,18 +546,39 @@ Java_com_catsmoker_app_features_spoofdevice_root_NativeSpoofChannel_nativeSetAli
 /* Sets the GL strings a profile answers with; null or empty leaves that string to the device. */
 JNIEXPORT void JNICALL
 Java_com_catsmoker_app_features_spoofdevice_root_NativeSpoofChannel_nativeSetGpuStrings(
-    JNIEnv *env, jclass clazz, jstring vendor, jstring renderer) {
+    JNIEnv *env, jclass clazz, jstring vendor, jstring renderer, jstring version, jstring extensions) {
     (void)clazz;
     const char *vendor_text = vendor != NULL ? (*env)->GetStringUTFChars(env, vendor, NULL) : NULL;
     const char *renderer_text =
         renderer != NULL ? (*env)->GetStringUTFChars(env, renderer, NULL) : NULL;
+    const char *version_text =
+        version != NULL ? (*env)->GetStringUTFChars(env, version, NULL) : NULL;
+    const char *extensions_text =
+        extensions != NULL ? (*env)->GetStringUTFChars(env, extensions, NULL) : NULL;
     pthread_mutex_lock(&g_lock);
     cs_copy(g_gpu_vendor, CS_VALUE_MAX, vendor_text);
     cs_copy(g_gpu_renderer, CS_VALUE_MAX, renderer_text);
-    if (g_gpu_vendor[0] != 0 || g_gpu_renderer[0] != 0) g_configured = 1;
+    cs_copy(g_gpu_version, CS_VALUE_MAX, version_text);
+    cs_copy(g_gpu_extensions, CS_VALUE_MAX, extensions_text);
+    if (g_gpu_vendor[0] != 0 || g_gpu_renderer[0] != 0 || g_gpu_version[0] != 0 || g_gpu_extensions[0] != 0) g_configured = 1;
     pthread_mutex_unlock(&g_lock);
     if (vendor_text != NULL) (*env)->ReleaseStringUTFChars(env, vendor, vendor_text);
     if (renderer_text != NULL) (*env)->ReleaseStringUTFChars(env, renderer, renderer_text);
+    if (version_text != NULL) (*env)->ReleaseStringUTFChars(env, version, version_text);
+    if (extensions_text != NULL) (*env)->ReleaseStringUTFChars(env, extensions, extensions_text);
+}
+
+/* Sets the spoofed Vulkan physical-device name; null or empty leaves it to the device. */
+JNIEXPORT void JNICALL
+Java_com_catsmoker_app_features_spoofdevice_root_NativeSpoofChannel_nativeSetVulkanModel(
+    JNIEnv *env, jclass clazz, jstring model) {
+    (void)clazz;
+    const char *text = model != NULL ? (*env)->GetStringUTFChars(env, model, NULL) : NULL;
+    pthread_mutex_lock(&g_lock);
+    cs_copy(g_vulkan_model, CS_VALUE_MAX, text);
+    if (g_vulkan_model[0] != 0) g_configured = 1;
+    pthread_mutex_unlock(&g_lock);
+    if (text != NULL) (*env)->ReleaseStringUTFChars(env, model, text);
 }
 
 /* The state bitmask; the Kotlin side mirrors the bit names (NativeSpoofChannel). */

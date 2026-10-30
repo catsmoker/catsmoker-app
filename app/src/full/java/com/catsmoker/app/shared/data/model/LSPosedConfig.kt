@@ -192,6 +192,15 @@ object LSPosedConfig {
     /** GL renderer string (`glGetString(GL_RENDERER)`), the partner of [KEY_GPU_VENDOR]. */
     const val KEY_GPU_RENDERER = "gpu.renderer"
 
+    /** GL version string (`glGetString(GL_VERSION)`), spoofed alongside the GPU identity. */
+    const val KEY_GPU_VERSION = "gpu.version"
+
+    /** GL extensions string (`glGetString(GL_EXTENSIONS)`), spoofed alongside the GPU identity. */
+    const val KEY_GPU_EXTENSIONS = "gpu.extensions"
+
+    /** Vulkan physical-device name (`VkPhysicalDeviceProperties.deviceName`), spoofed for Vulkan-based tier checks. */
+    const val KEY_VULKAN_MODEL = "vulkan.model"
+
     /**
      * Refresh rate in Hz the profile should answer `Display.getRefreshRate()` with, when set.
      *

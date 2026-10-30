@@ -9,6 +9,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.catsmoker.app.shared.ui.theme.CatsmokerSpacing
 
@@ -39,16 +40,27 @@ fun CardGroup(
  * Replaces the hand-rolled `Text(style = labelSmall, color = onSurfaceVariant, padding(...))`
  * repetition: several screens forgot the bottom padding entirely, leaving the heading touching
  * the card it introduces.
+ *
+ * [accent] paints the heading in the theme accent (bold `primary`) instead of the neutral
+ * `onSurfaceVariant` — Settings uses it to separate its five groups at a glance. The text is
+ * never uppercased or letter-spaced: that is a no-op for Arabic/CJK and spacing between letters
+ * breaks cursive Arabic.
  */
 @Composable
 fun SectionLabel(
     text: String,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    accent: Boolean = false
 ) {
     Text(
         text = text,
         style = MaterialTheme.typography.labelSmall,
-        color = MaterialTheme.colorScheme.onSurfaceVariant,
+        color = if (accent) {
+            MaterialTheme.colorScheme.primary
+        } else {
+            MaterialTheme.colorScheme.onSurfaceVariant
+        },
+        fontWeight = if (accent) FontWeight.Bold else null,
         modifier = modifier.padding(start = 4.dp, bottom = CatsmokerSpacing.LabelGap)
     )
 }

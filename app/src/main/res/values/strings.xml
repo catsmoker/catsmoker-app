@@ -148,6 +148,7 @@
     <!-- Links -->
     <string name="url_github" translatable="false">https://github.com/catsmoker/catsmoker-app</string>
     <string name="url_legal" translatable="false">https://catsmoker.vercel.app/legal</string>
+    <string name="url_license" translatable="false">https://creativecommons.org/licenses/by-nc-sa/4.0/</string>
     <string name="url_webpage" translatable="false">https://catsmoker.vercel.app/</string>
     <string name="url_paypal" translatable="false">https://www.paypal.me/catsmoker</string>
     <string name="url_discord" translatable="false">https://discord.gg/catsmoker</string>

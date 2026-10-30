@@ -36,7 +36,7 @@ app/src/
 │       │   └── ads/        # ( Implementations live per-flavor; see below)
 │       ├── shared/         # data/models, ui/theme, components
 │       └── features/       # main, gamingtools, editgamefiles, permissions,
-│                           # logs, settings, about (+ legal screens)
+│                           # logs, settings, about (+ legal + licenses screens)
 ├── full/                   # Full/GitHub-only: spoofdevice/ (+ root/ Xposed module,
 │                           # Magisk builder, native spoof channel: native_init +
 │                           # NativeSpoofChannel), SpoofRepository et al, Start.io
@@ -128,6 +128,11 @@ phone (see `GAMING_MODE.md`).
   crash handler writes `filesDir/crash_reports` (newest five) → the Logs screen's
   Export action builds a ZIP in `cacheDir/shared` and shares it through the
   FileProvider (see `LogsViewModel` / `BugReportExporter`).
+- **Share app**: the Settings card copies the installed
+  `applicationInfo.sourceDir` into `cacheDir/shared_apk` (the previous copy is
+  deleted first, so one APK is ever cached) → FileProvider `content://` URI →
+  `ACTION_SEND` chooser (see `AppApkSharer`). An App Bundle / per-ABI install
+  shares its base APK only and tells the user it may need the splits beside it.
 
 ## Capability detection (pattern, not a registry)
 

@@ -97,7 +97,6 @@ fun MainRoute(onNavigate: (String) -> Unit) {
         onOpenSpoofDevice = { onNavigate(Routes.SPOOF_DEVICE) },
         onOpenEditGameFiles = { onNavigate(Routes.EDIT_GAME_FILES) },
         onOpenGamingTools = { onNavigate(Routes.GAMING_TOOLS) },
-        onOpenAbout = { onNavigate(Routes.ABOUT) },
         onOpenSettings = { onNavigate(Routes.SETTINGS) }
     )
 }
@@ -114,7 +113,6 @@ fun MainScreen(
     onOpenSpoofDevice: () -> Unit,
     onOpenEditGameFiles: () -> Unit,
     onOpenGamingTools: () -> Unit,
-    onOpenAbout: () -> Unit,
     onOpenSettings: () -> Unit
 ) {
     val isPreview = LocalInspectionMode.current
@@ -395,17 +393,6 @@ fun MainScreen(
                 }
 
                 Spacer(modifier = Modifier.height(12.dp))
-
-                QuickActionButton(
-                    title = stringResource(R.string.about_header_title),
-                    subtitle = stringResource(R.string.dash_about_subtitle),
-                    iconContainerColor = MaterialTheme.colorScheme.surfaceVariant,
-                    iconContentColor = MaterialTheme.colorScheme.onSurface,
-                    onClick = onOpenAbout,
-                    isFullWidth = true,
-                    showChevron = true,
-                    icon = { Icon(Icons.Default.Info, null) }
-                )
             }
         } else {
             Spacer(modifier = Modifier.weight(1.5f))
@@ -579,7 +566,6 @@ fun MainPreview() {
             onOpenSpoofDevice = {},
             onOpenEditGameFiles = {},
             onOpenGamingTools = {},
-            onOpenAbout = {},
             onOpenSettings = {}
         )
     }

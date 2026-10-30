@@ -225,6 +225,9 @@ fun ProfileEditorScreen(
                 // only one of them silently does nothing.
                 EditorField(stringResource(R.string.spoof_field_gl_vendor), profile.gpuVendor, switch = fieldSwitch(ProfileToggleFields.GPU)) { profile = profile.copy(gpuVendor = it) }
                 EditorField(stringResource(R.string.spoof_field_gl_renderer), profile.gpuRenderer, switch = fieldSwitch(ProfileToggleFields.GPU)) { profile = profile.copy(gpuRenderer = it) }
+                EditorField(stringResource(R.string.spoof_field_gl_version), profile.gpuVersion, switch = fieldSwitch(ProfileToggleFields.GPU)) { profile = profile.copy(gpuVersion = it) }
+                EditorField(stringResource(R.string.spoof_field_gl_extensions), profile.gpuExtensions, switch = fieldSwitch(ProfileToggleFields.GPU)) { profile = profile.copy(gpuExtensions = it) }
+                EditorField(stringResource(R.string.spoof_field_vulkan_model), profile.vulkanModel, switch = fieldSwitch(ProfileToggleFields.GPU)) { profile = profile.copy(vulkanModel = it) }
             }
 
             EditorGroup(title = stringResource(R.string.spoof_group_facts)) {

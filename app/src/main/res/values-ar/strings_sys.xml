@@ -34,9 +34,7 @@
     <string name="sys_update_prompt">يتوفر إصدار جديد. هل تريد تنزيله وتثبيته الآن؟</string>
     <string name="sys_download">تنزيل</string>
     <string name="sys_later">لاحقًا</string>
-    <string name="sys_section_management">الإدارة</string>
     <string name="sys_permissions_title">أذونات التطبيق</string>
-    <string name="sys_permissions_subtitle">إدارة الأذونات الممنوحة.</string>
     <string name="sys_logs_title">سجلات النظام</string>
     <string name="sys_logs_subtitle">عرض تشخيصات التطبيق والنظام.</string>
     <string name="sys_section_appearance">المظهر</string>
@@ -77,4 +75,31 @@
     <string name="sys_first_run_title">مرحبًا بك في CatSmoker</string>
     <string name="sys_first_run_subtitle">اختر مظهر التطبيق ولغته. يمكنك تغيير هذا لاحقًا من الإعدادات.</string>
     <string name="sys_continue">متابعة</string>
+
+    <!-- Redesigned Settings: section headers, one-line values, info sheets. -->
+    <string name="sys_section_privacy">الخصوصية والبيانات</string>
+    <string name="sys_section_help">المساعدة والمعلومات</string>
+    <string name="sys_section_about">حول</string>
+    <string name="sys_appearance_summary">السمة: %1$s</string>
+    <string name="sys_language_summary">اللغة: %1$s</string>
+    <string name="sys_notifications_title">الإشعارات</string>
+    <string name="sys_notifications_allowed">مسموحة</string>
+    <string name="sys_notifications_blocked">محظورة</string>
+    <string name="sys_updates_summary">الإصدار %1$s</string>
+    <string name="sys_updates_available">يتوفر تحديث %1$s</string>
+    <string name="sys_updates_badge">جديد</string>
+    <string name="sys_state_on">مفعّل</string>
+    <string name="sys_state_off">متوقف</string>
+    <string name="sys_remove_ads_summary">شراء لمرة واحدة</string>
+    <string name="sys_permissions_all_granted">كلها ممنوحة</string>
+    <string name="sys_permissions_some_granted">ممنوح %1$d من %2$d</string>
+    <string name="sys_permissions_open_system">فتح إعدادات النظام</string>
+    <string name="sys_about_summary">الإصدار %1$s · CC BY-NC-SA 4.0</string>
+    <string name="sys_info_what_title">ما الذي يفعله</string>
+    <string name="sys_rate_app_title">قيم التطبيق</string>
+    <string name="sys_rate_app_summary">قيم على متجر Google Play</string>
+    <string name="sys_share_app_title">مشاركة التطبيق</string>
+    <string name="sys_share_app_summary">مشاركة ملف التطبيق</string>
+    <string name="sys_share_app_failed">تعذّرت مشاركة التطبيق</string>
+    <string name="sys_share_app_split_note">يستخدم هذا الإصدار ملفات APK مقسّمة — قد لا يُثبَّت الملف المُشارَك بمفرده</string>
 </resources>

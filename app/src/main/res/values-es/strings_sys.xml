@@ -34,9 +34,7 @@
     <string name="sys_update_prompt">Hay una nueva versión disponible. ¿Descargarla e instalarla ahora?</string>
     <string name="sys_download">DESCARGAR</string>
     <string name="sys_later">MÁS TARDE</string>
-    <string name="sys_section_management">Gestión</string>
     <string name="sys_permissions_title">Permisos de la app</string>
-    <string name="sys_permissions_subtitle">Gestiona los permisos otorgados.</string>
     <string name="sys_logs_title">Registros del sistema</string>
     <string name="sys_logs_subtitle">Ver diagnósticos de la app y del sistema.</string>
     <string name="sys_section_appearance">Apariencia</string>
@@ -77,4 +75,31 @@
     <string name="sys_first_run_title">Te damos la bienvenida a CatSmoker</string>
     <string name="sys_first_run_subtitle">Elige el aspecto y el idioma de la app. Podrás cambiarlo luego en Ajustes.</string>
     <string name="sys_continue">CONTINUAR</string>
+
+    <!-- Redesigned Settings: section headers, one-line values, info sheets. -->
+    <string name="sys_section_privacy">Privacidad y datos</string>
+    <string name="sys_section_help">Ayuda e información</string>
+    <string name="sys_section_about">Acerca de</string>
+    <string name="sys_appearance_summary">Tema: %1$s</string>
+    <string name="sys_language_summary">Idioma: %1$s</string>
+    <string name="sys_notifications_title">Notificaciones</string>
+    <string name="sys_notifications_allowed">Permitidas</string>
+    <string name="sys_notifications_blocked">Bloqueadas</string>
+    <string name="sys_updates_summary">Versión %1$s</string>
+    <string name="sys_updates_available">Actualización %1$s disponible</string>
+    <string name="sys_updates_badge">Nueva</string>
+    <string name="sys_state_on">Activado</string>
+    <string name="sys_state_off">Desactivado</string>
+    <string name="sys_remove_ads_summary">Compra única</string>
+    <string name="sys_permissions_all_granted">Todos concedidos</string>
+    <string name="sys_permissions_some_granted">%1$d de %2$d concedidos</string>
+    <string name="sys_permissions_open_system">Abrir ajustes del sistema</string>
+    <string name="sys_about_summary">Versión %1$s · CC BY-NC-SA 4.0</string>
+    <string name="sys_info_what_title">Qué hace</string>
+    <string name="sys_rate_app_title">Calificar App</string>
+    <string name="sys_rate_app_summary">Calificar en Google Play</string>
+    <string name="sys_share_app_title">Compartir App</string>
+    <string name="sys_share_app_summary">Compartir el APK</string>
+    <string name="sys_share_app_failed">No se pudo compartir la app</string>
+    <string name="sys_share_app_split_note">Esta versión usa APK divididos: el archivo compartido podría no instalarse por sí solo</string>
 </resources>

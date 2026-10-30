@@ -21,4 +21,7 @@ object VariantCapabilities {
      * ignores `ads_enabled`), so the toggle must stay hidden and unwired here.
      */
     const val HAS_FREE_ADS_TOGGLE = false
+
+    /** Google Play Store is available — used to gate Play-only entries like "Rate App". */
+    const val HAS_PLAY_STORE = true
 }

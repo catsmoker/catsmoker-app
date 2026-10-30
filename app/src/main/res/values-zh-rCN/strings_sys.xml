@@ -34,9 +34,7 @@
     <string name="sys_update_prompt">有新版本可用。现在下载并安装吗？</string>
     <string name="sys_download">下载</string>
     <string name="sys_later">稍后</string>
-    <string name="sys_section_management">管理</string>
     <string name="sys_permissions_title">应用权限</string>
-    <string name="sys_permissions_subtitle">管理已授予的权限。</string>
     <string name="sys_logs_title">系统日志</string>
     <string name="sys_logs_subtitle">查看应用和系统诊断信息。</string>
     <string name="sys_section_appearance">外观</string>
@@ -77,4 +75,31 @@
     <string name="sys_first_run_title">欢迎使用 CatSmoker</string>
     <string name="sys_first_run_subtitle">选择应用的外观和语言，稍后可在设置中更改。</string>
     <string name="sys_continue">继续</string>
+
+    <!-- Redesigned Settings: section headers, one-line values, info sheets. -->
+    <string name="sys_section_privacy">隐私与数据</string>
+    <string name="sys_section_help">帮助与信息</string>
+    <string name="sys_section_about">关于</string>
+    <string name="sys_appearance_summary">主题：%1$s</string>
+    <string name="sys_language_summary">语言：%1$s</string>
+    <string name="sys_notifications_title">通知</string>
+    <string name="sys_notifications_allowed">已允许</string>
+    <string name="sys_notifications_blocked">已阻止</string>
+    <string name="sys_updates_summary">版本 %1$s</string>
+    <string name="sys_updates_available">有可用更新 %1$s</string>
+    <string name="sys_updates_badge">新</string>
+    <string name="sys_state_on">开启</string>
+    <string name="sys_state_off">关闭</string>
+    <string name="sys_remove_ads_summary">一次性购买</string>
+    <string name="sys_permissions_all_granted">已全部授予</string>
+    <string name="sys_permissions_some_granted">已授予 %1$d/%2$d</string>
+    <string name="sys_permissions_open_system">打开系统设置</string>
+    <string name="sys_about_summary">版本 %1$s · CC BY-NC-SA 4.0</string>
+    <string name="sys_info_what_title">作用</string>
+    <string name="sys_rate_app_title">评分应用</string>
+    <string name="sys_rate_app_summary">在 Google Play 上评分</string>
+    <string name="sys_share_app_title">分享应用</string>
+    <string name="sys_share_app_summary">分享 APK 文件</string>
+    <string name="sys_share_app_failed">无法分享应用</string>
+    <string name="sys_share_app_split_note">此版本使用拆分 APK，分享的文件可能无法单独安装</string>
 </resources>

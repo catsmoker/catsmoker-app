@@ -34,9 +34,7 @@
     <string name="sys_update_prompt">A new version is available. Download and install now?</string>
     <string name="sys_download">DOWNLOAD</string>
     <string name="sys_later">LATER</string>
-    <string name="sys_section_management">Management</string>
     <string name="sys_permissions_title">App Permissions</string>
-    <string name="sys_permissions_subtitle">Manage granted permissions.</string>
     <string name="sys_logs_title">System Logs</string>
     <string name="sys_logs_subtitle">View app and system diagnostics.</string>
     <string name="sys_section_appearance">Appearance</string>
@@ -77,4 +75,31 @@
     <string name="sys_first_run_title">Welcome to CatSmoker</string>
     <string name="sys_first_run_subtitle">Choose how the app looks and which language it speaks. You can change this later in Settings.</string>
     <string name="sys_continue">CONTINUE</string>
+
+    <!-- Redesigned Settings: section headers, one-line values, info sheets. -->
+    <string name="sys_section_privacy">Privacy &amp; Data</string>
+    <string name="sys_section_help">Help &amp; Info</string>
+    <string name="sys_section_about">About</string>
+    <string name="sys_appearance_summary">Theme: %1$s</string>
+    <string name="sys_language_summary">Language: %1$s</string>
+    <string name="sys_notifications_title">Notifications</string>
+    <string name="sys_notifications_allowed">Allowed</string>
+    <string name="sys_notifications_blocked">Blocked</string>
+    <string name="sys_updates_summary">Version %1$s</string>
+    <string name="sys_updates_available">Update %1$s available</string>
+    <string name="sys_updates_badge">New</string>
+    <string name="sys_state_on">On</string>
+    <string name="sys_state_off">Off</string>
+    <string name="sys_remove_ads_summary">One-time purchase</string>
+    <string name="sys_permissions_all_granted">All granted</string>
+    <string name="sys_permissions_some_granted">%1$d of %2$d granted</string>
+    <string name="sys_permissions_open_system">Open system settings</string>
+    <string name="sys_about_summary">Version %1$s · CC BY-NC-SA 4.0</string>
+    <string name="sys_info_what_title">What it does</string>
+    <string name="sys_rate_app_title">Rate App</string>
+    <string name="sys_rate_app_summary">Rate on Google Play</string>
+    <string name="sys_share_app_title">Share App</string>
+    <string name="sys_share_app_summary">Share the APK</string>
+    <string name="sys_share_app_failed">Couldn\'t share the app</string>
+    <string name="sys_share_app_split_note">This build uses split APKs — the shared file may not install on its own</string>
 </resources>

@@ -22,4 +22,7 @@ object VariantCapabilities {
      * verified `remove_ads` purchase.
      */
     const val HAS_FREE_ADS_TOGGLE = true
+
+    /** Google Play Store is available — used to gate Play-only entries like "Rate App". */
+    const val HAS_PLAY_STORE = false
 }

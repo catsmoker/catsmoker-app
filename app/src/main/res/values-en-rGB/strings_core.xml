@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <resources>
     <!-- Core dashboard / navigation strings (feature: main, about, logs, permissions, startup). -->
     <!-- Back-press exit toast (%1$d = remaining taps). -->
@@ -23,11 +23,25 @@
 
     <!-- About screen. -->
     <string name="core_about_subtitle">App information and community.</string>
-    <string name="core_about_description">CatSmoker is an open-source performance utility for Android. Our mission is to provide gamers with the best possible experience by optimizing system resources and unlocking hidden potential.</string>
-    <string name="core_about_dev_title">Still in development</string>
-    <string name="core_about_dev_body">Some features are still in development and may not work. If something fails, please save the logs and report it on GitHub.</string>
-    <string name="core_about_dev_logs">View logs</string>
-    <string name="core_about_dev_report">Report on GitHub</string>
+    <string name="core_about_description">CatSmoker is an open-source Android toolkit that makes games run faster, smoother and more responsive.</string>
+    <string name="about_read_more">Read more</string>
+    <string name="about_read_less">Show less</string>
+    <string name="about_read_more_body">CatSmoker optimizes system resources so games keep a higher, steadier frame rate with lower input latency. Some features are still in development and may not work on every device. If something fails, open System Logs from Settings → Help &amp; Info and report it on GitHub.</string>
+
+    <!-- About section labels and rows. -->
+    <string name="about_section_contact">Developer &amp; Contact</string>
+    <string name="about_section_links">Links</string>
+    <string name="about_report_issue">Report an issue</string>
+    <string name="about_version">Version %1$s (%2$d)</string>
+    <string name="about_copied">Copied</string>
+    <string name="about_copy_version">Copy version</string>
+    <string name="about_licenses_title">Open Source Licenses</string>
+    <string name="about_licenses_summary">Third-party licenses</string>
+    <string name="about_licenses_subtitle">Software CatSmoker is built with.</string>
+    <string name="about_licenses_intro">CatSmoker is built on the following open-source libraries. Each entry names the license the library ships under.</string>
+    <string name="about_license_cc">License (CC BY-NC-SA 4.0)</string>
+    <string name="about_copyright">© 2026 CatSmoker. All rights reserved.</string>
+
 
     <!-- About screen community-button titles (brand names stay verbatim). -->
     <string name="about_social_github">GitHub</string>

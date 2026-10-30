@@ -51,6 +51,15 @@ android {
         // ADMOB_* + the ADMOB_APP_ID manifest placeholder in their flavor blocks.
     }
 
+    splits {
+        abi {
+            isEnable = true
+            reset()
+            include("arm64-v8a", "armeabi-v7a", "x86_64")
+            isUniversalApk = true
+        }
+    }
+
     // Single codebase, two distribution variants:
     // full = complete GitHub app (spoof/LSPosed/Magisk/Start.io/self-updater),
     // playstore = Play-safe build (no spoof implementation, AdMob instead of Start.io).

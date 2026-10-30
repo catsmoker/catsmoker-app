@@ -80,6 +80,7 @@ still run it explicitly:
 - `isMinifyEnabled = true` and `isShrinkResources = true` for the release
   build type; without `signing.properties` the release APK stays debug-signed
   (see above).
+- **GitHub Release rule**: GitHub Releases must publish ONLY the `full` variant assets: the universal `app-full-release.apk` along with all per-ABI split APK files (`app-full-arm64-v8a-release.apk`, `app-full-armeabi-v7a-release.apk`, `app-full-x86_64-release.apk`). NEVER attach the `playstore` variant (`app-playstore-release.apk` / `.aab`) to GitHub Releases; the Play variant is built exclusively for Google Play Console upload.
 - The Start.io ad SDK id can be overridden via `STARTIO_APP_ID` in
   `local.properties` (full variant; defaults to the demo id). AdMob ids for
   the playstore variant come from `ADMOB_APP_ID` / `ADMOB_BANNER_ID` /

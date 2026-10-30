@@ -384,10 +384,10 @@ Gaming Mode applies.
   dummy fallback). The AAR declares `minSdkVersion 33`, so `<uses-sdk
   tools:overrideLibrary="com.nothing.thirdparty">` waives the merge for this
   app's minSdk 27 — the runtime gate keeps older devices out.
-- **Toggle.** Settings → General → "Sync Gaming Mode with Glyph", stored in
-  `glyph_prefs` (`sync_gaming_mode`, default on) via `GlyphSyncStore`, and
-  shown only where `GlyphController.isSupported`. Turning it off clears a live
-  strip.
+- **Toggle.** Removed from the Settings screen. The Glyph mirror is controlled
+  only from the Gaming Tools screen; it is stored in `glyph_prefs`
+  (`sync_gaming_mode`, default on) via `GlyphSyncStore`, and shown only where
+  `GlyphController.isSupported`. Turning it off clears a live strip.
 - **Lifecycle.** The service is bound only when a run starts, the session is
   closed and `unInit()` called on completion/cancel/`onCleared`, and the screen
   also drops the lights on `ON_STOP`. `unInit()` unbinds unconditionally in the

@@ -8,8 +8,11 @@ single codebase with Android Gradle product flavors. There is no maintained
 
 | Variant | Dimension | Who | Contains |
 |---|---|---|---|
-| `full` | `distribution` | GitHub release | Everything: spoofing/LSPosed/Magisk, Start.io ads, GitHub self-updater |
-| `playstore` | `distribution` | Google Play release | Same app minus the restricted set: no spoof implementation, AdMob ads, no self-updater |
+| `full` | `distribution` | GitHub release ONLY | Everything: spoofing/LSPosed/Magisk, Start.io ads, GitHub self-updater |
+| `playstore` | `distribution` | Google Play release ONLY | Same app minus the restricted set: no spoof implementation, AdMob ads, no self-updater |
+
+> [!IMPORTANT]
+> **GitHub Releases Rule**: GitHub Releases must ONLY contain the `full` variant assets: the universal `app-full-release.apk` plus all per-ABI split APK files (`app-full-arm64-v8a-release.apk`, `app-full-armeabi-v7a-release.apk`, `app-full-x86_64-release.apk`). NEVER upload or publish the `playstore` variant (`app-playstore-release.apk` / `.aab`) to GitHub Releases — it is strictly reserved for Google Play Console distribution.
 
 Gradle tasks use the flavor name: `assembleFullDebug`, `assemblePlaystoreRelease`,
 `testFullDebugUnitTest`, `testPlaystoreDebugUnitTest`, `installPlaystoreDebug`.

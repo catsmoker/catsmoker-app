@@ -23,11 +23,25 @@
 
     <!-- About screen. -->
     <string name="core_about_subtitle">应用信息与社区。</string>
-    <string name="core_about_description">CatSmoker 是一款适用于 Android 的开源性能工具。我们的使命是通过优化系统资源并释放隐藏潜力，为玩家提供最佳体验。</string>
-    <string name="core_about_dev_title">仍在开发中</string>
-    <string name="core_about_dev_body">部分功能仍在开发中，可能无法正常工作。如果遇到问题，请保存日志并在 GitHub 上反馈。</string>
-    <string name="core_about_dev_logs">查看日志</string>
-    <string name="core_about_dev_report">在 GitHub 反馈</string>
+    <string name="core_about_description">CatSmoker 是一款开源 Android 工具，让游戏运行更快、更流畅、响应更迅速。</string>
+    <string name="about_read_more">阅读更多</string>
+    <string name="about_read_less">收起</string>
+    <string name="about_read_more_body">CatSmoker 优化系统资源，让游戏保持更高、更稳定的帧率并降低输入延迟。部分功能仍在开发中，可能无法在所有设备上正常工作。如果遇到问题，请在“设置 → 帮助与信息”中打开系统日志，并在 GitHub 上反馈。</string>
+
+    <!-- About section labels and rows. -->
+    <string name="about_section_contact">开发者与联系</string>
+    <string name="about_section_links">链接</string>
+    <string name="about_report_issue">报告问题</string>
+    <string name="about_version">版本 %1$s（%2$d）</string>
+    <string name="about_copied">已复制</string>
+    <string name="about_copy_version">复制版本号</string>
+    <string name="about_licenses_title">开源许可</string>
+    <string name="about_licenses_summary">第三方许可</string>
+    <string name="about_licenses_subtitle">CatSmoker 使用的软件。</string>
+    <string name="about_licenses_intro">CatSmoker 基于以下开源库构建。每一项都标明该库随附的许可。</string>
+    <string name="about_license_cc">许可（CC BY-NC-SA 4.0）</string>
+    <string name="about_copyright">© 2026 CatSmoker。保留所有权利。</string>
+
 
     <!-- About screen community-button titles (brand names stay verbatim). -->
     <string name="about_social_github">GitHub</string>

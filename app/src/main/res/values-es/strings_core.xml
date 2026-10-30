@@ -23,11 +23,25 @@
 
     <!-- About screen. -->
     <string name="core_about_subtitle">Información de la app y comunidad.</string>
-    <string name="core_about_description">CatSmoker es una utilidad de rendimiento de código abierto para Android. Nuestra misión es brindar a los jugadores la mejor experiencia posible optimizando los recursos del sistema y liberando su potencial oculto.</string>
-    <string name="core_about_dev_title">Aún en desarrollo</string>
-    <string name="core_about_dev_body">Algunas funciones aún están en desarrollo y pueden no funcionar. Si algo falla, guarda los registros e infórmalo en GitHub.</string>
-    <string name="core_about_dev_logs">Ver registros</string>
-    <string name="core_about_dev_report">Informar en GitHub</string>
+    <string name="core_about_description">CatSmoker es una herramienta de código abierto para Android que hace que los juegos vayan más rápido, con mayor fluidez y menor latencia.</string>
+    <string name="about_read_more">Leer más</string>
+    <string name="about_read_less">Mostrar menos</string>
+    <string name="about_read_more_body">CatSmoker optimiza los recursos del sistema para que los juegos mantengan una tasa de fotogramas más alta y estable, con menor latencia de entrada. Algunas funciones aún están en desarrollo y pueden no funcionar en todos los dispositivos. Si algo falla, abre los registros del sistema en Ajustes → Ayuda e información e infórmalo en GitHub.</string>
+
+    <!-- About section labels and rows. -->
+    <string name="about_section_contact">Desarrollador y contacto</string>
+    <string name="about_section_links">Enlaces</string>
+    <string name="about_report_issue">Informar de un problema</string>
+    <string name="about_version">Versión %1$s (%2$d)</string>
+    <string name="about_copied">Copiado</string>
+    <string name="about_copy_version">Copiar versión</string>
+    <string name="about_licenses_title">Licencias de código abierto</string>
+    <string name="about_licenses_summary">Licencias de terceros</string>
+    <string name="about_licenses_subtitle">Software con el que se construye CatSmoker.</string>
+    <string name="about_licenses_intro">CatSmoker se basa en las siguientes bibliotecas de código abierto. Cada entrada indica la licencia con la que se distribuye la biblioteca.</string>
+    <string name="about_license_cc">Licencia (CC BY-NC-SA 4.0)</string>
+    <string name="about_copyright">© 2026 CatSmoker. Todos los derechos reservados.</string>
+
 
     <!-- About screen community-button titles (brand names stay verbatim). -->
     <string name="about_social_github">GitHub</string>

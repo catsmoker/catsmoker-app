@@ -79,8 +79,11 @@ internal object NativeSpoofChannel {
         nativeSetAliasRules(renderRules())
         nativeSetGpuStrings(
             props[LSPosedConfig.KEY_GPU_VENDOR],
-            props[LSPosedConfig.KEY_GPU_RENDERER]
+            props[LSPosedConfig.KEY_GPU_RENDERER],
+            props[LSPosedConfig.KEY_GPU_VERSION],
+            props[LSPosedConfig.KEY_GPU_EXTENSIONS]
         )
+        nativeSetVulkanModel(props[LSPosedConfig.KEY_VULKAN_MODEL])
         val dropped = if (applied < table.size) " (dropped ${table.size - applied})" else ""
         log("state=${describe(nativeChannelState())} props=$applied/${table.size}$dropped")
 
@@ -120,7 +123,10 @@ internal object NativeSpoofChannel {
     private external fun nativeSetAliasRules(blob: String): Int
 
     /** Sets the spoofed GL strings; null leaves that string to the device. */
-    private external fun nativeSetGpuStrings(vendor: String?, renderer: String?)
+    private external fun nativeSetGpuStrings(vendor: String?, renderer: String?, version: String?, extensions: String?)
+
+    /** Sets the spoofed Vulkan physical-device name; null leaves it to the device. */
+    private external fun nativeSetVulkanModel(model: String?)
 
     /** The state bitmask above, read from the library itself. */
     private external fun nativeChannelState(): Int

@@ -396,6 +396,10 @@ Magisk module is device-global and applies neither list (already stated on its
 surfaces). Keep this path robust — it is the emergency exit for anyone who
 applied a spoof that broke something.
 
+## Vulkan identity (added 2026-10-30)
+
+In addition to the GL strings, the native channel spoofs the Vulkan physical-device name (`VkPhysicalDeviceProperties.deviceName`) via `vkGetPhysicalDeviceProperties` / `vkGetPhysicalDeviceProperties2` (sType-checked) and the `vkGetInstanceProcAddr` resolver, installed from the same dlopen callback when the process loads `libvulkan.so`. The field is `vulkanModel` (`LSPosedConfig.KEY_VULKAN_MODEL`, `vulkan.model`), rendered and toggled with the rest of the GPU identity. `apiVersion` is deliberately left alone (packed uint32; a wrong value is a worse mismatch signal than the real one). As with the GL hooks, a Vulkan library already mapped before the module attached keeps the device's name - the same documented already-mapped limit.
+
 ## A note on scope
 
 Spoof identity is per-game and per-profile. Toggling, editing, or deleting a

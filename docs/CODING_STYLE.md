@@ -110,7 +110,9 @@ These recur across the codebase — a reviewer will expect them:
   `SectionGap` 24dp between labelled sections, `LabelGap` 8dp from a section
   label to its first card. Pass siblings through `CardGroup` or
   `Arrangement.spacedBy(CatsmokerSpacing.CardGap)` and headings through
-  `SectionLabel`; don't hand-place per-pair `Spacer`s. A card is a surface,
+  `SectionLabel` (`accent = true` when one screen stacks many sections, as
+  Settings does; never hand-roll an uppercase/letter-spaced heading); don't
+  hand-place per-pair `Spacer`s. A card is a surface,
   not a layout, so it carries no outer margin — the host spaces it.
 - Buttons are `CatsmokerButton` (crimson spot-glow when live). Tiles/icons use
   `QuickActionButton` (`TactileBadge`: gradient + highlight + shadow).
