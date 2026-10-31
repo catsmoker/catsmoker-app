@@ -55,7 +55,10 @@ android {
 
     splits {
         abi {
-            isEnable = true
+            // An app bundle carries every ABI in its base module; AGP rejects ABI splits
+            // alongside a bundle ("multiple shrunk-resources files"). Disable splits when a
+            // bundle task is requested so bundleFullRelease/bundlePlaystoreRelease can run.
+            isEnable = !gradle.startParameter.taskNames.any { it.contains("bundle", ignoreCase = true) }
             reset()
             include("arm64-v8a", "armeabi-v7a", "x86_64")
             isUniversalApk = true

@@ -54,6 +54,12 @@ Release builds are minified (`isMinifyEnabled = true`, `isShrinkResources =
 true`); without a gitignored `signing.properties` (storeFile, storePassword,
 keyAlias, keyPassword) they stay debug-signed so any clone still builds.
 
+App bundles (`:app:bundleFullRelease`, `:app:bundlePlaystoreRelease`) also
+work: ABI splits switch off automatically when a bundle task is requested,
+because a bundle already carries every ABI in its base module. Gradle names
+the universal split APK `app-full-universal-release.apk`; GitHub releases
+publish it as `app-full-release.apk`, the name the self-updater expects.
+
 ## Running unit tests
 
 ```bash
