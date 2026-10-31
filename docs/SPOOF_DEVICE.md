@@ -396,9 +396,11 @@ Magisk module is device-global and applies neither list (already stated on its
 surfaces). Keep this path robust — it is the emergency exit for anyone who
 applied a spoof that broke something.
 
-## Vulkan identity (added 2026-10-30)
+## Vulkan identity (added 2026-10-30, updated 2026-10-31)
 
 In addition to the GL strings, the native channel spoofs the Vulkan physical-device name (`VkPhysicalDeviceProperties.deviceName`) via `vkGetPhysicalDeviceProperties` / `vkGetPhysicalDeviceProperties2` (sType-checked) and the `vkGetInstanceProcAddr` resolver, installed from the same dlopen callback when the process loads `libvulkan.so`. The field is `vulkanModel` (`LSPosedConfig.KEY_VULKAN_MODEL`, `vulkan.model`), rendered and toggled with the rest of the GPU identity. `apiVersion` is deliberately left alone (packed uint32; a wrong value is a worse mismatch signal than the real one). As with the GL hooks, a Vulkan library already mapped before the module attached keeps the device's name - the same documented already-mapped limit.
+
+**Android 15/16 `b .+4` thunk workaround (2026-10-31):** On Android 15+ `libvulkan.so` exports `vkGetInstanceProcAddr` as a four-byte unconditional branch (`b .+4`) whose body starts at +4. When a BTI-enabled Android 16 build (PAC/BTI) loads the module, the inline engine's trampoline enters the body one instruction past the landing pad and the CPU raises `SIGILL` at `GetInstanceProcAddr+8` — the crash reported for `com.tencent.mhadv`. The fix installs hooks on the *body* behind the thunk (`cs_skip_self_branch`) for all three Vulkan entry points (the two export paths and the resolver path). The resolver hook asks the real resolver for the pointer, installs a hook on that exact pointer the first time it is requested, and returns the same pointer. The game keeps the loader's own function (its CFI/type identity is unchanged); the code behind the address is now ours. This shape never hands the game a foreign function pointer from the resolver, avoiding the CFI risk the previous wrapper shape carried.
 
 ## A note on scope
 

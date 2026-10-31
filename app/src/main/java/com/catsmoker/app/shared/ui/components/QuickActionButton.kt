@@ -45,11 +45,6 @@ fun QuickActionButton(
      * Visible only when an update is available; callers gate it on that condition.
      */
     showIndicator: Boolean = false,
-    indicatorVisible: Boolean = showIndicator,
-    updateAvailable: Boolean = showIndicator,
-    updateIndicator: Boolean = showIndicator,
-    hasUpdate: Boolean = showIndicator,
-    isUpdateAvailable: Boolean = showIndicator,
     statusTag: (@Composable () -> Unit)? = null,
     /**
      * True while the tap's work is still running. The tile goes non-clickable and shows
@@ -251,7 +246,7 @@ fun QuickActionButton(
                 )
             }
             // Update-available indicator: a small dot, only visible when an update is available.
-            if (showIndicator || indicatorVisible || updateAvailable || updateIndicator || hasUpdate || isUpdateAvailable) {
+            if (showIndicator) {
                 Box(
                     modifier = Modifier
                         .align(Alignment.TopEnd)
@@ -269,11 +264,9 @@ fun QuickActionButton(
  */
 @Composable
 fun UpdateIndicator(
-    visible: Boolean = true,
-    updateAvailable: Boolean = visible,
-    showIndicator: Boolean = visible
+    visible: Boolean = true
 ) {
-    if (visible || updateAvailable || showIndicator) {
+    if (visible) {
         Box(
             modifier = Modifier
                 .size(10.dp)

@@ -9,7 +9,6 @@ import android.os.Environment
 import android.provider.DocumentsContract
 import android.provider.MediaStore
 import android.provider.OpenableColumns
-import android.provider.Settings
 import androidx.core.content.edit
 import androidx.core.net.toUri
 import androidx.documentfile.provider.DocumentFile
@@ -67,7 +66,6 @@ class EditGameFilesViewModel @Inject constructor(
          * the grant is still exactly what the user confirms.
          */
         data class LaunchFolderPicker(val initialUri: Uri? = null) : EditEvent()
-        object LaunchAllFilesAccess : EditEvent()
         object ShowZArchiverDialog : EditEvent()
     }
 
@@ -1479,13 +1477,6 @@ class EditGameFilesViewModel @Inject constructor(
         }
     }
 
-    fun onStoragePermissionResult() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R && Environment.isExternalStorageManager()) {
-            pendingAction?.invoke()
-            pendingAction = null
-        }
-    }
-
     fun onCustomFolderPicked(uri: Uri) {
         try {
             context.contentResolver.takePersistableUriPermission(
@@ -1912,7 +1903,6 @@ class EditGameFilesViewModel @Inject constructor(
     }
 
     private fun handleZArchiverAction() {
-        if (!checkStoragePermission()) return
         val config = gameConfigs[_uiState.value.selectedGame] ?: return
         val assetPath = requireSelectedAssetPath() ?: return
         // Defense in depth for the chooser's hidden row: this profile's payload depends on the
@@ -1985,34 +1975,6 @@ class EditGameFilesViewModel @Inject constructor(
                 false
             }
         }
-    }
-
-    private fun checkStoragePermission(): Boolean {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-            if (!Environment.isExternalStorageManager()) {
-                _events.tryEmit(EditEvent.LaunchAllFilesAccess)
-                return false
-            }
-            return true
-        }
-        val granted = context.checkSelfPermission(android.Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED
-        if (!granted) {
-            _events.tryEmit(EditEvent.LaunchAllFilesAccess)
-        }
-        return granted
-    }
-
-    fun launchAllFilesAccess(): Intent? {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-            return try {
-                Intent(Settings.ACTION_MANAGE_ALL_FILES_ACCESS_PERMISSION).apply {
-                    data = "package:${context.packageName}".toUri()
-                }
-            } catch (_: Exception) {
-                Intent(Settings.ACTION_MANAGE_ALL_FILES_ACCESS_PERMISSION)
-            }
-        }
-        return null
     }
 
     fun showSnackbar(message: String) {

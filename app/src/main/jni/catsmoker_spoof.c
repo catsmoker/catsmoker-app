@@ -282,13 +282,47 @@ static const unsigned char *cs_gl1_get_string(unsigned int name) {
 }
 
 /*
+ * Skips a 4-byte `b .+4` thunk in front of a function.
+ *
+ * Android 15/16 libvulkan exports `vkGetInstanceProcAddr` as a four-byte stub whose body
+ * starts at +4 (`b pc+4`). The stub is inside the code the framework's inline engine patches;
+ * on a BTI-enabled Android 16 build the engine's trampoline enters the body one instruction
+ * past the landing pad and the CPU raises SIGILL at `GetInstanceProcAddr+8` — the crash
+ * reported for com.tencent.mhadv on 2026-10-31. Hooking the body instead of the stub keeps
+ * every entry path working (dlsym callers still go through the stub, which branches here) and
+ * gives the engine a normal function with its own landing pad.
+ *
+ * Only `b .+4` is followed: a real `b` to another function (`vkCreateInstance` is one) is left
+ * alone because hooking the thunk there is harmless and the target may be shared.
+ */
+static void *cs_skip_self_branch(void *target) {
+#if defined(__aarch64__)
+    if (target == NULL) return NULL;
+    uint32_t insn = 0;
+    memcpy(&insn, target, sizeof(insn));
+    /* AArch64 unconditional B: 000101 followed by a signed 26-bit word offset. */
+    if ((insn & 0xFC000000u) != 0x14000000u) return target;
+    int32_t imm = (int32_t)(insn & 0x03FFFFFFu);
+    if (imm & 0x02000000) imm |= (int32_t)0xFC000000u; /* sign-extend imm26 */
+    return imm == 1 ? (char *)target + 4 : target;
+#else
+    /* The thunk this skips is AArch64-only; on other ABIs the first four bytes are unrelated
+     * code and reading them as a branch would move the hook into the middle of an
+     * instruction. */
+    return target;
+#endif
+}
+
+/*
  * Installs one hook through the framework's engine. Returns 1 on success; a failure leaves the
  * function untouched and the caller records no state bit for it — never a claim it did not earn.
  */
 static int cs_hook_install(void *target, void *replace, void **backup) {
     if (target == NULL || replace == NULL || backup == NULL || g_hook == NULL) return 0;
+    void *entry = cs_skip_self_branch(target);
+    if (entry != target) LOGD("skipping b .+4 thunk at %p -> %p", target, entry);
     *backup = NULL;
-    if (g_hook(target, replace, backup) != 0) return 0;
+    if (g_hook(entry, replace, backup) != 0) return 0;
     return *backup != NULL;
 }
 
@@ -357,30 +391,53 @@ static void cs_hook_gl_library(void *handle, int gles1) {
 
 /* ------------------------------------------------------------------------- Vulkan hooks
  * Spoofs VkPhysicalDeviceProperties.deviceName (the GPU name modern games and Vulkan-based
- * tier checks read). The Vulkan entry points are resolved per-instance through
- * vkGetInstanceProcAddr, so we hook both the exported symbol and the resolver. */
+ * tier checks read).
+ *
+ * Two entry paths reach the same data and both are covered without ever handing the game a
+ * foreign function pointer:
+ *  - `dlsym("vkGetPhysicalDeviceProperties")` returns the loader's exported dispatcher; hooking
+ *    that stub covers engines that resolve the symbol directly.
+ *  - `vkGetInstanceProcAddr(instance, "vkGetPhysicalDeviceProperties")` returns the loader's
+ *    *internal* implementation instead, which is a different address. Our resolver hook asks
+ *    the real resolver for the pointer, installs a hook on that exact pointer the first time it
+ *    is requested, and returns the same pointer. The game keeps the loader's own function (so
+ *    its type/CFI identity is unchanged); the code behind the address is now ours.
+ *
+ * The resolver itself must be hooked at its body, not at the exported symbol: see
+ * cs_skip_self_branch(). Returning our own wrapper pointers from the resolver (the previous
+ * shape) meant the loader could later call a foreign function through its dispatch table; this
+ * shape never does. */
 typedef void (*cs_vk_get_physical_device_properties_t)(void *, void *);
 typedef void *(*cs_vk_get_instance_proc_addr_t)(void *, const char *);
-static cs_vk_get_physical_device_properties_t g_real_vk_get_physical_device_properties = NULL;
-static cs_vk_get_physical_device_properties_t g_real_vk_get_physical_device_properties2 = NULL;
+static cs_vk_get_physical_device_properties_t g_real_vk_pdp_export = NULL;
+static cs_vk_get_physical_device_properties_t g_real_vk_pdp2_export = NULL;
+static cs_vk_get_physical_device_properties_t g_real_vk_pdp_loader = NULL;
+static cs_vk_get_physical_device_properties_t g_real_vk_pdp2_loader = NULL;
+/* Effective entries (after cs_skip_self_branch) owned by a hook of ours. A resolver may hand
+ * back the same stub the export path already hooked; hooking it twice would instrument Dobby's
+ * own trampoline. */
+static void *g_vk_pdp_export_target = NULL;
+static void *g_vk_pdp2_export_target = NULL;
+static void *g_vk_pdp_loader_target = NULL;
+static void *g_vk_pdp2_loader_target = NULL;
 static cs_vk_get_instance_proc_addr_t g_real_vk_get_instance_proc_addr = NULL;
+static pthread_mutex_t g_vk_lock = PTHREAD_MUTEX_INITIALIZER;
 
 /* VkPhysicalDeviceProperties.deviceName sits at offset 20 (5 uint32 fields before it) and is
  * VK_MAX_PHYSICAL_DEVICE_NAME_SIZE = 256 bytes. */
 #define CS_VK_DEVICE_NAME_OFFSET 20
 #define CS_VK_DEVICE_NAME_SIZE 256
 
-static void cs_vk_get_physical_device_properties(void *physicalDevice, void *properties) {
-    if (g_real_vk_get_physical_device_properties != NULL)
-        g_real_vk_get_physical_device_properties(physicalDevice, properties);
+/* Writes the profile into a VkPhysicalDeviceProperties. Caller has passed this to the real
+ * function, so only fields the profile carries are replaced. */
+static void cs_vk_spoof_pdp(void *properties) {
+    if (properties == NULL) return;
     pthread_mutex_lock(&g_lock);
-    if (properties != NULL) {
-        if (g_vulkan_version != 0) *(uint32_t *)properties = g_vulkan_version;
-        if (g_vulkan_vendor_id != 0) *(uint32_t *)((char *)properties + 8) = g_vulkan_vendor_id;
-        if (g_vulkan_device_id != 0) *(uint32_t *)((char *)properties + 12) = g_vulkan_device_id;
-        if (g_vulkan_model[0] != 0)
-            cs_copy((char *)properties + CS_VK_DEVICE_NAME_OFFSET, CS_VK_DEVICE_NAME_SIZE, g_vulkan_model);
-    }
+    if (g_vulkan_version != 0) *(uint32_t *)properties = g_vulkan_version;
+    if (g_vulkan_vendor_id != 0) *(uint32_t *)((char *)properties + 8) = g_vulkan_vendor_id;
+    if (g_vulkan_device_id != 0) *(uint32_t *)((char *)properties + 12) = g_vulkan_device_id;
+    if (g_vulkan_model[0] != 0)
+        cs_copy((char *)properties + CS_VK_DEVICE_NAME_OFFSET, CS_VK_DEVICE_NAME_SIZE, g_vulkan_model);
     pthread_mutex_unlock(&g_lock);
 }
 
@@ -388,22 +445,70 @@ static void cs_vk_get_physical_device_properties(void *physicalDevice, void *pro
  * (sType uint32 + padding + pNext pointer). Overwrite deviceName there too when the sType
  * matches VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2 (1000059000). */
 #define CS_VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2 1000059000u
-static void cs_vk_get_physical_device_properties2(void *physicalDevice, void *properties) {
-    if (g_real_vk_get_physical_device_properties2 != NULL)
-        g_real_vk_get_physical_device_properties2(physicalDevice, properties);
+static void cs_vk_spoof_pdp2(void *properties) {
+    if (properties == NULL) return;
     pthread_mutex_lock(&g_lock);
-    if (g_vulkan_model[0] != 0 && properties != NULL) {
-        uint32_t sType = *(uint32_t *)properties;
-        if (sType == CS_VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2) {
-            if (g_vulkan_version != 0) *(uint32_t *)((char *)properties + 16) = g_vulkan_version;
-            if (g_vulkan_vendor_id != 0) *(uint32_t *)((char *)properties + 16 + 8) = g_vulkan_vendor_id;
-            if (g_vulkan_device_id != 0) *(uint32_t *)((char *)properties + 16 + 12) = g_vulkan_device_id;
-            if (g_vulkan_model[0] != 0)
-                cs_copy((char *)properties + 16 + CS_VK_DEVICE_NAME_OFFSET,
-                        CS_VK_DEVICE_NAME_SIZE, g_vulkan_model);
-        }
+    if (g_vulkan_model[0] != 0 && *(uint32_t *)properties ==
+                                      CS_VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2) {
+        if (g_vulkan_version != 0) *(uint32_t *)((char *)properties + 16) = g_vulkan_version;
+        if (g_vulkan_vendor_id != 0) *(uint32_t *)((char *)properties + 16 + 8) = g_vulkan_vendor_id;
+        if (g_vulkan_device_id != 0) *(uint32_t *)((char *)properties + 16 + 12) = g_vulkan_device_id;
+        if (g_vulkan_model[0] != 0)
+            cs_copy((char *)properties + 16 + CS_VK_DEVICE_NAME_OFFSET,
+                    CS_VK_DEVICE_NAME_SIZE, g_vulkan_model);
     }
     pthread_mutex_unlock(&g_lock);
+}
+
+/* The exported dispatcher path (dlsym callers). */
+static void cs_vk_pdp_export(void *physicalDevice, void *properties) {
+    if (g_real_vk_pdp_export != NULL) g_real_vk_pdp_export(physicalDevice, properties);
+    cs_vk_spoof_pdp(properties);
+}
+
+static void cs_vk_pdp2_export(void *physicalDevice, void *properties) {
+    if (g_real_vk_pdp2_export != NULL) g_real_vk_pdp2_export(physicalDevice, properties);
+    cs_vk_spoof_pdp2(properties);
+}
+
+/* The resolver path (loader-internal implementation). */
+static void cs_vk_pdp_loader(void *physicalDevice, void *properties) {
+    if (g_real_vk_pdp_loader != NULL) g_real_vk_pdp_loader(physicalDevice, properties);
+    cs_vk_spoof_pdp(properties);
+}
+
+static void cs_vk_pdp2_loader(void *physicalDevice, void *properties) {
+    if (g_real_vk_pdp2_loader != NULL) g_real_vk_pdp2_loader(physicalDevice, properties);
+    cs_vk_spoof_pdp2(properties);
+}
+
+/* Hooks the pointer the real resolver just returned, once. The hook is installed at the body
+ * behind a `b .+4` thunk when there is one (see cs_skip_self_branch). A pointer already covered
+ * by the export hook (`already`) or by a previous resolver hook (`*owner`) is left alone:
+ * hooking the same entry twice would instrument Dobby's own trampoline, and calling the wrong
+ * backup would be worse than a property that keeps the device's name. */
+static void cs_vk_hook_resolved(void *target, void *replace, void **backup, void **owner,
+                                void *already, const char *name) {
+    if (target == NULL || replace == NULL || backup == NULL || owner == NULL) return;
+    void *entry = cs_skip_self_branch(target);
+    pthread_mutex_lock(&g_vk_lock);
+    if (entry == *owner || entry == already) {
+        pthread_mutex_unlock(&g_vk_lock);
+        return;
+    }
+    if (*owner != NULL) {
+        LOGD("%s resolved twice with different addresses (%p, %p), leaving the second alone",
+             name, *owner, entry);
+        pthread_mutex_unlock(&g_vk_lock);
+        return;
+    }
+    if (cs_hook_install(target, replace, backup)) {
+        *owner = entry;
+        LOGD("%s hooked at resolver address %p", name, entry);
+    } else {
+        LOGD("%s not hooked at resolver address %p", name, entry);
+    }
+    pthread_mutex_unlock(&g_vk_lock);
 }
 
 static void *cs_vk_get_instance_proc_addr(void *instance, const char *pName) {
@@ -411,12 +516,24 @@ static void *cs_vk_get_instance_proc_addr(void *instance, const char *pName) {
                      ? g_real_vk_get_instance_proc_addr(instance, pName)
                      : NULL;
     if (pName == NULL) return real;
-    if (strcmp(pName, "vkGetPhysicalDeviceProperties") == 0)
-        return (void *)cs_vk_get_physical_device_properties;
-    if (strcmp(pName, "vkGetPhysicalDeviceProperties2") == 0)
-        return (void *)cs_vk_get_physical_device_properties2;
-    if (strcmp(pName, "vkGetPhysicalDeviceProperties2KHR") == 0)
-        return (void *)cs_vk_get_physical_device_properties2;
+    if (strcmp(pName, "vkGetPhysicalDeviceProperties") == 0) {
+        cs_vk_hook_resolved(real, (void *)cs_vk_pdp_loader, (void **)&g_real_vk_pdp_loader,
+                            &g_vk_pdp_loader_target, g_vk_pdp_export_target,
+                            "vkGetPhysicalDeviceProperties");
+        return real;
+    }
+    if (strcmp(pName, "vkGetPhysicalDeviceProperties2") == 0) {
+        cs_vk_hook_resolved(real, (void *)cs_vk_pdp2_loader, (void **)&g_real_vk_pdp2_loader,
+                            &g_vk_pdp2_loader_target, g_vk_pdp2_export_target,
+                            "vkGetPhysicalDeviceProperties2");
+        return real;
+    }
+    if (strcmp(pName, "vkGetPhysicalDeviceProperties2KHR") == 0) {
+        cs_vk_hook_resolved(real, (void *)cs_vk_pdp2_loader, (void **)&g_real_vk_pdp2_loader,
+                            &g_vk_pdp2_loader_target, g_vk_pdp2_export_target,
+                            "vkGetPhysicalDeviceProperties2KHR");
+        return real;
+    }
     return real;
 }
 
@@ -424,13 +541,15 @@ static void cs_hook_vulkan_library(void *handle) {
     if (handle == NULL || g_hook == NULL || !cs_is_configured()) return;
     if (g_real_vk_get_instance_proc_addr != NULL) return;
     void *symbol = dlsym(handle, "vkGetPhysicalDeviceProperties");
-    if (symbol != NULL && cs_hook_install(symbol, (void *)cs_vk_get_physical_device_properties,
-                                          (void **)&g_real_vk_get_physical_device_properties)) {
+    if (symbol != NULL && cs_hook_install(symbol, (void *)cs_vk_pdp_export,
+                                          (void **)&g_real_vk_pdp_export)) {
+        g_vk_pdp_export_target = cs_skip_self_branch(symbol);
         LOGD("vkGetPhysicalDeviceProperties hooked in libvulkan.so");
     }
     symbol = dlsym(handle, "vkGetPhysicalDeviceProperties2");
-    if (symbol != NULL && cs_hook_install(symbol, (void *)cs_vk_get_physical_device_properties2,
-                                          (void **)&g_real_vk_get_physical_device_properties2)) {
+    if (symbol != NULL && cs_hook_install(symbol, (void *)cs_vk_pdp2_export,
+                                          (void **)&g_real_vk_pdp2_export)) {
+        g_vk_pdp2_export_target = cs_skip_self_branch(symbol);
         LOGD("vkGetPhysicalDeviceProperties2 hooked in libvulkan.so");
     }
     symbol = dlsym(handle, "vkGetInstanceProcAddr");
@@ -439,8 +558,8 @@ static void cs_hook_vulkan_library(void *handle) {
         g_state |= CS_STATE_VULKAN;
         LOGD("vkGetInstanceProcAddr hooked in libvulkan.so");
     }
-    /* Also set state bit if the direct property entry point was hooked. */
-    if (g_real_vk_get_physical_device_properties != NULL) g_state |= CS_STATE_VULKAN;
+    /* Also set state bit if a direct property entry point was hooked. */
+    if (g_real_vk_pdp_export != NULL || g_real_vk_pdp2_export != NULL) g_state |= CS_STATE_VULKAN;
 }
 
 static int g_early_libs_hooked = 0;

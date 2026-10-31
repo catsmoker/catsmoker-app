@@ -215,6 +215,15 @@ not silently rewrite history.
 
 ## Gaming engine
 
+- **Play build declares neither All files access nor a VpnService** (2026-10-31).
+  Google Play rejected both as non-core for a gaming optimizer. The
+  `MANAGE_EXTERNAL_STORAGE` permission and the `VpnFirewallService` declaration
+  now live in `src/full`; `VariantCapabilities.HAS_ALL_FILES_ACCESS` /
+  `HAS_VPN_FIREWALL` hide their controls on Play. Play keeps SAF/MediaStore file
+  work, `BackgroundDataRestrictor` (Data Saver + `cmd netpolicy`), and
+  root/Shizuku app-data cleaning. The full GitHub build keeps both features.
+  Do not re-add either declaration to `src/main` — that reintroduces the
+  Play rejection.
 - **Restore from a measured snapshot, never from defaults** (2026-09-20).
   Hard-coded restore values once overwrote the user's own DND setting and
   per-device state (GRID blobs, HSR fields). Every snapshot field is either
@@ -791,6 +800,11 @@ deliberately not ported, or blocked by hardware/field evidence.
   "Read more" expansion. The version line copies on tap/long-press (TalkBack custom action) rather
   than living in a card of its own.
 
-## Spoofing - Vulkan device name channel (2026-10-30)
+## Spoofing - Vulkan device name channel (2026-10-30, updated 2026-10-31)
 
-Added ulkanModel (Vulkan physical-device name, VkPhysicalDeviceProperties.deviceName) as a spoof field alongside the GL identity strings. Native hook in catsmoker_spoof.c: hooks kGetPhysicalDeviceProperties, kGetPhysicalDeviceProperties2 (sType-checked) and kGetInstanceProcAddr (resolver) in libvulkan.so via the existing dlopen callback, overwriting deviceName at offset 20 (v1) / offset 36 (v2) when a profile carries it. Same blank-means-off and both-channels rules as the GL strings. Version (piVersion) is intentionally NOT spoofed - it is a packed uint32 and a wrong value is a worse mismatch signal than leaving the real one. Device verification still required: confirm the target game queries Vulkan and that the spoofed name is read.\n
+Added `vulkanModel` (Vulkan physical-device name, `VkPhysicalDeviceProperties.deviceName`) as a spoof field alongside the GL identity strings. Native hook in `catsmoker_spoof.c`: hooks `vkGetPhysicalDeviceProperties`, `vkGetPhysicalDeviceProperties2` (sType-checked) and `vkGetInstanceProcAddr` (resolver) in `libvulkan.so` via the existing dlopen callback, overwriting `deviceName` at offset 20 (v1) / offset 36 (v2) when a profile carries it. Same blank-means-off and both-channels rules as the GL strings. Version (`apiVersion`) is intentionally NOT spoofed — it is a packed uint32 and a wrong value is a worse mismatch signal than leaving the real one. Device verification still required: confirm the target game queries Vulkan and that the spoofed name is read.
+
+**2026-10-31 update — `b .+4` thunk crash fix:** Android 15+ `libvulkan.so` exports `vkGetInstanceProcAddr` as a 4-byte `b .+4` thunk. On a BTI-enabled Android 16 build the inline engine's trampoline enters the body one instruction past the landing pad → `SIGILL/ILL_ILLOPC` at `GetInstanceProcAddr+8` (crash report for `com.tencent.mhadv`). Fixed by:
+- Adding `cs_skip_self_branch()` helper (ARM64-only) that detects and skips the thunk before hooking.
+- Installing export hooks at the body behind the thunk.
+- Resolver hook now asks the real resolver for the pointer, lazily hooks that exact pointer once, and **returns the same pointer**. The game keeps the loader's own function (CFI/type identity preserved); code behind the address is now ours. This shape never hands the game a foreign function pointer, avoiding the CFI risk the previous wrapper shape carried.

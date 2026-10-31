@@ -137,12 +137,19 @@ Most are expected for the feature set. A few deserve explicit justification:
   `canWriteAnimationScales()` before offering it.
 - `PACKAGE_USAGE_STATS` — needs user grant via Settings; used for app/game
   presence heuristics.
-- `MANAGE_EXTERNAL_STORAGE` — for file engineering on older Android; the
-  README itself notes SAF may fail on Android 10+, and ZArchiver may need
-  Shizuku for `Android/data`.
-- `RECORD_AUDIO` + VPN (`BIND_VPN_SERVICE`) — the VPN is a *local* firewall
-  that blocks other apps (user consents via Android's VPN dialog). `MODIFY_AUDIO_SETTINGS`
-  is for the audio boost. These are breadth of capability, not covert use.
+- `MANAGE_EXTERNAL_STORAGE` — **full build only**. Play rejected it as
+  non-core (2026-10-31), so `src/playstore` does not declare it; Play file
+  work goes through SAF/MediaStore, plus the ordinary legacy storage grant on
+  Android 8–10. The full cleaner still uses it for its direct shared-storage
+  walk.
+- `RECORD_AUDIO` — for the audio-boost visualizer. `MODIFY_AUDIO_SETTINGS` is
+  for the audio boost. These are breadth of capability, not covert use.
+- VPN (`BIND_VPN_SERVICE`) — **full build only**. The local VPN is a
+  network block that routes selected apps into a `tun` and never forwards it;
+  the user consents through Android's VPN dialog. Play's VpnService policy
+  requires the VPN to be core functionality, so `src/playstore` compiles a
+  no-op `VpnFirewall` stub and does not declare the service. Play keeps the
+  `BackgroundDataRestrictor` half (Data Saver + `cmd netpolicy`, root/Shizuku).
 
 ## Gaming Mode invariants that matter for safety
 
@@ -168,7 +175,7 @@ The state machine in `GamingEngine` has security-adjacent guarantees:
 | Privilege escalation bug in `ShellRunner`'s command construction | High (root context) | Single choke point; `joinArgs` quoting; code review on the quoting path                                                  |
 | Exported provider leaks spoof config to other apps               | High                | `resolvePackageName` UID scoping; documented invariant                                                                   |
 | Third-party SDK (Start.io / AdMob) supply chain / data flow     | Medium              | Pinned version; manual init; flavor-isolated (Start.io Full-only, AdMob Play-only); review dependency changes            |
-| Malicious app tricking the local VPN or overlays                 | Medium              | All overlay/FGS services are `exported="false"`; `BIND_VPN_SERVICE` enforced by the system; user must consent to the VPN |
+| Malicious app tricking the local VPN or overlays (full only)       | Medium              | All overlay/FGS services are `exported="false"`; `BIND_VPN_SERVICE` enforced by the system; user must consent to the VPN |
 | Regression in Gaming Mode allowlist bricks session               | Medium              | `hardWhitelist` + system-critical exclusion keep essential packages alive; snapshot revert                               |
 | Shell injection from an untrusted profile/game value             | High (root context) | `joinArgs` quoting on all dynamic args; treat any value sourced from files or user input as untrusted                    |
 

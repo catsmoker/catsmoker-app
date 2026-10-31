@@ -44,6 +44,7 @@ import com.catsmoker.app.R
 import com.catsmoker.app.features.about.LegalDialog
 import com.catsmoker.app.features.about.legalPrivacySections
 import com.catsmoker.app.features.about.legalTermsSections
+import com.catsmoker.app.system.VariantCapabilities
 import com.catsmoker.app.shared.ui.components.CatsmokerButton
 import com.catsmoker.app.shared.ui.components.LanguageOptions
 import com.catsmoker.app.shared.ui.components.ScreenScaffold
@@ -391,21 +392,27 @@ fun PermissionsListScreen(
                             else -> stringResource(R.string.core_perm_shizuku_not_running)
                         }
                     ) { onRequestShizuku() }
-                    PermissionRow(stringResource(R.string.core_perm_storage_title), stringResource(R.string.core_perm_storage_sub), uiState.storageGranted) {
-                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                            try {
-                                context.startActivity(Intent(Settings.ACTION_MANAGE_ALL_FILES_ACCESS_PERMISSION).apply {
-                                    data = "package:${context.packageName}".toUri()
-                                })
-                            } catch (_: Exception) {
+                    // All files access is full-only (Play rejected it), but Android 8–9
+                    // still need the ordinary write grant for the Downloads export, so
+                    // keep the row for that case instead of leaving the permission
+                    // declared but impossible to grant from the app.
+                    if (VariantCapabilities.HAS_ALL_FILES_ACCESS || Build.VERSION.SDK_INT < Build.VERSION_CODES.R) {
+                        PermissionRow(stringResource(R.string.core_perm_storage_title), stringResource(R.string.core_perm_storage_sub), uiState.storageGranted) {
+                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
                                 try {
-                                    context.startActivity(Intent(Settings.ACTION_MANAGE_ALL_FILES_ACCESS_PERMISSION))
+                                    context.startActivity(Intent(Settings.ACTION_MANAGE_ALL_FILES_ACCESS_PERMISSION).apply {
+                                        data = "package:${context.packageName}".toUri()
+                                    })
                                 } catch (_: Exception) {
-                                    context.startActivity(Intent(Settings.ACTION_SETTINGS))
+                                    try {
+                                        context.startActivity(Intent(Settings.ACTION_MANAGE_ALL_FILES_ACCESS_PERMISSION))
+                                    } catch (_: Exception) {
+                                        context.startActivity(Intent(Settings.ACTION_SETTINGS))
+                                    }
                                 }
+                            } else {
+                                storageLauncher.launch(Manifest.permission.WRITE_EXTERNAL_STORAGE)
                             }
-                        } else {
-                            storageLauncher.launch(Manifest.permission.WRITE_EXTERNAL_STORAGE)
                         }
                     }
                     PermissionRow(stringResource(R.string.core_perm_battery_title), stringResource(R.string.core_perm_battery_sub), uiState.batteryGranted) {

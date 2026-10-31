@@ -67,10 +67,15 @@
     <uses-permission android:name="android.permission.AD_ID" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <uses-permission android:name="android.permission.ACCESS_NOTIFICATION_POLICY" />
-    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
-    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
-    <!-- Kept intentionally: Play REVIEW decision pending in PLAYSTORE.md; do not remove. -->
-    <uses-permission android:name="android.permission.MANAGE_EXTERNAL_STORAGE" />
+    <!-- Legacy shared-storage grant, used only on Android 8–10 (API 27–29).
+         Android 11+ uses MediaStore/SAF, or all files access in the full build. -->
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" android:maxSdkVersion="29" />
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" android:maxSdkVersion="29" />
+    <!--
+        MANAGE_EXTERNAL_STORAGE is deliberately absent here: Play rejected it as
+        non-core for this app (2026-10-31). The full build declares it in
+        src/full/AndroidManifest.xml; Play uses SAF/MediaStore instead.
+    -->
     <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
@@ -260,22 +265,10 @@
         </service>
 
         <!--
-            The local VPN that blocks other apps' network access. BIND_VPN_SERVICE is enforced by the
-            system, so it is declared on the service rather than requested at install: only Android
-            itself may bind here. The user still has to accept Android's own VPN consent dialog before
-            the interface can be established.
+            VpnFirewallService is full-only: Play's VpnService policy requires
+            the VPN to be core functionality, which this app is not. Its
+            declaration lives in src/full/AndroidManifest.xml.
         -->
-        <service
-            android:name=".features.gamingtools.tools.firewall.VpnFirewallService"
-            android:enabled="true"
-            android:exported="false"
-            android:permission="android.permission.BIND_VPN_SERVICE"
-            android:foregroundServiceType="specialUse">
-            <intent-filter>
-                <action android:name="android.net.VpnService" />
-            </intent-filter>
-            <property android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE" android:value="App network block" />
-        </service>
 
     </application>
 </manifest>

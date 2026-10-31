@@ -53,7 +53,7 @@
     <string name="gt_tool_dnd_title">عدم الإزعاج</string>
     <string name="gt_tool_dnd_sub">اكتم الإشعارات أثناء اللعب.</string>
     <string name="gt_tool_net_title">بيانات الخلفية</string>
-    <string name="gt_tool_net_sub">حظر VPN (واي فاي + بيانات) أو توفير البيانات (بيانات فقط).</string>
+    <string name="gt_tool_net_sub">أبقِ التطبيقات الأخرى بعيدًا عن الإنترنت.</string>
     <string name="gt_tool_dns_title">DNS خاص</string>
     <string name="gt_tool_dns_sub">اختر موفر DNS الخاص.</string>
     <string name="gt_tool_afs_title">إيقاف تلقائي قسري</string>
@@ -225,7 +225,7 @@
     <string name="gt_net_vpn_how_4">سيطلب منك أندرويد مرة واحدة السماح به. إذا قلت لا، لن يُحظر شيء.</string>
     <string name="gt_net_ds_title">توفير البيانات</string>
     <string name="gt_net_ds_sub">إعداد أندرويد نفسه. يتطلب روت أو Shizuku. لبيانات الهاتف فقط.</string>
-    <string name="gt_net_ds_need">توفير البيانات يحتاج روت أو Shizuku. لا يسمح أندرويد لتطبيق عادي بتغييره. مفتاح VPN أعلاه ما زال يعمل بدون أي منهما.</string>
+    <string name="gt_net_ds_need">توفير البيانات يحتاج روت أو Shizuku. لا يسمح أندرويد لتطبيق عادي بتغييره.</string>
     <string name="gt_net_checking">جارٍ التحقق…</string>
     <string name="gt_net_unknown">لم يخبرنا هاتفك إن كان هذا مشغلاً أم متوقفاً</string>
     <string name="gt_net_ds_on_count">مشغّل — يوقف %1$d من التطبيقات</string>
@@ -239,7 +239,7 @@
     <string name="gt_net_ds_how_title">كيف يعمل توفير البيانات؟</string>
     <string name="gt_net_ds_how_1">يستخدم نفس الإعداد الذي تجده في إعدادات أندرويد، ويطلب من هاتفك إيقاف إنترنت الخلفية للتطبيقات الأخرى. تُضاف ألعابك أولاً إلى قائمة \"المسموح دائماً\"، فتستمر في العمل.</string>
     <string name="gt_net_ds_how_2">كل تغيير يُقرأ من هاتفك بعد ذلك، فما تراه أعلاه هو إجابة هاتفك وليس تخميناً من هذا التطبيق.</string>
-    <string name="gt_net_ds_how_3">يعمل فقط على بيانات الهاتف، أو Wi-Fi حددته كمكلف. على Wi-Fi العادي لا يفعل شيئاً — مفتاح VPN هو الذي يعمل في كل مكان.</string>
+    <string name="gt_net_ds_how_3">يعمل فقط على بيانات الهاتف، أو Wi-Fi حددته كمكلف. على Wi-Fi العادي لا يفعل شيئاً.</string>
     <string name="gt_net_which_title">أيهما يجب أن أستخدم؟</string>
     <string name="gt_net_which_1">على بيانات الهاتف: توفير البيانات وحده كافٍ، ولا يكلف بطارية.</string>
     <string name="gt_net_which_2">على Wi-Fi: استخدم مفتاح VPN — لن يفعل توفير البيانات شيئاً.</string>

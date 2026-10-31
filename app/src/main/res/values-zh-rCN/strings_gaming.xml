@@ -53,7 +53,7 @@
     <string name="gt_tool_dnd_title">勿扰模式</string>
     <string name="gt_tool_dnd_sub">玩游戏时静音通知。</string>
     <string name="gt_tool_net_title">后台数据</string>
-    <string name="gt_tool_net_sub">VPN 拦截（Wi-Fi + 移动数据）或流量节省程序（仅移动数据）。</string>
+    <string name="gt_tool_net_sub">让其他应用无法使用网络。</string>
     <string name="gt_tool_dns_title">私有 DNS</string>
     <string name="gt_tool_dns_sub">选择私有 DNS 提供商。</string>
     <string name="gt_tool_afs_title">自动强制停止</string>
@@ -225,7 +225,7 @@
     <string name="gt_net_vpn_how_4">Android 会请求一次授权。若你拒绝，则不会阻止任何内容。</string>
     <string name="gt_net_ds_title">流量节省程序</string>
     <string name="gt_net_ds_sub">Android 自带设置。需要 Root 或 Shizuku。仅移动数据。</string>
-    <string name="gt_net_ds_need">流量节省程序需要 Root 或 Shizuku。Android 不允许普通应用更改它。上方的 VPN 开关无需它们仍可工作。</string>
+    <string name="gt_net_ds_need">流量节省程序需要 Root 或 Shizuku。Android 不允许普通应用更改它。</string>
     <string name="gt_net_checking">检查中…</string>
     <string name="gt_net_unknown">手机不愿告知此项处于开启还是关闭</string>
     <string name="gt_net_ds_on_count">已开启 — 正在阻止 %1$d 个应用</string>
@@ -239,7 +239,7 @@
     <string name="gt_net_ds_how_title">流量节省程序如何工作？</string>
     <string name="gt_net_ds_how_1">使用与 Android 设置中相同的选项，要求手机关闭其他应用的后台网络。你的游戏会先加入“始终允许”名单，因此不受影响。</string>
     <string name="gt_net_ds_how_2">每次更改都会从手机读回确认，因此上方显示的是手机的答复，而非本应用的猜测。</string>
-    <string name="gt_net_ds_how_3">仅在移动数据或你标记为按量计费的 Wi-Fi 上有效。普通 Wi-Fi 下无效——VPN 开关在任何地方都有效。</string>
+    <string name="gt_net_ds_how_3">仅在移动数据或你标记为按量计费的 Wi-Fi 上有效。普通 Wi-Fi 下无效。</string>
     <string name="gt_net_which_title">该用哪一个？</string>
     <string name="gt_net_which_1">移动数据下：仅流量节省程序就够，且不耗电。</string>
     <string name="gt_net_which_2">Wi-Fi 下：用 VPN 开关——流量节省程序无效。</string>

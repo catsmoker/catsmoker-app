@@ -72,6 +72,7 @@ import com.catsmoker.app.shared.util.DisplayMetricsProvider
 import com.catsmoker.app.shared.util.formatBytes
 import com.catsmoker.app.shared.ui.theme.CatsmokerSpacing
 import com.catsmoker.app.shared.ui.theme.CatsmokerTheme
+import com.catsmoker.app.system.VariantCapabilities
 
 /**
  * Columns in "Your Games".
@@ -226,22 +227,24 @@ fun GamingToolsRoute(onBack: () -> Unit) {
         onAddCleanerCleanPattern = viewModel::addCleanerCleanPattern,
         onRemoveCleanerCleanPattern = viewModel::removeCleanerCleanPattern,
         onGrantStorageAccess = {
-            val intent = viewModel.allFilesAccessIntent()
-            if (intent == null) {
-                // Below API 30 the cleaner runs on the runtime storage permission, which lives on
-                // the app's own settings page.
-                context.startActivity(
-                    Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, "package:${context.packageName}".toUri())
-                )
-            } else {
-                try {
-                    storageAccessLauncher.launch(intent)
-                } catch (_: Exception) {
-                    // API 30+ only; allFilesAccessIntent() is null below R so this is unreachable there.
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                        storageAccessLauncher.launch(Intent(Settings.ACTION_MANAGE_ALL_FILES_ACCESS_PERMISSION))
-                    } else {
-                        context.startActivity(Intent(Settings.ACTION_SETTINGS))
+            if (VariantCapabilities.HAS_ALL_FILES_ACCESS) {
+                val intent = viewModel.allFilesAccessIntent()
+                if (intent == null) {
+                    // Below API 30 the cleaner runs on the runtime storage permission, which lives on
+                    // the app's own settings page.
+                    context.startActivity(
+                        Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, "package:${context.packageName}".toUri())
+                    )
+                } else {
+                    try {
+                        storageAccessLauncher.launch(intent)
+                    } catch (_: Exception) {
+                        // API 30+ only; allFilesAccessIntent() is null below R so this is unreachable there.
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                            storageAccessLauncher.launch(Intent(Settings.ACTION_MANAGE_ALL_FILES_ACCESS_PERMISSION))
+                        } else {
+                            context.startActivity(Intent(Settings.ACTION_SETTINGS))
+                        }
                     }
                 }
             }
@@ -782,7 +785,7 @@ fun GamingToolsScreen(
                     title = stringResource(R.string.gt_tool_net_title),
                     subtitle = stringResource(R.string.gt_tool_net_sub),
                     icon = Icons.Default.VpnLock,
-                    info = InfoTopics.backgroundData
+                    info = InfoTopics.backgroundData(VariantCapabilities.HAS_VPN_FIREWALL)
                 ) {
                     BackgroundDataContent(
                         status = uiState.backgroundDataStatus,
@@ -791,6 +794,7 @@ fun GamingToolsScreen(
                         hasPrivilege = hasPrivilege,
                         vpnState = uiState.vpnFirewallState,
                         isChangingVpn = uiState.isChangingVpnFirewall,
+                        vpnAvailable = VariantCapabilities.HAS_VPN_FIREWALL,
                         onSetDataSaver = onSetBackgroundDataRestriction,
                         onSetVpn = onSetVpnFirewall
                     )
@@ -1716,7 +1720,7 @@ fun CleaningContent(
                 }
             }
 
-            if (report.needsAllFilesAccess) {
+            if (report.needsAllFilesAccess && VariantCapabilities.HAS_ALL_FILES_ACCESS) {
                 Spacer(modifier = Modifier.height(8.dp))
                 CatsmokerButton(onClick = onGrantStorageAccess, modifier = Modifier.fillMaxWidth()) {
                     Text(stringResource(R.string.gt_cleaner_grant))
@@ -1993,12 +1997,13 @@ private fun categoryLabel(category: CleaningFeature.Category): String = stringRe
 )
 
 /**
- * Two independent ways to stop other apps using the network.
+ * Two independent ways to stop other apps using the network on the full build;
+ * Play ships only the Data Saver half.
  *
  * They are separate switches because they are separate mechanisms with separate requirements, and
  * either alone is a sensible choice:
  * - **App block (local VPN)** works on any network and needs no root, but only one VPN can be active
- *   on the device at a time.
+ *   on the device at a time. Full build only; Play's VpnService policy rejects a non-core VPN.
  * - **Data Saver** is Android's own policy, needs root or Shizuku, and only applies to metered
  *   networks — but it costs nothing and leaves the VPN slot free.
  *
@@ -2007,7 +2012,8 @@ private fun categoryLabel(category: CleaningFeature.Category): String = stringRe
  * Everything shown is read from the device: [BackgroundDataRestrictor.Status] carries nulls for
  * anything that could not be read, and those render as an explicit unavailable line rather than a
  * default that would look like a reading. The VPN half reports [VpnFirewall.State], whose `running`
- * flag comes from `establish()` returning a real descriptor.
+ * flag comes from `establish()` returning a real descriptor; [vpnAvailable] is false on Play, where
+ * that service is not compiled in.
  */
 @Composable
 fun BackgroundDataContent(
@@ -2017,39 +2023,42 @@ fun BackgroundDataContent(
     hasPrivilege: Boolean,
     vpnState: VpnFirewall.State,
     isChangingVpn: Boolean,
+    vpnAvailable: Boolean,
     onSetDataSaver: (Boolean) -> Unit,
     onSetVpn: (Boolean) -> Unit
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-        // ---------- Switch 1: the local VPN ----------
-        NetworkBlockSwitch(
-            title = stringResource(R.string.gt_net_vpn_title),
-            // Never called a firewall: it is a local VPN, and saying otherwise would misdescribe what
-            // the app does. The subtitle names both the mechanism and the one real trade-off.
-            subtitle = stringResource(R.string.gt_net_vpn_sub),
-            checked = vpnState.running,
-            enabled = !isChangingVpn,
-            busy = isChangingVpn,
-            onCheckedChange = onSetVpn
-        )
-        Text(
-            text = when {
-                vpnState.running && vpnState.blockedCount > 0 ->
-                    stringResource(R.string.gt_net_vpn_on_count, vpnState.blockedCount)
-                vpnState.running -> stringResource(R.string.gt_net_on)
-                else -> stringResource(R.string.gt_net_off)
-            },
-            fontSize = 11.sp,
-            color = if (vpnState.running) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
-        )
-        // Kept on screen after a failure so the switch flicking back off is explained rather than
-        // looking like the tap was missed.
-        vpnState.lastError?.let { error ->
-            Text(stringResource(R.string.gt_net_vpn_error, error), fontSize = 11.sp, color = Color(0xFFEF9A9A), lineHeight = 15.sp)
-        }
+        if (vpnAvailable) {
+            // ---------- Switch 1: the local VPN (full build only) ----------
+            NetworkBlockSwitch(
+                title = stringResource(R.string.gt_net_vpn_title),
+                // Never called a firewall: it is a local VPN, and saying otherwise would misdescribe what
+                // the app does. The subtitle names both the mechanism and the one real trade-off.
+                subtitle = stringResource(R.string.gt_net_vpn_sub),
+                checked = vpnState.running,
+                enabled = !isChangingVpn,
+                busy = isChangingVpn,
+                onCheckedChange = onSetVpn
+            )
+            Text(
+                text = when {
+                    vpnState.running && vpnState.blockedCount > 0 ->
+                        stringResource(R.string.gt_net_vpn_on_count, vpnState.blockedCount)
+                    vpnState.running -> stringResource(R.string.gt_net_on)
+                    else -> stringResource(R.string.gt_net_off)
+                },
+                fontSize = 11.sp,
+                color = if (vpnState.running) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            // Kept on screen after a failure so the switch flicking back off is explained rather than
+            // looking like the tap was missed.
+            vpnState.lastError?.let { error ->
+                Text(stringResource(R.string.gt_net_vpn_error, error), fontSize = 11.sp, color = Color(0xFFEF9A9A), lineHeight = 15.sp)
+            }
 
-        // ---------- Switch 2: Android's own Data Saver ----------
-        HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+            // ---------- Switch 2: Android's own Data Saver ----------
+            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+        }
         NetworkBlockSwitch(
             title = stringResource(R.string.gt_net_ds_title),
             subtitle = stringResource(R.string.gt_net_ds_sub),

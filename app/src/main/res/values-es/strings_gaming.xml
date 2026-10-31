@@ -53,7 +53,7 @@
     <string name="gt_tool_dnd_title">No molestar</string>
     <string name="gt_tool_dnd_sub">Silencia las notificaciones mientras juegas.</string>
     <string name="gt_tool_net_title">Datos en segundo plano</string>
-    <string name="gt_tool_net_sub">Bloqueo VPN (Wi-Fi + móvil) o Ahorro de datos (solo móvil).</string>
+    <string name="gt_tool_net_sub">Mantén otras apps fuera de internet.</string>
     <string name="gt_tool_dns_title">DNS privado</string>
     <string name="gt_tool_dns_sub">Elige el proveedor de DNS privado.</string>
     <string name="gt_tool_afs_title">Cierre forzoso automático</string>
@@ -225,7 +225,7 @@
     <string name="gt_net_vpn_how_4">Android te pedirá permiso una vez. Si dices que no, no se bloquea nada.</string>
     <string name="gt_net_ds_title">Ahorro de datos</string>
     <string name="gt_net_ds_sub">Ajuste propio de Android. Necesita root o Shizuku. Solo datos móviles.</string>
-    <string name="gt_net_ds_need">Ahorro de datos necesita root o Shizuku. Android no permite que una app normal lo cambie. El interruptor de VPN de arriba sigue funcionando sin ninguno.</string>
+    <string name="gt_net_ds_need">Ahorro de datos necesita root o Shizuku. Android no permite que una app normal lo cambie.</string>
     <string name="gt_net_checking">Comprobando…</string>
     <string name="gt_net_unknown">Tu teléfono no quiso decir si esto está activado o no</string>
     <string name="gt_net_ds_on_count">Activado — deteniendo %1$d apps</string>
@@ -239,7 +239,7 @@
     <string name="gt_net_ds_how_title">¿Cómo funciona Ahorro de datos?</string>
     <string name="gt_net_ds_how_1">Usa el mismo ajuste que verías en los ajustes de Android, y le pide a tu teléfono que apague el internet en segundo plano de otras apps. Tus juegos se añaden primero a la lista de \"siempre permitidas\", así que siguen funcionando.</string>
     <string name="gt_net_ds_how_2">Cada cambio se lee de vuelta en tu teléfono, así que lo que ves arriba es la respuesta de tu teléfono, no un invento de esta app.</string>
-    <string name="gt_net_ds_how_3">Solo funciona en datos móviles, o en Wi-Fi que hayas marcado como de pago. En Wi-Fi normal no hace nada — el interruptor de VPN es el que funciona en todas partes.</string>
+    <string name="gt_net_ds_how_3">Solo funciona en datos móviles, o en Wi-Fi que hayas marcado como de pago. En Wi-Fi normal no hace nada.</string>
     <string name="gt_net_which_title">¿Cuál debería usar?</string>
     <string name="gt_net_which_1">En datos móviles: Ahorro de datos solo basta, y no gasta batería.</string>
     <string name="gt_net_which_2">En Wi-Fi: usa el interruptor de VPN — Ahorro de datos no hará nada.</string>

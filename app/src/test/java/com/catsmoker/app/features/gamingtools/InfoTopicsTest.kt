@@ -34,7 +34,7 @@ class InfoTopicsTest {
         "game default frame rate" to InfoTopics.gameDefaultFrameRate,
         "ANGLE driver" to InfoTopics.angleDriver,
         "resolution" to InfoTopics.resolution("your phone"),
-        "background data" to InfoTopics.backgroundData,
+        "background data" to InfoTopics.backgroundData(true),
         "private DNS" to InfoTopics.dns(null),
         "auto force stop" to InfoTopics.autoForceStop,
         "cleaner" to InfoTopics.cleaning,
@@ -123,6 +123,21 @@ class InfoTopicsTest {
         assertTrue(
             "multi-question features keep their questions together",
             multi.containsAll(setOf("fixed performance", "volume boost", "ART pre-compile", "resolution", "background data", "auto force stop", "cleaner"))
+        )
+    }
+
+    @Test
+    fun playBackgroundDataOmitsTheFullOnlyVpnQuestions() {
+        val full = InfoTopics.backgroundData(hasVpn = true)
+        val play = InfoTopics.backgroundData(hasVpn = false)
+        assertTrue(
+            "the full topic explains the VPN and the Data Saver choice",
+            full.sections.size > play.sections.size
+        )
+        assertEquals(
+            "Play keeps only the what + Data Saver sections",
+            2,
+            play.sections.size
         )
     }
 }

@@ -217,7 +217,7 @@ class GamingModeUiPlacementTest {
         assertTrue(
             card.contains("if (!isActive && (gamingState is GamingModeState.Interrupted || recovery.isNeeded))")
         )
-        assertTrue(card.contains("enabled = !isRestoringApps && !isBusy && !isActive"))
+        assertTrue(card.contains("enabled = !isRestoringApps && !isBusy"))
         // The action is exposed by the ViewModel, not run from the screen.
         assertTrue(viewModel.contains("fun restoreSuspendedApps()"))
         assertTrue(screen.contains("onRestoreGamingApps = viewModel::restoreSuspendedApps"))

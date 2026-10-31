@@ -11,6 +11,13 @@
     <!-- Required for the built-in GitHub self-updater to launch the package installer. -->
     <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
 
+    <!--
+        Full (GitHub) distribution only. The cleaner's direct shared-storage walk
+        and the all-files settings entry use this; Play rejected it as non-core,
+        so the Play variant deliberately omits it (see VariantCapabilities).
+    -->
+    <uses-permission android:name="android.permission.MANAGE_EXTERNAL_STORAGE" />
+
     <application>
         <meta-data android:name="xposedmodule" android:value="true" />
         <meta-data android:name="xposeddescription" android:value="Unlock max FPS and optimize supported games." />
@@ -50,5 +57,23 @@
             android:name="com.startapp.sdk.adsbase.StartAppInitProvider"
             android:authorities="${applicationId}.startappinitprovider"
             tools:node="remove" />
+
+        <!--
+            Full-only local VPN: BIND_VPN_SERVICE is enforced by the system, so it
+            is declared on the service rather than requested at install. Play's
+            VpnService policy requires the VPN to be core functionality, so the
+            Play variant omits this service entirely and keeps Data Saver only.
+        -->
+        <service
+            android:name=".features.gamingtools.tools.firewall.VpnFirewallService"
+            android:enabled="true"
+            android:exported="false"
+            android:permission="android.permission.BIND_VPN_SERVICE"
+            android:foregroundServiceType="specialUse">
+            <intent-filter>
+                <action android:name="android.net.VpnService" />
+            </intent-filter>
+            <property android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE" android:value="App network block" />
+        </service>
     </application>
 </manifest>

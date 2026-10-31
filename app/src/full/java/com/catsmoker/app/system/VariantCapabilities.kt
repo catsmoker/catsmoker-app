@@ -25,4 +25,18 @@ object VariantCapabilities {
 
     /** Google Play Store is available — used to gate Play-only entries like "Rate App". */
     const val HAS_PLAY_STORE = false
+
+    /**
+     * The full build declares `MANAGE_EXTERNAL_STORAGE` for the cleaner's direct
+     * shared-storage walk. Google Play rejected that permission for this app as
+     * non-core, so the Play variant must not declare it (see the Play twin).
+     */
+    const val HAS_ALL_FILES_ACCESS = true
+
+    /**
+     * The local VPN network block is compiled into the full build only. Play's
+     * VpnService policy requires the VPN to be core functionality, which a gaming
+     * optimizer is not; the Play variant keeps the Data Saver half instead.
+     */
+    const val HAS_VPN_FIREWALL = true
 }

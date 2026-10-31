@@ -38,6 +38,7 @@ import com.catsmoker.app.shared.data.model.FpsSource
 import com.catsmoker.app.shared.data.model.MetricReadStatus
 import com.catsmoker.app.shared.data.model.MetricsState
 import com.catsmoker.app.shared.ui.components.QuickActionButton
+import com.catsmoker.app.shared.ui.components.UpdateIndicator
 import com.catsmoker.app.shared.ui.components.SectionCard
 import com.catsmoker.app.shared.ui.components.AdBanner
 import com.catsmoker.app.system.VariantCapabilities
@@ -118,12 +119,6 @@ fun MainScreen(
     adsEnabled: Boolean,
     /** Version name of a release the last check found, null when up to date. Drives the update indicator on the Settings tile. */
     availableUpdateName: String? = null,
-    /** Convenience alias some callers use for the same condition. */
-    updateAvailable: Boolean = availableUpdateName != null,
-    hasUpdateAvailable: Boolean = availableUpdateName != null,
-    updateIndicator: Boolean = availableUpdateName != null,
-    isUpdateAvailable: Boolean = availableUpdateName != null,
-    hasUpdate: Boolean = availableUpdateName != null,
     onOpenSpoofDevice: () -> Unit,
     onOpenEditGameFiles: () -> Unit,
     onOpenGamingTools: () -> Unit,
@@ -406,11 +401,6 @@ fun MainScreen(
                                 spreadGridContent = true,
                                 showChevron = true,
                                 showIndicator = availableUpdateName != null,
-                                indicatorVisible = availableUpdateName != null,
-                                updateAvailable = availableUpdateName != null,
-                                updateIndicator = availableUpdateName != null,
-                                hasUpdate = availableUpdateName != null,
-                                isUpdateAvailable = availableUpdateName != null,
                                 contentPadding = 12.dp,
                                 iconSize = 40.dp,
                                 icon = { Icon(Icons.Default.Settings, null) }
@@ -602,21 +592,6 @@ private fun MetricReadStatus.compactLabel(): String = when (this) {
 /**
  * Small update-available indicator. Rendered only when an update is available.
  */
-@Composable
-fun UpdateIndicator(
-    visible: Boolean = true,
-    updateAvailable: Boolean = visible,
-    showIndicator: Boolean = visible
-) {
-    if (visible || updateAvailable || showIndicator) {
-        Box(
-            modifier = Modifier
-                .size(10.dp)
-                .background(Color(0xFFEF4444), androidx.compose.foundation.shape.CircleShape)
-        )
-    }
-}
-
 @Preview(showBackground = true, backgroundColor = 0xFF000000)
 @Composable
 fun MainPreview() {

@@ -436,11 +436,13 @@ the user set on purpose. Copy these cases when adding a field:
   when the interface is supported *and* the property already exists; the
   existence gate is what keeps a `persist.*` write reversible.
 
-Network blocking is two switches over one app set (user-installed apps holding
-`INTERNET`, minus CatSmoker and the game library), never a per-app matrix:
-`VpnFirewall` claims a `tun` and never reads it — blocked apps *time out*, and
-Android allows one active VPN, so it and any other VPN evict each other — and
-`BackgroundDataRestrictor` uses Android's own `cmd netpolicy` plus Data Saver.
+Network blocking is two switches over one app set on the full build (user-installed apps holding
+`INTERNET`, minus CatSmoker and the game library): `VpnFirewall` claims a `tun` and never reads it —
+blocked apps *time out*, and Android allows one active VPN, so it and any other VPN evict each
+other — and `BackgroundDataRestrictor` uses Android's own `cmd netpolicy` plus Data Saver.
+The Play build omits the VPN service (Play's VpnService policy requires it to be core) and keeps
+only the Data Saver half; shared UI hides the VPN switch behind
+`VariantCapabilities.HAS_VPN_FIREWALL`.
 Both post-mortems are in the KDoc (Data Saver alone blocked nothing in
 background; the first `VpnService` blackholed the *game's* traffic while
 reporting success without calling `VpnService.prepare()`); read it before

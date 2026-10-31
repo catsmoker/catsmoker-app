@@ -8,14 +8,22 @@ single codebase with Android Gradle product flavors. There is no maintained
 
 | Variant | Dimension | Who | Contains |
 |---|---|---|---|
-| `full` | `distribution` | GitHub release ONLY | Everything: spoofing/LSPosed/Magisk, Start.io ads, GitHub self-updater |
-| `playstore` | `distribution` | Google Play release ONLY | Same app minus the restricted set: no spoof implementation, AdMob ads, no self-updater |
+| `full` | `distribution` | GitHub release ONLY | Everything: spoofing/LSPosed/Magisk, Start.io ads, GitHub self-updater, All files access, local VPN |
+| `playstore` | `distribution` | Google Play release ONLY | Same app minus the restricted set: no spoof implementation, AdMob ads, no self-updater, no `MANAGE_EXTERNAL_STORAGE`, no `VpnService` |
 
 > [!IMPORTANT]
 > **GitHub Releases Rule**: GitHub Releases must ONLY contain the `full` variant assets: the universal `app-full-release.apk` plus all per-ABI split APK files (`app-full-arm64-v8a-release.apk`, `app-full-armeabi-v7a-release.apk`, `app-full-x86_64-release.apk`). NEVER upload or publish the `playstore` variant (`app-playstore-release.apk` / `.aab`) to GitHub Releases — it is strictly reserved for Google Play Console distribution.
 
 Gradle tasks use the flavor name: `assembleFullDebug`, `assemblePlaystoreRelease`,
 `testFullDebugUnitTest`, `testPlaystoreDebugUnitTest`, `installPlaystoreDebug`.
+
+Play policy omissions (2026-10-31): the `playstore` manifest declares neither
+`android.permission.MANAGE_EXTERNAL_STORAGE` nor the
+`VpnFirewallService`/`android.net.VpnService` intent filter. Both live in
+`src/full/AndroidManifest.xml`. Shared code consults
+`VariantCapabilities.HAS_ALL_FILES_ACCESS` / `HAS_VPN_FIREWALL` to hide the
+corresponding controls; Play uses SAF/MediaStore for files and Data Saver
+(`cmd netpolicy`, root/Shizuku) for network blocking.
 
 ## Source sets
 
@@ -24,9 +32,10 @@ app/src/
 ├── main/        # Shared code — everything used by both variants. Default home.
 ├── full/        # Full-only: spoofdevice/, SpoofRepository et al, Start.io
 │                # wiring, xposed_init, strings_spoof, scope array, spoof tests
-│                # (src/testFull/), full manifest additions.
+│                # (src/testFull/), All files access + VpnFirewallService,
+│                # full manifest additions.
 └── playstore/   # Play-only: AdMob wiring, adi-registration.properties,
-                 # Play manifest additions (AdMob App ID).
+                 # VPN no-op shim, Play manifest additions (AdMob App ID).
 ```
 
 `src/main` must **never** import from `src/full`: those classes do not exist in
@@ -40,6 +49,9 @@ with identical package, name and API, different bodies:
 - `system.navigation.spoofGraph()` (real destinations vs empty block)
 - `system.ProfileShareHandler` (profile intake vs no-op)
 - `features.settings.SelfUpdater` (GitHub updater vs unsupported stub)
+- `features.gamingtools.tools.firewall.VpnFirewall` (real local VPN vs no-op)
+  with `VariantCapabilities.HAS_VPN_FIREWALL` / `HAS_ALL_FILES_ACCESS` deciding
+  whether the control is shown at all
 
 Shared callers (`AppNavHost`, `MainScreen`, `MainActivity`, `CatsmokerApp`,
 `SettingsViewModel/Screen`) use only the shim API plus the capability flags.

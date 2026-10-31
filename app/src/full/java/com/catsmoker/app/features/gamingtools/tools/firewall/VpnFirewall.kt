@@ -18,6 +18,11 @@ import javax.inject.Singleton
 /**
  * A local VPN that drops other apps' traffic — the same mechanism NetGuard uses.
  *
+ * **Full build only.** Google Play's VpnService policy requires the VPN to be core
+ * functionality, which this app is not, so the Play variant compiles a no-op
+ * [VpnFirewall] stub instead and hides the switch. The Data Saver half of
+ * network blocking stays available there.
+ *
  * **This is a local VPN, not a kernel firewall, and the wording in the UI says so.** Nothing here
  * talks to netfilter or iptables. Android hands an app a `tun` interface, lets it name which packages
  * are routed into it, and sends everything else straight past it. This service claims the tun for the

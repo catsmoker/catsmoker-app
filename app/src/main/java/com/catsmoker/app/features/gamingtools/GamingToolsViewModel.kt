@@ -47,6 +47,7 @@ import com.catsmoker.app.features.gamingtools.tools.glyph.GlyphSyncStore
 import com.catsmoker.app.features.gamingtools.tools.overlay.PerformanceOverlayPositionStore
 import com.catsmoker.app.features.gamingtools.tools.overlay.PerformanceOverlayService
 import com.catsmoker.app.features.gamingtools.ui.GamingModeProgress
+import com.catsmoker.app.system.VariantCapabilities
 import com.catsmoker.app.system.shell.ShellRunner
 import com.catsmoker.app.shared.util.DisplayMetricsProvider
 import com.catsmoker.app.shared.util.formatBytes
@@ -833,6 +834,7 @@ class GamingToolsViewModel @Inject constructor(
      * system dialog, and [onVpnConsentResult] decides what actually happened.
      */
     fun setVpnFirewall(enable: Boolean) {
+        if (!VariantCapabilities.HAS_VPN_FIREWALL) return
         viewModelScope.launch {
             if (!enable) {
                 _uiState.update { it.copy(isChangingVpnFirewall = true) }
@@ -867,11 +869,14 @@ class GamingToolsViewModel @Inject constructor(
      * to the screen rather than launched here. Null is safe to treat as "go ahead and try": the honest
      * gate is [VpnFirewall.start], which re-checks and returns the device's own refusal.
      */
-    fun vpnConsentIntent(): Intent? =
-        (vpnFirewall.consent() as? VpnFirewall.Consent.Required)?.intent
+    fun vpnConsentIntent(): Intent? {
+        if (!VariantCapabilities.HAS_VPN_FIREWALL) return null
+        return (vpnFirewall.consent() as? VpnFirewall.Consent.Required)?.intent
+    }
 
     /** Called by the screen once Android's consent dialog has been answered. */
     fun onVpnConsentResult(granted: Boolean) {
+        if (!VariantCapabilities.HAS_VPN_FIREWALL) return
         _uiState.update { it.copy(vpnConsentRequest = false) }
         if (!granted) {
             _toasts.tryEmit(context.getString(R.string.gt_vm_vpn_no))
@@ -897,12 +902,14 @@ class GamingToolsViewModel @Inject constructor(
                     backgroundDataEngaged = backgroundDataRestrictor.isEngaged()
                 )
             }
-            // Cross-checked against the connectivity service rather than trusted from our own record:
-            // Android tears a VPN down when another VPN app starts, without telling us, and a switch
-            // still showing "on" would then be claiming a block that no longer exists.
-            val vpnState = vpnFirewall.state.value
-            if (vpnState.running && vpnFirewall.systemReportsVpn() == false) {
-                vpnFirewall.stop()
+            if (VariantCapabilities.HAS_VPN_FIREWALL) {
+                // Cross-checked against the connectivity service rather than trusted from our own record:
+                // Android tears a VPN down when another VPN app starts, without telling us, and a switch
+                // still showing "on" would then be claiming a block that no longer exists.
+                val vpnState = vpnFirewall.state.value
+                if (vpnState.running && vpnFirewall.systemReportsVpn() == false) {
+                    vpnFirewall.stop()
+                }
             }
         }
     }
@@ -981,6 +988,7 @@ class GamingToolsViewModel @Inject constructor(
      * storage permission covers it instead.
      */
     fun allFilesAccessIntent(): Intent? {
+        if (!VariantCapabilities.HAS_ALL_FILES_ACCESS) return null
         if (android.os.Build.VERSION.SDK_INT < android.os.Build.VERSION_CODES.R) return null
         return try {
             Intent(Settings.ACTION_MANAGE_ALL_FILES_ACCESS_PERMISSION).apply {

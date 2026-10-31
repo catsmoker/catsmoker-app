@@ -6,6 +6,7 @@ import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Environment
 import com.catsmoker.app.R
+import com.catsmoker.app.system.VariantCapabilities
 import com.catsmoker.app.system.shell.ShellRunner
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ensureActive
@@ -262,12 +263,14 @@ object CleaningFeature {
      * @return true when this app's own file APIs can read shared storage.
      *
      * From API 30 the plain read permission only covers media, so all-files access is the only
-     * thing that makes a full storage walk possible — which is exactly the check the reference
-     * cleaner performs before scanning.
+     * thing that makes a full storage walk possible. Play rejected that permission as non-core,
+     * so the Play variant returns false there and relies on its privileged shell for app data.
+     * Android 8–9 (API 27–29) predate scoped storage: their ordinary read grant still covers the
+     * walk, so Play keeps that path instead of losing the whole feature on older devices.
      */
     fun hasStorageAccess(context: Context): Boolean =
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-            Environment.isExternalStorageManager()
+            VariantCapabilities.HAS_ALL_FILES_ACCESS && Environment.isExternalStorageManager()
         } else {
             context.checkSelfPermission(Manifest.permission.READ_EXTERNAL_STORAGE) ==
                 PackageManager.PERMISSION_GRANTED
@@ -355,7 +358,7 @@ object CleaningFeature {
                 results = buckets.toResults(),
                 scannedSharedStorage = rootListing != null,
                 scannedAppData = scannedAppData,
-                needsAllFilesAccess = !directAccess,
+                needsAllFilesAccess = !directAccess && VariantCapabilities.HAS_ALL_FILES_ACCESS,
                 limitations = limitations
             )
         }

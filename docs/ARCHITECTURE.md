@@ -90,7 +90,8 @@ Application entry point and Compose host. A Hilt module provides
 ### Overlay & background services
 Several long-running `Service` implementations live under
 `gamingtools/tools/` (crosshair, performance overlay, auto force-stop,
-VPN firewall, app booster). Each reads/writes shared prefs and StateFlows
+app booster). The local `VpnFirewallService` is full-only (Play's VpnService
+policy rejects a non-core VPN). Each reads/writes shared prefs and StateFlows
 so the Compose UI and the overlay stay in sync. Both visible overlays
 reposition through a move mode — the window is `FLAG_NOT_TOUCHABLE` until the
 user asks to drag it, so taps otherwise reach the game; the crosshair stores an

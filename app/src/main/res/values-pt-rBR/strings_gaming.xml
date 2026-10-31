@@ -54,7 +54,7 @@
     <string name="gt_tool_dnd_title">Não Perturbe</string>
     <string name="gt_tool_dnd_sub">Silencie as notificações enquanto joga.</string>
     <string name="gt_tool_net_title">Dados em segundo plano</string>
-    <string name="gt_tool_net_sub">Bloqueio por VPN (Wi-Fi + dados móveis) ou Economia de dados (só dados móveis).</string>
+    <string name="gt_tool_net_sub">Mantenha outros apps fora da internet.</string>
     <string name="gt_tool_dns_title">DNS privado</string>
     <string name="gt_tool_dns_sub">Escolha o provedor de DNS privado.</string>
     <string name="gt_tool_afs_title">Parada forçada automática</string>
@@ -226,7 +226,7 @@
     <string name="gt_net_vpn_how_4">O Android vai pedir sua permissão uma vez. Se você recusar, nada é bloqueado.</string>
     <string name="gt_net_ds_title">Economia de dados</string>
     <string name="gt_net_ds_sub">Configuração própria do Android. Precisa de root ou Shizuku. Só dados móveis.</string>
-    <string name="gt_net_ds_need">A Economia de dados precisa de root ou Shizuku. O Android não permite que um app normal mude isso. A chave de VPN acima continua funcionando sem nenhum dos dois.</string>
+    <string name="gt_net_ds_need">A Economia de dados precisa de root ou Shizuku. O Android não permite que um app normal mude isso.</string>
     <string name="gt_net_checking">Verificando…</string>
     <string name="gt_net_unknown">Seu celular não quis dizer se isto está ativo ou desativado</string>
     <string name="gt_net_ds_on_count">Ativo — parando %1$d apps</string>
@@ -240,7 +240,7 @@
     <string name="gt_net_ds_how_title">Como funciona a Economia de dados?</string>
     <string name="gt_net_ds_how_1">Usa a mesma configuração que você encontraria nas Configurações do Android e pede ao seu celular que desligue a internet em segundo plano dos outros apps. Seus jogos são adicionados primeiro à lista de \"sempre permitidos\", então continuam funcionando.</string>
     <string name="gt_net_ds_how_2">Toda alteração é lida de volta do seu celular depois, então o que você vê acima é a resposta do seu celular, não um palpite deste app.</string>
-    <string name="gt_net_ds_how_3">Só funciona em dados móveis, ou em Wi-Fi que você marcou como pago. Em Wi-Fi normal não faz nada — a chave de VPN é a que funciona em todos os lugares.</string>
+    <string name="gt_net_ds_how_3">Só funciona em dados móveis, ou em Wi-Fi que você marcou como pago. Em Wi-Fi normal não faz nada.</string>
     <string name="gt_net_which_title">Qual devo usar?</string>
     <string name="gt_net_which_1">Em dados móveis: só a Economia de dados já basta, e não gasta bateria.</string>
     <string name="gt_net_which_2">Em Wi-Fi: use a chave de VPN — a Economia de dados não fará nada.</string>

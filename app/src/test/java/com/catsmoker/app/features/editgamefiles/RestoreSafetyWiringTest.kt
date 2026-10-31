@@ -96,7 +96,7 @@ class RestoreSafetyWiringTest {
 
     @Test
     fun anUnreadableSafFileIsNeverTreatedAsASeedPath() {
-        val body = region("private fun performSafFileCopy", "fun onStoragePermissionResult")
+        val body = region("private fun performSafFileCopy", "fun onCustomFolderPicked")
         assertTrue(
             "the profile push must refuse an existing file it cannot read",
             body.contains("gf_existing_unreadable")

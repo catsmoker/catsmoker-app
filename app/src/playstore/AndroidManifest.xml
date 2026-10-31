@@ -5,6 +5,12 @@
     placeholder (Google's sample test ID by default, overridden via
     ADMOB_APP_ID in local.properties). Missing exactly this tag crashes the
     app with "Missing application ID".
+
+    Deliberately absent here (Play policy, 2026-10-31): MANAGE_EXTERNAL_STORAGE
+    and the VpnFirewallService. Google Play rejected both as non-core for this
+    app; the full GitHub build declares them in src/full/AndroidManifest.xml.
+    This variant uses SAF/MediaStore for files and Data Saver for network
+    blocking, with root/Shizuku still handling app-data cleaning.
 -->
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 

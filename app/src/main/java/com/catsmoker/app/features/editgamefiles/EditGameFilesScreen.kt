@@ -1,8 +1,5 @@
 package com.catsmoker.app.features.editgamefiles
 
-import android.content.Intent
-import android.os.Build
-import android.provider.Settings
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -63,9 +60,6 @@ fun EditGameFilesRoute(onBack: () -> Unit) {
     val folderPicker = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocumentTree()) { uri ->
         uri?.let { viewModel.onCustomFolderPicked(it) }
     }
-    val allFilesPicker = rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) {
-        viewModel.onStoragePermissionResult()
-    }
 
     // Install state is probed when the view model is built, but the user installs and
     // uninstalls games while this screen sits open. Re-probing on every resume keeps the
@@ -91,25 +85,6 @@ fun EditGameFilesRoute(onBack: () -> Unit) {
                 EditGameFilesViewModel.EditEvent.LaunchFilePicker -> filePicker.launch("*/*")
                 EditGameFilesViewModel.EditEvent.LaunchSafPicker -> safPicker.launch(null)
                 is EditGameFilesViewModel.EditEvent.LaunchFolderPicker -> folderPicker.launch(event.initialUri)
-                EditGameFilesViewModel.EditEvent.LaunchAllFilesAccess -> {
-                    val intent = viewModel.launchAllFilesAccess()
-                    if (intent != null) {
-                        try {
-                            allFilesPicker.launch(intent)
-                        } catch (_: Exception) {
-                            try {
-                                // API 30+ only; launchAllFilesAccess() is null below R so this is unreachable there.
-                                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                                    allFilesPicker.launch(Intent(Settings.ACTION_MANAGE_ALL_FILES_ACCESS_PERMISSION))
-                                } else {
-                                    allFilesPicker.launch(Intent(Settings.ACTION_SETTINGS))
-                                }
-                            } catch (_: Exception) {
-                                allFilesPicker.launch(Intent(Settings.ACTION_SETTINGS))
-                            }
-                        }
-                    }
-                }
                 EditGameFilesViewModel.EditEvent.ShowZArchiverDialog -> {
                     Toast.makeText(context, zarchiverCopied, Toast.LENGTH_LONG).show()
                     viewModel.launchZArchiver()

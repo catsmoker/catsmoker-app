@@ -208,7 +208,7 @@
     <string name="gt_net_vpn_how_4">Android will ask you once to allow it. If you say no, nothing is blocked.</string>
     <string name="gt_net_ds_title">Data Saver</string>
     <string name="gt_net_ds_sub">Android\'s own setting. Needs root or Shizuku. Mobile data only.</string>
-    <string name="gt_net_ds_need">Data Saver needs root or Shizuku. Android does not let a normal app change it. The VPN switch above still works without either.</string>
+    <string name="gt_net_ds_need">Data Saver needs root or Shizuku. Android does not let a normal app change it.</string>
     <string name="gt_net_checking">Checking…</string>
     <string name="gt_net_unknown">Your phone would not tell us if this is on or off</string>
     <string name="gt_net_ds_on_count">On — stopping %1$d apps</string>
@@ -222,7 +222,7 @@
     <string name="gt_net_ds_how_title">How does Data Saver work?</string>
     <string name="gt_net_ds_how_1">It uses the same setting you would find in Android\'s own settings, and asks your phone to turn off background internet for other apps. Your games are added to the \"always allowed\" list first, so they keep working.</string>
     <string name="gt_net_ds_how_2">Every change is read back from your phone afterwards, so what you see above is your phone\'s answer, not a guess by this app.</string>
-    <string name="gt_net_ds_how_3">It only works on mobile data, or Wi-Fi you have marked as costing money. On normal Wi-Fi it does nothing — the VPN switch is the one that works everywhere.</string>
+    <string name="gt_net_ds_how_3">It only works on mobile data, or Wi-Fi you have marked as costing money. On normal Wi-Fi it does nothing.</string>
     <string name="gt_net_which_title">Which should I use?</string>
     <string name="gt_net_which_1">On mobile data: Data Saver alone is enough, and it costs no battery.</string>
     <string name="gt_net_which_2">On Wi-Fi: use the VPN switch — Data Saver will not do anything.</string>

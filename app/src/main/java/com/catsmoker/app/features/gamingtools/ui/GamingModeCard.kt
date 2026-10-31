@@ -263,7 +263,7 @@ fun GamingModeCard(
                         CatsmokerButton(
                             onClick = onRestoreApps,
                             modifier = Modifier.fillMaxWidth(),
-                            enabled = !isRestoringApps && !isBusy && !isActive
+                            enabled = !isRestoringApps && !isBusy
                         ) {
                             if (isRestoringApps) {
                                 CircularProgressIndicator(modifier = Modifier.size(14.dp), strokeWidth = 2.dp)
