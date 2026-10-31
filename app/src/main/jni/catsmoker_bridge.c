@@ -242,9 +242,9 @@ static void *find_dyn_symbol(const char *name) {
     }
     if (!found && hash) {
         long hoff = (long)(uintptr_t)file_offset(f, hash, phdrs, ehdr.e_phnum);
-        long soff = (long)(uintptr_t)file_offset(f, symtab, phdrs, ehdr.e_phnum);
-        long toff = (long)(uintptr_t)file_offset(f, strtab, phdrs, ehdr.e_phnum);
-        if (hoff && soff && toff) {
+        long shoff = (long)(uintptr_t)file_offset(f, symtab, phdrs, ehdr.e_phnum);
+        long stoff = (long)(uintptr_t)file_offset(f, strtab, phdrs, ehdr.e_phnum);
+        if (hoff && shoff && stoff) {
             uint32_t nbucket = 0, nchain = 0;
             fseek(f, hoff, SEEK_SET);
             if (fread(&nbucket, 4, 1, f) == 1 && fread(&nchain, 4, 1, f) == 1 && nbucket) {
@@ -254,11 +254,11 @@ static void *find_dyn_symbol(const char *name) {
                     uint32_t idx = buckets[h];
                     while (idx && idx < nchain) {
                         Elf64_Sym sym;
-                        fseek(f, soff + (long)idx * sizeof(sym), SEEK_SET);
+                        fseek(f, shoff + (long)idx * sizeof(sym), SEEK_SET);
                         if (fread(&sym, 1, sizeof(sym), f) != sizeof(sym)) break;
                         if (sym.st_name < strsz) {
                             char symname[256];
-                            fseek(f, toff + sym.st_name, SEEK_SET);
+                            fseek(f, stoff + sym.st_name, SEEK_SET);
                             size_t k = 0;
                             int ch;
                             while (k < sizeof(symname) - 1 && (ch = fgetc(f)) > 0) symname[k++] = (char)ch;

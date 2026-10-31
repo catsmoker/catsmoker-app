@@ -206,9 +206,6 @@ class GameInterventions @Inject constructor(
          * device that reports itself out of performance mode consults the STANDARD row, and only
          * one row would mean the cap holds exactly until then.
          *
-         * @param downscale opt-in backbuffer scale from `sanitizeDownscale`. A non-null value
-         *   replaces `false` in both rows (the platform's own FPS-throttling docs use the same
-         *   `mode=2,…,downscaleFactor=0.9:mode=3,…` shape); null keeps the reference bytes.
          */
         fun overlayValue(maxFps: Int): String =
             "mode=2,opengles=0,downscaleFactor=false,fps=$maxFps" +

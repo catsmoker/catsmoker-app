@@ -10,7 +10,7 @@ package com.catsmoker.app.features.gamingtools.engine
  * flag was written produced the opposite lie (apps suspended, UI idle, flag false).
  *
  * This reconciliation starts from what the device can actually be asked:
- *  - the package manager's per-package suspension list ([suspendedNow], null when unreadable);
+ *  - the package manager's per-package suspension list (suspendedNow, null when unreadable);
  *  - the persisted record of what this app suspended;
  *  - the boot count, which tells whether the settings levers could even have survived.
  *
@@ -26,7 +26,7 @@ object GamingModeSession {
      * @param pendingPackages recorded packages that are still suspended, or every recorded package
      *   when the device could not answer.
      * @param pendingAppOps packages whose `RUN_IN_BACKGROUND` app-op is still recorded as changed.
-     * @param verified false when [suspendedNow] was unreadable; the pending list is then the
+     * @param verified false when suspendedNow was unreadable; the pending list is then the
      *   record alone, not live evidence.
      */
     data class Verdict(

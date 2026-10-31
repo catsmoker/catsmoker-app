@@ -13,7 +13,7 @@ import com.catsmoker.app.system.ads.AdManager
 import com.catsmoker.app.system.ads.RemoveAdsRepository
 import com.catsmoker.app.system.config.AnalyticsConsent
 import com.catsmoker.app.system.config.AppearanceStore
-import com.catsmoker.app.system.config.LocaleHelper
+
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers

@@ -204,7 +204,7 @@ fun SettingsRoute(
  * Every row is one short line — icon, title, current value — with no long descriptions or
  * info icons except on the Privacy & Data switches, where the shared [InfoButton] opens a
  * bottom sheet explaining what is collected (same pattern as Gaming Tools). Card icons use
- * the theme's [colorScheme.onSurface] so they read correctly in light and dark themes.
+ * the theme's colorScheme.onSurface so they read correctly in light and dark themes.
  *
  * The screen stays a plain scroll column: at this length a search field would be more chrome
  * than help, and collapsible sections would hide the values the cards exist to show.

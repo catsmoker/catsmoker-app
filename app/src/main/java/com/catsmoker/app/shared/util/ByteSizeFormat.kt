@@ -16,7 +16,7 @@ import kotlin.math.round
  * the exact byte count is printed with no decimals; above it, one decimal is enough to read and
  * never claims more precision than the measurement has.
  *
- * The number is formatted in [locale] so a comma decimal separator is used where that is the
+ * The number is formatted in `locale` so a comma decimal separator is used where that is the
  * convention (`1,5 KiB` in German), while the unit abbreviation stays untouched — translating the
  * unit would corrupt a value that is meant to be comparable across languages.
  *
@@ -24,9 +24,6 @@ import kotlin.math.round
  * scanner), so `0` is a legitimate result and returns `"0 B"` rather than being hidden. Negative
  * input has no meaning for a byte count and is treated the same way instead of printing `-1 B`.
  *
- * @param bytes measured byte count. `0` or negative renders as `"0 B"`.
- * @param locale locale for the numeric part; defaults to the process locale, which the app's own
- *   language switch updates.
  */
 object ByteSizeFormat {
 
