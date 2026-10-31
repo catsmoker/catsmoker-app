@@ -38,6 +38,10 @@ object ThermalZoneReader {
             .orEmpty()
         return zones.mapNotNull { dir ->
             val type = readTrimmed(File(dir, "type")) ?: return@mapNotNull null
+            val lower = type.lowercase()
+            if (lower.contains("trip") || lower.contains("threshold") || lower.contains("shutdown") || lower.contains("limit")) {
+                return@mapNotNull null
+            }
             Zone(type, parseTempC(readTrimmed(File(dir, "temp")).orEmpty()))
         }
     }

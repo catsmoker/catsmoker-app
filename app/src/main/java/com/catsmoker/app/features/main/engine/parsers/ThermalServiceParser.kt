@@ -58,14 +58,7 @@ object ThermalServiceParser {
     fun parse(output: String): ThermalResult? {
         if (output.isBlank()) return null
 
-        val halSection = if (output.contains("Current temperatures from HAL:")) {
-            output.substringAfter("Current temperatures from HAL:")
-                .substringBefore("Current cooling devices")
-                .substringBefore("Temperature static thresholds")
-        } else {
-            ""
-        }
-        val section = halSection.ifBlank { output }
+        val section = extractLiveSection(output)
 
         var cpu: Float? = null
         var gpu: Float? = null
@@ -80,6 +73,9 @@ object ThermalServiceParser {
             val degC = normalize(raw) ?: continue
             val type = typeRegex.find(body)?.groupValues?.get(1)?.toIntOrNull()
             val name = nameRegex.find(body)?.groupValues?.get(1).orEmpty()
+            // A bare "soc" node reporting a small value (e.g. 100) is a state/percentage,
+            // not a temperature; real SoC temps arrive in millidegrees (> 200 raw).
+            if (name.uppercase().replace('-', '_') == "SOC" && abs(raw) <= 200f) continue
 
             // Keep the hottest reading per slot: SoCs expose several CPU cluster sensors and the
             // peak is what actually drives throttling.
@@ -142,8 +138,10 @@ object ThermalServiceParser {
             val parts = line.split(':')
             if (parts.size < 2) continue
 
-            val degC = normalize(parts.last().trim().toFloatOrNull() ?: continue) ?: continue
+            val rawValue = parts.last().trim().toFloatOrNull() ?: continue
+            val degC = normalize(rawValue) ?: continue
             val name = parts[parts.size - 2].trim()
+            if (name.uppercase().replace('-', '_') == "SOC" && abs(rawValue) <= 200f) continue
 
             when (classify(null, name)) {
                 SensorKind.CPU -> { cpu = hotter(cpu, degC); count++ }
@@ -158,6 +156,42 @@ object ThermalServiceParser {
         return ThermalResult(
             cpuC = cpu, gpuC = gpu, skinC = skin, npuC = npu, batteryC = battery, entryCount = count
         )
+    }
+
+    /**
+     * Extracts the live temperatures section, stripping out static thresholds, cooling devices,
+     * and trip points which report max limits (like 100 °C) rather than real temperatures.
+     */
+    private fun extractLiveSection(output: String): String {
+        val lower = output.lowercase()
+        val startHeaderIndex = listOf(
+            "current temperatures from hal:",
+            "current temperatures:",
+            "temperatures from hal:",
+            "temperatures:"
+        ).map { lower.indexOf(it) }.filter { it != -1 }.minOrNull()
+
+        val textToSearch = if (startHeaderIndex != null) {
+            output.substring(startHeaderIndex)
+        } else {
+            output
+        }
+
+        val lowerText = textToSearch.lowercase()
+        val cutoffIndex = listOf(
+            "temperature static thresholds",
+            "static thresholds",
+            "thresholds:",
+            "trip points:",
+            "current cooling devices",
+            "cooling devices"
+        ).map { lowerText.indexOf(it) }.filter { it != -1 }.minOrNull()
+
+        return if (cutoffIndex != null && cutoffIndex > 0) {
+            textToSearch.substring(0, cutoffIndex)
+        } else {
+            textToSearch
+        }
     }
 
     /** Kernel zones report milli-degrees; the HAL reports degrees. Normalise and sanity-check. */
@@ -176,6 +210,16 @@ object ThermalServiceParser {
      * The name fallback covers the common Qualcomm/MediaTek/OEM zone labels.
      */
     private fun classify(type: Int?, name: String): SensorKind {
+        val n = name.uppercase().replace('-', '_')
+        if (n.contains("TRIP") || n.contains("THRESHOLD") || n.contains("SHUTDOWN") ||
+            n.contains("LIMIT") || n.contains("MAX") || n.contains("CRITICAL") ||
+            n.contains("CRIT") || n.contains("HOT") || n.contains("ALERT") ||
+            n.contains("WARNING") || n.contains("PASSIVE") || n.contains("ACTIVE") ||
+            n.contains("TARGET")
+        ) {
+            return SensorKind.UNKNOWN
+        }
+
         when (type) {
             0 -> return SensorKind.CPU
             1 -> return SensorKind.GPU
@@ -187,7 +231,6 @@ object ThermalServiceParser {
         // Vendors spell the same zone with either separator — `quiet-therm-adc` on most Qualcomm
         // HALs, `quiet_therm` elsewhere; likewise `ap-ntc` / `AP_NTC`. Fold them together, or the
         // keyword list silently matches only half the devices in the wild.
-        val n = name.uppercase().replace('-', '_')
         return when {
             n.contains("SKIN") || n.contains("QUIET_THERM") || n.contains("XO_THERM") -> SensorKind.SKIN
             n.contains("GPU") || n.contains("GRAPHICS") || n.contains("MALI") -> SensorKind.GPU

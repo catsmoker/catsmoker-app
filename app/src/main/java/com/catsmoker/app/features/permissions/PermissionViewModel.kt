@@ -181,9 +181,14 @@ class PermissionViewModel @Inject constructor(
 
     fun requestRootPermission() {
         viewModelScope.launch(Dispatchers.IO) {
-            // Ask for a root shell and keep the answer: a denied or failed request used
-            // to be discarded, leaving the row off with no explanation of what happened.
-            val granted = runCatching { Shell.cmd("id").exec().isSuccess }.getOrDefault(false)
+            // Build a *fresh* root shell instead of reusing libsu's cached one. A cached
+            // non-root shell (e.g. from an earlier denied probe) would make `Shell.cmd`
+            // reuse it silently and never re-trigger the superuser manager's prompt, so
+            // the "Grant" button appeared to do nothing. A new builder always runs `su`,
+            // which is what makes Magisk/KernelSU/APatch show their grant dialog.
+            val granted = runCatching {
+                Shell.Builder.create().setTimeout(60).build().isRoot
+            }.getOrDefault(false)
             if (!granted) _events.tryEmit(UiEvent.RootRequestFailed)
             refreshStates()
         }

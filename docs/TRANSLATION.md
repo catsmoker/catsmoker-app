@@ -10,7 +10,7 @@ strings into resources.
   in `src/main`, plus `strings_spoof.xml` in `src/full` (Full flavor only),
   each mirrored key-for-key in `values-en-rGB/`, `values-ar/`, `values-es/`,
   `values-zh-rCN/`, `values-pt-rBR/` (`en en-rGB ar es zh-CN pt-rBR`, declared
-  in `resConfigs` + `res/xml/locales_config.xml`; in-app tags are
+  in `androidResources.localeFilters` + `res/xml/locales_config.xml`; in-app tags are
   `en/ar/es/zh-CN/pt-BR`).
   A key missing from a mirror falls back to the wrong language at runtime, so
   `LocaleParityTest` pins parity for user-visible copy — extend it when adding
@@ -88,13 +88,13 @@ Create a locale folder next to `values/` and mirror the keys:
 app/src/main/res/values-xx-rYY/strings.xml   # e.g. values-es, values-zh-rCN, values-pt-rBR
 ```
 
-Update `resConfigs` (`app/build.gradle.kts`), `res/xml/locales_config.xml`,
+Update `androidResources.localeFilters` (`app/build.gradle.kts`), `res/xml/locales_config.xml`,
 and `LocaleParityTest.localeDirs` to match. Full-only copy goes in the
 mirrored `src/full/res/values-*/strings_spoof.xml` instead.
 
 **Partial locales are a deliberate exception, not the norm.** `values-fr/`
 carries only the "Enable Ads" guilt-trip dialog (`strings_sys.xml`): French is
-in `resConfigs` so those six strings resolve on a French device, but it is
+in `localeFilters` so those six strings resolve on a French device, but it is
 *not* in `locales_config.xml`, `AppearanceStore`'s language picker, or
 `LocaleParityTest.localeDirs` — the rest of the app is untranslated, and
 offering French in the switcher would show a mostly-English UI. Expect

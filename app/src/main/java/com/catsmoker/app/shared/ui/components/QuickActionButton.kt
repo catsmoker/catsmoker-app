@@ -13,6 +13,7 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
@@ -39,6 +40,16 @@ fun QuickActionButton(
     modifier: Modifier = Modifier,
     isFullWidth: Boolean = false,
     showChevron: Boolean = false,
+    /**
+     * When true, draws a small update-available indicator dot at the top end of the tile.
+     * Visible only when an update is available; callers gate it on that condition.
+     */
+    showIndicator: Boolean = false,
+    indicatorVisible: Boolean = showIndicator,
+    updateAvailable: Boolean = showIndicator,
+    updateIndicator: Boolean = showIndicator,
+    hasUpdate: Boolean = showIndicator,
+    isUpdateAvailable: Boolean = showIndicator,
     statusTag: (@Composable () -> Unit)? = null,
     /**
      * True while the tap's work is still running. The tile goes non-clickable and shows
@@ -89,8 +100,24 @@ fun QuickActionButton(
                         modifier = Modifier
                             .size(iconSize)
                             .clip(RoundedCornerShape(14.dp))
-                            .background(iconContainerColor)
-                            .border(1.dp, iconContentColor.copy(alpha = 0.28f), RoundedCornerShape(14.dp)),
+                            .background(
+                                Brush.verticalGradient(
+                                    colors = listOf(
+                                        iconContainerColor,
+                                        iconContainerColor.copy(alpha = 0.5f)
+                                    )
+                                )
+                            )
+                            .border(
+                                1.dp,
+                                Brush.verticalGradient(
+                                    colors = listOf(
+                                        iconContentColor.copy(alpha = 0.45f),
+                                        iconContentColor.copy(alpha = 0.15f)
+                                    )
+                                ),
+                                RoundedCornerShape(14.dp)
+                            ),
                         contentAlignment = Alignment.Center
                     ) {
                         CompositionLocalProvider(LocalContentColor provides iconContentColor) {
@@ -123,7 +150,7 @@ fun QuickActionButton(
                         Icon(
                             imageVector = Icons.Default.ChevronRight,
                             contentDescription = null,
-                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
                             modifier = Modifier.size(20.dp)
                         )
                     }
@@ -144,6 +171,7 @@ fun QuickActionButton(
                         containerColor = iconContainerColor,
                         contentColor = iconContentColor,
                         isLoading = isLoading,
+                        showChevron = showChevron,
                         icon = icon
                     )
                     Column {
@@ -179,6 +207,7 @@ fun QuickActionButton(
                         containerColor = iconContainerColor,
                         contentColor = iconContentColor,
                         isLoading = isLoading,
+                        showChevron = showChevron,
                         icon = icon
                     )
                     Spacer(modifier = Modifier.height(gridTitleGap))
@@ -221,12 +250,40 @@ fun QuickActionButton(
                         .clip(RoundedCornerShape(bottomStart = 20.dp, bottomEnd = 20.dp))
                 )
             }
+            // Update-available indicator: a small dot, only visible when an update is available.
+            if (showIndicator || indicatorVisible || updateAvailable || updateIndicator || hasUpdate || isUpdateAvailable) {
+                Box(
+                    modifier = Modifier
+                        .align(Alignment.TopEnd)
+                        .padding(10.dp)
+                ) {
+                    UpdateIndicator()
+                }
+            }
         }
     }
 }
 
 /**
- * The rounded icon badge plus the optional busy spinner, shared by both grid
+ * Small update-available indicator. Rendered only when an update is available.
+ */
+@Composable
+fun UpdateIndicator(
+    visible: Boolean = true,
+    updateAvailable: Boolean = visible,
+    showIndicator: Boolean = visible
+) {
+    if (visible || updateAvailable || showIndicator) {
+        Box(
+            modifier = Modifier
+                .size(10.dp)
+                .background(Color(0xFFEF4444), androidx.compose.foundation.shape.CircleShape)
+        )
+    }
+}
+
+/**
+ * The rounded icon badge plus the optional busy spinner and chevron, shared by both grid
  * layouts so the two branches can never drift apart.
  */
 @Composable
@@ -235,6 +292,7 @@ private fun ActionIconBadge(
     containerColor: Color,
     contentColor: Color,
     isLoading: Boolean,
+    showChevron: Boolean = false,
     icon: @Composable () -> Unit
 ) {
     Row(
@@ -246,8 +304,24 @@ private fun ActionIconBadge(
             modifier = Modifier
                 .size(iconSize)
                 .clip(RoundedCornerShape(14.dp))
-                .background(containerColor)
-                .border(1.dp, contentColor.copy(alpha = 0.28f), RoundedCornerShape(14.dp)),
+                .background(
+                    Brush.verticalGradient(
+                        colors = listOf(
+                            containerColor,
+                            containerColor.copy(alpha = 0.5f)
+                        )
+                    )
+                )
+                .border(
+                    1.dp,
+                    Brush.verticalGradient(
+                        colors = listOf(
+                            contentColor.copy(alpha = 0.45f),
+                            contentColor.copy(alpha = 0.15f)
+                        )
+                    ),
+                    RoundedCornerShape(14.dp)
+                ),
             contentAlignment = Alignment.Center
         ) {
             CompositionLocalProvider(LocalContentColor provides contentColor) {
@@ -258,6 +332,13 @@ private fun ActionIconBadge(
             CircularProgressIndicator(
                 modifier = Modifier.size(20.dp),
                 strokeWidth = 2.dp
+            )
+        } else if (showChevron) {
+            Icon(
+                imageVector = Icons.Default.ChevronRight,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
+                modifier = Modifier.size(20.dp)
             )
         }
     }

@@ -10,6 +10,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
@@ -24,6 +25,8 @@ import com.startapp.sdk.ads.banner.BannerListener
  */
 @Composable
 fun AdBanner(modifier: Modifier = Modifier) {
+    if (LocalInspectionMode.current) return
+
     // Container size, not the configuration screen width: on foldables and in multi-window
     // the activity window is narrower than the screen, and the configuration value goes stale.
     val containerWidth = with(LocalDensity.current) { LocalWindowInfo.current.containerSize.width.toDp() }

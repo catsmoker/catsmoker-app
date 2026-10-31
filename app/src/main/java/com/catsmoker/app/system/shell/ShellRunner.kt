@@ -497,7 +497,10 @@ class ShellRunner @Inject constructor(
             val asInterface = stubClass.getMethod("asInterface", IBinder::class.java)
             val service = asInterface.invoke(null, binder) ?: return ""
             val getters = service.javaClass.methods
-                .filter { it.name.contains("emperature", ignoreCase = true) }
+                .filter {
+                    it.name.contains("emperature", ignoreCase = true) &&
+                        !it.name.contains("threshold", ignoreCase = true)
+                }
                 .sortedBy { it.parameterCount }
             for (getter in getters) {
                 val result = runCatching {
@@ -635,7 +638,18 @@ class ShellRunner @Inject constructor(
             ?.mapNotNull { zone ->
                 val type = File(zone, "type")
                 val temp = File(zone, "temp")
-                if (type.canRead() && temp.canRead()) type to temp else null
+                if (type.canRead() && temp.canRead()) {
+                    val name = runCatching { type.readText().trim().lowercase() }.getOrNull().orEmpty()
+                    if (name.contains("trip") || name.contains("threshold") || name.contains("shutdown") ||
+                        name.contains("limit") || name.contains("max") || name.contains("critical") ||
+                        name.contains("hot") || name.contains("alert") || name.contains("warning") ||
+                        name.contains("passive") || name.contains("active") || name.contains("target")
+                    ) {
+                        null
+                    } else {
+                        type to temp
+                    }
+                } else null
             }
             .orEmpty()
     } catch (_: Throwable) {

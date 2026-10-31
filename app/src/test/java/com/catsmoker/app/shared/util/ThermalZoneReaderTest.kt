@@ -58,4 +58,27 @@ class ThermalZoneReaderTest {
             root.deleteRecursively()
         }
     }
+
+    @Test
+    fun skipsTripAndThresholdZones() {
+        val root = Files.createTempDirectory("thermal-trip").toFile()
+        try {
+            val zone1 = File(root, "thermal_zone0")
+            zone1.mkdir()
+            File(zone1, "type").writeText("cpu-0-trip-point")
+            File(zone1, "temp").writeText("100000")
+
+            val zone2 = File(root, "thermal_zone1")
+            zone2.mkdir()
+            File(zone2, "type").writeText("cpu-0-0")
+            File(zone2, "temp").writeText("42500")
+
+            val zones = ThermalZoneReader.zonesFromSysfsRoot(root)
+            assertEquals(1, zones.size)
+            assertEquals("cpu-0-0", zones[0].name)
+            assertEquals(42.5f, zones[0].tempC!!, 0.01f)
+        } finally {
+            root.deleteRecursively()
+        }
+    }
 }

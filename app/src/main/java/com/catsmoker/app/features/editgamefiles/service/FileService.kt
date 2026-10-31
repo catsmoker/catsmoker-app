@@ -90,6 +90,10 @@ class FileService : IFileService.Stub {
         val sb = StringBuilder()
         for (zone in zones.sortedBy { it.name }) {
             val type = readTrimmed(File(zone, "type")) ?: continue
+            val lower = type.lowercase()
+            if (lower.contains("trip") || lower.contains("threshold") || lower.contains("shutdown") || lower.contains("limit")) {
+                continue
+            }
             val temp = readTrimmed(File(zone, "temp")) ?: continue
             sb.append(type).append(':').append(temp).append('\n')
         }

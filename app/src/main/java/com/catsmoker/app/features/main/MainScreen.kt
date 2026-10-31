@@ -16,7 +16,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawWithCache
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.drawscope.Stroke
@@ -48,6 +51,8 @@ import kotlin.time.Duration.Companion.seconds
 @Composable
 fun MainRoute(onNavigate: (String) -> Unit) {
     val viewModel: MainViewModel = hiltViewModel()
+    val settingsViewModel: com.catsmoker.app.features.settings.SettingsViewModel = hiltViewModel()
+    val settingsUiState by settingsViewModel.uiState.collectAsState()
     val state by viewModel.metricsState.collectAsState()
     val fpsHistory by viewModel.fpsHistory.collectAsState()
     val cpuHistory by viewModel.cpuHistory.collectAsState()
@@ -94,6 +99,7 @@ fun MainRoute(onNavigate: (String) -> Unit) {
         tempHistory = tempHistory,
         pingHistory = pingHistory,
         adsEnabled = adsEnabled,
+        availableUpdateName = settingsUiState.availableUpdateName,
         onOpenSpoofDevice = { onNavigate(Routes.SPOOF_DEVICE) },
         onOpenEditGameFiles = { onNavigate(Routes.EDIT_GAME_FILES) },
         onOpenGamingTools = { onNavigate(Routes.GAMING_TOOLS) },
@@ -110,6 +116,14 @@ fun MainScreen(
     tempHistory: List<Float>,
     pingHistory: List<Int>,
     adsEnabled: Boolean,
+    /** Version name of a release the last check found, null when up to date. Drives the update indicator on the Settings tile. */
+    availableUpdateName: String? = null,
+    /** Convenience alias some callers use for the same condition. */
+    updateAvailable: Boolean = availableUpdateName != null,
+    hasUpdateAvailable: Boolean = availableUpdateName != null,
+    updateIndicator: Boolean = availableUpdateName != null,
+    isUpdateAvailable: Boolean = availableUpdateName != null,
+    hasUpdate: Boolean = availableUpdateName != null,
     onOpenSpoofDevice: () -> Unit,
     onOpenEditGameFiles: () -> Unit,
     onOpenGamingTools: () -> Unit,
@@ -120,6 +134,7 @@ fun MainScreen(
     var showAdsDeferred by remember { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
+        if (isPreview) return@LaunchedEffect
         // One-frame "breath" to let the system settle after splash removal
         kotlinx.coroutines.delay(16.milliseconds) 
         
@@ -135,10 +150,9 @@ fun MainScreen(
     }
 
     LaunchedEffect(adsEnabled) {
-        if (adsEnabled) {
-            kotlinx.coroutines.delay(5.seconds)
-            showAdsDeferred = true
-        }
+        if (isPreview || !adsEnabled) return@LaunchedEffect
+        kotlinx.coroutines.delay(5.seconds)
+        showAdsDeferred = true
     }
 
     val metricsAlpha by animateFloatAsState(if (hydrationPhase >= 1) 1f else 0f, tween(300), label = "metrics")
@@ -319,11 +333,12 @@ fun MainScreen(
                             QuickActionButton(
                                 title = stringResource(R.string.dash_spoof_title),
                                 subtitle = stringResource(R.string.dash_spoof_subtitle),
-                                iconContainerColor = MaterialTheme.colorScheme.surfaceVariant,
-                                iconContentColor = MaterialTheme.colorScheme.onSurface,
+                                iconContainerColor = NothingRed.copy(alpha = 0.15f),
+                                iconContentColor = NothingRed,
                                 onClick = onOpenSpoofDevice,
                                 modifier = Modifier.weight(1f).fillMaxHeight(),
                                 spreadGridContent = true,
+                                showChevron = true,
                                 contentPadding = 12.dp,
                                 iconSize = 40.dp,
                                 icon = { Icon(Icons.Default.SettingsInputComponent, null) }
@@ -331,11 +346,12 @@ fun MainScreen(
                             QuickActionButton(
                                 title = stringResource(R.string.dash_edit_files_title),
                                 subtitle = stringResource(R.string.dash_edit_files_subtitle),
-                                iconContainerColor = MaterialTheme.colorScheme.surfaceVariant,
-                                iconContentColor = MaterialTheme.colorScheme.onSurface,
+                                iconContainerColor = Color(0xFF3B82F6).copy(alpha = 0.15f),
+                                iconContentColor = Color(0xFF60A5FA),
                                 onClick = onOpenEditGameFiles,
                                 modifier = Modifier.weight(1f).fillMaxHeight(),
                                 spreadGridContent = true,
+                                showChevron = true,
                                 contentPadding = 12.dp,
                                 iconSize = 40.dp,
                                 icon = { Icon(Icons.Default.FolderOpen, null) }
@@ -349,11 +365,12 @@ fun MainScreen(
                             QuickActionButton(
                                 title = stringResource(R.string.dash_edit_files_title),
                                 subtitle = stringResource(R.string.dash_edit_files_subtitle),
-                                iconContainerColor = MaterialTheme.colorScheme.surfaceVariant,
-                                iconContentColor = MaterialTheme.colorScheme.onSurface,
+                                iconContainerColor = Color(0xFF3B82F6).copy(alpha = 0.15f),
+                                iconContentColor = Color(0xFF60A5FA),
                                 onClick = onOpenEditGameFiles,
                                 modifier = Modifier.weight(1f).fillMaxHeight(),
                                 spreadGridContent = true,
+                                showChevron = true,
                                 contentPadding = 12.dp,
                                 iconSize = 40.dp,
                                 icon = { Icon(Icons.Default.FolderOpen, null) }
@@ -368,27 +385,47 @@ fun MainScreen(
                         QuickActionButton(
                             title = stringResource(R.string.Gaming_tools_title),
                             subtitle = stringResource(R.string.dash_gaming_tools_subtitle),
-                            iconContainerColor = MaterialTheme.colorScheme.surfaceVariant,
-                            iconContentColor = MaterialTheme.colorScheme.onSurface,
+                            iconContainerColor = Color(0xFF10B981).copy(alpha = 0.15f),
+                            iconContentColor = Color(0xFF34D399),
                             onClick = onOpenGamingTools,
                             modifier = Modifier.weight(1f).fillMaxHeight(),
                             spreadGridContent = true,
+                            showChevron = true,
                             contentPadding = 12.dp,
                             iconSize = 40.dp,
                             icon = { Icon(Icons.Default.SportsEsports, null) }
                         )
-                        QuickActionButton(
-                            title = stringResource(R.string.core_settings_title),
-                            subtitle = stringResource(R.string.core_settings_subtitle),
-                            iconContainerColor = MaterialTheme.colorScheme.surfaceVariant,
-                            iconContentColor = MaterialTheme.colorScheme.onSurface,
-                            onClick = onOpenSettings,
-                            modifier = Modifier.weight(1f).fillMaxHeight(),
-                            spreadGridContent = true,
-                            contentPadding = 12.dp,
-                            iconSize = 40.dp,
-                            icon = { Icon(Icons.Default.Settings, null) }
-                        )
+                        Box(modifier = Modifier.weight(1f).fillMaxHeight()) {
+                            QuickActionButton(
+                                title = stringResource(R.string.core_settings_title),
+                                subtitle = stringResource(R.string.core_settings_subtitle),
+                                iconContainerColor = Color(0xFF8B5CF6).copy(alpha = 0.15f),
+                                iconContentColor = Color(0xFFA78BFA),
+                                onClick = onOpenSettings,
+                                modifier = Modifier.fillMaxSize(),
+                                spreadGridContent = true,
+                                showChevron = true,
+                                showIndicator = availableUpdateName != null,
+                                indicatorVisible = availableUpdateName != null,
+                                updateAvailable = availableUpdateName != null,
+                                updateIndicator = availableUpdateName != null,
+                                hasUpdate = availableUpdateName != null,
+                                isUpdateAvailable = availableUpdateName != null,
+                                contentPadding = 12.dp,
+                                iconSize = 40.dp,
+                                icon = { Icon(Icons.Default.Settings, null) }
+                            )
+                            if (availableUpdateName != null) {
+                                // New indicator: only visible when an update is available.
+                                Box(
+                                    modifier = Modifier
+                                        .align(Alignment.TopEnd)
+                                        .padding(8.dp)
+                                ) {
+                                    UpdateIndicator()
+                                }
+                            }
+                        }
                     }
                 }
 
@@ -426,6 +463,7 @@ fun CombinedChart(
     modifier: Modifier = Modifier
 ) {
     val nothingRed = NothingRed
+    val gridColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.05f)
     
     Spacer(
         modifier = modifier
@@ -434,7 +472,8 @@ fun CombinedChart(
             .clip(RoundedCornerShape(12.dp))
             // Theme panel, not a fixed tint: the old white-3% wash was invisible on a
             // light card, leaving the lines floating on the card itself.
-            .background(MaterialTheme.colorScheme.surfaceVariant)
+            .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
+            .border(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.3f), RoundedCornerShape(12.dp))
             .padding(8.dp)
             .drawWithCache {
                 val stroke = Stroke(width = 2.dp.toPx(), cap = StrokeCap.Round)
@@ -447,7 +486,33 @@ fun CombinedChart(
                 val tempP = createPath(tempHistory, size, 60f)
                 val pingP = createPath(pingHistory.map { it.toFloat() }, size, 200f)
 
+                val fpsFillP = Path().apply {
+                    addPath(fpsP)
+                    if (fpsHistory.size >= 2) {
+                        lineTo(size.width, size.height)
+                        lineTo(0f, size.height)
+                        close()
+                    }
+                }
+
+                val fpsGradient = Brush.verticalGradient(
+                    colors = listOf(nothingRed.copy(alpha = 0.20f), Color.Transparent),
+                    startY = 0f,
+                    endY = size.height
+                )
+
                 onDrawBehind {
+                    // Draw horizontal telemetry grid lines
+                    val h1 = size.height * 0.33f
+                    val h2 = size.height * 0.66f
+                    drawLine(gridColor, start = Offset(0f, h1), end = Offset(size.width, h1), strokeWidth = 1.dp.toPx())
+                    drawLine(gridColor, start = Offset(0f, h2), end = Offset(size.width, h2), strokeWidth = 1.dp.toPx())
+
+                    // Ambient gradient under live FPS path
+                    if (fpsHistory.size >= 2) {
+                        drawPath(fpsFillP, brush = fpsGradient)
+                    }
+
                     drawPath(fpsP, nothingRed, style = stroke)
                     drawPath(cpuP, Color(0xFF22C55E), style = stroke)
                     drawPath(ramP, Color(0xFF3B82F6), style = stroke)
@@ -458,8 +523,8 @@ fun CombinedChart(
     )
 }
 
-private fun createPath(history: List<Float>, size: androidx.compose.ui.geometry.Size, baseMax: Float): androidx.compose.ui.graphics.Path {
-    val path = androidx.compose.ui.graphics.Path()
+private fun createPath(history: List<Float>, size: androidx.compose.ui.geometry.Size, baseMax: Float): Path {
+    val path = Path()
     if (history.size < 2) return path
     val w = size.width
     val h = size.height
@@ -478,26 +543,26 @@ fun StatusBadge(label: String, active: Boolean, activeColor: Color) {
     Box(
         modifier = Modifier
             .background(
-                if (active) activeColor.copy(alpha = 0.1f) else MaterialTheme.colorScheme.surfaceVariant,
+                if (active) activeColor.copy(alpha = 0.12f) else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
                 RoundedCornerShape(8.dp)
             )
             .border(
                 1.dp,
-                if (active) activeColor.copy(alpha = 0.2f) else MaterialTheme.colorScheme.outlineVariant,
+                if (active) activeColor.copy(alpha = 0.3f) else MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f),
                 RoundedCornerShape(8.dp)
             )
-            .padding(horizontal = 8.dp, vertical = 4.dp)
+            .padding(horizontal = 10.dp, vertical = 4.dp)
     ) {
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
             Box(
                 modifier = Modifier
-                    .size(4.dp)
-                    .background(if (active) activeColor else MaterialTheme.colorScheme.onSurfaceVariant, CircleShape)
+                    .size(6.dp)
+                    .background(if (active) activeColor else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f), CircleShape)
             )
             Text(
                 text = label,
                 style = MaterialTheme.typography.labelSmall,
-                color = if (active) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurfaceVariant
+                color = if (active) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
             )
         }
     }
@@ -509,7 +574,7 @@ fun CompactStat(label: String, value: String, color: Color) {
         Text(
             text = label,
             style = MaterialTheme.typography.labelSmall,
-            color = color.copy(alpha = 0.6f),
+            color = color.copy(alpha = 0.7f),
             fontSize = 9.sp
         )
         Text(
@@ -532,6 +597,24 @@ private fun MetricReadStatus.compactLabel(): String = when (this) {
     MetricReadStatus.PrivilegeDenied -> stringResource(R.string.core_compact_privilege)
     MetricReadStatus.Unsupported -> stringResource(R.string.core_compact_unsupported)
     else -> stringResource(R.string.core_compact_na)
+}
+
+/**
+ * Small update-available indicator. Rendered only when an update is available.
+ */
+@Composable
+fun UpdateIndicator(
+    visible: Boolean = true,
+    updateAvailable: Boolean = visible,
+    showIndicator: Boolean = visible
+) {
+    if (visible || updateAvailable || showIndicator) {
+        Box(
+            modifier = Modifier
+                .size(10.dp)
+                .background(Color(0xFFEF4444), androidx.compose.foundation.shape.CircleShape)
+        )
+    }
 }
 
 @Preview(showBackground = true, backgroundColor = 0xFF000000)

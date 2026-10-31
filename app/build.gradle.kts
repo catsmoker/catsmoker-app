@@ -14,6 +14,14 @@ android {
     namespace = "com.catsmoker.app"
     compileSdk = 37
 
+    androidResources {
+        // Only locales the app actually ships (see res/xml/locales_config.xml): strips the
+        // dozens of transitive locales dragged in by material/ads/splashscreen/work.
+        // Shrinking alone cannot do this. Qualifiers match res/values-* dirs exactly;
+        // in-app tags are en/ar/es/zh-CN/pt-BR (AppearanceStore), en-GB is a mirror.
+        localeFilters += setOf("en", "en-rGB", "ar", "es", "zh-rCN", "pt-rBR", "fr")
+    }
+
     defaultConfig {
         applicationId = "com.catsmoker.app"
         minSdk = 27
@@ -23,12 +31,6 @@ android {
         // ShellRunner KDoc). Shipped helpers keep serving the old AIDL until this moves.
         versionCode = 11
         versionName = "2.0.5"
-
-        // Only locales the app actually ships (see res/xml/locales_config.xml): strips the
-        // dozens of transitive locales dragged in by material/ads/splashscreen/work.
-        // Shrinking alone cannot do this. Qualifiers match res/values-* dirs exactly;
-        // in-app tags are en/ar/es/zh-CN/pt-BR (AppearanceStore), en-GB is a mirror.
-        resConfigs("en", "en-rGB", "ar", "es", "zh-rCN", "pt-rBR", "fr")
 
         vectorDrawables {
             useSupportLibrary = true
@@ -210,7 +212,7 @@ dependencies {
     implementation(libs.compose.ui)
     implementation(libs.compose.ui.graphics)
     implementation(libs.compose.ui.tooling.preview)
-    debugImplementation(libs.compose.ui.tooling)
+    implementation(libs.compose.ui.tooling)
     debugImplementation(libs.compose.runtime.tracing)
     implementation(libs.compose.material3)
     implementation(libs.compose.material.icons.extended)

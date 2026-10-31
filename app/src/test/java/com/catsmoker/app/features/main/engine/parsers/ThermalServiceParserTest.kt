@@ -131,4 +131,30 @@ class ThermalServiceParserTest {
         assertEquals(0, result.entryCount)
         assertTrue(!result.hasAnySensor)
     }
+
+    @Test
+    fun ignoresStaticThresholdsWithNonStandardHeader() {
+        // Non-standard OEM dumpsys header (without "from HAL:").
+        val dump = """
+            Current temperatures:
+             Temperature{mValue=38.5, mType=0, mName=cpu0}
+            Static thresholds:
+             Temperature{mValue=100.0, mType=0, mName=cpu0}
+        """.trimIndent()
+
+        val result = ThermalServiceParser.parse(dump)!!
+        assertEquals(38.5f, result.cpuC!!, 0.01f)
+    }
+
+    @Test
+    fun ignoresTripPointAndThresholdSensorNames() {
+        val dump = """
+            Temperature{mValue=41.0, mType=0, mName=cpu-0-0}
+            Temperature{mValue=100.0, mType=0, mName=cpu-trip-point-0}
+            Temperature{mValue=105.0, mType=0, mName=cpu-max-threshold}
+        """.trimIndent()
+
+        val result = ThermalServiceParser.parse(dump)!!
+        assertEquals(41.0f, result.cpuC!!, 0.01f)
+    }
 }

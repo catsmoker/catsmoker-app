@@ -12,6 +12,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import com.catsmoker.app.BuildConfig
@@ -38,6 +39,8 @@ import com.google.android.gms.ads.LoadAdError
  */
 @Composable
 fun AdBanner(modifier: Modifier = Modifier) {
+    if (LocalInspectionMode.current) return
+
     val adUnitId = BuildConfig.ADMOB_BANNER_ID
     if (adUnitId.isEmpty()) return
 
