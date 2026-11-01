@@ -42,7 +42,7 @@
     <string name="gt_tool_sound_sub">Aumente o volume além do limite.</string>
     <string name="gt_tool_booster_title">Otimização de compilação de apps</string>
     <string name="gt_tool_booster_sub">Pré-compile apps — um jogo ou todos — para os jogos terem menos engasgos.</string>
-    <string name="gt_tool_booster_need">Precisa de root ou Shizuku. O Android não permite que um app normal faça isso. O Shizuku é um app auxiliar gratuito que empresta esse poder a este app sem root.</string>
+    <string name="gt_tool_booster_need">Precisa de root ou Shizuku. O Android não permite que um app normal faça isso.</string>
     <string name="gt_tool_devopts_title">Opções do desenvolvedor</string>
     <string name="gt_tool_devopts_sub">Acelere menus e apps em segundo plano.</string>
     <string name="gt_tool_screen_title">Resolução</string>
@@ -59,7 +59,7 @@
     <string name="gt_tool_dns_sub">Escolha o provedor de DNS privado.</string>
     <string name="gt_tool_afs_title">Parada forçada automática</string>
     <string name="gt_tool_afs_sub">Força a parada de todo app que você deixa (encerrado por completo), sem lista para gerenciar.</string>
-    <string name="gt_tool_afs_need">Precisa de root ou Shizuku. O Android não permite que um app normal feche outros apps. O Shizuku é um app auxiliar gratuito que empresta esse poder a este app sem root.</string>
+    <string name="gt_tool_afs_need">Precisa de root ou Shizuku. O Android não permite que um app normal feche outros apps.</string>
     <string name="gt_tool_cleaner_title">Limpeza de armazenamento</string>
     <string name="gt_tool_cleaner_sub">Analise arquivos desnecessários, libere RAM e otimize o armazenamento.</string>
 
@@ -88,7 +88,7 @@
     <string name="gt_res_dpi">DPI</string>
     <string name="gt_res_editable_hint">Você pode digitar seus próprios números.</string>
     <string name="gt_res_locked_hint">Bloqueado na predefinição acima. Escolha \"Personalizado\" para digitar seus próprios números.</string>
-    <string name="gt_res_need">Precisa de root ou Shizuku. O Android não permite que um app normal redimensione a tela. O Shizuku é um app auxiliar gratuito que empresta esse poder a este app sem root.</string>
+    <string name="gt_res_need">Precisa de root ou Shizuku. O Android não permite que um app normal redimensione a tela.</string>
     <string name="gt_res_ready_root">Pronto — usando root.</string>
     <string name="gt_res_ready_shizuku">Pronto — usando Shizuku.</string>
     <string name="gt_res_apply">Aplicar</string>
@@ -422,7 +422,7 @@
     <!-- Accessible name for the Gaming Mode power toggle (state-dependent). -->
     <string name="gt_gm_toggle_on">Ativar Modo Jogo</string>
     <string name="gt_gm_toggle_off">Desativar Modo Jogo</string>
-    <string name="gt_gm_need">Precisa de root ou Shizuku.\nTudo o que o Modo Jogo faz precisa ser feito pelo sistema do seu celular, e o Android só permite que um app peça isso por meio de root ou Shizuku. O Shizuku é um app auxiliar gratuito que empresta esses poderes a este app sem root. Ele se ativa sozinho assim que um deles estiver disponível.</string>
+    <string name="gt_gm_need">Precisa de root ou Shizuku.\nEle se ativa sozinho assim que um deles estiver disponível.</string>
     <string name="gt_gm_what_title">O que o Modo Jogo faz?</string>
     <string name="gt_gm_what_1">Prepara seu celular para jogar com um toque: mantém a tela na velocidade máxima, pausa outros apps, silencia notificações e impede que seu celular diminua a própria velocidade.</string>
     <string name="gt_gm_what_2">Anota como seu celular estava configurado antes de mudar qualquer coisa, então desativar devolve tudo exatamente como era.</string>

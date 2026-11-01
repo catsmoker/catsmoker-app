@@ -1,5 +1,6 @@
 package com.catsmoker.app.system.config
 
+import android.annotation.SuppressLint
 import android.content.Context
 import android.content.Intent
 import android.content.res.Configuration
@@ -17,6 +18,7 @@ import java.util.Locale
  * engine state and running services — on the previous language, which is how
  * English-selected UI kept showing Arabic until the process died.
  */
+@SuppressLint("AppBundleLocaleChanges")
 object LocaleHelper {
 
     /**

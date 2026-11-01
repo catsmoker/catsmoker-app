@@ -1,5 +1,6 @@
 package com.catsmoker.app.features.spoofdevice.root
 
+import android.annotation.SuppressLint
 import android.content.Context
 import android.os.Build
 import android.os.Handler
@@ -188,6 +189,7 @@ object UnityFrameRateDelivery {
      * 3. the module classloader's dex path list.
      * Any failure returns null; the caller aborts without side effects.
      */
+    @SuppressLint("DiscouragedPrivateApi")
     private fun findOwnApk(context: Context): String? {
         runCatching {
             val bundle = context.contentResolver.call(

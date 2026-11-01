@@ -1,5 +1,7 @@
 package com.catsmoker.app.system.shell
 
+import android.annotation.SuppressLint
+
 /**
  * The in-app native bridge: a JNI library (`libcatsmoker_bridge.so`) built from
  * `app/src/main/jni/` and packaged inside this APK.
@@ -65,6 +67,7 @@ object NativeBridge {
      * as the target's UID, which maps a second copy and therefore skips `native_init`.
      * Idempotent; the first successful load wins.
      */
+    @SuppressLint("UnsafeDynamicallyLoadedCode")
     @Synchronized
     fun preload(path: String): Boolean {
         if (loaded) return true

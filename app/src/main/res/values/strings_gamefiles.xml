@@ -1,4 +1,4 @@
-<resources>
+<resources xmlns:tools="http://schemas.android.com/tools" tools:ignore="MissingTranslation">
     <!-- Game-files (File Engineering) feature strings. Every name starts with gf_.
          Owned by the editgamefiles feature; do not reuse names from strings.xml. -->
 

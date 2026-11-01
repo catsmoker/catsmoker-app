@@ -1,4 +1,4 @@
-<resources>
+<resources xmlns:tools="http://schemas.android.com/tools" tools:ignore="MissingTranslation">
     <!-- Settings screen + update flow + support dialog. Language endonyms stay native in every locale. -->
     <string name="sys_settings_title">Settings</string>
     <string name="sys_settings_subtitle">App configuration and preferences.</string>

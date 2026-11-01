@@ -34,7 +34,7 @@
     <string name="gt_tool_sound_sub">Turn the volume up past the limit.</string>
     <string name="gt_tool_booster_title">App Booster</string>
     <string name="gt_tool_booster_sub">Get apps ready so games stutter less.</string>
-    <string name="gt_tool_booster_need">Needs root or Shizuku. Android does not let a normal app do this. Shizuku is a free helper app that lends this app that power without root.</string>
+    <string name="gt_tool_booster_need">Needs root or Shizuku. Android does not let a normal app do this.</string>
     <string name="gt_tool_devopts_title">Developer Options</string>
     <string name="gt_tool_devopts_sub">Speed up menus and background apps.</string>
     <string name="gt_tool_screen_title">Screen Size</string>
@@ -51,7 +51,7 @@
     <string name="gt_tool_dns_sub">Choose a quicker, more private phone book.</string>
     <string name="gt_tool_afs_title">Auto Force Stop</string>
     <string name="gt_tool_afs_sub">Closes every app you leave, with no list to manage.</string>
-    <string name="gt_tool_afs_need">Needs root or Shizuku. Android does not let a normal app close other apps. Shizuku is a free helper app that lends this app that power without root.</string>
+    <string name="gt_tool_afs_need">Needs root or Shizuku. Android does not let a normal app close other apps.</string>
     <string name="gt_tool_cleaner_title">Cleaner</string>
     <string name="gt_tool_cleaner_sub">Scan junk, free RAM and trim storage.</string>
 
@@ -80,7 +80,7 @@
     <string name="gt_res_dpi">DPI</string>
     <string name="gt_res_editable_hint">You can type your own numbers.</string>
     <string name="gt_res_locked_hint">Locked to the preset above. Pick \"Custom\" to type your own numbers.</string>
-    <string name="gt_res_need">Needs root or Shizuku. Android does not let a normal app resize the screen. Shizuku is a free helper app that lends this app that power without root.</string>
+    <string name="gt_res_need">Needs root or Shizuku. Android does not let a normal app resize the screen.</string>
     <string name="gt_res_ready_root">Ready — using Root.</string>
     <string name="gt_res_ready_shizuku">Ready — using Shizuku.</string>
     <string name="gt_res_apply">Apply</string>
@@ -389,7 +389,7 @@
     <string name="gt_gm_failed">Activation failed</string>
     <string name="gt_gm_ready">Optimizations Ready</string>
     <string name="gt_gm_locked">Locked</string>
-    <string name="gt_gm_need">Needs root or Shizuku.\nEverything Gaming Mode does has to be done by your phone\'s system, and Android only lets an app ask for that through root or Shizuku. Shizuku is a free helper app that lends this app those powers without root. It turns on by itself once one of them is available.</string>
+    <string name="gt_gm_need">Needs root or Shizuku.\nIt turns on by itself once one of them is available.</string>
     <string name="gt_gm_what_title">What does Gaming Mode do?</string>
     <string name="gt_gm_what_1">It gets your phone ready to play in one tap: keeps the screen at its fastest, pauses other apps, silences notifications, and stops your phone slowing itself down.</string>
     <string name="gt_gm_what_2">It writes down how your phone was set up before it changes anything, so turning it off puts everything back exactly as it was.</string>

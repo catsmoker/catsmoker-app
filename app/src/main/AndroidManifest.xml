@@ -106,6 +106,7 @@
         android:appComponentFactory="androidx.core.app.CoreComponentFactory"
         tools:replace="android:appComponentFactory"
         tools:targetApi="p"
+        tools:ignore="RemoveWorkManagerInitializer,UnusedTranslation"
         android:theme="@style/Theme.Catsmoker">
 
         <meta-data android:name="moe.shizuku.client.V3_SUPPORT" android:value="true" />

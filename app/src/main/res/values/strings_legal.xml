@@ -1,4 +1,4 @@
-<resources>
+<resources xmlns:tools="http://schemas.android.com/tools" tools:ignore="MissingTranslation">
     <!-- Legal screens (Privacy Policy + Terms & Conditions). Every key here is user-visible
         and must be mirrored in all locale mirrors (see LocaleParityTest). Bodies describe
         only verified behavior; the contact address is the project's own support inbox. -->

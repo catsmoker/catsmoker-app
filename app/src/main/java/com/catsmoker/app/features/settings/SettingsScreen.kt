@@ -1,6 +1,7 @@
 package com.catsmoker.app.features.settings
 
 import android.app.Activity
+import android.annotation.SuppressLint
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
@@ -486,6 +487,7 @@ fun SettingsScreen(
  * [extraContent] is a second, explicit action below the row (the Permissions card's system
  * shortcut), kept out of the clickable row so the two taps cannot be confused.
  */
+@SuppressLint("ModifierParameter")
 @Composable
 private fun SettingsRowCard(
     icon: ImageVector,

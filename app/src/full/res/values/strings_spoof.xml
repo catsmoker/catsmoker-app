@@ -1,4 +1,4 @@
-﻿<resources>
+﻿<resources xmlns:tools="http://schemas.android.com/tools" tools:ignore="MissingTranslation">
     <!-- Device spoofing feature strings. Names use the spoof_ prefix (owned by this file). -->
     <!-- Home -->
     <string name="spoof_home_subtitle">Device identity and root masking suite.</string>

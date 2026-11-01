@@ -254,7 +254,7 @@ class LSPosedModule : IXposedHookLoadPackage {
     // exists below it. Lint cannot see through `realSdkInt`, so the legacy branch is
     // deliberately suppressed rather than replacing it with an AndroidX dependency that a
     // hooked game process may not have loaded.
-    @SuppressLint("UnspecifiedRegisterReceiverFlag")
+    @SuppressLint("UnspecifiedRegisterReceiverFlag", "InlinedApi")
     private fun registerReceiver(context: Context, lpparam: XC_LoadPackage.LoadPackageParam) {
         if (receiverRegistered) return
         receiverRegistered = true
@@ -354,6 +354,7 @@ class LSPosedModule : IXposedHookLoadPackage {
         }
     }
 
+    @SuppressLint("PrivateApi")
     private fun hookSystemProperties(classLoader: ClassLoader) {
         // Loader attempts: the app loader, the bootstrap loader, then a runtime lookup that
         // never touches the compile classpath (the class is hidden from it). Any unhooked

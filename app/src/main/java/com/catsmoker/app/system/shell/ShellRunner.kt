@@ -1,5 +1,6 @@
 package com.catsmoker.app.system.shell
 
+import android.annotation.SuppressLint
 import android.content.ComponentName
 import android.content.Context
 import android.content.ServiceConnection
@@ -487,6 +488,7 @@ class ShellRunner @Inject constructor(
      * service reads as "" so the strategy loop moves on, and foreign objects in the result
      * are skipped by the mapper rather than fabricated into readings.
      */
+    @SuppressLint("PrivateApi")
     private fun readThermalViaReflection(): String {
         return runCatching {
             val serviceManager = Class.forName("android.os.ServiceManager")

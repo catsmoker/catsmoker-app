@@ -41,7 +41,7 @@
     <string name="gt_tool_sound_sub">把音量调到超过上限。</string>
     <string name="gt_tool_booster_title">应用加速器</string>
     <string name="gt_tool_booster_sub">提前准备好应用，让游戏更少卡顿。</string>
-    <string name="gt_tool_booster_need">需要 Root 或 Shizuku。Android 不允许普通应用执行此操作。Shizuku 是一款免费辅助应用，无需 Root 即可为此应用提供该能力。</string>
+    <string name="gt_tool_booster_need">需要 Root 或 Shizuku。Android 不允许普通应用执行此操作。</string>
     <string name="gt_tool_devopts_title">开发者选项</string>
     <string name="gt_tool_devopts_sub">加速菜单和后台应用。</string>
     <string name="gt_tool_screen_title">分辨率</string>
@@ -58,7 +58,7 @@
     <string name="gt_tool_dns_sub">选择私有 DNS 提供商。</string>
     <string name="gt_tool_afs_title">自动强制停止</string>
     <string name="gt_tool_afs_sub">强制停止你离开的每个应用（完全终止），无需管理任何列表。</string>
-    <string name="gt_tool_afs_need">需要 Root 或 Shizuku。Android 不允许普通应用关闭其他应用。Shizuku 是一款免费辅助应用，无需 Root 即可为此应用提供该能力。</string>
+    <string name="gt_tool_afs_need">需要 Root 或 Shizuku。Android 不允许普通应用关闭其他应用。</string>
     <string name="gt_tool_cleaner_title">存储清理</string>
     <string name="gt_tool_cleaner_sub">扫描垃圾、释放内存并优化存储。</string>
 
@@ -87,7 +87,7 @@
     <string name="gt_res_dpi">DPI</string>
     <string name="gt_res_editable_hint">你可以输入自己的数字。</string>
     <string name="gt_res_locked_hint">已锁定为上方预设。选择“自定义”可输入自己的数字。</string>
-    <string name="gt_res_need">需要 Root 或 Shizuku。Android 不允许普通应用调整屏幕尺寸。Shizuku 是一款免费辅助应用，无需 Root 即可为此应用提供该能力。</string>
+    <string name="gt_res_need">需要 Root 或 Shizuku。Android 不允许普通应用调整屏幕尺寸。</string>
     <string name="gt_res_ready_root">就绪 — 使用 Root。</string>
     <string name="gt_res_ready_shizuku">就绪 — 使用 Shizuku。</string>
     <string name="gt_res_apply">应用</string>
@@ -421,7 +421,7 @@
     <!-- Accessible name for the Gaming Mode power toggle (state-dependent). -->
     <string name="gt_gm_toggle_on">开启游戏模式</string>
     <string name="gt_gm_toggle_off">关闭游戏模式</string>
-    <string name="gt_gm_need">需要 Root 或 Shizuku。\n游戏模式的所有操作都须由手机系统完成，而 Android 只允许应用经 Root 或 Shizuku 请求。Shizuku 是一款免费辅助应用，无需 Root 即可提供这些能力。一旦具备其一便会自动启用。</string>
+    <string name="gt_gm_need">需要 Root 或 Shizuku。\n一旦具备其一便会自动启用。</string>
     <string name="gt_gm_what_title">游戏模式做什么？</string>
     <string name="gt_gm_what_1">一键备战：保持屏幕最高速度、暂停其他应用、静音通知，并阻止手机自行降速。</string>
     <string name="gt_gm_what_2">更改前会记下手机原设置，因此关闭后一切原样恢复。</string>

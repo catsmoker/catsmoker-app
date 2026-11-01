@@ -1,5 +1,7 @@
 package com.catsmoker.app.features.editgamefiles.pubg
 
+import android.annotation.SuppressLint
+
 /**
  * PUBG: New State's `GameUserSettings.ini` transform (backlog item M168: implementation shipped,
  * field verification still blocked on a launchable New State device), ported from the New State
@@ -24,6 +26,7 @@ package com.catsmoker.app.features.editgamefiles.pubg
  * already at every target is reported as unchanged. The caller owns the channel: the file lives
  * in the game's private data dir (`/data/data/com.pubg.newstate/...`), so root only.
  */
+@SuppressLint("SdCardPath")
 object NewStateIniTransform {
 
     const val PACKAGE = "com.pubg.newstate"

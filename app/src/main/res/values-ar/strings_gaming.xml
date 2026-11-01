@@ -41,7 +41,7 @@
     <string name="gt_tool_sound_sub">ارفع الصوت فوق الحد.</string>
     <string name="gt_tool_booster_title">تحسين ترجمة التطبيقات</string>
     <string name="gt_tool_booster_sub">ترجمة مسبقة للتطبيقات — لعبة واحدة أو الكل — لتقطيع أقل.</string>
-    <string name="gt_tool_booster_need">يتطلب روت أو Shizuku. لا يسمح أندرويد لتطبيق عادي بفعل هذا. Shizuku تطبيق مساعد مجاني يمنح هذا التطبيق تلك القدرة بدون روت.</string>
+    <string name="gt_tool_booster_need">يتطلب روت أو Shizuku. لا يسمح أندرويد لتطبيق عادي بفعل هذا.</string>
     <string name="gt_tool_devopts_title">خيارات المطور</string>
     <string name="gt_tool_devopts_sub">تسريع القوائم وتطبيقات الخلفية.</string>
     <string name="gt_tool_screen_title">الدقة</string>
@@ -58,7 +58,7 @@
     <string name="gt_tool_dns_sub">اختر موفر DNS الخاص.</string>
     <string name="gt_tool_afs_title">إيقاف تلقائي قسري</string>
     <string name="gt_tool_afs_sub">يوقف كل تطبيق تغادره قسرًا (إنهاء كامل)، دون أي قائمة لإدارتها.</string>
-    <string name="gt_tool_afs_need">يتطلب روت أو Shizuku. لا يسمح أندرويد لتطبيق عادي بإغلاق التطبيقات الأخرى. Shizuku تطبيق مساعد مجاني يمنح هذا التطبيق تلك القدرة بدون روت.</string>
+    <string name="gt_tool_afs_need">يتطلب روت أو Shizuku. لا يسمح أندرويد لتطبيق عادي بإغلاق التطبيقات الأخرى.</string>
     <string name="gt_tool_cleaner_title">منظف التخزين</string>
     <string name="gt_tool_cleaner_sub">افحص الملفات غير المرغوبة، وحرّر الذاكرة، ونظّف التخزين.</string>
 
@@ -87,7 +87,7 @@
     <string name="gt_res_dpi">DPI</string>
     <string name="gt_res_editable_hint">يمكنك كتابة أرقامك الخاصة.</string>
     <string name="gt_res_locked_hint">مقفل على الإعداد المسبق أعلاه. اختر \"مخصص\" لكتابة أرقامك الخاصة.</string>
-    <string name="gt_res_need">يتطلب روت أو Shizuku. لا يسمح أندرويد لتطبيق عادي بتغيير حجم الشاشة. Shizuku تطبيق مساعد مجاني يمنح هذا التطبيق تلك القدرة بدون روت.</string>
+    <string name="gt_res_need">يتطلب روت أو Shizuku. لا يسمح أندرويد لتطبيق عادي بتغيير حجم الشاشة.</string>
     <string name="gt_res_ready_root">جاهز — يستخدم Root.</string>
     <string name="gt_res_ready_shizuku">جاهز — يستخدم Shizuku.</string>
     <string name="gt_res_apply">تطبيق</string>
@@ -421,7 +421,7 @@
     <!-- Accessible name for the Gaming Mode power toggle (state-dependent). -->
     <string name="gt_gm_toggle_on">تفعيل وضع الألعاب</string>
     <string name="gt_gm_toggle_off">إيقاف وضع الألعاب</string>
-    <string name="gt_gm_need">يتطلب روت أو Shizuku.\nكل ما يفعله وضع الألعاب يجب أن يقوم به نظام هاتفك، ولا يسمح أندرويد لتطبيق بطلب ذلك إلا عبر روت أو Shizuku. Shizuku تطبيق مساعد مجاني يمنح هذا التطبيق تلك القدرات بدون روت. يُفعَّل بنفسه فور توفر أحدهما.</string>
+    <string name="gt_gm_need">يتطلب روت أو Shizuku.\nيُفعَّل بنفسه فور توفر أحدهما.</string>
     <string name="gt_gm_what_title">ماذا يفعل وضع الألعاب؟</string>
     <string name="gt_gm_what_1">يجهز هاتفك للعب بنقرة واحدة: يُبقي الشاشة بأقصى سرعة، ويوقف التطبيقات الأخرى مؤقتاً، ويكتم الإشعارات، ويمنع هاتفك من إبطاء نفسه.</string>
     <string name="gt_gm_what_2">يسجل كيف كان هاتفك مضبوطاً قبل تغيير أي شيء، فإيقافه يعيد كل شيء كما كان بالضبط.</string>
