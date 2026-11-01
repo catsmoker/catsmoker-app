@@ -504,11 +504,7 @@
     <string name="gt_gm_not_blocked">غير محظور</string>
 
     <!-- RAM card -->
-    <string name="gt_ram_title">الذاكرة</string>
     <string name="gt_ram_free">استعادة الذاكرة</string>
-    <string name="gt_ram_what_1">يطلب من هاتفك إغلاق التطبيقات الجالسة في الخلفية دون فعل شيء، ما يحرر ذاكرة للعبتك.</string>
-    <string name="gt_ram_what_2">يخبرك كم حرر فعلاً، مقاساً قبل وبعد — وليس تخميناً.</string>
-    <string name="gt_ram_what_3">لا يُغلق شيء مفتوح لديك، ولا يُحذف شيء.</string>
 
     <!-- Fixed performance card -->
     <string name="gt_fp_title">وضع الأداء الثابت</string>

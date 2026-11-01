@@ -446,7 +446,7 @@
     <string name="gf_hsr_standalone_title">HSR Graphics</string>
     <string name="gf_wuwa_cache_btn">CLEAR SHADER CACHE</string>
     <string name="gf_wuwa_cache_caption">Deletes files/UE4Game/ProgramBinaryCache and VulkanProgramBinaryCache, then force-stops the game so the next launch recompiles shaders. Needs root or Shizuku; expect stutter on the first launch.</string>
-    <string name="gf_wuwa_cache_cleaning">Clearing shader cache...</string>
+    <string name="gf_wuwa_cache_cleaning">Clearing shader cache…</string>
     <string name="gf_wuwa_cache_done">Cleared: %1$s. Already absent: %2$d. The game recompiles shaders on its next launch.</string>
     <string name="gf_wuwa_cache_none">No shader-cache folders were present - nothing to delete.</string>
     <string name="gf_wuwa_cache_failed">Shader-cache cleanup failed: %1$s</string>

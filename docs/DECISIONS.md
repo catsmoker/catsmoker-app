@@ -808,3 +808,8 @@ Added `vulkanModel` (Vulkan physical-device name, `VkPhysicalDeviceProperties.de
 - Adding `cs_skip_self_branch()` helper (ARM64-only) that detects and skips the thunk before hooking.
 - Installing export hooks at the body behind the thunk.
 - Resolver hook now asks the real resolver for the pointer, lazily hooks that exact pointer once, and **returns the same pointer**. The game keeps the loader's own function (CFI/type identity preserved); code behind the address is now ours. This shape never hands the game a foreign function pointer, avoiding the CFI risk the previous wrapper shape carried.
+
+## Lint hygiene and scoped suppressions (2026-11-01)
+
+- **Safe lint findings were fixed, not suppressed.** InflateParams on WindowManager-attached overlay views (null root is correct) got a targeted `@SuppressLint`; UseKtx, UseCompatLoadingForDrawables, UseOfNonLambdaOffsetOverload, ConfigurationScreenWidthHeight and Overdraw were fixed at the call site; 12 strings unused in both flavors were removed from every locale mirror (the 3 unused-in-full / 16 unused-in-play ones stay because the other flavor uses them).
+- **`app/lint.xml` ignores two stylistic rules.** `TypographyDashes` only ever flags ISO-8601 dates (`2026-10-25`), where an en dash is factually wrong; `PluralsCandidate` flags the deliberate `app(s)`/`file(s)` convention, and converting ~70 count strings to real plurals would need plural categories in six languages (Arabic has six) plus every call site. Revisit only if the copy is rewritten to true plurals. This is a suppression with a documented reason, not a claim that the findings are bugs.

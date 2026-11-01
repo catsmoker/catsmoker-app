@@ -33,6 +33,8 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import android.app.Activity
 import android.widget.Toast
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalWindowInfo
 import com.catsmoker.app.R
 import com.catsmoker.app.shared.data.model.FpsSource
 import com.catsmoker.app.shared.data.model.MetricReadStatus
@@ -428,7 +430,7 @@ fun MainScreen(
         Spacer(modifier = Modifier.weight(0.1f))
 
         // 4. Ads (Ultra Deferred)
-        val adSlotHeight = if (LocalConfiguration.current.screenWidthDp >= 600) 90.dp else 50.dp
+        val adSlotHeight = if (with(LocalDensity.current) { LocalWindowInfo.current.containerSize.width.toDp() } >= 600.dp) 90.dp else 50.dp
         if (adsEnabled && hydrationPhase >= 3 && showAdsDeferred) {
             AdBanner(modifier = Modifier.padding(bottom = 8.dp))
         } else {

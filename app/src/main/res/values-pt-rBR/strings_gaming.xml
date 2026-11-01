@@ -505,11 +505,7 @@
     <string name="gt_gm_not_blocked">Não bloqueado</string>
 
     <!-- RAM card -->
-    <string name="gt_ram_title">Memória</string>
     <string name="gt_ram_free">Recuperar RAM</string>
-    <string name="gt_ram_what_1">Pede ao seu celular que feche apps que estão em segundo plano sem fazer nada, o que libera memória para o seu jogo.</string>
-    <string name="gt_ram_what_2">Informa quanto realmente foi liberado, medido antes e depois — não é um palpite.</string>
-    <string name="gt_ram_what_3">Nada que você tem aberto é fechado, e nada é apagado.</string>
 
     <!-- Fixed performance card -->
     <string name="gt_fp_title">Modo de desempenho fixo</string>

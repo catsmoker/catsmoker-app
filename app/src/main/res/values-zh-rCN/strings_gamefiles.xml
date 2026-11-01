@@ -469,7 +469,7 @@
     <string name="gf_hsr_standalone_title">HSR 画质</string>
     <string name="gf_wuwa_cache_btn">清除着色器缓存</string>
     <string name="gf_wuwa_cache_caption">删除 files/UE4Game/ProgramBinaryCache 和 VulkanProgramBinaryCache，并强制停止游戏，使下次启动重新编译着色器。需要 root 或 Shizuku；首次启动可能卡顿。</string>
-    <string name="gf_wuwa_cache_cleaning">正在清除着色器缓存...</string>
+    <string name="gf_wuwa_cache_cleaning">正在清除着色器缓存…</string>
     <string name="gf_wuwa_cache_done">已清除：%1$s。原本不存在：%2$d。游戏将在下次启动时重新编译着色器。</string>
     <string name="gf_wuwa_cache_none">没有找到着色器缓存文件夹 - 无需删除。</string>
     <string name="gf_wuwa_cache_failed">清除着色器缓存失败：%1$s</string>

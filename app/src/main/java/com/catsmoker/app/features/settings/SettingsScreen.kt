@@ -4,7 +4,7 @@ import android.app.Activity
 import android.annotation.SuppressLint
 import android.content.Context
 import android.content.Intent
-import android.net.Uri
+import androidx.core.net.toUri
 import android.provider.Settings
 import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.background
@@ -867,7 +867,7 @@ private fun openNotificationSettings(context: Context) {
 private fun openAppSystemSettings(context: Context) {
     val intent = Intent(
         Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
-        Uri.parse("package:${context.packageName}")
+        "package:${context.packageName}".toUri()
     )
     runCatching { context.startActivity(intent) }
 }

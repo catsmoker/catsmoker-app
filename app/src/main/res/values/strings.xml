@@ -1,4 +1,4 @@
-﻿<resources xmlns:tools="http://schemas.android.com/tools" tools:ignore="MissingTranslation">
+<resources xmlns:tools="http://schemas.android.com/tools" tools:ignore="MissingTranslation">
     <!-- ========================================== -->
     <!--                 GENERAL                    -->
     <!-- ========================================== -->
@@ -143,7 +143,6 @@
     <string name="dash_edit_files_title">File Engineering</string>
     <string name="dash_edit_files_subtitle">Data Optimization Tools</string>
     <string name="dash_gaming_tools_subtitle">Overlays, Network &amp; Logic</string>
-    <string name="dash_about_subtitle">System info &amp; Community</string>
 
     <!-- Links -->
     <string name="url_github" translatable="false">https://github.com/catsmoker/catsmoker-app</string>

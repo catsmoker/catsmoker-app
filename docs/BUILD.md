@@ -81,6 +81,12 @@ still run it explicitly:
 ./gradlew lint
 ```
 
+`app/lint.xml` scopes two stylistic rules out of the report, with the reason in
+the file: `TypographyDashes` (all hits are ISO-8601 dates, where an en dash would
+be wrong) and `PluralsCandidate` (the shipped `app(s)`/`file(s)` copy is the
+translated convention; true plurals would need forms in every locale plus every
+call site). Everything else still reports.
+
 ## Release notes
 
 - `isMinifyEnabled = true` and `isShrinkResources = true` for the release

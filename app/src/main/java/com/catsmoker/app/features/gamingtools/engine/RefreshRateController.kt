@@ -1,6 +1,7 @@
 package com.catsmoker.app.features.gamingtools.engine
 
 import android.content.Context
+import androidx.core.content.edit
 import android.hardware.display.DisplayManager
 import android.provider.Settings
 import android.view.Display
@@ -116,7 +117,7 @@ class RefreshRateController @Inject constructor(
         if (enabled) {
             if (isForcePeakActive()) return true
             val previous = readMinHz()
-            prefs.edit().putString(PREF_PREVIOUS_MIN_HZ, previous?.toString() ?: "").apply()
+            prefs.edit { putString(PREF_PREVIOUS_MIN_HZ, previous?.toString() ?: "") }
             return writeFloat(KEY_MIN_REFRESH_RATE, peak)
         } else {
             val stashed = prefs.getString(PREF_PREVIOUS_MIN_HZ, null)
@@ -127,7 +128,7 @@ class RefreshRateController @Inject constructor(
                 stashed != null -> deleteMin()
                 else -> writeFloat(KEY_MIN_REFRESH_RATE, NO_CONFIG)
             }
-            prefs.edit().remove(PREF_PREVIOUS_MIN_HZ).apply()
+            prefs.edit { remove(PREF_PREVIOUS_MIN_HZ) }
             return ok
         }
     }
@@ -292,7 +293,7 @@ class RefreshRateController @Inject constructor(
         ).getString("previous_min_refresh_rate", null)
         if (legacy != null) {
             context.getSharedPreferences("game_developer_options", Context.MODE_PRIVATE)
-                .edit().remove("previous_min_refresh_rate").apply()
+                .edit { remove("previous_min_refresh_rate") }
         }
         legacy
     } catch (_: Exception) {

@@ -471,7 +471,7 @@
     <string name="gf_hsr_standalone_title">Gráficos do HSR</string>
     <string name="gf_wuwa_cache_btn">LIMPAR CACHE DE SHADERS</string>
     <string name="gf_wuwa_cache_caption">Exclui files/UE4Game/ProgramBinaryCache e VulkanProgramBinaryCache e depois força o encerramento do jogo para que a próxima abertura recompile os shaders. Requer root ou Shizuku; espere engasgos na primeira abertura.</string>
-    <string name="gf_wuwa_cache_cleaning">Limpando cache de shaders...</string>
+    <string name="gf_wuwa_cache_cleaning">Limpando cache de shaders…</string>
     <string name="gf_wuwa_cache_done">Limpos: %1$s. Já ausentes: %2$d. O jogo recompila os shaders na próxima abertura.</string>
     <string name="gf_wuwa_cache_none">Nenhuma pasta de cache de shaders estava presente - nada para excluir.</string>
     <string name="gf_wuwa_cache_failed">Falha na limpeza do cache de shaders: %1$s</string>

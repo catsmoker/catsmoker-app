@@ -504,11 +504,7 @@
     <string name="gt_gm_not_blocked">未阻止</string>
 
     <!-- RAM card -->
-    <string name="gt_ram_title">内存</string>
     <string name="gt_ram_free">回收 RAM</string>
-    <string name="gt_ram_what_1">要求手机关闭后台闲置应用，为游戏腾出内存。</string>
-    <string name="gt_ram_what_2">会告知实际释放了多少，前后实测——不是猜测。</string>
-    <string name="gt_ram_what_3">不会关闭你正用的东西，也不会删除任何内容。</string>
 
     <!-- Fixed performance card -->
     <string name="gt_fp_title">固定性能模式</string>

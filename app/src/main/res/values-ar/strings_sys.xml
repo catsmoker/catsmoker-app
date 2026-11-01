@@ -13,14 +13,11 @@
     <string name="sys_ads_guilt_cat_desc">قطة حزينة</string>
     <!-- Play-variant paid ad removal (Google Play Billing one-time product remove_ads). -->
     <string name="sys_remove_ads_title">إزالة الإعلانات</string>
-    <string name="sys_remove_ads_sub">عملية شراء لمرة واحدة. ادفع مرة واحدة وتصفح بدون إعلانات للأبد.</string>
     <string name="sys_ads_removed_title">تمت إزالة الإعلانات</string>
     <string name="sys_ads_removed_sub">شكرًا لدعمك — أنت تتصفح الآن بدون إعلانات.</string>
     <string name="sys_analytics_title">إرسال بيانات التحليلات</string>
     <string name="sys_analytics_sub">تتلقى Google Firebase بيانات الاستخدام (إطلاق التطبيقات، وطول الجلسة، وطراز الجهاز، وإصدار التطبيق، وعنوان IP). أوقف هذا لإيقاف التجميع؛ وإلغاء تثبيت التطبيق يوقفه أيضًا. راجع سياسة الخصوصية.</string>
     <!-- Nothing Glyph Interface mirror (Settings > General, shown only where the GDK works). -->
-    <string name="sys_glyph_sync_title">مزامنة وضع الألعاب مع Glyph</string>
-    <string name="sys_glyph_sync_sub">يعرض شريط تحميل وضع الألعاب على واجهة Glyph. على هواتف Nothing فقط.</string>
     <string name="sys_billing_unavailable">خدمة فوترة Google Play غير متاحة. تحقق من اتصالك وحاول مجددًا.</string>
     <string name="sys_remove_ads_pending">عملية الشراء قيد الانتظار. ستتوقف الإعلانات فور تأكيد Google Play.</string>
     <string name="sys_remove_ads_failed">تعذر إتمام عملية الشراء: %1$s</string>
@@ -28,7 +25,6 @@
     <string name="sys_updating">جارٍ تنزيل التحديث…</string>
     <string name="sys_check_updates">التحقق من وجود تحديثات</string>
     <string name="sys_prerelease">تضمين الإصدارات الأولية</string>
-    <string name="sys_prerelease_sub">اعرض أيضًا إصدارات GitHub التجريبية. تُضمَّن الإصدارات المستقرة دائمًا.</string>
     <string name="sys_auto_check">التحقق التلقائي من التحديثات</string>
     <string name="sys_update_available">يتوفر تحديث: %1$s</string>
     <string name="sys_update_prompt">يتوفر إصدار جديد. هل تريد تنزيله وتثبيته الآن؟</string>
@@ -44,7 +40,6 @@
     <string name="sys_theme_light">فاتح</string>
     <string name="sys_theme_dynamic">لون ديناميكي</string>
     <string name="sys_language_title">اللغة</string>
-    <string name="sys_language_subtitle">لغة التطبيق. تُطبق فورًا.</string>
     <string name="sys_lang_system">افتراضي النظام</string>
     <string name="sys_checking_updates">جارٍ التحقق من وجود تحديثات…</string>
     <string name="sys_no_releases">لم يتم العثور على إصدارات في GitHub</string>
@@ -91,8 +86,6 @@
     <string name="sys_state_on">مفعّل</string>
     <string name="sys_state_off">متوقف</string>
     <string name="sys_remove_ads_summary">شراء لمرة واحدة</string>
-    <string name="sys_permissions_all_granted">كلها ممنوحة</string>
-    <string name="sys_permissions_some_granted">ممنوح %1$d من %2$d</string>
     <string name="sys_permissions_open_system">فتح إعدادات النظام</string>
     <string name="sys_about_summary">الإصدار %1$s · CC BY-NC-SA 4.0</string>
     <string name="sys_info_what_title">ما الذي يفعله</string>

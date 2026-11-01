@@ -1,5 +1,6 @@
 package com.catsmoker.app.features.gamingtools.tools.crosshair
 
+import android.annotation.SuppressLint
 import android.app.NotificationManager
 import android.app.PendingIntent
 import android.app.Service
@@ -141,6 +142,7 @@ class CrosshairOverlayService : Service() {
         return START_NOT_STICKY
     }
 
+    @SuppressLint("InflateParams")
     private fun showOverlay(assetName: String) {
         overlayView?.let { existing ->
             runCatching { windowManager?.removeView(existing) }
@@ -374,6 +376,7 @@ class CrosshairOverlayService : Service() {
         runCatching { windowManager?.updateViewLayout(view, params) }
     }
 
+    @SuppressLint("InflateParams")
     private fun showBanner() {
         if (bannerView != null) return
 

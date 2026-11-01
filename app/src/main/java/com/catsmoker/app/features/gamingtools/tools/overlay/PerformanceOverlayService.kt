@@ -1,5 +1,6 @@
 package com.catsmoker.app.features.gamingtools.tools.overlay
 
+import android.annotation.SuppressLint
 import android.app.NotificationManager
 import android.app.Service
 import android.content.Intent
@@ -14,6 +15,7 @@ import android.view.ViewConfiguration
 import android.view.WindowManager
 import android.widget.TextView
 import androidx.core.app.NotificationCompat
+import androidx.core.content.ContextCompat
 import androidx.core.content.edit
 import com.catsmoker.app.R
 import com.catsmoker.app.features.main.engine.MetricsEngine
@@ -164,6 +166,7 @@ class PerformanceOverlayService : Service() {
         sendBroadcast(Intent(ACTION_SERVICE_STARTED).setPackage(packageName))
     }
 
+    @SuppressLint("InflateParams")
     private fun showOverlay() {
         // No parent exists: the view is attached to the WindowManager, not a ViewGroup.
         val view = LayoutInflater.from(this).inflate(R.layout.overlay_performance, null)
@@ -185,7 +188,7 @@ class PerformanceOverlayService : Service() {
                 overlayView = view
                 overlayParams = params
                 attachDragHandler(view)
-                if (isMoveMode) view.foreground = getDrawable(R.drawable.bg_perf_move_halo)
+                if (isMoveMode) view.foreground = ContextCompat.getDrawable(this, R.drawable.bg_perf_move_halo)
                 // Re-clamped once the view has been measured, not against the stored value alone:
                 // the position can have been saved at a resolution the app's own Resolution Changer
                 // has since replaced, and the view's own size is part of the legal range.
@@ -333,7 +336,7 @@ class PerformanceOverlayService : Service() {
             runCatching { windowManager?.updateViewLayout(view, params) }
             // The outline is the only on-screen difference between the modes, so the panel cannot be
             // silently taking taps with no cue that it will keep doing so.
-            view.foreground = if (enabled) getDrawable(R.drawable.bg_perf_move_halo) else null
+            view.foreground = if (enabled) ContextCompat.getDrawable(this, R.drawable.bg_perf_move_halo) else null
         }
 
         // The notification's action is the backstop exit from move mode, so it has to track the mode.

@@ -2,6 +2,7 @@ package com.catsmoker.app.features.editgamefiles.wuwa
 
 import android.content.Context
 import android.content.SharedPreferences
+import androidx.core.content.edit
 import com.google.gson.Gson
 
 /**
@@ -31,7 +32,7 @@ class WuwaPresetStore(private val prefs: SharedPreferences) {
     fun loadPresetRaw(): String? = prefs.getString(KEY_PRESET, null)
 
     fun savePreset(preset: String) {
-        prefs.edit().putString(KEY_PRESET, sanitizePreset(preset)).apply()
+        prefs.edit { putString(KEY_PRESET, sanitizePreset(preset)) }
     }
 
     /** The restored options, or [fallback] when nothing (or nothing valid) was stored. */
@@ -39,7 +40,7 @@ class WuwaPresetStore(private val prefs: SharedPreferences) {
         decodeOptions(prefs.getString(KEY_OPTIONS, null)) ?: fallback
 
     fun saveOptions(options: WuWaConfigGenerator.Options) {
-        prefs.edit().putString(KEY_OPTIONS, encodeOptions(options)).apply()
+        prefs.edit { putString(KEY_OPTIONS, encodeOptions(options)) }
     }
 
     companion object {

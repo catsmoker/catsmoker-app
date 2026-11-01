@@ -469,7 +469,7 @@
     <string name="gf_hsr_standalone_title">رسومات HSR</string>
     <string name="gf_wuwa_cache_btn">مسح ذاكرة التظليل</string>
     <string name="gf_wuwa_cache_caption">يحذف files/UE4Game/ProgramBinaryCache وVulkanProgramBinaryCache ثم يوقف اللعبة قسريًا لإعادة تجميع التظليل عند التشغيل التالي. يتطلب صلاحية root أو Shizuku؛ توقع تقطعًا في أول تشغيل.</string>
-    <string name="gf_wuwa_cache_cleaning">جارٍ مسح ذاكرة التظليل...</string>
+    <string name="gf_wuwa_cache_cleaning">جارٍ مسح ذاكرة التظليل…</string>
     <string name="gf_wuwa_cache_done">تم المسح: %1$s. كانت غائبة مسبقًا: %2$d. ستُعاد ترجمة التظليل عند التشغيل التالي.</string>
     <string name="gf_wuwa_cache_none">لم تكن مجلدات ذاكرة التظليل موجودة - لا يوجد ما يُحذف.</string>
     <string name="gf_wuwa_cache_failed">فشل مسح ذاكرة التظليل: %1$s</string>

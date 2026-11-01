@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+    Scoped lint suppressions, with the reason each one is deliberate.
+
+    TypographyDashes: every hit is an ISO-8601 date such as "2026-10-25" in the
+    legal copy. An en dash there would be factually wrong (dashes are for ranges),
+    so the rule has nothing legitimate to flag in this project.
+
+    PluralsCandidate: the app deliberately writes "app(s)" / "file(s)" / "line(s)"
+    instead of Android <plurals>. Converting ~70 count strings would require real
+    plural forms in six languages (Arabic alone has six categories) plus every call
+    site; the "app(s)" form is the shipped, translated convention and is not a bug.
+    Revisit only if the copy is rewritten to true plurals.
+-->
+<lint>
+    <issue id="TypographyDashes" severity="ignore" />
+    <issue id="PluralsCandidate" severity="ignore" />
+</lint>

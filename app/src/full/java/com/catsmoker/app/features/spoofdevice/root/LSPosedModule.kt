@@ -4,6 +4,7 @@ import android.annotation.SuppressLint
 import android.content.BroadcastReceiver
 import android.content.ContentResolver
 import android.content.Context
+import androidx.core.content.edit
 import android.content.Intent
 import android.content.IntentFilter
 import android.os.Build
@@ -130,12 +131,12 @@ class LSPosedModule : IXposedHookLoadPackage {
                         try {
                             context.getSharedPreferences(
                                 LSPosedConfig.PREFS_NAME, Context.MODE_PRIVATE
-                            ).edit()
-                                .putLong(
+                            ).edit {
+                                putLong(
                                     LSPosedConfig.KEY_MODULE_HEARTBEAT_ELAPSED,
                                     SystemClock.elapsedRealtime()
                                 )
-                                .apply()
+                            }
                         } catch (_: Throwable) {
                             // Best-effort: the status card treats absence as "not loaded".
                         }

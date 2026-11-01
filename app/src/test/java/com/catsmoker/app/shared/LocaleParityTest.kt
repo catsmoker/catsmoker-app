@@ -103,9 +103,6 @@ class LocaleParityTest {
         // Settings analytics toggle — verifies the opt-out is a real switch, not cosmetic.
         "sys_analytics_title",
         "sys_analytics_sub",
-        // Settings Glyph mirror toggle (Nothing phones only; the copy still ships translated).
-        "sys_glyph_sync_title",
-        "sys_glyph_sync_sub",
         // Redesigned Settings: section headers and one-line current-value summaries.
         "sys_section_privacy",
         "sys_section_help",
@@ -121,8 +118,6 @@ class LocaleParityTest {
         "sys_state_on",
         "sys_state_off",
         "sys_remove_ads_summary",
-        "sys_permissions_all_granted",
-        "sys_permissions_some_granted",
         "sys_permissions_open_system",
         "sys_about_summary",
         // Info-sheet section title shared by the analytics and ads info sheets.
@@ -234,7 +229,6 @@ class LocaleParityTest {
         "sys_ads_guilt_cat_desc",
         // Play-variant paid ad removal (Settings purchase row + status + notices).
         "sys_remove_ads_title",
-        "sys_remove_ads_sub",
         "sys_ads_removed_title",
         "sys_ads_removed_sub",
         "sys_billing_unavailable",

@@ -29,6 +29,7 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
@@ -98,7 +99,7 @@ fun AdsDonationDialog(
                     contentScale = ContentScale.Fit,
                     modifier = Modifier
                         .size(96.dp)
-                        .offset(y = (shake.value * 6f).dp)
+                        .offset { IntOffset(0, (shake.value * 6f).dp.roundToPx()) }
                 )
 
                 Spacer(modifier = Modifier.height(16.dp))
