@@ -441,15 +441,11 @@ fun HsrGraphicsScreen(
                         modifier = Modifier.fillMaxWidth(),
                         // Nothing pending means the only effect of Apply would be force-stopping
                         // the game to rewrite identical bytes. Say that instead of doing it.
-                        enabled = !uiState.applying && uiState.settingsDirty
+                        enabled = !uiState.applying && uiState.settingsDirty,
+                        isLoading = uiState.applying,
+                        loadingLabel = stringResource(R.string.gf_applying)
                     ) {
-                        if (uiState.applying) {
-                            CircularProgressIndicator(modifier = Modifier.size(18.dp), strokeWidth = 2.dp, color = Color.Black)
-                            Spacer(modifier = Modifier.width(8.dp))
-                            Text(stringResource(R.string.gf_applying))
-                        } else {
-                            Text(stringResource(R.string.gf_apply_to_game))
-                        }
+                        Text(stringResource(R.string.gf_apply_to_game))
                     }
                     if (!uiState.settingsDirty && !uiState.applying) {
                         Spacer(modifier = Modifier.height(4.dp))

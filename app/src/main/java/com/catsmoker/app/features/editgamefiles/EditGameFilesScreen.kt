@@ -642,15 +642,11 @@ private fun ProfileGameEditor(
                 CatsmokerButton(
                     onClick = onApplyProfile,
                     modifier = Modifier.fillMaxWidth(),
-                    enabled = !uiState.isLoading
+                    enabled = uiState.busyArea == null,
+                    isLoading = uiState.busyArea == EditGameFilesViewModel.BusyArea.PROFILE_PUSH,
+                    loadingLabel = stringResource(R.string.gf_working)
                 ) {
-                    if (uiState.busyArea == EditGameFilesViewModel.BusyArea.PROFILE_PUSH) {
-                        CircularProgressIndicator(modifier = Modifier.size(18.dp), strokeWidth = 2.dp)
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text(stringResource(R.string.gf_working))
-                    } else {
-                        Text(stringResource(R.string.gf_apply_profile))
-                    }
+                    Text(stringResource(R.string.gf_apply_profile))
                 }
                 // Games with a resettable file only (config's resetFilePath): deleting it lets
                 // the game regenerate from defaults — the revert for every push above. The
@@ -660,16 +656,12 @@ private fun ProfileGameEditor(
                     CatsmokerOutlinedButton(
                         onClick = onResetSave,
                         modifier = Modifier.fillMaxWidth(),
-                        enabled = !uiState.isLoading,
+                        enabled = uiState.busyArea == null,
+                        isLoading = uiState.busyArea == EditGameFilesViewModel.BusyArea.RESET,
+                        loadingLabel = stringResource(R.string.gf_working),
                         colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.error)
                     ) {
-                        if (uiState.busyArea == EditGameFilesViewModel.BusyArea.RESET) {
-                            CircularProgressIndicator(modifier = Modifier.size(18.dp), strokeWidth = 2.dp)
-                            Spacer(modifier = Modifier.width(8.dp))
-                            Text(stringResource(R.string.gf_working))
-                        } else {
-                            Text(stringResource(R.string.gf_reset_file, uiState.configFileLabel).uppercase())
-                        }
+                        Text(stringResource(R.string.gf_reset_file, uiState.configFileLabel).uppercase())
                     }
                 }
                 // Every overwrite above takes a timestamped backup first; this is the way
@@ -678,17 +670,12 @@ private fun ProfileGameEditor(
                 CatsmokerOutlinedButton(
                     onClick = onRestoreBackup,
                     modifier = Modifier.fillMaxWidth(),
-                    enabled = !uiState.isLoading
+                    enabled = uiState.busyArea == null,
+                    isLoading = uiState.busyArea == EditGameFilesViewModel.BusyArea.RESTORE ||
+                        uiState.busyArea == EditGameFilesViewModel.BusyArea.BACKUP_DELETE,
+                    loadingLabel = stringResource(R.string.gf_working)
                 ) {
-                    if (uiState.busyArea == EditGameFilesViewModel.BusyArea.RESTORE ||
-                        uiState.busyArea == EditGameFilesViewModel.BusyArea.BACKUP_DELETE
-                    ) {
-                        CircularProgressIndicator(modifier = Modifier.size(18.dp), strokeWidth = 2.dp)
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text(stringResource(R.string.gf_working))
-                    } else {
-                        Text(stringResource(R.string.gf_restore_backup))
-                    }
+                    Text(stringResource(R.string.gf_restore_backup))
                 }
 
                 // One card now owns both ways to change a file: choose a bundled profile,
@@ -872,14 +859,14 @@ private fun PubgSaveEditorSection(
             Spacer(modifier = Modifier.height(12.dp))
 
             if (read == null) {
-                CatsmokerButton(onClick = onReadSave, modifier = Modifier.fillMaxWidth(), enabled = !uiState.isLoading) {
-                    if (uiState.busyArea == EditGameFilesViewModel.BusyArea.SAVE_READ) {
-                        CircularProgressIndicator(modifier = Modifier.size(18.dp), strokeWidth = 2.dp)
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text(stringResource(R.string.gf_reading))
-                    } else {
-                        Text(stringResource(R.string.gf_read_save))
-                    }
+                CatsmokerButton(
+                    onClick = onReadSave,
+                    modifier = Modifier.fillMaxWidth(),
+                    enabled = uiState.busyArea == null,
+                    isLoading = uiState.busyArea == EditGameFilesViewModel.BusyArea.SAVE_READ,
+                    loadingLabel = stringResource(R.string.gf_reading)
+                ) {
+                    Text(stringResource(R.string.gf_read_save))
                 }
             } else {
                 Text(
@@ -995,26 +982,21 @@ private fun PubgSaveEditorSection(
                 CatsmokerOutlinedButton(
                     onClick = onReadSave,
                     modifier = Modifier.weight(1f),
-                    enabled = !uiState.isLoading
+                    enabled = uiState.busyArea == null,
+                    isLoading = uiState.busyArea == EditGameFilesViewModel.BusyArea.SAVE_READ,
+                    loadingLabel = stringResource(R.string.gf_reading)
                 ) {
-                    if (uiState.busyArea == EditGameFilesViewModel.BusyArea.SAVE_READ) {
-                        CircularProgressIndicator(modifier = Modifier.size(16.dp), strokeWidth = 2.dp)
-                    } else {
-                        Text(stringResource(R.string.gf_reread))
-                    }
+                    Text(stringResource(R.string.gf_reread))
                 }
                 CatsmokerButton(
                     onClick = onApplySaveEdits,
                     modifier = Modifier.weight(1f),
-                    enabled = read != null && uiState.saveEdits.isNotEmpty() && !uiState.isLoading
+                    enabled = read != null && uiState.saveEdits.isNotEmpty() &&
+                        uiState.busyArea == null,
+                    isLoading = uiState.busyArea == EditGameFilesViewModel.BusyArea.SAVE_APPLY,
+                    loadingLabel = stringResource(R.string.gf_applying)
                 ) {
-                    if (uiState.busyArea == EditGameFilesViewModel.BusyArea.SAVE_APPLY) {
-                        CircularProgressIndicator(modifier = Modifier.size(16.dp), strokeWidth = 2.dp)
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text(stringResource(R.string.gf_applying))
-                    } else {
-                        Text(stringResource(R.string.gf_apply))
-                    }
+                    Text(stringResource(R.string.gf_apply))
                 }
             }
         }

@@ -161,6 +161,11 @@
     <string name="spoof_assign_current">Current: %1$s</string>
     <string name="spoof_action_assign">Assign</string>
     <string name="spoof_assign_none">无（未分配）</string>
+    <string name="spoof_action_force_stop">强制停止</string>
+    <string name="spoof_toast_force_stopped">已强制停止 %1$s</string>
+    <string name="spoof_error_force_stop">无法强制停止 %1$s: %2$s</string>
+    <string name="spoof_force_stop_confirm_title">强制停止 %1$s？</string>
+    <string name="spoof_force_stop_confirm_body">应用会立即关闭，未保存的内容可能丢失。</string>
     <string name="spoof_safe_subtitle">按应用跳过伪装：完全跳过或仅保留 Android 版本。</string>
     <string name="spoof_safe_desc">完全跳过：应用看到你的真实设备，不做任何伪装。仅保留 Android 版本：版本保持真实（常见的崩溃原因），型号与指纹仍被伪装。若应用同时出现在两个列表中，完全跳过优先。</string>
     <string name="spoof_safe_version_note">使用“仅保留 Android 版本”时，指纹与构建 ID/描述仍带有配置文件的版本信息，仔细比对可能发现两者不一致。</string>

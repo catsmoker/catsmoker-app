@@ -116,6 +116,12 @@ These recur across the codebase — a reviewer will expect them:
   not a layout, so it carries no outer margin — the host spaces it.
 - Buttons are `CatsmokerButton` (crimson spot-glow when live). Tiles/icons use
   `QuickActionButton` (`TactileBadge`: gradient + highlight + shadow).
+- Async work on a button passes `isLoading` plus a `loadingLabel` naming the action
+  (`gf_applying`, `gf_reading`, `gf_deploying`…), which swaps the label for a spinner and
+  blocks a second tap. Never hand-roll a spinner inside a button, never let a busy button
+  fall back to the disabled container (surface at 12% — unreadable in the light theme,
+  which is why the component keeps the enabled colours while disabled), and show one
+  spinner per action rather than one per button that shares the busy flag.
 - Numerals/scores use `MetricNumerals` (Ndot dot-matrix); body copy stays a
   clean sans. Switches/chips/progress inherit crimson from the theme
   `primary` — do not hardcode red.

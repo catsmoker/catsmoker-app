@@ -19,6 +19,7 @@ import androidx.lifecycle.viewModelScope
 import com.catsmoker.app.BuildConfig
 import com.catsmoker.app.R
 import com.catsmoker.app.features.gamingtools.engine.DisplayRefreshRateProvider
+import com.catsmoker.app.features.gamingtools.engine.PrivilegeCommands
 import com.catsmoker.app.features.spoofdevice.tools.MagiskModuleBuilder
 import com.catsmoker.app.shared.data.model.DevicePreset
 import com.catsmoker.app.shared.data.model.DeviceProfile
@@ -825,6 +826,34 @@ class SpoofDeviceViewModel @Inject constructor(
             // The collector re-derives every app's label from the new snapshot.
             if (saved) syncLsposedConfig()
         }
+    }
+
+    /**
+     * Force stops [packageName] so the next launch picks up its new spoofing profile.
+     *
+     * Needs root or Shizuku: `am force-stop` is refused for any package but our own from an
+     * unprivileged shell (the same limit `AutoForceStopService` documents), so the refusal is
+     * reported instead of pretending the app was stopped. Returns true only when the shell
+     * accepted the command, which is what drives the caller's checkmark.
+     */
+    suspend fun forceStopApp(packageName: String): Boolean {
+        if (!shellRunner.hasPrivilege()) {
+            _toasts.tryEmit(context.getString(R.string.gt_needs_root_shizuku_close))
+            return false
+        }
+        val result = shellRunner.execSafeResult(*PrivilegeCommands.forceStopArgs(packageName))
+        if (result.isSuccess) {
+            _toasts.tryEmit(context.getString(R.string.spoof_toast_force_stopped, packageName))
+        } else {
+            _toasts.tryEmit(
+                context.getString(
+                    R.string.spoof_error_force_stop,
+                    packageName,
+                    result.text.ifBlank { "exit ${result.exitCode}" }
+                )
+            )
+        }
+        return result.isSuccess
     }
 
     /**

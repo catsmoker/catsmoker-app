@@ -605,6 +605,15 @@ class LocaleParityTest {
         "gt_cleaner_advanced",
         "gt_cleaner_advanced_hide",
         "gt_tool_cleaner_sub",
+        // Shared button busy state (CatsmokerButton) and the per-app force-stop action in the
+        // spoof assignment list. keysIn() also reads src/full/res, so the spoof keys are
+        // covered by the same parity assertion.
+        "core_working",
+        "spoof_action_force_stop",
+        "spoof_toast_force_stopped",
+        "spoof_error_force_stop",
+        "spoof_force_stop_confirm_title",
+        "spoof_force_stop_confirm_body",
     )
 
     private fun keysIn(dir: String): Set<String> {

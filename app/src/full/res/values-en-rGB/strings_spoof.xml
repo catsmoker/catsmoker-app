@@ -166,6 +166,11 @@
     <string name="spoof_assign_current">Current: %1$s</string>
     <string name="spoof_action_assign">Assign</string>
     <string name="spoof_assign_none">None (Unassigned)</string>
+    <string name="spoof_action_force_stop">Force Stop</string>
+    <string name="spoof_toast_force_stopped">Force stopped %1$s</string>
+    <string name="spoof_error_force_stop">Could not force stop %1$s: %2$s</string>
+    <string name="spoof_force_stop_confirm_title">Force stop %1$s?</string>
+    <string name="spoof_force_stop_confirm_body">The app closes right away. Unsaved work in it may be lost.</string>
     <!-- Safe mode -->
     <string name="spoof_safe_subtitle">Per-app spoof opt-outs: full skip, or Android version only.</string>
     <string name="spoof_safe_desc">Full skip: the app sees your real device — nothing is spoofed. Android version only: the version stays real (the usual cause of crashes) while model and fingerprint stay spoofed. Full skip wins if an app is in both lists.</string>

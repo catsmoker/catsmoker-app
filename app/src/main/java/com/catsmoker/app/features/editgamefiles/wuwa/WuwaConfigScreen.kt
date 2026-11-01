@@ -470,14 +470,18 @@ fun WuwaConfigScreen(
                 CatsmokerButton(
                     onClick = { onDeploy(WuwaDeployChannel.SHELL) },
                     enabled = !uiState.applying && !uiState.generating && uiState.previews.isNotEmpty() && uiState.canShell,
+                    isLoading = uiState.applying,
+                    loadingLabel = stringResource(R.string.gf_deploying),
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    Text(if (uiState.applying) stringResource(R.string.gf_deploying) else stringResource(R.string.gf_deploy_shell))
+                    Text(stringResource(R.string.gf_deploy_shell))
                 }
                 Spacer(modifier = Modifier.height(8.dp))
                 CatsmokerOutlinedButton(
                     onClick = { onDeploy(WuwaDeployChannel.SAF) },
                     enabled = !uiState.applying && !uiState.generating && uiState.previews.isNotEmpty(),
+                    isLoading = uiState.applying,
+                    loadingLabel = stringResource(R.string.gf_deploying),
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Text(if (uiState.hasSafUri) stringResource(R.string.gf_deploy_saf) else stringResource(R.string.gf_deploy_saf_pick))
@@ -497,12 +501,11 @@ fun WuwaConfigScreen(
                 CatsmokerOutlinedButton(
                     onClick = onCleanShaderCache,
                     enabled = uiState.canShell && !uiState.cleaningCache && !uiState.applying,
+                    isLoading = uiState.cleaningCache,
+                    loadingLabel = stringResource(R.string.gf_wuwa_cache_cleaning),
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    Text(
-                        if (uiState.cleaningCache) stringResource(R.string.gf_wuwa_cache_cleaning)
-                        else stringResource(R.string.gf_wuwa_cache_btn)
-                    )
+                    Text(stringResource(R.string.gf_wuwa_cache_btn))
                 }
                 Spacer(modifier = Modifier.height(4.dp))
                 Text(
@@ -774,9 +777,11 @@ private fun CommunityPacksCard(
                             CatsmokerButton(
                                 onClick = { onDeployPackVariant(pack.id, variant.name) },
                                 enabled = !uiState.applying && !busy,
+                                isLoading = busy,
+                                loadingLabel = stringResource(R.string.gf_deploying),
                                 modifier = Modifier.fillMaxWidth()
                             ) {
-                                Text(if (busy) stringResource(R.string.gf_deploying) else stringResource(R.string.gf_deploy_variant))
+                                Text(stringResource(R.string.gf_deploy_variant))
                             }
                         } else {
                             Spacer(modifier = Modifier.height(8.dp))
@@ -798,9 +803,11 @@ private fun CommunityPacksCard(
                             CatsmokerOutlinedButton(
                                 onClick = { onDeployPackVariantStripped(pack.id, variant.name) },
                                 enabled = !uiState.applying && !busy,
+                                isLoading = busy,
+                                loadingLabel = stringResource(R.string.gf_deploying),
                                 modifier = Modifier.fillMaxWidth()
                             ) {
-                                Text(if (busy) stringResource(R.string.gf_deploying) else stringResource(R.string.gf_deploy_stripped))
+                                Text(stringResource(R.string.gf_deploy_stripped))
                             }
                         }
                     }

@@ -78,6 +78,7 @@ fun NavGraphBuilder.spoofGraph(navController: NavHostController) {
             uiState = uiState,
             onLoadApps = { viewModel.loadApps() },
             onAssignProfile = { pkg, id -> viewModel.assignProfile(pkg, id) },
+            onForceStop = { pkg -> viewModel.forceStopApp(pkg) },
             onBack = { navController.popBackStack() }
         )
     }

@@ -8,7 +8,10 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.Stop
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -21,12 +24,15 @@ import com.catsmoker.app.R
 import com.catsmoker.app.shared.ui.components.ScreenScaffold
 import com.catsmoker.app.shared.ui.components.SectionCard
 import com.catsmoker.app.shared.ui.theme.CatsmokerSpacing
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 @Composable
 fun AppAssignmentScreen(
     uiState: SpoofDeviceViewModel.UiState,
     onLoadApps: () -> Unit,
     onAssignProfile: (String, String?) -> Unit,
+    onForceStop: suspend (String) -> Boolean,
     onBack: () -> Unit
 ) {
     var searchQuery by remember { mutableStateOf("") }
@@ -76,10 +82,11 @@ fun AppAssignmentScreen(
                     contentPadding = PaddingValues(bottom = 32.dp),
                     verticalArrangement = Arrangement.spacedBy(CatsmokerSpacing.CardGap)
                 ) {
-                    items(filteredApps) { app ->
+                    items(filteredApps, key = { it.packageName }) { app ->
                         AppItem(
                             app = app,
-                            onClick = { selectedApp = app }
+                            onClick = { selectedApp = app },
+                            onForceStop = { onForceStop(app.packageName) }
                         )
                     }
                 }
@@ -230,20 +237,37 @@ private fun ProfileRadioRow(selected: Boolean, label: String, onSelect: () -> Un
     }
 }
 
-
+/**
+ * Per-app row in the assignment list.
+ *
+ * Shows the app icon, label, package name, assigned profile (if any), and a
+ * [ForceStopButton] so a running game can be restarted into its new profile.
+ */
 @Composable
-fun AppItem(app: SpoofDeviceViewModel.AppEntry, onClick: () -> Unit) {
+fun AppItem(
+    app: SpoofDeviceViewModel.AppEntry,
+    onClick: () -> Unit,
+    onForceStop: suspend (String) -> Boolean
+) {
     SectionCard(
         modifier = Modifier.fillMaxWidth().clickable { onClick() }
     ) {
-        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
             Image(
                 bitmap = app.icon.asImageBitmap(),
                 contentDescription = null,
                 modifier = Modifier.size(40.dp)
             )
             Column(modifier = Modifier.weight(1f)) {
-                Text(app.label, fontWeight = androidx.compose.ui.text.font.FontWeight.Bold, fontSize = 16.sp, color = MaterialTheme.colorScheme.onSurface)
+                Text(
+                    app.label,
+                    fontWeight = androidx.compose.ui.text.font.FontWeight.Bold,
+                    fontSize = 16.sp,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
                 Text(app.packageName, fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
             if (app.assignedProfileName != null) {
@@ -254,6 +278,113 @@ fun AppItem(app: SpoofDeviceViewModel.AppEntry, onClick: () -> Unit) {
                     fontWeight = androidx.compose.ui.text.font.FontWeight.Medium
                 )
             }
+            ForceStopButton(
+                packageName = app.packageName,
+                appLabel = app.label,
+                onForceStop = onForceStop
+            )
         }
     }
+}
+
+/**
+ * Force-stop action for one app row.
+ *
+ * Shows a spinner while `am force-stop` actually runs, then the real outcome: a check on
+ * success or a cross on failure (each for 1.2 s), with the matching toast from
+ * [SpoofDeviceViewModel.forceStopApp]. Needs root or Shizuku — from an unprivileged shell
+ * Android refuses to stop another app, and that refusal is what the cross reports.
+ */
+@Composable
+private fun ForceStopButton(
+    packageName: String,
+    appLabel: String,
+    onForceStop: suspend (String) -> Boolean
+) {
+    // Keyed by package: the list is filtered by the search box, and an unkeyed remember
+    // would leave a checkmark attached to whichever app lands on the same index.
+    var state by remember(packageName) { mutableStateOf<ForceStopState>(ForceStopState.Idle) }
+    var confirming by remember(packageName) { mutableStateOf(false) }
+    val scope = rememberCoroutineScope()
+
+    val isLoading = state == ForceStopState.Loading
+    val showCheck = state == ForceStopState.Success
+    val showError = state == ForceStopState.Error
+
+    val containerColor = when {
+        showError -> MaterialTheme.colorScheme.errorContainer
+        showCheck -> MaterialTheme.colorScheme.primaryContainer
+        else -> MaterialTheme.colorScheme.surfaceContainerHighest
+    }
+    val contentColor = when {
+        showError -> MaterialTheme.colorScheme.onErrorContainer
+        showCheck -> MaterialTheme.colorScheme.onPrimaryContainer
+        else -> MaterialTheme.colorScheme.onSurfaceVariant
+    }
+
+    IconButton(
+        onClick = { if (!isLoading) confirming = true },
+        enabled = !isLoading,
+        colors = IconButtonDefaults.iconButtonColors(
+            containerColor = containerColor,
+            contentColor = contentColor,
+            // Keep this row's colours while busy instead of the default faded pair.
+            disabledContainerColor = containerColor,
+            disabledContentColor = contentColor
+        )
+    ) {
+        when {
+            isLoading -> CircularProgressIndicator(
+                modifier = Modifier.size(20.dp),
+                strokeWidth = 2.5.dp,
+                color = contentColor
+            )
+            showCheck -> Icon(
+                imageVector = Icons.Default.CheckCircle,
+                contentDescription = stringResource(R.string.spoof_toast_force_stopped, appLabel),
+                tint = contentColor
+            )
+            showError -> Icon(
+                imageVector = Icons.Default.Close,
+                contentDescription = stringResource(R.string.spoof_action_force_stop),
+                tint = contentColor
+            )
+            else -> Icon(
+                imageVector = Icons.Default.Stop,
+                contentDescription = stringResource(R.string.spoof_action_force_stop),
+                tint = contentColor
+            )
+        }
+    }
+
+    if (confirming) {
+        AlertDialog(
+            onDismissRequest = { confirming = false },
+            title = { Text(stringResource(R.string.spoof_force_stop_confirm_title, appLabel)) },
+            text = { Text(stringResource(R.string.spoof_force_stop_confirm_body)) },
+            confirmButton = {
+                TextButton(onClick = {
+                    confirming = false
+                    state = ForceStopState.Loading
+                    scope.launch {
+                        state = if (onForceStop(packageName)) ForceStopState.Success else ForceStopState.Error
+                        delay(1200)
+                        state = ForceStopState.Idle
+                    }
+                }) { Text(stringResource(R.string.spoof_action_force_stop)) }
+            },
+            dismissButton = {
+                TextButton(onClick = { confirming = false }) {
+                    Text(stringResource(R.string.spoof_action_cancel))
+                }
+            }
+        )
+    }
+}
+
+private sealed class ForceStopState {
+    object Idle : ForceStopState()
+    object Loading : ForceStopState()
+    object Success : ForceStopState()
+    object Error : ForceStopState()
 }

@@ -10,7 +10,6 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
@@ -336,15 +335,11 @@ fun GridScreen(
                     CatsmokerButton(
                         onClick = onApply,
                         modifier = Modifier.fillMaxWidth(),
-                        enabled = !uiState.applying && hasPendingEdits
+                        enabled = !uiState.applying && hasPendingEdits,
+                        isLoading = uiState.applying,
+                        loadingLabel = stringResource(R.string.gf_applying)
                     ) {
-                        if (uiState.applying) {
-                            CircularProgressIndicator(modifier = Modifier.size(18.dp), strokeWidth = 2.dp, color = Color.Black)
-                            Spacer(modifier = Modifier.width(8.dp))
-                            Text(stringResource(R.string.gf_applying))
-                        } else {
-                            Text(stringResource(R.string.gf_apply_to_game))
-                        }
+                        Text(stringResource(R.string.gf_apply_to_game))
                     }
                     if (!hasPendingEdits && !uiState.applying) {
                         Spacer(modifier = Modifier.height(4.dp))

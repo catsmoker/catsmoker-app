@@ -56,6 +56,9 @@
     <!-- Shared scaffold back button (talkback). -->
     <string name="core_back">Back</string>
 
+    <!-- Button loading state label (shown with spinner while async work runs). -->
+    <string name="core_working">Working…</string>
+
     <!-- Onboarding terms step. Prefix/suffix carry their edge space via \u0020. -->
     <string name="core_terms_prefix">Please read our\u0020</string>
     <string name="core_terms_link">Terms and Conditions</string>

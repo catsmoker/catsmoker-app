@@ -166,6 +166,11 @@
     <string name="spoof_assign_current">Atual: %1$s</string>
     <string name="spoof_action_assign">Atribuir</string>
     <string name="spoof_assign_none">Nenhum (não atribuído)</string>
+    <string name="spoof_action_force_stop">Forçar parada</string>
+    <string name="spoof_toast_force_stopped">Forçada parada de %1$s</string>
+    <string name="spoof_error_force_stop">Não foi possível forçar a parada de %1$s: %2$s</string>
+    <string name="spoof_force_stop_confirm_title">Forçar a parada de %1$s?</string>
+    <string name="spoof_force_stop_confirm_body">O app será fechado imediatamente. O trabalho não salvo pode ser perdido.</string>
     <!-- Safe mode -->
     <string name="spoof_safe_subtitle">Exclusões de falsificação por app: ignorar totalmente ou apenas a versão do Android.</string>
     <string name="spoof_safe_desc">Ignorar totalmente: o app vê seu dispositivo real — nada é falsificado. Apenas a versão do Android: a versão continua real (a causa habitual de falhas), enquanto modelo e fingerprint continuam falsificados. Ignorar totalmente prevalece se um app estiver nas duas listas.</string>

@@ -161,6 +161,11 @@
     <string name="spoof_assign_current">Current: %1$s</string>
     <string name="spoof_action_assign">Assign</string>
     <string name="spoof_assign_none">لا شيء (غير معيّن)</string>
+    <string name="spoof_action_force_stop">إيقاف إجباري</string>
+    <string name="spoof_toast_force_stopped">تم إيقاف %1$s إجباريًا</string>
+    <string name="spoof_error_force_stop">تعذّر إيقاف %1$s إجباريًا: %2$s</string>
+    <string name="spoof_force_stop_confirm_title">إيقاف %1$s إجباريًا؟</string>
+    <string name="spoof_force_stop_confirm_body">سيُغلق التطبيق فورًا. قد تُفقد العمل غير المحفوظ فيه.</string>
     <string name="spoof_safe_subtitle">استثناءات الانتحال لكل تطبيق: تخطٍّ كامل أو إصدار Android فقط.</string>
     <string name="spoof_safe_desc">التخطي الكامل: يرى التطبيق جهازك الحقيقي دون أي انتحال. إصدار Android فقط: يبقى الإصدار حقيقيًا (السبب المعتاد للتعطل) بينما يظل الطراز والبصمة منتَحلين. يفوز التخطي الكامل عند إدراج التطبيق في القائمتين معًا.</string>
     <string name="spoof_safe_version_note">عند اختيار إصدار Android فقط، تظل البصمة ومعرّف/وصف البناء تحمل إصدار الملف الشخصي، ما قد يجعل التعارض ملحوظًا لقارئ متدقق.</string>

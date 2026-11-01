@@ -56,6 +56,9 @@
     <!-- Shared scaffold back button (talkback). -->
     <string name="core_back">返回</string>
 
+    <!-- Button loading state label (shown with spinner while async work runs). -->
+    <string name="core_working">处理中…</string>
+
     <!-- Onboarding terms step. Prefix/suffix carry their edge space via \u0020.
          The link opens the CC license text (not the app Terms — those open as dialogs below). -->
     <string name="core_terms_prefix">使用本应用前，请先阅读</string>
