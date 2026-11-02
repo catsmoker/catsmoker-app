@@ -77,7 +77,8 @@ class SpoofScopeTest {
         "com.tencent.tmgp.cod",
         "com.tencent.tmgp.gnyx",
         "com.HoYoverse.hkrpgoversea",
-        "com.kurogame.wutheringwaves.global"
+        "com.kurogame.wutheringwaves.global",
+        "com.bandainamcoent.ultimateninjastorm"
     )
 
     private fun scopeItems(): List<String> {

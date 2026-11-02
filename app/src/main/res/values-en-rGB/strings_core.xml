@@ -65,6 +65,9 @@
     <string name="core_terms_suffix">\u0020before using the app.</string>
     <string name="core_terms_title">Terms &amp; Conditions</string>
     <string name="core_terms_agree">I agree to the terms.</string>
+    <string name="onb_terms_subtitle">Review the key points, then accept to continue.</string>
+    <string name="onb_terms_key_sections">Key sections</string>
+    <string name="onb_terms_required">Required to continue.</string>
     <string name="core_continue">CONTINUE</string>
 
     <!-- Permissions screen. -->
@@ -75,6 +78,8 @@
     <string name="core_perm_shizuku_title">Shizuku Access</string>
     <string name="core_perm_shizuku_sub">Alternative to Root for system tweaks.</string>
     <string name="core_perm_root_denied">Root was not granted. Check the prompt or your root manager.</string>
+    <string name="core_perm_root_unavailable">Root is not available on this device. This feature requires a rooted device.</string>
+    <string name="core_perm_restricted_hint">If the toggle will not turn on: open App Info, tap the three-dot menu, choose "Allow restricted settings", then return here and retry.</string>
     <string name="core_perm_shizuku_not_running">Shizuku is not running — start it in the Shizuku app first.</string>
     <string name="core_perm_shizuku_not_granted">Shizuku is running — tap Grant to allow Catsmoker.</string>
     <string name="core_perm_storage_title">Storage Access</string>
@@ -104,6 +109,13 @@
     <!-- Mirrored from values/ (en-GB uses the same English copy). -->
     <string name="core_perm_need_13">Requires Android 13 or newer.</string>
     <string name="core_perm_need_12">Requires Android 12 or newer.</string>
+    <string name="onb_perm_group_essential">Essential</string>
+    <string name="onb_perm_group_system">System</string>
+    <string name="onb_perm_group_additional">Additional</string>
+    <string name="onb_perm_granted">Granted</string>
+    <string name="onb_perm_not_granted">Not granted</string>
+    <string name="onb_perm_unavailable">Unavailable</string>
+    <string name="onb_perm_not_running">Not running</string>
     <!-- Accessible names for the shared info (i) button and its bottom sheet. -->
     <string name="info_more_about">More info about %1$s</string>
     <string name="info_close">Close</string>

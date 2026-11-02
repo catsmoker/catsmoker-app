@@ -69,6 +69,8 @@
     <!-- First-run onboarding step one. -->
     <string name="sys_first_run_title">欢迎使用 CatSmoker</string>
     <string name="sys_first_run_subtitle">选择应用的外观和语言，稍后可在设置中更改。</string>
+    <string name="onb_theme_hint">点按预览，应用会立即切换。</string>
+    <string name="onb_language_hint">继续后应用将以新语言重启。</string>
     <string name="sys_continue">继续</string>
 
     <!-- Redesigned Settings: section headers, one-line values, info sheets. -->

@@ -66,6 +66,9 @@
     <string name="core_terms_suffix">\u0020antes de usar la app.</string>
     <string name="core_terms_title">Términos y condiciones</string>
     <string name="core_terms_agree">Acepto los términos.</string>
+    <string name="onb_terms_subtitle">Revisa los puntos clave y luego acepta para continuar.</string>
+    <string name="onb_terms_key_sections">Secciones clave</string>
+    <string name="onb_terms_required">Obligatorio para continuar.</string>
     <string name="core_continue">CONTINUAR</string>
 
     <!-- Permissions screen. -->
@@ -76,6 +79,8 @@
     <string name="core_perm_shizuku_title">Acceso Shizuku</string>
     <string name="core_perm_shizuku_sub">Alternativa a root para ajustes del sistema.</string>
     <string name="core_perm_root_denied">No se concedió root. Revisa el aviso o tu gestor de root.</string>
+    <string name="core_perm_root_unavailable">Root no está disponible en este dispositivo. Esta función requiere un dispositivo rooteado.</string>
+    <string name="core_perm_restricted_hint">Si el interruptor no se activa: abre Información de la app, toca el menú de tres puntos, elige «Permitir ajustes restringidos» y vuelve aquí para reintentar.</string>
     <string name="core_perm_shizuku_not_running">Shizuku no está en ejecución: inícialo primero en la app Shizuku.</string>
     <string name="core_perm_shizuku_not_granted">Shizuku está en ejecución: pulsa Conceder para permitir Catsmoker.</string>
     <string name="core_perm_storage_title">Acceso al almacenamiento</string>
@@ -97,6 +102,14 @@
     <!-- Permission rows gated on Android version: shown disabled with a reason, never hidden. -->
     <string name="core_perm_need_13">Requiere Android 13 o posterior.</string>
     <string name="core_perm_need_12">Requiere Android 12 o posterior.</string>
+    <!-- Onboarding permission checklist: group labels and compact status words. -->
+    <string name="onb_perm_group_essential">Esenciales</string>
+    <string name="onb_perm_group_system">Sistema</string>
+    <string name="onb_perm_group_additional">Adicionales</string>
+    <string name="onb_perm_granted">Concedido</string>
+    <string name="onb_perm_not_granted">No concedido</string>
+    <string name="onb_perm_unavailable">No disponible</string>
+    <string name="onb_perm_not_running">No está en ejecución</string>
     <!-- MetricReadStatus full labels: the reason shown in place of a value on the dashboard
          and in the performance overlay, when the device never reported a number. -->
     <string name="core_read_loading">leyendo…</string>

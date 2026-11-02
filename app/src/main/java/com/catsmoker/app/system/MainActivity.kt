@@ -89,6 +89,7 @@ class MainActivity : ComponentActivity() {    override fun attachBaseContext(new
         updateTaskDescription()
         
         val startDestination = if (isFirstRun()) Routes.PERMISSION else Routes.MAIN
+        val isFreshLaunch = savedInstanceState == null
         
         setContent {
             AppearanceStore.init(applicationContext)
@@ -106,7 +107,7 @@ class MainActivity : ComponentActivity() {    override fun attachBaseContext(new
                 darkTheme = darkTheme,
                 dynamicColor = themeMode == AppearanceStore.ThemeMode.DYNAMIC
             ) {
-                var showStartup by remember { mutableStateOf(true) }
+                var showStartup by remember { mutableStateOf(isFreshLaunch) }
                 var showSupportDialog by remember { mutableStateOf(shouldShowSupportDialog()) }
                 // Prompt state read once: it decides whether this showing offers the
                 // "Do not show again" checkbox (2nd showing on). The shown-count itself

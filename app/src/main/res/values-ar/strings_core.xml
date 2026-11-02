@@ -66,6 +66,9 @@
     <string name="core_terms_suffix">\u0020قبل استخدام التطبيق.</string>
     <string name="core_terms_title">الشروط والأحكام</string>
     <string name="core_terms_agree">أوافق على الشروط.</string>
+    <string name="onb_terms_subtitle">راجع النقاط الرئيسية ثم اقبل للمتابعة.</string>
+    <string name="onb_terms_key_sections">الأقسام الرئيسية</string>
+    <string name="onb_terms_required">مطلوب للمتابعة.</string>
     <string name="core_continue">متابعة</string>
 
     <!-- Permissions screen. -->
@@ -76,6 +79,8 @@
     <string name="core_perm_shizuku_title">وصول Shizuku</string>
     <string name="core_perm_shizuku_sub">بديل للجذر لتعديلات النظام.</string>
     <string name="core_perm_root_denied">لم يُمنح Root. تحقّق من النافذة أو مدير Root.</string>
+    <string name="core_perm_root_unavailable">Root غير متاح على هذا الجهاز. تتطلب هذه الميزة جهازًا بصلاحيات Root.</string>
+    <string name="core_perm_restricted_hint">إذا لم يعمل المفتاح: افتح معلومات التطبيق، واضغط قائمة النقاط الثلاث، واختر «السماح بالإعدادات المقيّدة»، ثم عُد هنا وحاول مرة أخرى.</string>
     <string name="core_perm_shizuku_not_running">Shizuku لا يعمل — شغّله من تطبيق Shizuku أولًا.</string>
     <string name="core_perm_shizuku_not_granted">Shizuku يعمل — اضغط منح للسماح لـ Catsmoker.</string>
     <string name="core_perm_storage_title">الوصول إلى التخزين</string>
@@ -97,6 +102,14 @@
     <!-- Permission rows gated on Android version: shown disabled with a reason, never hidden. -->
     <string name="core_perm_need_13">يتطلب أندرويد 13 أو أحدث.</string>
     <string name="core_perm_need_12">يتطلب أندرويد 12 أو أحدث.</string>
+    <!-- Onboarding permission checklist: group labels and compact status words. -->
+    <string name="onb_perm_group_essential">أساسية</string>
+    <string name="onb_perm_group_system">النظام</string>
+    <string name="onb_perm_group_additional">إضافية</string>
+    <string name="onb_perm_granted">ممنوح</string>
+    <string name="onb_perm_not_granted">غير ممنوح</string>
+    <string name="onb_perm_unavailable">غير متاح</string>
+    <string name="onb_perm_not_running">لا يعمل</string>
     <!-- MetricReadStatus full labels: the reason shown in place of a value on the dashboard
          and in the performance overlay, when the device never reported a number. -->
     <string name="core_read_loading">جارٍ القراءة…</string>

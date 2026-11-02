@@ -154,6 +154,21 @@ fun legalTermsSections(): List<Pair<String, String>> = listOf(
 )
 
 /**
+ * A short index of the Terms sections a first-time user should see before accepting.
+ *
+ * Only the already-translated section titles are reused — no new legal copy is written and
+ * no clause is reworded. The full text stays one tap away through [legalTermsSections] and
+ * the onboarding dialog, so this list is a table of contents, not a substitute.
+ */
+@Composable
+fun legalTermsHighlights(): List<String> = listOf(
+    stringResource(R.string.legal_t_license_title),
+    stringResource(R.string.legal_t_use_title),
+    stringResource(R.string.legal_t_games_title),
+    stringResource(R.string.legal_t_risk_title)
+)
+
+/**
  * Shared footer linking the website legal page from both in-app legal
  * screens. Opening it is a plain browser intent — it never touches consent.
  */

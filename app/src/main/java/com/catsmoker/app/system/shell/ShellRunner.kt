@@ -145,6 +145,28 @@ class ShellRunner @Inject constructor(
         return rooted
     }
 
+    /**
+     * Whether a root implementation (`su`) is present on the device, independent of
+     * whether this app has been granted authorization. Used to tell "no root installed"
+     * apart from "root installed but not granted" — never execute `su` here, which
+     * would trigger the superuser manager's grant dialog during a mere state probe.
+     */
+    fun isRootImplemented(): Boolean {
+        val candidates = listOf(
+            "/system/bin/su", "/system/xbin/su", "/sbin/su", "/vendor/bin/su",
+            "/su/bin/su", "/data/adb/magisk/su", "/data/adb/ksu/bin/su",
+            "/data/adb/apatch/bin/su"
+        )
+        if (candidates.any { runCatching { java.io.File(it).exists() }.getOrDefault(false) }) return true
+        val path = System.getenv("PATH").orEmpty()
+        if (path.split(":").any { dir -> runCatching { java.io.File(dir, "su").exists() }.getOrDefault(false) }) return true
+        // Last resort, prompt-free: ask the shell whether `su` resolves.
+        return runCatching {
+            val p = Runtime.getRuntime().exec(arrayOf("sh", "-c", "command -v su"))
+            p.waitFor() == 0 && p.inputStream.bufferedReader().readLine().orEmpty().isNotBlank()
+        }.getOrDefault(false)
+    }
+
     fun hasPrivilege(): Boolean = isRootAvailable() || _shizukuHasPermission.value
 
     /**

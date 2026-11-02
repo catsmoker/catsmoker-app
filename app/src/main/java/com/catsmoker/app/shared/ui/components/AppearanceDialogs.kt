@@ -66,7 +66,7 @@ fun ThemeModeOptions(
 }
 
 @Composable
-private fun themeModeLabel(mode: AppearanceStore.ThemeMode): String = when (mode) {
+fun themeModeLabel(mode: AppearanceStore.ThemeMode): String = when (mode) {
     AppearanceStore.ThemeMode.SYSTEM -> stringResource(R.string.sys_theme_system)
     AppearanceStore.ThemeMode.DARK -> stringResource(R.string.sys_theme_dark)
     AppearanceStore.ThemeMode.LIGHT -> stringResource(R.string.sys_theme_light)
@@ -89,16 +89,22 @@ fun languageDisplayName(tag: String): String {
     return endonym.ifEmpty { stringResource(R.string.sys_lang_system) }
 }
 
+/**
+ * Every language the pickers offer, in display order. Shared by the Settings radio rows
+ * and the first-run pill selector so the two surfaces cannot drift apart.
+ */
+fun languageOptions(): List<String> = listOf(
+    AppearanceStore.LANGUAGE_SYSTEM,
+    AppearanceStore.LANGUAGE_ENGLISH,
+    AppearanceStore.LANGUAGE_ARABIC,
+    AppearanceStore.LANGUAGE_SPANISH,
+    AppearanceStore.LANGUAGE_CHINESE,
+    AppearanceStore.LANGUAGE_PORTUGUESE
+)
+
 @Composable
 fun LanguageOptions(selectedTag: String, onSelect: (String) -> Unit) {
-    val options = listOf(
-        AppearanceStore.LANGUAGE_SYSTEM,
-        AppearanceStore.LANGUAGE_ENGLISH,
-        AppearanceStore.LANGUAGE_ARABIC,
-        AppearanceStore.LANGUAGE_SPANISH,
-        AppearanceStore.LANGUAGE_CHINESE,
-        AppearanceStore.LANGUAGE_PORTUGUESE
-    )
+    val options = languageOptions()
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         options.forEach { tag ->
             SelectableOptionRow(

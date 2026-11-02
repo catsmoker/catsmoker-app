@@ -213,6 +213,22 @@ class LocaleParityTest {
         "legal_t_contact_body",
         "core_terms_read_privacy",
         "core_terms_read_terms",
+        // First-run onboarding redesign: step copy, live theme/language hints, terms key-section
+        // labels and the compact permission checklist statuses.
+        "sys_first_run_title",
+        "sys_first_run_subtitle",
+        "onb_theme_hint",
+        "onb_language_hint",
+        "onb_terms_subtitle",
+        "onb_terms_key_sections",
+        "onb_terms_required",
+        "onb_perm_group_essential",
+        "onb_perm_group_system",
+        "onb_perm_group_additional",
+        "onb_perm_granted",
+        "onb_perm_not_granted",
+        "onb_perm_unavailable",
+        "onb_perm_not_running",
         // Accessible names for previously unlabeled icon-only buttons.
         "core_desc_add",
         "core_desc_more",
@@ -493,8 +509,11 @@ class LocaleParityTest {
         // Permission rows that need a newer Android version (shown disabled, not hidden).
         "core_perm_need_13",
         "core_perm_need_12",
-        // Root denial feedback and Shizuku tri-state (not running / running without grant).
+        // Root denial/unavailable feedback, restricted-settings guidance and Shizuku tri-state
+        // (not running / running without grant) — all reachable from the permission info sheets.
         "core_perm_root_denied",
+        "core_perm_root_unavailable",
+        "core_perm_restricted_hint",
         "core_perm_shizuku_not_running",
         "core_perm_shizuku_not_granted",
         // Spoof home root-manager tile (shown disabled when not rooted, not hidden).

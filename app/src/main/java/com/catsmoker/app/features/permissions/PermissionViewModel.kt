@@ -37,6 +37,8 @@ class PermissionViewModel @Inject constructor(
 ) : ViewModel() {
 
     data class UiState(
+        /** True while the first-run flow is running; false when reopened from Settings. */
+        val isOnboarding: Boolean = true,
         /** First-run step one: theme + language, one full screen with no scrolling. */
         val isAppearanceStep: Boolean = true,
         /** First-run step two: the terms checkbox gates its own Continue. */
@@ -46,6 +48,7 @@ class PermissionViewModel @Inject constructor(
         val languageTag: String = AppearanceStore.LANGUAGE_SYSTEM,
         val isAgreed: Boolean = false,
         val rootGranted: Boolean = false,
+        val rootAvailable: Boolean = false,
         val notifGranted: Boolean = false,
         val storageGranted: Boolean = false,
         val batteryGranted: Boolean = false,
@@ -71,6 +74,9 @@ class PermissionViewModel @Inject constructor(
     private val _events = MutableSharedFlow<UiEvent>(extraBufferCapacity = 1)
     val events: SharedFlow<UiEvent> = _events.asSharedFlow()
 
+    @Volatile
+    private var rootRequestAttempted = false
+
     init {
         // Reopened from Settings after onboarding (`is_first_run` — what MainActivity gates
         // the start destination on — already false): skip both gates and land on the plain
@@ -80,9 +86,16 @@ class PermissionViewModel @Inject constructor(
         // the language is already applied by the fresh process.
         val prefs = context.getSharedPreferences("app_prefs", Context.MODE_PRIVATE)
         if (!prefs.getBoolean("is_first_run", true)) {
-            _uiState.update { it.copy(isAppearanceStep = false, isAgreementStep = false) }
-        } else if (AppearanceStore.isChosen(context)) {
-            _uiState.update { it.copy(isAppearanceStep = false) }
+            _uiState.update {
+                it.copy(isOnboarding = false, isAppearanceStep = false, isAgreementStep = false)
+            }
+        } else {
+            if (AppearanceStore.isChosen(context)) {
+                _uiState.update { it.copy(isAppearanceStep = false) }
+            }
+            if (prefs.getBoolean("terms_accepted", false)) {
+                _uiState.update { it.copy(isAgreementStep = false) }
+            }
         }
         _uiState.update {
             it.copy(
@@ -136,6 +149,9 @@ class PermissionViewModel @Inject constructor(
     fun onAgreementContinue(): Boolean {
         val current = _uiState.value
         if (!current.isAgreed) return false
+        context.getSharedPreferences("app_prefs", Context.MODE_PRIVATE).edit {
+            putBoolean("terms_accepted", true)
+        }
         _uiState.update { it.copy(isAgreementStep = false) }
         return true
     }
@@ -154,7 +170,19 @@ class PermissionViewModel @Inject constructor(
     }
 
     fun refreshStates() {
-        checkRootPermission { rooted -> _uiState.update { it.copy(rootGranted = rooted) } }
+        viewModelScope.launch(Dispatchers.IO) {
+            val implemented = shellRunner.isRootImplemented()
+            val granted = shellRunner.isRootAvailable(force = true)
+            withContext(Dispatchers.Main) {
+                _uiState.update { it.copy(rootAvailable = implemented, rootGranted = granted) }
+                // Auto-request once when root is present but not yet authorized, so Magisk
+                // can show its grant dialog at an appropriate point in the workflow.
+                if (implemented && !granted && !rootRequestAttempted) {
+                    rootRequestAttempted = true
+                    requestRootPermission()
+                }
+            }
+        }
         shellRunner.refreshShizukuPermission()
         _uiState.update {
             it.copy(
@@ -180,6 +208,10 @@ class PermissionViewModel @Inject constructor(
         } else true
 
     fun requestRootPermission() {
+        if (!_uiState.value.rootAvailable) {
+            _events.tryEmit(UiEvent.RootRequestFailed)
+            return
+        }
         viewModelScope.launch(Dispatchers.IO) {
             // Build a *fresh* root shell instead of reusing libsu's cached one. A cached
             // non-root shell (e.g. from an earlier denied probe) would make `Shell.cmd`
@@ -189,8 +221,10 @@ class PermissionViewModel @Inject constructor(
             val granted = runCatching {
                 Shell.Builder.create().setTimeout(60).build().isRoot
             }.getOrDefault(false)
-            if (!granted) _events.tryEmit(UiEvent.RootRequestFailed)
-            refreshStates()
+            withContext(Dispatchers.Main) {
+                _uiState.update { it.copy(rootGranted = granted) }
+                if (!granted) _events.tryEmit(UiEvent.RootRequestFailed)
+            }
         }
     }
 

@@ -69,6 +69,8 @@
     <!-- First-run onboarding step one. -->
     <string name="sys_first_run_title">Boas-vindas ao CatSmoker</string>
     <string name="sys_first_run_subtitle">Escolha a aparência do app e o idioma que ele fala. Você pode mudar isso depois nas Configurações.</string>
+    <string name="onb_theme_hint">Toque em uma prévia — o app muda na hora.</string>
+    <string name="onb_language_hint">O app reinicia no novo idioma após Continuar.</string>
     <string name="sys_continue">CONTINUAR</string>
 
     <!-- Redesigned Settings: section headers, one-line values, info sheets. -->

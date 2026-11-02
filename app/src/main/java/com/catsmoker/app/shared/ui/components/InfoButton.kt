@@ -106,20 +106,26 @@ data class InfoTopic(
 @Composable
 fun InfoButton(
     topic: InfoTopic,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    /**
+     * Dense layouts (the onboarding permission tiles) use a 36 dp control with an 18 dp
+     * glyph. The sheet itself is unchanged; only the trigger shrinks so a row can stay
+     * compact without losing the explanation.
+     */
+    compact: Boolean = false
 ) {
     var open by rememberSaveable { mutableStateOf(false) }
     val featureName = topic.name.resolve()
 
     IconButton(
         onClick = { open = true },
-        modifier = modifier.size(48.dp)
+        modifier = modifier.size(if (compact) 36.dp else 48.dp)
     ) {
         Icon(
             imageVector = if (topic.isCaution) Icons.Filled.Warning else Icons.Outlined.Info,
             contentDescription = stringResource(R.string.info_more_about, featureName),
             tint = if (topic.isCaution) InfoCautionColor else MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.size(20.dp)
+            modifier = Modifier.size(if (compact) 18.dp else 20.dp)
         )
     }
 

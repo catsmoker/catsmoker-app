@@ -66,6 +66,9 @@
     <string name="core_terms_suffix">。</string>
     <string name="core_terms_title">条款与条件</string>
     <string name="core_terms_agree">我同意这些条款。</string>
+    <string name="onb_terms_subtitle">查看要点，然后接受以继续。</string>
+    <string name="onb_terms_key_sections">关键部分</string>
+    <string name="onb_terms_required">必须接受才能继续。</string>
     <string name="core_continue">继续</string>
 
     <!-- Permissions screen. -->
@@ -76,6 +79,8 @@
     <string name="core_perm_shizuku_title">Shizuku 权限</string>
     <string name="core_perm_shizuku_sub">系统调节的 Root 替代方案。</string>
     <string name="core_perm_root_denied">未授予 Root。请检查授权弹窗或 Root 管理器。</string>
+    <string name="core_perm_root_unavailable">此设备不支持 Root。此功能需要已获取 Root 权限的设备。</string>
+    <string name="core_perm_restricted_hint">如果开关无法开启：打开应用信息，点按三点菜单，选择“允许受限制的设置”，然后返回此处重试。</string>
     <string name="core_perm_shizuku_not_running">Shizuku 未运行——请先在 Shizuku 应用中启动。</string>
     <string name="core_perm_shizuku_not_granted">Shizuku 正在运行——点按授予以允许 Catsmoker。</string>
     <string name="core_perm_storage_title">存储权限</string>
@@ -97,6 +102,14 @@
     <!-- Permission rows gated on Android version: shown disabled with a reason, never hidden. -->
     <string name="core_perm_need_13">需要 Android 13 或更高版本。</string>
     <string name="core_perm_need_12">需要 Android 12 或更高版本。</string>
+    <!-- Onboarding permission checklist: group labels and compact status words. -->
+    <string name="onb_perm_group_essential">必要</string>
+    <string name="onb_perm_group_system">系统</string>
+    <string name="onb_perm_group_additional">其他</string>
+    <string name="onb_perm_granted">已授予</string>
+    <string name="onb_perm_not_granted">未授予</string>
+    <string name="onb_perm_unavailable">不可用</string>
+    <string name="onb_perm_not_running">未运行</string>
     <!-- MetricReadStatus full labels: the reason shown in place of a value on the dashboard
          and in the performance overlay, when the device never reported a number. -->
     <string name="core_read_loading">正在读取…</string>
