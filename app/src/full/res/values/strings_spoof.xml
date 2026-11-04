@@ -216,6 +216,8 @@
     <string name="spoof_error_zip">Failed to save ZIP: %1$s</string>
     <string name="spoof_error_no_manager">No Root Manager found</string>
     <string name="spoof_error_publish">Could not publish spoof config (%1$s)</string>
+    <string name="spoof_error_privilege_required">Spoof config not published: root or Shizuku is required to reach target apps.</string>
+    <string name="spoof_error_vulkan_not_live">Vulkan spoof keys set but Vulkan is not the live graphics API on this device — Vulkan keys will be skipped.</string>
     <string name="spoof_ladder_label">Frame-rate ladder</string>
     <!-- Preset / profile separation + sharing -->
     <string name="spoof_action_share">Share</string>
@@ -242,4 +244,9 @@
     <string name="spoof_toast_imported">Profile \'%1$s\' imported</string>
     <string name="spoof_error_export_failed">Could not export \'%1$s\'</string>
     <string name="spoof_error_no_share_target">No app available to share with</string>
+    <!-- LSPosed inactive warning when assigning profiles (F-02). -->
+    <string name="spoof_lsposed_inactive_title">Xposed module not active</string>
+    <string name="spoof_lsposed_inactive_body">Spoofing will not take effect in this app until the Catsmoker module is enabled in your Xposed/LSPosed manager and the app is restarted. Assign now anyway, or open the manager first.</string>
+    <string name="spoof_action_open_manager">Open Manager</string>
+    <string name="spoof_action_dismiss">Dismiss</string>
 </resources>

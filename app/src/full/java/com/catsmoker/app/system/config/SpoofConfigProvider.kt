@@ -10,6 +10,7 @@ import android.os.Binder
 import android.os.Bundle
 import android.os.ParcelFileDescriptor
 import android.os.Process
+import android.content.pm.PackageManager
 import com.catsmoker.app.shared.data.repository.SpoofRepository
 import dagger.hilt.EntryPoint
 import dagger.hilt.InstallIn
@@ -131,17 +132,34 @@ class SpoofConfigProvider : ContentProvider() {
     private fun resolvePackageName(uri: Uri, requestedPackage: String?): String? {
         val explicit = requestedPackage?.trim()?.takeIf { it.isNotEmpty() }
             ?: uri.getQueryParameter(QUERY_PACKAGE)?.trim()?.takeIf { it.isNotEmpty() }
-
-        val callingUid = Binder.getCallingUid()
-        // Our own UI resolves arbitrary packages to preview what a profile renders to.
-        if (callingUid == Process.myUid()) return explicit ?: context?.packageName
-
-        val caller = callingPackage?.takeIf { it.isNotEmpty() }
-        if (explicit == null) return caller
-
-        // Shared-UID apps may legitimately ask for a sibling: callingPackage only names one of them.
-        val siblings = runCatching { context?.packageManager?.getPackagesForUid(callingUid) }
-            .getOrNull().orEmpty()
-        return explicit.takeIf { it == caller || it in siblings }
+        return resolvePackageNameForTest(
+            callingUid = Binder.getCallingUid(),
+            callingPackage = callingPackage,
+            explicitPackage = explicit,
+            ourUid = Process.myUid(),
+            ourPackageName = context?.packageName ?: "",
+            packageManager = context?.packageManager
+        )
     }
+}
+
+/** Top-level wrapper so the pure decision logic can be unit-tested without a ContentProvider instance. */
+internal fun resolvePackageNameForTest(
+    callingUid: Int,
+    callingPackage: String?,
+    explicitPackage: String?,
+    ourUid: Int,
+    ourPackageName: String,
+    packageManager: PackageManager?
+): String? {
+    // Our own UI resolves arbitrary packages to preview what a profile renders to.
+    if (callingUid == ourUid) return explicitPackage ?: ourPackageName
+
+    val caller = callingPackage?.takeIf { it.isNotEmpty() }
+    if (explicitPackage == null) return caller
+
+    // Shared-UID apps may legitimately ask for a sibling: callingPackage only names one of them.
+    val siblings = runCatching { packageManager?.getPackagesForUid(callingUid) }
+        .getOrNull().orEmpty()
+    return explicitPackage.takeIf { it == caller || it in siblings }
 }

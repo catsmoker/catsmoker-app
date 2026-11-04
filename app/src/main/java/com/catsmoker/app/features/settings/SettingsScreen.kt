@@ -93,6 +93,10 @@ fun SettingsRoute(
         val observer = LifecycleEventObserver { _, event ->
             if (event == Lifecycle.Event.ON_RESUME) {
                 viewModel.refreshPurchases()
+                viewModel.refreshUpdateStatus()
+                viewModel.refreshUpdates()
+                viewModel.onResume()
+                viewModel.checkForUpdatesIfNeeded()
             }
         }
         if (owner != null) owner.lifecycle.addObserver(observer)

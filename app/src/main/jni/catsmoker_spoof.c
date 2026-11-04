@@ -91,6 +91,10 @@ static char g_gpu_vendor[CS_VALUE_MAX];
 static char g_gpu_renderer[CS_VALUE_MAX];
 static char g_gpu_version[CS_VALUE_MAX];
 static char g_gpu_extensions[CS_VALUE_MAX];
+static char g_egl_vendor[CS_VALUE_MAX];
+static char g_egl_version[CS_VALUE_MAX];
+static char g_egl_extensions[CS_VALUE_MAX];
+static char g_egl_client_apis[CS_VALUE_MAX];
 static char g_vulkan_model[CS_VALUE_MAX];
 static uint32_t g_vulkan_version = 0;
 static uint32_t g_vulkan_vendor_id = 0;
@@ -115,6 +119,7 @@ static pthread_mutex_t g_lock = PTHREAD_MUTEX_INITIALIZER;
 #define CS_STATE_CONFIGURED 32
 #define CS_STATE_GL_GLES1 64
 #define CS_STATE_VULKAN 128
+#define CS_STATE_EGL 256
 
 /* ------------------------------------------------------------------------- helpers */
 
@@ -255,6 +260,17 @@ typedef const unsigned char *(*cs_gl_get_string_f)(unsigned int name);
 static cs_gl_get_string_f g_real_gl2;
 static cs_gl_get_string_f g_real_gl1;
 
+/* ------------------------------------------------------------------------- EGL hooks */
+
+#define CS_EGL_VENDOR 0x3053
+#define CS_EGL_VERSION 0x3054
+#define CS_EGL_EXTENSIONS 0x3055
+#define CS_EGL_CLIENT_APIS 0x308D
+
+typedef const char *(*cs_egl_query_string_f)(void *display, int name);
+
+static cs_egl_query_string_f g_real_egl_query_string;
+
 /* The profile's GL string, or NULL to let the real one through. The returned pointer aliases
  * the static buffer, which never moves: a later profile assignment can change what a stale
  * pointer reads, but it can never dangle. */
@@ -279,6 +295,24 @@ static const unsigned char *cs_gl2_get_string(unsigned int name) {
 static const unsigned char *cs_gl1_get_string(unsigned int name) {
     const unsigned char *spoofed = cs_gpu_string(name);
     return spoofed != NULL ? spoofed : g_real_gl1(name);
+}
+
+/* EGL query string lookup: answers with spoofed vendor/version/extensions/client_apis when set. */
+static const char *cs_egl_string(int name) {
+    const char *value = NULL;
+    pthread_mutex_lock(&g_lock);
+    if (name == CS_EGL_VENDOR && g_egl_vendor[0] != 0) value = g_egl_vendor;
+    else if (name == CS_EGL_VERSION && g_egl_version[0] != 0) value = g_egl_version;
+    else if (name == CS_EGL_EXTENSIONS && g_egl_extensions[0] != 0) value = g_egl_extensions;
+    else if (name == CS_EGL_CLIENT_APIS && g_egl_client_apis[0] != 0) value = g_egl_client_apis;
+    pthread_mutex_unlock(&g_lock);
+    return value;
+}
+
+/* EGL hook for eglQueryString - intercepts vendor, version, extensions, client_apis queries. */
+static const char *cs_egl_query_string(void *display, int name) {
+    const char *spoofed = cs_egl_string(name);
+    return spoofed != NULL ? spoofed : g_real_egl_query_string(display, name);
 }
 
 /*
@@ -386,6 +420,23 @@ static void cs_hook_gl_library(void *handle, int gles1) {
         LOGD("glGetString hooked in libGLESv2.so");
     } else {
         LOGD("glGetString not hooked in libGLESv2.so");
+    }
+}
+
+/* Hooks eglQueryString in libEGL.so when it loads. */
+static void cs_hook_egl_library(void *handle) {
+    if (handle == NULL || g_hook == NULL || !cs_is_configured()) return;
+    if (g_state & CS_STATE_EGL) return;
+    void *symbol = dlsym(handle, "eglQueryString");
+    if (symbol == NULL) {
+        LOGD("libEGL.so has no eglQueryString");
+        return;
+    }
+    if (cs_hook_install(symbol, (void *)cs_egl_query_string, (void **)&g_real_egl_query_string)) {
+        g_state |= CS_STATE_EGL;
+        LOGD("eglQueryString hooked in libEGL.so");
+    } else {
+        LOGD("eglQueryString not hooked in libEGL.so");
     }
 }
 
@@ -570,8 +621,8 @@ static void cs_hook_already_loaded_libs(void) {
     if (g_early_libs_hooked) return;
     g_early_libs_hooked = 1;
     if (g_hook == NULL) return;
-    const char *libs[3] = {"libGLESv2.so", "libGLESv1_CM.so", "libvulkan.so"};
-    for (int i = 0; i < 3; i++) {
+    const char *libs[4] = {"libGLESv2.so", "libGLESv1_CM.so", "libvulkan.so", "libEGL.so"};
+    for (int i = 0; i < 4; i++) {
         void *handle = dlopen(libs[i], RTLD_NOLOAD | RTLD_NOW);
         if (handle == NULL) {
             LOGD("early-load: %s not mapped", libs[i]);
@@ -581,6 +632,7 @@ static void cs_hook_already_loaded_libs(void) {
         if (strcmp(libs[i], "libGLESv2.so") == 0) cs_hook_gl_library(handle, 0);
         else if (strcmp(libs[i], "libGLESv1_CM.so") == 0) cs_hook_gl_library(handle, 1);
         else if (strcmp(libs[i], "libvulkan.so") == 0) cs_hook_vulkan_library(handle);
+        else if (strcmp(libs[i], "libEGL.so") == 0) cs_hook_egl_library(handle);
     }
 }
 
@@ -594,6 +646,8 @@ static void cs_on_module_loaded(const char *name, void *handle) {
         cs_hook_gl_library(handle, 1);
     } else if (cs_ends_with(name, "libvulkan.so")) {
         cs_hook_vulkan_library(handle);
+    } else if (cs_ends_with(name, "libEGL.so")) {
+        cs_hook_egl_library(handle);
     }
 }
 
@@ -728,6 +782,29 @@ Java_com_catsmoker_app_features_spoofdevice_root_NativeSpoofChannel_nativeSetGpu
     if (renderer_text != NULL) (*env)->ReleaseStringUTFChars(env, renderer, renderer_text);
     if (version_text != NULL) (*env)->ReleaseStringUTFChars(env, version, version_text);
     if (extensions_text != NULL) (*env)->ReleaseStringUTFChars(env, extensions, extensions_text);
+}
+
+/* Sets the EGL strings a profile answers with; null or empty leaves that string to the device. */
+JNIEXPORT void JNICALL
+Java_com_catsmoker_app_features_spoofdevice_root_NativeSpoofChannel_nativeSetEglStrings(
+    JNIEnv *env, jclass clazz, jstring vendor, jstring version, jstring extensions, jstring clientApis) {
+    (void)clazz;
+    const char *vendor_text = vendor != NULL ? (*env)->GetStringUTFChars(env, vendor, NULL) : NULL;
+    const char *version_text = version != NULL ? (*env)->GetStringUTFChars(env, version, NULL) : NULL;
+    const char *extensions_text = extensions != NULL ? (*env)->GetStringUTFChars(env, extensions, NULL) : NULL;
+    const char *client_apis_text = clientApis != NULL ? (*env)->GetStringUTFChars(env, clientApis, NULL) : NULL;
+    pthread_mutex_lock(&g_lock);
+    cs_copy(g_egl_vendor, CS_VALUE_MAX, vendor_text);
+    cs_copy(g_egl_version, CS_VALUE_MAX, version_text);
+    cs_copy(g_egl_extensions, CS_VALUE_MAX, extensions_text);
+    cs_copy(g_egl_client_apis, CS_VALUE_MAX, client_apis_text);
+    if (g_egl_vendor[0] != 0 || g_egl_version[0] != 0 || g_egl_extensions[0] != 0 || g_egl_client_apis[0] != 0) g_configured = 1;
+    pthread_mutex_unlock(&g_lock);
+    cs_hook_already_loaded_libs();
+    if (vendor_text != NULL) (*env)->ReleaseStringUTFChars(env, vendor, vendor_text);
+    if (version_text != NULL) (*env)->ReleaseStringUTFChars(env, version, version_text);
+    if (extensions_text != NULL) (*env)->ReleaseStringUTFChars(env, extensions, extensions_text);
+    if (client_apis_text != NULL) (*env)->ReleaseStringUTFChars(env, clientApis, client_apis_text);
 }
 
 /* Sets the spoofed Vulkan physical-device name; null or empty leaves it to the device. */

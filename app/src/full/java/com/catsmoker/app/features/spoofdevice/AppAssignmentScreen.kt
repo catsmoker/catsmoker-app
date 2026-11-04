@@ -40,6 +40,9 @@ fun AppAssignmentScreen(
     // An assignment held for exclusivity confirmation: non-null only between
     // the picker's Assign tap and the confirm dialog's verdict.
     var pendingAssign by remember { mutableStateOf<PendingAssign?>(null) }
+    // Warning shown when the user assigns a profile while the LSPosed module is
+    // not active: spoofing will not take effect in the target until it is.
+    var showLsposedWarning by remember { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
         onLoadApps()
@@ -99,10 +102,14 @@ fun AppAssignmentScreen(
             app = app,
             uiState = uiState,
             onAssignProfile = { profileId ->
-                // The exclusivity gate for the Xposed direction lives one level
-                // out: the picker dialog stays dumb, and a confirm wraps the
-                // commit only when a Magisk module is installed.
-                if (
+                // Spoofing only takes effect in target apps when the LSPosed module is
+                // active (loaded into those processes). Warn before committing so the
+                // user isn't left wondering why nothing changed (see F-02 in the audit
+                // report). The Magisk-module exclusivity confirm is orthogonal and
+                // still applies when the module is active.
+                if (!uiState.moduleActive) {
+                    showLsposedWarning = true
+                } else if (
                     SpoofMethodConflict.needsAssignConfirm(
                         profileId = profileId,
                         magisk = uiState.magiskModuleStatus
@@ -139,6 +146,24 @@ fun AppAssignmentScreen(
                     pendingAssign = null
                     selectedApp = null
                 }) { Text(stringResource(R.string.spoof_action_cancel)) }
+            }
+        )
+    }
+    // Warning: LSPosed module not active — spoofing will not take effect until enabled.
+    if (showLsposedWarning) {
+        AlertDialog(
+            onDismissRequest = { showLsposedWarning = false },
+            title = { Text(stringResource(R.string.spoof_lsposed_inactive_title)) },
+            text = { Text(stringResource(R.string.spoof_lsposed_inactive_body)) },
+            confirmButton = {
+                TextButton(onClick = { showLsposedWarning = false }) {
+                    Text(stringResource(R.string.spoof_action_open_manager))
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showLsposedWarning = false }) {
+                    Text(stringResource(R.string.spoof_action_dismiss))
+                }
             }
         )
     }

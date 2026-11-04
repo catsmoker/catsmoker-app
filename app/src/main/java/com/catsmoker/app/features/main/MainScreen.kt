@@ -13,6 +13,9 @@ import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.LifecycleOwner
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawWithCache
@@ -40,7 +43,6 @@ import com.catsmoker.app.shared.data.model.FpsSource
 import com.catsmoker.app.shared.data.model.MetricReadStatus
 import com.catsmoker.app.shared.data.model.MetricsState
 import com.catsmoker.app.shared.ui.components.QuickActionButton
-import com.catsmoker.app.shared.ui.components.UpdateIndicator
 import com.catsmoker.app.shared.ui.components.SectionCard
 import com.catsmoker.app.shared.ui.components.AdBanner
 import com.catsmoker.app.system.VariantCapabilities
@@ -92,6 +94,24 @@ fun MainRoute(onNavigate: (String) -> Unit) {
 
     LaunchedEffect(Unit) {
         viewModel.startMetrics()
+    }
+
+    // Returning to the foreground re-evaluates the update status (throttled), so
+    // a release published while the app was backgrounded still surfaces as a badge.
+    DisposableEffect(context) {
+        val owner = context as? LifecycleOwner
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_RESUME) {
+                settingsViewModel.refreshUpdateStatus()
+                settingsViewModel.refreshUpdates()
+                settingsViewModel.onResume()
+                settingsViewModel.checkForUpdatesIfNeeded()
+            }
+        }
+        if (owner != null) owner.lifecycle.addObserver(observer)
+        onDispose {
+            if (owner != null) owner.lifecycle.removeObserver(observer)
+        }
     }
 
     MainScreen(
@@ -156,17 +176,22 @@ fun MainScreen(
     val actionsAlpha by animateFloatAsState(if (hydrationPhase >= 2) 1f else 0f, tween(300), label = "actions")
     val chartAlpha by animateFloatAsState(if (hydrationPhase >= 3) 1f else 0f, tween(500), label = "chart")
 
-    // No-scroll dashboard that fills the viewport with content, not gaps: the performance
-    // card and the actions block split leftover height by weight (1 : 1.5), and the chart,
-    // grid gap, and tiles absorb their share inside their own bounds. Fixed spacers
-    // separate sections. Ad slot stays reserved at the bottom.
-    Column(
+    // Responsive dashboard: portrait keeps the existing no-scroll vertical rhythm
+    // (performance card on top, quick actions below, ad slot reserved at the bottom);
+    // landscape switches to a two-column layout so neither column is squeezed by the
+    // short viewport height.
+    BoxWithConstraints(
         modifier = Modifier
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
             .systemBarsPadding()
             .padding(horizontal = 24.dp)
     ) {
+        val landscape = maxWidth > maxHeight
+        if (!landscape) {
+            Column(
+                modifier = Modifier.fillMaxSize()
+            ) {
         // 1. Header (Always Instant)
         Row(
             modifier = Modifier
@@ -407,16 +432,7 @@ fun MainScreen(
                                 iconSize = 40.dp,
                                 icon = { Icon(Icons.Default.Settings, null) }
                             )
-                            if (availableUpdateName != null) {
-                                // New indicator: only visible when an update is available.
-                                Box(
-                                    modifier = Modifier
-                                        .align(Alignment.TopEnd)
-                                        .padding(8.dp)
-                                ) {
-                                    UpdateIndicator()
-                                }
-                            }
+                            // Indicator is now drawn inside the Settings tile, on the icon's corner.
                         }
                     }
                 }
@@ -439,6 +455,96 @@ fun MainScreen(
                     .padding(bottom = 8.dp)
                     .height(adSlotHeight)
             )
+        }
+            }
+        } else {
+            // Landscape: two-column layout so the short viewport height does not
+            // squeeze the performance card and the quick actions into one column.
+            Column(modifier = Modifier.fillMaxSize().padding(vertical = 8.dp)) {
+                Row(
+                    modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(text = stringResource(R.string.app_name), style = MaterialTheme.typography.titleLarge, color = MaterialTheme.colorScheme.onSurface)
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        StatusBadge(label = stringResource(R.string.res_method_root), active = state.hasRoot, activeColor = NothingRed)
+                        StatusBadge(label = stringResource(R.string.res_method_shizuku), active = state.hasShizuku, activeColor = NothingRed)
+                    }
+                }
+                Row(
+                    modifier = Modifier.fillMaxWidth().weight(1f),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    if (hydrationPhase >= 1) {
+                        Column(modifier = Modifier.weight(1f).fillMaxHeight().graphicsLayer { alpha = metricsAlpha }) {
+                            SectionCard(modifier = Modifier.fillMaxSize(), contentPadding = 12.dp) {
+                                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+                                    Column {
+                                        Text(text = stringResource(R.string.dash_live_performance), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                        Row(verticalAlignment = Alignment.Bottom) {
+                                            Text(text = state.fps?.toString() ?: "?", style = MaterialTheme.typography.displayLarge, color = NothingRed)
+                                            Text(text = when { state.fps == null -> stringResource(state.fpsReadStatus.labelRes); state.fpsSource == FpsSource.Choreographer -> stringResource(R.string.dash_fps_label_ui); else -> stringResource(R.string.dash_fps_label) }, style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(start = 4.dp, bottom = 12.dp))
+                                        }
+                                    }
+                                    Column(horizontalAlignment = Alignment.End, verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                                        Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+                                            CompactStat(label = stringResource(R.string.core_metric_cpu), value = state.cpuPercentage?.let { "$it%" } ?: state.cpuReadStatus.compactLabel(), color = Color(0xFF22C55E))
+                                            CompactStat(label = stringResource(R.string.core_metric_ram), value = state.ramUsedGb?.let { String.format(Locale.US, "%.1fG", it) } ?: state.ramReadStatus.compactLabel(), color = Color(0xFF3B82F6))
+                                        }
+                                        Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+                                            CompactStat(label = if (state.displayTempIsSoc) stringResource(R.string.core_metric_soc) else stringResource(R.string.core_metric_temp), value = state.displayTempC?.let { "${it.toInt()}?" } ?: state.displayTempReadStatus.compactLabel(), color = Color(0xFFF59E0B))
+                                            CompactStat(label = stringResource(R.string.core_metric_ping), value = state.pingMs?.let { "${it}ms" } ?: state.pingReadStatus.compactLabel(), color = Color(0xFF8B5CF6))
+                                        }
+                                    }
+                                }
+                                Spacer(modifier = Modifier.height(8.dp))
+                                if (hydrationPhase >= 4) {
+                                    Box(modifier = Modifier.fillMaxWidth().weight(1f).graphicsLayer { alpha = chartAlpha }) {
+                                        CombinedChart(fpsHistory = fpsHistory, cpuHistory = cpuHistory, ramHistory = ramHistory, tempHistory = tempHistory, pingHistory = pingHistory, ramTotal = state.ramTotalGb, modifier = Modifier.fillMaxSize())
+                                    }
+                                } else {
+                                    Spacer(modifier = Modifier.weight(1f))
+                                }
+                            }
+                        }
+                    } else {
+                        Spacer(modifier = Modifier.weight(1f))
+                    }
+                    if (hydrationPhase >= 2) {
+                        Column(modifier = Modifier.weight(1f).fillMaxHeight().graphicsLayer { alpha = actionsAlpha }) {
+                            Text(text = stringResource(R.string.dash_quick_actions), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(start = 4.dp, bottom = 8.dp))
+                            Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                                if (VariantCapabilities.HAS_SPOOF) {
+                                    Row(modifier = Modifier.weight(1f), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                        QuickActionButton(title = stringResource(R.string.dash_spoof_title), subtitle = stringResource(R.string.dash_spoof_subtitle), iconContainerColor = NothingRed.copy(alpha = 0.15f), iconContentColor = NothingRed, onClick = onOpenSpoofDevice, modifier = Modifier.weight(1f).fillMaxHeight(), spreadGridContent = true, showChevron = true, contentPadding = 8.dp, iconSize = 32.dp, icon = { Icon(Icons.Default.SettingsInputComponent, null) })
+                                        QuickActionButton(title = stringResource(R.string.dash_edit_files_title), subtitle = stringResource(R.string.dash_edit_files_subtitle), iconContainerColor = Color(0xFF3B82F6).copy(alpha = 0.15f), iconContentColor = Color(0xFF60A5FA), onClick = onOpenEditGameFiles, modifier = Modifier.weight(1f).fillMaxHeight(), spreadGridContent = true, showChevron = true, contentPadding = 8.dp, iconSize = 32.dp, icon = { Icon(Icons.Default.FolderOpen, null) })
+                                    }
+                                } else {
+                                    Row(modifier = Modifier.weight(1f), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                        QuickActionButton(title = stringResource(R.string.dash_edit_files_title), subtitle = stringResource(R.string.dash_edit_files_subtitle), iconContainerColor = Color(0xFF3B82F6).copy(alpha = 0.15f), iconContentColor = Color(0xFF60A5FA), onClick = onOpenEditGameFiles, modifier = Modifier.weight(1f).fillMaxHeight(), spreadGridContent = true, showChevron = true, contentPadding = 8.dp, iconSize = 32.dp, icon = { Icon(Icons.Default.FolderOpen, null) })
+                                    }
+                                }
+                                Row(modifier = Modifier.weight(1f), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                    QuickActionButton(title = stringResource(R.string.Gaming_tools_title), subtitle = stringResource(R.string.dash_gaming_tools_subtitle), iconContainerColor = Color(0xFF10B981).copy(alpha = 0.15f), iconContentColor = Color(0xFF34D399), onClick = onOpenGamingTools, modifier = Modifier.weight(1f).fillMaxHeight(), spreadGridContent = true, showChevron = true, contentPadding = 8.dp, iconSize = 32.dp, icon = { Icon(Icons.Default.SportsEsports, null) })
+                                    Box(modifier = Modifier.weight(1f).fillMaxHeight()) {
+                                        QuickActionButton(title = stringResource(R.string.core_settings_title), subtitle = stringResource(R.string.core_settings_subtitle), iconContainerColor = Color(0xFF8B5CF6).copy(alpha = 0.15f), iconContentColor = Color(0xFFA78BFA), onClick = onOpenSettings, modifier = Modifier.fillMaxSize(), spreadGridContent = true, showChevron = true, showIndicator = availableUpdateName != null, contentPadding = 8.dp, iconSize = 32.dp, icon = { Icon(Icons.Default.Settings, null) })
+                                    }
+                                }
+                            }
+                            Spacer(modifier = Modifier.height(4.dp))
+                        }
+                    } else {
+                        Spacer(modifier = Modifier.weight(1f))
+                    }
+                }
+                val adSlotHeight2 = if (with(LocalDensity.current) { LocalWindowInfo.current.containerSize.width.toDp() } >= 600.dp) 90.dp else 50.dp
+                if (adsEnabled && hydrationPhase >= 3 && showAdsDeferred) {
+                    AdBanner(modifier = Modifier.padding(bottom = 4.dp))
+                } else {
+                    Spacer(modifier = Modifier.padding(bottom = 4.dp).height(adSlotHeight2))
+                }
+            }
         }
     }
 }

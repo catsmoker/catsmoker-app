@@ -245,13 +245,14 @@ private fun GamePickerDialog(
         onDismissRequest = onDismiss,
         title = { Text(stringResource(R.string.gf_choose_game_title)) },
         text = {
-            Column {
+            // Six rows do not fit a landscape dialog; without this the last game is
+            // clipped and unreachable because the dialog body itself does not scroll.
+            Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
                 PickerRow(
                     game = GameType.PUBG_GLOBAL,
                     label = "PUBG Mobile",
                     installed = pubgDot,
                     selected = pubgSelected,
-                    showChevron = true,
                     onPick = { onPick(GameType.PUBG_GLOBAL) } // opens the VERSION chips, not a silent Global pick
                 )
                 otherGroup.forEach { game -> PickerRow(game, installedGames[game], selectedGame == game, onPick) }
@@ -270,8 +271,7 @@ private fun PickerRow(
     installed: Boolean?,
     selected: Boolean,
     onPick: (GameType) -> Unit,
-    label: String = game.displayName,
-    showChevron: Boolean = false
+    label: String = game.displayName
 ) {
     Row(
         modifier = Modifier
@@ -295,13 +295,6 @@ private fun PickerRow(
                 Icons.Default.Check,
                 contentDescription = stringResource(R.string.gf_selected_desc),
                 tint = MaterialTheme.colorScheme.primary,
-                modifier = Modifier.size(18.dp)
-            )
-        } else if (showChevron) {
-            Icon(
-                Icons.Default.ChevronRight,
-                contentDescription = stringResource(R.string.gf_choose_version_desc),
-                tint = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.size(18.dp)
             )
         }
@@ -520,8 +513,9 @@ fun EditGameFilesScreen(
             title = { Text(stringResource(R.string.gf_restore_backup_title)) },
             text = {
                 // Newest first — the top row is the state immediately before the last overwrite,
-                // which is the one "undo" means.
-                Column {
+                // which is the one "undo" means. Scrolls: the list grows with every write and
+                // can exceed the dialog body in landscape.
+                Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
                     uiState.backups.forEach { backup ->
                         Row(
                             modifier = Modifier

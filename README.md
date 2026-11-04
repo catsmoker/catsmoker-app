@@ -124,10 +124,12 @@ Utilizes the LSPosed framework to hook into game processes at runtime. This allo
 9. **Apply**: Force stop the selected games to let the hooks take effect, or reboot.
 
 ### For Non-Rooted Devices (Shizuku)
-1. **Install Shizuku**: Download from the [Play Store](https://play.google.com/store/apps/details?id=moe.shizuku.privileged.api).
-2. **Activate Shizuku**: Follow the in-app instructions (Wireless Debugging or ADB via PC).
-3. **Authorize**: Open CatSmoker and grant Shizuku permission when prompted.
-4. **Select Game**: Choose your game and use the "Apply with Shizuku" method.
+1. **Choose a Shizuku Manager**:
+   - **Preferred / Recommended: [Shizuku Next](https://github.com/ShizukuNext/ShizukuNext)** — Offers improved daemon persistence and stability on modern Android ROMs.
+   - **Alternative: [Shizuku (Play Store)](https://play.google.com/store/apps/details?id=moe.shizuku.privileged.api)** — The traditional official client app.
+2. **Activate Shizuku**: Follow the in-app instructions (Wireless Debugging or ADB via PC) to start the daemon.
+3. **Authorize**: Open CatSmoker and grant Shizuku permission when prompted. CatSmoker is 100% compatible with both regular Shizuku and Shizuku Next via the standard `rikka.shizuku` binder protocol.
+4. **Select Game**: Choose your game and use the privileged Shizuku method.
 
 > **File access note:** SAF may not work on Android 10 or later. ZArchiver may also require Shizuku to access `Android/data`.
 

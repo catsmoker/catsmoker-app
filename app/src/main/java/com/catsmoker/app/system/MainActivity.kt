@@ -44,7 +44,11 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.foundation.layout.Row
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.ui.res.stringResource
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.LifecycleOwner
 
 /**
  * Support-dialog prompt state, persisted in `app_prefs` next to `app_launch_count`.
@@ -122,7 +126,23 @@ class MainActivity : ComponentActivity() {    override fun attachBaseContext(new
                 // the NavHost, and creating a second controller here would split the back stack.
                 val navController = rememberNavController()
 
-                if (!showStartup && showSupportDialog) {
+                // Gate dialog presentation on the activity not stopping: once onStop/onDestroy
+                // has begun, WindowManager may already be tearing down the window binder, and
+                // presenting a dialog here triggers DeadObjectException in
+                // dispatchAppVisibility (see F-03 in the audit report).
+                val lifecycleOwner: LifecycleOwner = this@MainActivity
+                var isFinishing by remember { mutableStateOf(false) }
+                DisposableEffect(lifecycleOwner) {
+                    val observer = LifecycleEventObserver { _, event ->
+                        if (event == Lifecycle.Event.ON_STOP || event == Lifecycle.Event.ON_DESTROY) {
+                            isFinishing = true
+                        }
+                    }
+                    lifecycleOwner.lifecycle.addObserver(observer)
+                    onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
+                }
+
+                if (!showStartup && showSupportDialog && !isFinishing) {
                     LaunchedEffect(Unit) { markSupportDialogShown() }
                     val githubUrl = stringResource(R.string.url_github)
                     AlertDialog(

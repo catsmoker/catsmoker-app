@@ -19,6 +19,7 @@ import androidx.lifecycle.viewModelScope
 import com.catsmoker.app.BuildConfig
 import com.catsmoker.app.R
 import com.catsmoker.app.features.gamingtools.engine.DisplayRefreshRateProvider
+import com.catsmoker.app.features.gamingtools.engine.GraphicsApiDetector
 import com.catsmoker.app.features.gamingtools.engine.PrivilegeCommands
 import com.catsmoker.app.features.spoofdevice.tools.MagiskModuleBuilder
 import com.catsmoker.app.shared.data.model.DevicePreset
@@ -52,6 +53,7 @@ class SpoofDeviceViewModel @Inject constructor(
     // The panel's peak decides which rung of a package's frame-rate ladder wins, so the refresh
     // reader is injected here too — the display-fact owners are split by question, not by caller.
     private val displayRefreshRate: DisplayRefreshRateProvider,
+    private val graphicsApi: GraphicsApiDetector,
     val repository: SpoofRepository
 ) : ViewModel() {
 
@@ -1086,20 +1088,37 @@ class SpoofDeviceViewModel @Inject constructor(
             // measured now — the config a rung's profile renders to must be the one the panel
             // earned at the moment of publishing, not a winner frozen earlier.
             val panelPeakHz = displayRefreshRate.getMaxHardwareRefreshRate()
-            val sections = LSPosedConfig.renderSections(
-                (data.assignments.keys + data.rateAssignments.keys).mapNotNull { packageName ->
-                    val profile = SpoofRepository.resolveProfileForPackage(data, packageName, panelPeakHz)
-                        ?: return@mapNotNull null
-                    packageName to repository.renderConfig(profile, data.globalProperties)
-                }.toMap()
-            )
+            // Vulkan keys are only useful when Vulkan is the live graphics API; publishing them
+            // on a GLES-only device creates a model/GPU disagreement that anti-cheat readers
+            // can spot (see F-04 in the audit report).
+            val vulkanLive = graphicsApi.isVulkanLive()
+            // Track whether any configured profile carries Vulkan keys, before stripping:
+            // the toast needs to tell the user their Vulkan keys were dropped.
+            val vulkanKeysConfigured = (data.assignments.keys + data.rateAssignments.keys).mapNotNull { packageName ->
+                SpoofRepository.resolveProfileForPackage(data, packageName, panelPeakHz)
+            }.any { profile ->
+                repository.renderConfig(profile, data.globalProperties).let { hasVulkanKeys(it) }
+            }
+            val packageConfigs = (data.assignments.keys + data.rateAssignments.keys).mapNotNull { packageName ->
+                val profile = SpoofRepository.resolveProfileForPackage(data, packageName, panelPeakHz)
+                    ?: return@mapNotNull null
+                var config = repository.renderConfig(profile, data.globalProperties)
+                if (vulkanLive == false) {
+                    config = stripVulkanKeys(config)
+                }
+                packageName to config
+            }.toMap()
+            val sections = LSPosedConfig.renderSections(packageConfigs)
 
             // The single-profile fallback can only hold one, so prefer one the user assigned
             // over whichever profile happens to sit first in the list.
             val assignedId = data.assignments.values.firstOrNull()
             val fallbackProfile = data.profiles.firstOrNull { it.id == assignedId }?.profile
                 ?: data.profiles.firstOrNull()?.profile
-            val rendered = fallbackProfile?.let { repository.renderConfig(it, data.globalProperties) }
+            var rendered = fallbackProfile?.let { repository.renderConfig(it, data.globalProperties) }
+            if (vulkanLive == false) {
+                rendered = rendered?.let { stripVulkanKeys(it) }
+            }
 
             if (rendered != null) writeStringToBoth(LSPosedConfig.KEY_DEVICE_PROPS, rendered)
 
@@ -1115,8 +1134,30 @@ class SpoofDeviceViewModel @Inject constructor(
                 if (rendered != null) putGlobalBase64(LSPosedConfig.KEY_GLOBAL_DEVICE_PROPS_B64, rendered)
                 // repository.save() already broadcast, but that was before these writes landed.
                 context.sendBroadcast(Intent(LSPosedConfig.ACTION_CONFIG_CHANGED))
+            } else if (sections.isNotEmpty()) {
+                // Assignments exist but no privilege channel can publish them: hooks in target
+                // apps will never receive the config, so spoofing silently does nothing. Tell
+                // the user instead of leaving them to wonder (see F-01 in the audit report).
+                _toasts.tryEmit(context.getString(R.string.spoof_error_privilege_required))
+            }
+            // Warn when Vulkan keys were configured but Vulkan is not the live API: they were
+            // stripped from the published config, so nothing will read them in target apps.
+            if (vulkanLive == false && vulkanKeysConfigured) {
+                _toasts.tryEmit(context.getString(R.string.spoof_error_vulkan_not_live))
             }
         }
+    }
+
+    /** Whether a rendered `key=value` config carries any Vulkan spoof keys. */
+    private fun hasVulkanKeys(rendered: String): Boolean =
+        LSPosedConfig.parseDeviceProps(rendered).keys.any { LSPosedConfig.isVulkanKey(it) }
+
+    /** Returns [rendered] with Vulkan keys removed, or the input unchanged when it has none. */
+    private fun stripVulkanKeys(rendered: String): String {
+        val props = LSPosedConfig.parseDeviceProps(rendered)
+        val stripped = props.filterKeys { !LSPosedConfig.isVulkanKey(it) }
+        if (stripped.size == props.size) return rendered
+        return stripped.entries.joinToString("\n") { "${it.key}=${it.value}" }
     }
 
     private suspend fun putGlobalBase64(key: String, value: String) {

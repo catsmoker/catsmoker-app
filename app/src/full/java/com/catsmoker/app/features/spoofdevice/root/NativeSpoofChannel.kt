@@ -27,7 +27,7 @@ import de.robv.android.xposed.XposedBridge
  *   function. A process that never receives a profile installs no hooks at all.
  * - No fabricated answers: a key the profile does not carry falls through to the device's own
  *   value, and a long value is truncated exactly the way bionic truncates (91 characters).
- * - EGL strings (`eglQueryString`) are platform strings and stay untouched.
+ * - EGL strings (`eglQueryString`) are now spoofed alongside GL and Vulkan.
  *
  * Limits to carry honestly: a framework without the native API never calls `native_init`, so the
  * state mask reports no hooks and the Java half spoofs alone; the native `glGetString` hook is
@@ -60,6 +60,9 @@ internal object NativeSpoofChannel {
     /** Native Vulkan physical-device properties hooked in `libvulkan.so`. */
     const val STATE_VULKAN = 128
 
+    /** Native `eglQueryString` in `libEGL.so` is hooked. */
+    const val STATE_EGL = 256
+
     /**
      * Pushes the resolved profile into this process's native half.
      *
@@ -86,12 +89,24 @@ internal object NativeSpoofChannel {
             props[LSPosedConfig.KEY_GPU_VERSION],
             props[LSPosedConfig.KEY_GPU_EXTENSIONS]
         )
-        nativeSetVulkanModel(props[LSPosedConfig.KEY_VULKAN_MODEL])
-        nativeSetVulkanVersion(props[LSPosedConfig.KEY_VULKAN_VERSION])
-        nativeSetVulkanIds(
-            props[LSPosedConfig.KEY_VULKAN_VENDOR_ID]?.toIntOrNull() ?: 0,
-            props[LSPosedConfig.KEY_VULKAN_DEVICE_ID]?.toIntOrNull() ?: 0
+        nativeSetEglStrings(
+            props[LSPosedConfig.KEY_EGL_VENDOR],
+            props[LSPosedConfig.KEY_EGL_VERSION],
+            props[LSPosedConfig.KEY_EGL_EXTENSIONS],
+            props[LSPosedConfig.KEY_EGL_CLIENT_APIS]
         )
+        // Vulkan keys are only applied when Vulkan is the live graphics API; on a GLES-only
+        // device they would create a model/GPU disagreement readers can spot (see F-04).
+        if (isVulkanLive()) {
+            nativeSetVulkanModel(props[LSPosedConfig.KEY_VULKAN_MODEL])
+            nativeSetVulkanVersion(props[LSPosedConfig.KEY_VULKAN_VERSION])
+            nativeSetVulkanIds(
+                props[LSPosedConfig.KEY_VULKAN_VENDOR_ID]?.toIntOrNull() ?: 0,
+                props[LSPosedConfig.KEY_VULKAN_DEVICE_ID]?.toIntOrNull() ?: 0
+            )
+        } else {
+            log("Vulkan not live — Vulkan spoof keys skipped")
+        }
         val dropped = if (applied < table.size) " (dropped ${table.size - applied})" else ""
         log("state=${describe(nativeChannelState())} props=$applied/${table.size}$dropped")
 
@@ -120,6 +135,7 @@ internal object NativeSpoofChannel {
         if (state and STATE_PROP_READ != 0) names.add("prop_read")
         if (state and STATE_GL_GLES2 != 0) names.add("gl_gles2")
         if (state and STATE_GL_GLES1 != 0) names.add("gl_gles1")
+        if (state and STATE_EGL != 0) names.add("egl")
         if (state and STATE_VULKAN != 0) names.add("vulkan")
         if (state and STATE_CONFIGURED != 0) names.add("configured")
         return if (names.isEmpty()) "none" else names.joinToString("+")
@@ -133,6 +149,9 @@ internal object NativeSpoofChannel {
 
     /** Sets the spoofed GL strings; null leaves that string to the device. */
     private external fun nativeSetGpuStrings(vendor: String?, renderer: String?, version: String?, extensions: String?)
+
+    /** Sets the spoofed EGL strings; null leaves that string to the device. */
+    private external fun nativeSetEglStrings(vendor: String?, version: String?, extensions: String?, clientApis: String?)
 
     /** Sets the spoofed Vulkan physical-device name; null leaves it to the device. */
     private external fun nativeSetVulkanModel(model: String?)
@@ -162,5 +181,46 @@ internal object NativeSpoofChannel {
     private fun log(message: String) {
         Log.i(TAG, message)
         runCatching { XposedBridge.log("$TAG: $message") }
+    }
+
+    /**
+     * Whether Vulkan appears to be a live graphics API on this device. Read-only: checks
+     * SurfaceFlinger's `vulkan_renderengine` flag, the `cmd gpu vkjson` service, and the
+     * `ro.hardware.vulkan` prop plus `libvulkan.so` presence. No Vulkan calls are made.
+     */
+    private fun isVulkanLive(): Boolean {
+        // 1. SurfaceFlinger compositor flag.
+        val sf = runCatching {
+            Runtime.getRuntime().exec("dumpsys SurfaceFlinger").inputStream.bufferedReader().readText()
+        }.getOrDefault("")
+        val vulkanEngine = runCatching {
+            sf.lines().firstOrNull { it.trim().startsWith("vulkan_renderengine:") }
+                ?.substringAfter("vulkan_renderengine:")
+                ?.trim()
+        }.getOrNull()
+        when (vulkanEngine) {
+            "true" -> return true
+            "false" -> return false
+        }
+
+        // 2. Vulkan GPU service reachable.
+        val vk = runCatching {
+            Runtime.getRuntime().exec("cmd gpu vkjson").inputStream.bufferedReader().readText()
+        }.getOrDefault("")
+        if (vk.isNotBlank() && !vk.contains("Failure") && !vk.contains("error")) return true
+
+        // 3. Fall back: Vulkan library present and a hardware Vulkan string reported.
+        val libPresent = listOf(
+            "/system/lib64/libvulkan.so",
+            "/system/lib/libvulkan.so",
+            "/vendor/lib64/libvulkan.so",
+            "/vendor/lib/libvulkan.so",
+            "/odm/lib64/libvulkan.so",
+            "/odm/lib/libvulkan.so"
+        ).any { java.io.File(it).exists() }
+        val hwVulkan = runCatching {
+            Runtime.getRuntime().exec("getprop ro.hardware.vulkan").inputStream.bufferedReader().readText().trim()
+        }.getOrDefault("")
+        return libPresent && hwVulkan.isNotBlank()
     }
 }

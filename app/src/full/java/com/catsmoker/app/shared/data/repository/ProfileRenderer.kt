@@ -118,6 +118,18 @@ object ProfileRenderer {
         if (profile.gpuExtensions.isNotBlank()) {
             addProp(LSPosedConfig.KEY_GPU_EXTENSIONS, profile.gpuExtensions)
         }
+
+        // EGL identity for the EGL-string hooks. Rendered as a group or not at all —
+        // the four keys are only ever set together by the editor, and partial EGL
+        // identity is a stronger mismatch signal than none (see DeviceProfile.applyFallbacks).
+        if (profile.eglVendor.isNotBlank() && profile.eglVersion.isNotBlank()
+            && profile.eglExtensions.isNotBlank() && profile.eglClientApis.isNotBlank()) {
+            addProp(LSPosedConfig.KEY_EGL_VENDOR, profile.eglVendor)
+            addProp(LSPosedConfig.KEY_EGL_VERSION, profile.eglVersion)
+            addProp(LSPosedConfig.KEY_EGL_EXTENSIONS, profile.eglExtensions)
+            addProp(LSPosedConfig.KEY_EGL_CLIENT_APIS, profile.eglClientApis)
+        }
+
         if (!profile.disableVulkanSpoof) {
             if (profile.vulkanModel.isNotBlank()) {
                 addProp(LSPosedConfig.KEY_VULKAN_MODEL, profile.vulkanModel)

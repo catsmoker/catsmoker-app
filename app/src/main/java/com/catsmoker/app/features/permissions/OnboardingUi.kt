@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.selection.selectable
@@ -50,11 +51,13 @@ import com.catsmoker.app.system.config.AppearanceStore
 /**
  * Shared frame for the three first-run screens.
  *
- * The onboarding is deliberately not scrollable: every step must be readable at a glance
- * on the smallest supported phone. The frame therefore owns the fixed parts (progress,
- * heading, footer action) and gives the remaining height to the step's own content, which
- * is expected to distribute itself instead of stacking past the bottom. [content] receives
- * [compact] so a step can tighten its own cards/pills on short viewports.
+ * The onboarding keeps its steps unscrollable on phones they were designed for: every step
+ * must be readable at a glance on the smallest supported portrait phone. The frame owns the
+ * fixed parts (progress, heading, footer action) and gives the remaining height to the step's
+ * own content, which is expected to distribute itself instead of stacking past the bottom.
+ * When the viewport is too short for that (landscape), a step's content may scroll inside the
+ * frame while the footer action stays pinned. [content] receives [compact] so a step can
+ * tighten its own cards/pills on short viewports.
  *
  * [dense] is for the permission checklist, which carries nine rows and therefore trades
  * the display heading for a 22 sp title. It is not a separate visual language — the
@@ -82,6 +85,7 @@ fun OnboardingScaffold(
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
             .systemBarsPadding()
+            .imePadding()
     ) {
         val compact = maxHeight < 700.dp
         val titleStyle = when {

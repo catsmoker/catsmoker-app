@@ -198,6 +198,18 @@ object LSPosedConfig {
     /** GL extensions string (`glGetString(GL_EXTENSIONS)`), spoofed alongside the GPU identity. */
     const val KEY_GPU_EXTENSIONS = "gpu.extensions"
 
+    /** EGL vendor string (`eglQueryString(EGL_VENDOR)`), spoofed for EGL-based tier checks. */
+    const val KEY_EGL_VENDOR = "egl.vendor"
+
+    /** EGL version string (`eglQueryString(EGL_VERSION)`), spoofed alongside the EGL identity. */
+    const val KEY_EGL_VERSION = "egl.version"
+
+    /** EGL extensions string (`eglQueryString(EGL_EXTENSIONS)`), spoofed for EGL capability checks. */
+    const val KEY_EGL_EXTENSIONS = "egl.extensions"
+
+    /** EGL client APIs string (`eglQueryString(EGL_CLIENT_APIS)`), spoofed for API availability checks. */
+    const val KEY_EGL_CLIENT_APIS = "egl.client_apis"
+
     /** Vulkan physical-device name (`VkPhysicalDeviceProperties.deviceName`), spoofed for Vulkan-based tier checks. */
     const val KEY_VULKAN_MODEL = "vulkan.model"
 
@@ -297,6 +309,9 @@ object LSPosedConfig {
 
     /** True when [key] names a real system property rather than one of our own profile keys. */
     fun isSystemProperty(key: String): Boolean = SYSTEM_PROPERTY_PREFIXES.any(key::startsWith)
+
+    /** True when [key] is one of the Vulkan spoof keys this profile can carry. */
+    fun isVulkanKey(key: String): Boolean = key.startsWith("vulkan.", ignoreCase = true)
 
     /**
      * The real system properties of a rendered profile, in render order.

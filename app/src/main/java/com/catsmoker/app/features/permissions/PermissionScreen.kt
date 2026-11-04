@@ -12,6 +12,8 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -279,25 +281,56 @@ fun AgreementStepScreen(
             // A tall step can carry the real opening paragraph of the Terms; a short one
             // keeps only the license note and the section index so nothing is clipped.
             val intro = if (maxHeight >= 560.dp) stringResource(R.string.legal_t_intro) else null
-            Column(
-                modifier = Modifier.fillMaxSize(),
-                verticalArrangement = Arrangement.Center
-            ) {
-                TermsDocumentCard(
-                    licenseText = annotatedLinkString,
-                    intro = intro,
-                    keySections = keySections,
-                    compact = compact,
-                    onReadTerms = { showTerms = true },
-                    onReadPrivacy = { showPrivacy = true },
-                    onOpenWebsite = { uriHandler.openUri(legalUrl) },
-                    modifier = Modifier.fillMaxWidth()
-                )
-                Spacer(Modifier.height(if (compact) 10.dp else 14.dp))
-                AgreementAcceptanceCard(
-                    agreed = agreed,
-                    onAgreedChange = onAgreedChange
-                )
+            if (maxHeight < 420.dp) {
+                // Landscape cannot fit both cards: the acceptance row must stay visible or
+                // CONTINUE is permanently disabled with no way to enable it, so it is
+                // pinned above the footer and the document scrolls in the space left.
+                Column(modifier = Modifier.fillMaxSize()) {
+                    Column(
+                        modifier = Modifier
+                            .weight(1f)
+                            .fillMaxWidth()
+                            .verticalScroll(rememberScrollState())
+                    ) {
+                        TermsDocumentCard(
+                            licenseText = annotatedLinkString,
+                            intro = intro,
+                            keySections = keySections,
+                            compact = compact,
+                            onReadTerms = { showTerms = true },
+                            onReadPrivacy = { showPrivacy = true },
+                            onOpenWebsite = { uriHandler.openUri(legalUrl) },
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                        Spacer(Modifier.height(10.dp))
+                    }
+                    Spacer(Modifier.height(6.dp))
+                    AgreementAcceptanceCard(
+                        agreed = agreed,
+                        onAgreedChange = onAgreedChange
+                    )
+                }
+            } else {
+                Column(
+                    modifier = Modifier.fillMaxSize(),
+                    verticalArrangement = Arrangement.Center
+                ) {
+                    TermsDocumentCard(
+                        licenseText = annotatedLinkString,
+                        intro = intro,
+                        keySections = keySections,
+                        compact = compact,
+                        onReadTerms = { showTerms = true },
+                        onReadPrivacy = { showPrivacy = true },
+                        onOpenWebsite = { uriHandler.openUri(legalUrl) },
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    Spacer(Modifier.height(if (compact) 10.dp else 14.dp))
+                    AgreementAcceptanceCard(
+                        agreed = agreed,
+                        onAgreedChange = onAgreedChange
+                    )
+                }
             }
         }
     }
@@ -757,10 +790,24 @@ fun PermissionsListScreen(
             // Five tile rows (1 + 2 + 2) share the leftover height: short phones keep a
             // compact 58-62 dp tile, tall phones grow them instead of leaving gaps between
             // the three groups. 78 dp covers the group labels and the two inter-row gaps.
-            val tileHeight = ((maxHeight - 78.dp) / 5).coerceIn(58.dp, 112.dp)
+            //
+            // Landscape (and any viewport shorter than ~420 dp) cannot fit three groups
+            // at the 58 dp floor, so content becomes scrollable instead of clipping the
+            // ADDITIONAL group behind the footer.
+            val scrollable = maxHeight < 420.dp
+            val tileHeight = if (scrollable) 58.dp
+            else ((maxHeight - 78.dp) / 5).coerceIn(58.dp, 112.dp)
             Column(
-                modifier = Modifier.fillMaxSize(),
-                verticalArrangement = Arrangement.SpaceBetween
+                modifier = Modifier
+                    .fillMaxSize()
+                    .then(
+                        if (scrollable) Modifier
+                            .verticalScroll(rememberScrollState())
+                            .padding(bottom = 8.dp)
+                        else Modifier
+                    ),
+                verticalArrangement = if (scrollable) Arrangement.spacedBy(10.dp)
+                else Arrangement.SpaceBetween
             ) {
                 PermissionGroup(label = stringResource(R.string.onb_perm_group_essential)) {
                     PermissionGrid(specs = essential, tileHeight = tileHeight)

@@ -105,11 +105,26 @@ class SettingsViewModel @Inject constructor(
          * auto-checks — its section stays hidden and the stub answers static.
          */
         private var autoCheckedThisProcess = false
+        private var checkInFlight: Boolean = false
 
         private const val PREF_AUTO_CHECK = "auto_check_update"
         private const val PREF_PRERELEASE = "use_prerelease"
         private const val PREF_DISMISSED_TAG = "update_dismissed_tag"
         private const val PREF_PENDING_TAG = "update_pending_tag"
+        /** Cached tag of the newest release found, so the badge survives process death. */
+        private const val PREF_CACHED_UPDATE_TAG = "update_cached_tag"
+        /** Timestamp (ms) of the last completed update check, for throttling repeats. */
+        private const val PREF_LAST_CHECK_TS = "update_last_check_ts"
+        /** Minimum gap between automatic checks, to avoid hammering the GitHub API. */
+        private const val REFRESH_INTERVAL_MS = 6L * 60 * 60 * 1000
+
+        /**
+         * Process-wide source of truth for the found update's version name. Every
+         * SettingsViewModel instance (home screen and Settings screen) observes it,
+         * so the home indicator and the Updates card can never disagree.
+         */
+        private val _sharedAvailableUpdate = MutableStateFlow<String?>(null)
+        val sharedAvailableUpdate: StateFlow<String?> = _sharedAvailableUpdate.asStateFlow()
     }
 
     init {
@@ -131,6 +146,26 @@ class SettingsViewModel @Inject constructor(
                 analyticsEnabled = analyticsOn,
                 notificationsEnabled = notificationsEnabled()
             )
+        }
+        // Seed the badge from the cached release so it shows before any network
+        // round-trip, and drop a stale cache once the installed version catches up.
+        val cachedTag = prefs.getString(PREF_CACHED_UPDATE_TAG, null)
+        val cachedName = if (cachedTag != null) {
+            if (SelfUpdater.isTagInstalled(cachedTag, BuildConfig.VERSION_CODE, BuildConfig.VERSION_NAME)) {
+                prefs.edit { remove(PREF_CACHED_UPDATE_TAG) }
+                null
+            } else {
+                SelfUpdater.parseTagVersion(cachedTag).name
+            }
+        } else null
+        if (cachedName != null && _sharedAvailableUpdate.value == null) {
+            _sharedAvailableUpdate.value = cachedName
+        }
+        // Keep this instance's UiState in sync with the process-wide update state.
+        viewModelScope.launch {
+            sharedAvailableUpdate.collect { name ->
+                _uiState.update { it.copy(availableUpdateName = name) }
+            }
         }
         checkPendingUpdateResult()
         maybeAutoCheck(autoOn)
@@ -287,10 +322,34 @@ class SettingsViewModel @Inject constructor(
      * entirely — nothing re-enables it.
      */
     private fun maybeAutoCheck(autoOn: Boolean) {
-        if (!SelfUpdater.SUPPORTED || !autoOn || autoCheckedThisProcess) return
+        if (!SelfUpdater.SUPPORTED || !autoOn) return
+        if (checkInFlight) return
+        val now = System.currentTimeMillis()
+        // Throttle: never re-hit the API within the refresh interval, even across
+        // processes/instances, so reopening the app or Settings stays cheap.
+        if (now - prefs.getLong(PREF_LAST_CHECK_TS, 0L) < REFRESH_INTERVAL_MS) return
+        checkInFlight = true
         autoCheckedThisProcess = true
         performUpdateCheck(_uiState.value.isPreRelease, silent = true)
     }
+
+    /**
+     * Re-evaluates the update status: syncs from the shared/cache state and
+     * triggers a silent check when the last one is stale. Safe to call on app
+     * start, when the Updates screen opens, and on return to the foreground.
+     */
+    fun refreshUpdateStatus() {
+        maybeAutoCheck(_uiState.value.autoCheck)
+    }
+
+    /** Alias kept for callers that name the action differently. */
+    fun refreshUpdates() = refreshUpdateStatus()
+
+    /** Alias kept for callers that name the action differently. */
+    fun onResume() = refreshUpdateStatus()
+
+    /** Alias kept for callers that name the action differently. */
+    fun checkForUpdatesIfNeeded() = refreshUpdateStatus()
 
     /**
      * One-shot verdict on the installer handoff: if the version now installed
@@ -313,6 +372,8 @@ class SettingsViewModel @Inject constructor(
         // Play Store owns updates on that variant — the section is hidden there,
         // but guard the entry point anyway so a stale call can never self-update.
         if (!SelfUpdater.SUPPORTED) return
+        if (checkInFlight) return
+        checkInFlight = true
         _toasts.tryEmit(context.getString(R.string.sys_checking_updates))
         performUpdateCheck(_uiState.value.isPreRelease, silent = false)
     }
@@ -358,15 +419,29 @@ class SettingsViewModel @Inject constructor(
             } catch (e: Exception) {
                 SelfUpdater.CheckResult.Failed(e.message ?: "?")
             }
+            // Record that a check completed, regardless of outcome, so repeated
+            // opens do not hammer the API. Cache the found release when present.
+            prefs.edit {
+                putLong(PREF_LAST_CHECK_TS, System.currentTimeMillis())
+                when (result) {
+                    is SelfUpdater.CheckResult.Available ->
+                        putString(PREF_CACHED_UPDATE_TAG, result.info.tagName)
+                    is SelfUpdater.CheckResult.UpToDate,
+                    is SelfUpdater.CheckResult.NoReleases ->
+                        remove(PREF_CACHED_UPDATE_TAG)
+                    is SelfUpdater.CheckResult.Failed -> { /* keep previous cache */ }
+                }
+            }
             withContext(Dispatchers.Main) {
                 when (result) {
                     is SelfUpdater.CheckResult.NoReleases -> {
+                        _sharedAvailableUpdate.value = null
                         if (!silent) _toasts.tryEmit(context.getString(R.string.sys_no_releases))
                     }
                     is SelfUpdater.CheckResult.UpToDate -> {
                         // The badge is a claim about the latest check; an up-to-date answer
                         // retires it even when the check was silent.
-                        _uiState.update { it.copy(availableUpdateName = null) }
+                        _sharedAvailableUpdate.value = null
                         if (!silent) {
                             _toasts.tryEmit(
                                 context.getString(R.string.sys_up_to_date, BuildConfig.VERSION_NAME)
@@ -378,7 +453,9 @@ class SettingsViewModel @Inject constructor(
                         // explicit question and must always be answered, or the button
                         // looks dead for the rest of that release's life.
                         val dismissed = prefs.getString(PREF_DISMISSED_TAG, null)
+                        val name = SelfUpdater.parseTagVersion(result.info.tagName).name
                         if (!silent || dismissed != result.info.tagName) {
+                            _sharedAvailableUpdate.value = name
                             _uiState.update {
                                 it.copy(
                                     updateDialog = UpdateDialog(
@@ -388,8 +465,7 @@ class SettingsViewModel @Inject constructor(
                                         result.info.sha256Hex
                                     ),
                                     // Name the version, not the raw `11-2.0.5` tag.
-                                    availableUpdateName =
-                                        SelfUpdater.parseTagVersion(result.info.tagName).name
+                                    availableUpdateName = name
                                 )
                             }
                         }
@@ -403,6 +479,7 @@ class SettingsViewModel @Inject constructor(
                     }
                 }
             }
+            checkInFlight = false
         }
     }
 
