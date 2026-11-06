@@ -37,6 +37,7 @@ import com.catsmoker.app.features.editgamefiles.wuwa.WuwaConfigRoute
 import com.catsmoker.app.shared.data.model.GameType
 import com.catsmoker.app.shared.ui.components.ScreenScaffold
 import com.catsmoker.app.shared.ui.components.SectionCard
+import com.catsmoker.app.shared.ui.components.CardHeading
 import com.catsmoker.app.shared.ui.theme.CatsmokerTheme
 import kotlinx.coroutines.flow.collectLatest
 import com.catsmoker.app.shared.ui.components.CatsmokerButton
@@ -377,7 +378,7 @@ fun EditGameFilesScreen(
 
             SectionCard {
                 Column {
-                    Text(stringResource(R.string.gf_game_section), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary)
+                    CardHeading(stringResource(R.string.gf_game_section))
                     Spacer(modifier = Modifier.height(10.dp))
                     GameSelector(
                         selectedGame = uiState.selectedGame,
@@ -598,7 +599,7 @@ private fun ProfileGameEditor(
     Column {
         SectionCard {
             Column {
-                Text(stringResource(R.string.gf_profile_section), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary)
+                CardHeading(stringResource(R.string.gf_profile_section))
                 // Only this card's own jobs light the bar: push / reset / restore /
                 // backup-delete. Other cards stay dark while their buttons disable.
                 val profileBusy = uiState.busyArea == EditGameFilesViewModel.BusyArea.PROFILE_PUSH ||
@@ -679,7 +680,7 @@ private fun ProfileGameEditor(
                     Spacer(modifier = Modifier.height(16.dp))
                     HorizontalDivider(color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.12f))
                     Spacer(modifier = Modifier.height(14.dp))
-                    Text(stringResource(R.string.gf_custom_upload), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary)
+                    CardHeading(stringResource(R.string.gf_custom_upload))
                     if (uiState.busyArea == EditGameFilesViewModel.BusyArea.CUSTOM_UPLOAD) {
                         Spacer(modifier = Modifier.height(8.dp))
                         SquigglyProgressBar(progress = null, animate = true, modifier = Modifier.fillMaxWidth())
@@ -786,7 +787,10 @@ private fun GameNotFoundCard(
 ) {
     SectionCard {
         Column {
-            Text(stringResource(R.string.gf_game_not_found), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.error, letterSpacing = 1.sp)
+            CardHeading(
+                text = stringResource(R.string.gf_game_not_found),
+                color = MaterialTheme.colorScheme.error
+            )
             Spacer(modifier = Modifier.height(8.dp))
             Text(
                 stringResource(R.string.gf_game_not_installed, gameName) +
@@ -836,7 +840,7 @@ private fun PubgSaveEditorSection(
 
     SectionCard {
         Column {
-            Text(stringResource(R.string.gf_save_editor), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary)
+            CardHeading(stringResource(R.string.gf_save_editor))
             // Same card for read + apply: the bar shows for either, the spinner only on the tapped button.
             val saveBusy = uiState.busyArea == EditGameFilesViewModel.BusyArea.SAVE_READ ||
                 uiState.busyArea == EditGameFilesViewModel.BusyArea.SAVE_APPLY
@@ -888,7 +892,7 @@ private fun PubgSaveEditorSection(
             }
 
             Spacer(modifier = Modifier.height(12.dp))
-            Text(stringResource(R.string.gf_frame_rate), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary)
+            CardHeading(stringResource(R.string.gf_frame_rate))
             Spacer(modifier = Modifier.height(6.dp))
             val fpsEditable = PubgSaveSelection.fpsEditable(read)
             if (fpsEditable) {
@@ -912,7 +916,7 @@ private fun PubgSaveEditorSection(
             }
 
             Spacer(modifier = Modifier.height(12.dp))
-            Text(stringResource(R.string.gf_render_quality), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary)
+            CardHeading(stringResource(R.string.gf_render_quality))
             Spacer(modifier = Modifier.height(6.dp))
             val renderEditable = PubgSaveSelection.renderEditable(read)
             if (renderEditable) {
@@ -937,7 +941,7 @@ private fun PubgSaveEditorSection(
             }
 
             Spacer(modifier = Modifier.height(12.dp))
-            Text(stringResource(R.string.gf_camera_view), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary)
+            CardHeading(stringResource(R.string.gf_camera_view))
             Spacer(modifier = Modifier.height(6.dp))
             // The old group rendered two chips that could never be clicked on saves lacking
             // one of the pair. Explain the omission instead of showing dead controls.

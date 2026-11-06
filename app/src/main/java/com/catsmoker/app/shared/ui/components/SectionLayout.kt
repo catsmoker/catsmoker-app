@@ -64,3 +64,28 @@ fun SectionLabel(
         modifier = modifier.padding(start = 4.dp, bottom = CatsmokerSpacing.LabelGap)
     )
 }
+
+/**
+ * A card heading — the title inside a [SectionCard].
+ *
+ * Replaces the hand-rolled `Text(stringResource(R.string.KEY), style = labelSmall, color = primary, letterSpacing = 1.sp)`
+ * pattern found across the File Engineering editors. The heading is bold primary with no letter-spacing
+ * (letter-spacing breaks cursive Arabic and is unnecessary for Latin uppercase) and no outer padding:
+ * [SectionCard] already applies its own content padding.
+ *
+ * [color] defaults to `primary`; pass `error` for failure-state headings (e.g. GAME NOT FOUND).
+ */
+@Composable
+fun CardHeading(
+    text: String,
+    modifier: Modifier = Modifier,
+    color: androidx.compose.ui.graphics.Color = MaterialTheme.colorScheme.primary
+) {
+    Text(
+        text = text,
+        style = MaterialTheme.typography.labelSmall,
+        color = color,
+        fontWeight = FontWeight.Bold,
+        modifier = modifier
+    )
+}

@@ -24,6 +24,7 @@ import com.catsmoker.app.features.gamingtools.ui.CollapsibleExplainer
 import com.catsmoker.app.shared.ui.components.ChipFlowRow
 import com.catsmoker.app.shared.ui.components.ScreenScaffold
 import com.catsmoker.app.shared.ui.components.SectionCard
+import com.catsmoker.app.shared.ui.components.CardHeading
 import com.catsmoker.app.shared.ui.theme.CatsmokerTheme
 import kotlinx.coroutines.flow.collectLatest
 import kotlin.math.roundToInt
@@ -153,7 +154,7 @@ fun HsrGraphicsScreen(
 
                     if (!flat) {
                     SectionCard {
-                        Text(stringResource(R.string.gf_frame_rate), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary, letterSpacing = 1.sp)
+                        CardHeading(stringResource(R.string.gf_frame_rate))
                         Spacer(modifier = Modifier.height(8.dp))
                         ChipFlowRow {
                             // One option only: the game's highest. Lower choices would write a
@@ -180,7 +181,7 @@ fun HsrGraphicsScreen(
                     Spacer(modifier = Modifier.height(12.dp))
 
                     SectionCard {
-                        Text(stringResource(R.string.gf_render_scale_sync), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary, letterSpacing = 1.sp)
+                        CardHeading(stringResource(R.string.gf_render_scale_sync))
                         Spacer(modifier = Modifier.height(12.dp))
 
                         if (!flat) {
@@ -232,7 +233,7 @@ fun HsrGraphicsScreen(
 
                     if (!flat) {
                     SectionCard {
-                        Text(stringResource(R.string.gf_quality), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary, letterSpacing = 1.sp)
+                        CardHeading(stringResource(R.string.gf_quality))
                         Spacer(modifier = Modifier.height(4.dp))
                         QualitySlider(stringResource(R.string.gf_hsr_q_resolution), settings.resolutionQuality, qualityNameFor(settings.resolutionQuality)) { v -> onUpdate { it.copy(resolutionQuality = v) } }
                         QualitySlider(stringResource(R.string.gf_hsr_q_shadow), settings.shadowQuality, qualityNameFor(settings.shadowQuality)) { v -> onUpdate { it.copy(shadowQuality = v) } }
@@ -254,7 +255,7 @@ fun HsrGraphicsScreen(
                     // (0–5, same names as the JSON scale). Resolution presets below stay.
                     if (flat) {
                     SectionCard {
-                        Text(stringResource(R.string.gf_quality), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary, letterSpacing = 1.sp)
+                        CardHeading(stringResource(R.string.gf_quality))
                         Spacer(modifier = Modifier.height(4.dp))
                         QualitySlider(stringResource(R.string.gf_hsr_q_tier), settings.graphicsQuality, qualityNameFor(settings.graphicsQuality)) { v -> onUpdate { it.copy(graphicsQuality = v) } }
                     }
@@ -270,7 +271,7 @@ fun HsrGraphicsScreen(
                     // JSON-backed tiers — hidden in flat format, where tiers have no meaning.
                     if (!flat) {
                     SectionCard {
-                        Text(stringResource(R.string.gf_hsr_preset_title), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary, letterSpacing = 1.sp)
+                        CardHeading(stringResource(R.string.gf_hsr_preset_title))
                         Spacer(modifier = Modifier.height(8.dp))
                         ChipFlowRow {
                             HsrGraphicsSettings.GRAPHICS_PRESET_NAMES.forEachIndexed { level, name ->
@@ -295,7 +296,7 @@ fun HsrGraphicsScreen(
                     // JSON-backed toggles — hidden in flat format with the rest.
                     if (!flat) {
                     SectionCard {
-                        Text(stringResource(R.string.gf_hidden_upscaling), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary, letterSpacing = 1.sp)
+                        CardHeading(stringResource(R.string.gf_hidden_upscaling))
                         Spacer(modifier = Modifier.height(4.dp))
                         Text(
                             stringResource(R.string.gf_hsr_hidden_body),
@@ -375,7 +376,7 @@ fun HsrGraphicsScreen(
 
                     if (!flat) {
                     SectionCard {
-                        Text(stringResource(R.string.gf_anti_aliasing), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary, letterSpacing = 1.sp)
+                        CardHeading(stringResource(R.string.gf_anti_aliasing))
                         Spacer(modifier = Modifier.height(8.dp))
                         ChipFlowRow {
                             listOf(0 to stringResource(R.string.gf_off), 1 to "TAA", 2 to "FXAA").forEach { (mode, name) ->
@@ -392,7 +393,7 @@ fun HsrGraphicsScreen(
                     Spacer(modifier = Modifier.height(12.dp))
 
                     SectionCard {
-                        Text(stringResource(R.string.gf_res_decoupling), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary, letterSpacing = 1.sp)
+                        CardHeading(stringResource(R.string.gf_res_decoupling))
                         Spacer(modifier = Modifier.height(8.dp))
                         // Five presets in a fixed Row used to clip the last one on narrow
                         // screens, which read as an unexplained mystery control. Wrap instead.
@@ -498,7 +499,7 @@ fun HsrGraphicsScreen(
                         Spacer(modifier = Modifier.height(12.dp))
 
                         SectionCard {
-                            Text(stringResource(R.string.gf_game_prefs), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary, letterSpacing = 1.sp)
+                            CardHeading(stringResource(R.string.gf_game_prefs))
                             Spacer(modifier = Modifier.height(4.dp))
                             Text(
                                 stringResource(R.string.gf_hsr_prefs_body),
@@ -721,7 +722,7 @@ private fun HsrLoadFailureCard(
     onShowAnyway: (() -> Unit)? = null
 ) {
     // Host-styled failure surface: the File Engineering screen's GAME NOT FOUND card is a
-    // SectionCard with a labelSmall title (error red for a missing game, primary otherwise),
+    // SectionCard with a CardHeading (error red for a missing game, primary otherwise),
     // so a load failure here reads as the same kind of thing, not a different component.
     // The small secondary "Show anyway" button is offered only when the caller passes it —
     // callers do so solely for a confirmed-missing install, so other stages keep no button.
@@ -729,7 +730,7 @@ private fun HsrLoadFailureCard(
         Column {
             when (failure.stage) {
                 HsrReadResult.Stage.NO_ROOT -> {
-                    Text(stringResource(R.string.gf_hsr_root_title), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary, letterSpacing = 1.sp)
+                    CardHeading(stringResource(R.string.gf_hsr_root_title))
                     Spacer(modifier = Modifier.height(8.dp))
                     Text(
                         stringResource(R.string.gf_hsr_root_body),
@@ -738,7 +739,10 @@ private fun HsrLoadFailureCard(
                     )
                 }
                 HsrReadResult.Stage.GAME_NOT_INSTALLED -> {
-                    Text(stringResource(R.string.gf_game_not_found), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.error, letterSpacing = 1.sp)
+                    CardHeading(
+                        text = stringResource(R.string.gf_game_not_found),
+                        color = MaterialTheme.colorScheme.error
+                    )
                     Spacer(modifier = Modifier.height(8.dp))
                     Text(
                         stringResource(R.string.gf_hsr_missing_body),
@@ -747,7 +751,7 @@ private fun HsrLoadFailureCard(
                     )
                 }
                 HsrReadResult.Stage.PREFS_NOT_FOUND -> {
-                    Text(stringResource(R.string.gf_hsr_settings_title), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary, letterSpacing = 1.sp)
+                    CardHeading(stringResource(R.string.gf_hsr_settings_title))
                     Spacer(modifier = Modifier.height(8.dp))
                     Text(
                         stringResource(R.string.gf_hsr_settings_body),
@@ -756,7 +760,7 @@ private fun HsrLoadFailureCard(
                     )
                 }
                 HsrReadResult.Stage.READ_FAILED -> {
-                    Text(stringResource(R.string.gf_could_not_read_title), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary, letterSpacing = 1.sp)
+                    CardHeading(stringResource(R.string.gf_could_not_read_title))
                     Spacer(modifier = Modifier.height(8.dp))
                     Text(
                         stringResource(R.string.gf_read_failed_detail, failure.detail),
@@ -765,7 +769,7 @@ private fun HsrLoadFailureCard(
                     )
                 }
                 HsrReadResult.Stage.PARSE_FAILED -> {
-                    Text(stringResource(R.string.gf_hsr_format_title), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary, letterSpacing = 1.sp)
+                    CardHeading(stringResource(R.string.gf_hsr_format_title))
                     Spacer(modifier = Modifier.height(8.dp))
                     Text(
                         stringResource(R.string.gf_hsr_format_body, failure.detail),

@@ -24,6 +24,7 @@ import com.catsmoker.app.features.editgamefiles.ConfigBackupStore
 import com.catsmoker.app.features.gamingtools.ui.CollapsibleExplainer
 import com.catsmoker.app.shared.ui.components.ScreenScaffold
 import com.catsmoker.app.shared.ui.components.SectionCard
+import com.catsmoker.app.shared.ui.components.CardHeading
 import com.catsmoker.app.shared.ui.theme.CatsmokerSpacing
 import kotlinx.coroutines.flow.collectLatest
 import com.catsmoker.app.shared.ui.components.CatsmokerButton
@@ -195,7 +196,7 @@ fun WuwaConfigScreen(
             // The recommendation's apply target sits directly below it — the preset chips
             // used to live several cards down, past the auto-tune card.
             SectionCard {
-                Text(stringResource(R.string.gf_preset_section), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary, letterSpacing = 1.sp)
+                CardHeading(stringResource(R.string.gf_preset_section))
                 Spacer(modifier = Modifier.height(8.dp))
                 // Every preset visible at once — a wrapping flow, never a sideways strip.
                 ChipFlowRow {
@@ -228,7 +229,7 @@ fun WuwaConfigScreen(
             Spacer(modifier = Modifier.height(12.dp))
 
             SectionCard {
-                Text(stringResource(R.string.gf_frame_rate), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary, letterSpacing = 1.sp)
+                CardHeading(stringResource(R.string.gf_frame_rate))
                 Spacer(modifier = Modifier.height(8.dp))
                 // No FPS picker: the generator always writes MAX_FPS (120). A lower choice
                 // would create a ceiling, which the no-cap rule forbids.
@@ -253,7 +254,7 @@ fun WuwaConfigScreen(
             Spacer(modifier = Modifier.height(12.dp))
 
             SectionCard {
-                Text(stringResource(R.string.gf_game_mode), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary, letterSpacing = 1.sp)
+                CardHeading(stringResource(R.string.gf_game_mode))
                 Spacer(modifier = Modifier.height(8.dp))
                 ChipFlowRow {
                     WuWaConfigGenerator.GameMode.entries.forEach { mode ->
@@ -275,7 +276,7 @@ fun WuwaConfigScreen(
             Spacer(modifier = Modifier.height(12.dp))
 
             SectionCard {
-                Text(stringResource(R.string.gf_effects), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary, letterSpacing = 1.sp)
+                CardHeading(stringResource(R.string.gf_effects))
                 Spacer(modifier = Modifier.height(8.dp))
                 WuwaSwitchRow(stringResource(R.string.gf_fx_outline_t), stringResource(R.string.gf_fx_outline_c), !uiState.options.disableOutline) { v ->
                     onUpdateOptions { it.copy(disableOutline = !v) }
@@ -323,7 +324,7 @@ fun WuwaConfigScreen(
                 // questions ("how does the renderer behave" vs "what is drawn"), so they live in
                 // separate cards; the per-control captions carry the detail.
                 SectionCard {
-                    Text(stringResource(R.string.gf_wuwa_engine_section), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary, letterSpacing = 1.sp)
+                    CardHeading(stringResource(R.string.gf_wuwa_engine_section))
                     Spacer(modifier = Modifier.height(8.dp))
                     WuwaSwitchRow(stringResource(R.string.gf_fx_hzb_t), stringResource(R.string.gf_fx_hzb_c), uiState.options.hzb) { v ->
                         onUpdateOptions { it.copy(hzb = v) }
@@ -346,7 +347,7 @@ fun WuwaConfigScreen(
                 Spacer(modifier = Modifier.height(12.dp))
 
                 SectionCard {
-                    Text(stringResource(R.string.gf_files_section), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary, letterSpacing = 1.sp)
+                    CardHeading(stringResource(R.string.gf_files_section))
                     Spacer(modifier = Modifier.height(8.dp))
                     WuwaSwitchRow(
                         stringResource(R.string.gf_files_scal_t),
@@ -369,7 +370,7 @@ fun WuwaConfigScreen(
                 Spacer(modifier = Modifier.height(12.dp))
 
                 SectionCard {
-                    Text(stringResource(R.string.gf_advanced), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary, letterSpacing = 1.sp)
+                    CardHeading(stringResource(R.string.gf_advanced))
                     Spacer(modifier = Modifier.height(8.dp))
                     WuwaSwitchRow(
                         stringResource(R.string.gf_adv_restricted_t),
@@ -425,7 +426,7 @@ fun WuwaConfigScreen(
             Spacer(modifier = Modifier.height(12.dp))
 
             SectionCard {
-                Text(stringResource(R.string.gf_deploy), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary, letterSpacing = 1.sp)
+                CardHeading(stringResource(R.string.gf_deploy))
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(
                     stringResource(R.string.gf_deploy_body),
@@ -536,7 +537,7 @@ fun WuwaConfigScreen(
             if (uiState.backups.isNotEmpty()) {
                 Spacer(modifier = Modifier.height(12.dp))
                 SectionCard {
-                    Text(stringResource(R.string.gf_backups), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary, letterSpacing = 1.sp)
+                    CardHeading(stringResource(R.string.gf_backups))
                     Spacer(modifier = Modifier.height(8.dp))
                     Text(
                         stringResource(R.string.gf_backups_body),
@@ -592,7 +593,7 @@ fun WuwaConfigScreen(
             // internally for their own axes; that is not the removed analysis surface.
             Spacer(modifier = Modifier.height(12.dp))
             SectionCard {
-                Text(stringResource(R.string.gf_wuwa_profile_title), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary, letterSpacing = 1.sp)
+                CardHeading(stringResource(R.string.gf_wuwa_profile_title))
                 Spacer(modifier = Modifier.height(8.dp))
                 CatsmokerButton(
                     onClick = onReadProfile,
@@ -655,7 +656,10 @@ private fun WuwaNotInstalledCard(
 ) {
     SectionCard {
         Column {
-            Text(stringResource(R.string.gf_game_not_found), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.error, letterSpacing = 1.sp)
+            CardHeading(
+                text = stringResource(R.string.gf_game_not_found),
+                color = MaterialTheme.colorScheme.error
+            )
             Spacer(modifier = Modifier.height(8.dp))
             Text(
                 stringResource(R.string.gf_wuwa_not_installed_body, WuwaConfigManager.PACKAGE),
@@ -690,12 +694,7 @@ private fun CommunityPacksCard(
     onDeletePack: (String) -> Unit
 ) {
     SectionCard {
-        Text(
-            stringResource(R.string.gf_packs),
-            style = MaterialTheme.typography.labelSmall,
-            color = MaterialTheme.colorScheme.primary,
-            letterSpacing = 1.sp
-        )
+        CardHeading(stringResource(R.string.gf_packs))
         Spacer(modifier = Modifier.height(8.dp))
         Text(
             stringResource(R.string.gf_packs_body),
@@ -841,7 +840,7 @@ private fun AutoTuneCard(
     SectionCard {
         val tuner = uiState.tuner
         Row(verticalAlignment = Alignment.CenterVertically) {
-            Text(stringResource(R.string.gf_autotune), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary, letterSpacing = 1.sp)
+            CardHeading(stringResource(R.string.gf_autotune))
             Spacer(modifier = Modifier.weight(1f))
             Text(
                 stringResource(
@@ -974,7 +973,7 @@ private fun RecommendCard(
 ) {
     SectionCard {
         Row(verticalAlignment = Alignment.CenterVertically) {
-            Text(stringResource(R.string.gf_smart_recommend), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary, letterSpacing = 1.sp)
+            CardHeading(stringResource(R.string.gf_smart_recommend))
             Spacer(modifier = Modifier.weight(1f))
             Text(
                 stringResource(R.string.gf_wuwa_score, rec.score, rec.tier),

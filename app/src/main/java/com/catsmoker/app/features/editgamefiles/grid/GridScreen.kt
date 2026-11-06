@@ -18,6 +18,7 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.catsmoker.app.R
 import com.catsmoker.app.shared.ui.components.ScreenScaffold
 import com.catsmoker.app.shared.ui.components.SectionCard
+import com.catsmoker.app.shared.ui.components.CardHeading
 import kotlinx.coroutines.flow.collectLatest
 import com.catsmoker.app.shared.ui.components.CatsmokerButton
 import com.catsmoker.app.shared.ui.components.CatsmokerOutlinedButton
@@ -148,7 +149,7 @@ fun GridScreen(
                     }
 
                     SectionCard {
-                        Text(stringResource(R.string.gf_frame_rate), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary, letterSpacing = 1.sp)
+                        CardHeading(stringResource(R.string.gf_frame_rate))
                         Spacer(modifier = Modifier.height(8.dp))
                         // Only the game's highest tier: a 30/60/90/120 choice would write a
                         // lower ceiling, which the no-cap rule forbids.
@@ -180,7 +181,7 @@ fun GridScreen(
                     Spacer(modifier = Modifier.height(12.dp))
 
                     SectionCard {
-                        Text(stringResource(R.string.gf_resolution_section), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary, letterSpacing = 1.sp)
+                        CardHeading(stringResource(R.string.gf_resolution_section))
                         Spacer(modifier = Modifier.height(8.dp))
                         ChipFlowRow {
                             listOf(480, 600, 720, 1080, 1440).forEach { height ->
@@ -201,7 +202,7 @@ fun GridScreen(
                     Spacer(modifier = Modifier.height(12.dp))
 
                     SectionCard {
-                        Text(stringResource(R.string.gf_quality), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary, letterSpacing = 1.sp)
+                        CardHeading(stringResource(R.string.gf_quality))
                         Spacer(modifier = Modifier.height(4.dp))
                         read.ladder.forEach { (name, current) ->
                             val enabled = current != null
@@ -232,7 +233,7 @@ fun GridScreen(
                     Spacer(modifier = Modifier.height(12.dp))
 
                     SectionCard {
-                        Text(stringResource(R.string.gf_perf_switches), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary, letterSpacing = 1.sp)
+                        CardHeading(stringResource(R.string.gf_perf_switches))
                         Spacer(modifier = Modifier.height(4.dp))
                         GridPreferences.SWITCH_TARGETS.forEach { (name, _) ->
                             val current = read.switches[name]
@@ -500,7 +501,7 @@ private fun GridLoadFailureCard(
     onShowAnyway: (() -> Unit)? = null
 ) {
     // Host-styled failure surface: the File Engineering screen's GAME NOT FOUND card is a
-    // SectionCard with a labelSmall title (error red for a missing game, primary otherwise),
+    // SectionCard with a CardHeading (error red for a missing game, primary otherwise),
     // so a load failure here reads as the same kind of thing, not a different component.
     // The small secondary "Show anyway" button is offered only when the caller passes it —
     // callers do so solely for a confirmed-missing install, so other stages keep no button.
@@ -508,7 +509,7 @@ private fun GridLoadFailureCard(
         Column {
             when (failure.stage) {
                 GridPreferencesManager.ReadResult.Stage.NO_CHANNEL -> {
-                    Text(stringResource(R.string.gf_grid_no_channel_title), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary, letterSpacing = 1.sp)
+                    CardHeading(stringResource(R.string.gf_grid_no_channel_title))
                     Spacer(modifier = Modifier.height(8.dp))
                     Text(
                         stringResource(R.string.gf_grid_no_channel_body),
@@ -521,7 +522,10 @@ private fun GridLoadFailureCard(
                     }
                 }
                 GridPreferencesManager.ReadResult.Stage.GAME_NOT_INSTALLED -> {
-                    Text(stringResource(R.string.gf_game_not_found), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.error, letterSpacing = 1.sp)
+                    CardHeading(
+                        text = stringResource(R.string.gf_game_not_found),
+                        color = MaterialTheme.colorScheme.error
+                    )
                     Spacer(modifier = Modifier.height(8.dp))
                     Text(
                         stringResource(R.string.gf_grid_not_installed_body),
@@ -530,7 +534,7 @@ private fun GridLoadFailureCard(
                     )
                 }
                 GridPreferencesManager.ReadResult.Stage.FILE_NOT_FOUND -> {
-                    Text(stringResource(R.string.gf_grid_prefs_title), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary, letterSpacing = 1.sp)
+                    CardHeading(stringResource(R.string.gf_grid_prefs_title))
                     Spacer(modifier = Modifier.height(8.dp))
                     Text(
                         stringResource(R.string.gf_grid_prefs_body),
@@ -539,7 +543,7 @@ private fun GridLoadFailureCard(
                     )
                 }
                 GridPreferencesManager.ReadResult.Stage.READ_FAILED -> {
-                    Text(stringResource(R.string.gf_could_not_read_title), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary, letterSpacing = 1.sp)
+                    CardHeading(stringResource(R.string.gf_could_not_read_title))
                     Spacer(modifier = Modifier.height(8.dp))
                     Text(
                         stringResource(R.string.gf_read_failed_detail, failure.detail),
