@@ -288,6 +288,7 @@ class SpoofRepository @Inject constructor(
                     buildId = "AP4A.260105.001", securityPatch = "2026-01-01",
                     screenWidth = 1440, screenHeight = 3120, screenDensity = 500,
                     hwCpuCores = 8, hwRamMb = 12288,
+                    socModel = "SM8850", socManufacturer = "QTI", socId = "418",
                     gpuVendor = "Qualcomm", gpuRenderer = "Adreno (TM) 840",
                     vulkanModel = "Adreno (TM) 840",
                     vulkanVersion = "1.4.295", vulkanVendorId = 0x5143
@@ -303,6 +304,7 @@ class SpoofRepository @Inject constructor(
                     buildId = "AQ4A.260912.001", securityPatch = "2026-01-01",
                     screenWidth = 1440, screenHeight = 3200, screenDensity = 522,
                     hwCpuCores = 8, hwRamMb = 12288,
+                    socModel = "SM8850", socManufacturer = "QTI", socId = "418",
                     gpuVendor = "Qualcomm", gpuRenderer = "Adreno (TM) 840",
                     vulkanModel = "Adreno (TM) 840",
                     vulkanVendorId = 0x5143
@@ -317,6 +319,7 @@ class SpoofRepository @Inject constructor(
                     buildRelease = "15", buildSdk = 35,
                     buildId = "UKQ1.240917.001", securityPatch = "2025-02-05",
                     hwCpuCores = 8, hwRamMb = 12288,
+                    socModel = "SM8750", socManufacturer = "QTI", socId = "405",
                     gpuVendor = "Qualcomm", gpuRenderer = "Adreno (TM) 840",
                     gpuVersion = "OpenGL ES 3.2 V@0842.8 (GIT@008a698cf0, I622757abef, 1757677684) (Date:09/12/25)",
                     vulkanModel = "Adreno (TM) 840",
@@ -334,6 +337,7 @@ class SpoofRepository @Inject constructor(
                     buildCharacteristics = "tablet",
                     screenWidth = 1848, screenHeight = 2960, screenDensity = 320,
                     hwCpuCores = 8, hwRamMb = 12288,
+                    socModel = "SM8850", socManufacturer = "QTI", socId = "418",
                     vulkanVendorId = 0
                 ).apply { applyFallbacks() }
             ),
@@ -365,6 +369,7 @@ class SpoofRepository @Inject constructor(
                     buildId = "AP4A.260105.001", securityPatch = "2026-01-01",
                     screenWidth = 1440, screenHeight = 3168, screenDensity = 510,
                     hwCpuCores = 8, hwRamMb = 12288,
+                    socModel = "SM8850", socManufacturer = "QTI", socId = "418",
                     gpuVendor = "Qualcomm", gpuRenderer = "Adreno (TM) 840",
                     vulkanModel = "Adreno (TM) 840",
                     vulkanVendorId = 0x5143
@@ -379,6 +384,7 @@ class SpoofRepository @Inject constructor(
                     buildId = "UKQ1.240917.001", securityPatch = "2025-02-05",
                     screenWidth = 1080, screenHeight = 2400, screenDensity = 400,
                     hwCpuCores = 8, hwRamMb = 16384,
+                    socModel = "SM8750", socManufacturer = "QTI", socId = "405",
                     gpuVendor = "Qualcomm",
                     gpuRenderer = "Adreno (TM) 830",
                     vulkanModel = "Adreno (TM) 830",
@@ -394,6 +400,7 @@ class SpoofRepository @Inject constructor(
                     buildId = "UKQ1.240917.001", securityPatch = "2025-02-05",
                     screenWidth = 1216, screenHeight = 2688, screenDensity = 440,
                     hwCpuCores = 8, hwRamMb = 16384,
+                    socModel = "SM8750", socManufacturer = "QTI", socId = "405",
                     gpuVendor = "Qualcomm",
                     gpuRenderer = "Adreno (TM) 830",
                     vulkanModel = "Adreno (TM) 830",

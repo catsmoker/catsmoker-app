@@ -62,6 +62,7 @@ class SpoofDeviceViewModel @Inject constructor(
         val packageName: String,
         val icon: Bitmap,
         val systemApp: Boolean,
+        val isGame: Boolean,
         val assignedProfileName: String? = null
     )
 
@@ -779,14 +780,19 @@ class SpoofDeviceViewModel @Inject constructor(
             val apps = packages.mapNotNull { pkg ->
                 val appInfo = pkg.applicationInfo ?: return@mapNotNull null
                 if (pkg.packageName == context.packageName || pkg.packageName == "android") return@mapNotNull null
-                
+
+                val isGame = appInfo.category == ApplicationInfo.CATEGORY_GAME
                 AppEntry(
                     label = appInfo.loadLabel(pm).toString(),
                     packageName = pkg.packageName,
                     icon = appInfo.loadIcon(pm).toBitmap(96, 96),
-                    systemApp = (appInfo.flags and ApplicationInfo.FLAG_SYSTEM) != 0
+                    systemApp = (appInfo.flags and ApplicationInfo.FLAG_SYSTEM) != 0,
+                    isGame = isGame
                 )
-            }.sortedBy { it.label }
+            }.sortedWith(
+                compareByDescending<SpoofDeviceViewModel.AppEntry> { it.isGame }
+                    .thenBy { it.label.lowercase() }
+            )
 
             withContext(Dispatchers.Main) {
                 // Labels come from the same derivation the store collector uses, so a ladder

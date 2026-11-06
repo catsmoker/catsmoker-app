@@ -708,6 +708,8 @@ class GamingEngine(
         "com.microsoft.deviceintegrationservice"  // ThermalInfoService bridge
     )
 
+    
+
     // The vivo whitelist keys moved to [OemPackageResolver] (with two more the reference writes
     // and this engine used to skip); the constants there are the same strings these keys were.
     private val vivoGameCubeApps = OemPackageResolver.KEY_GAME_CUBE_APPS
@@ -716,9 +718,40 @@ class GamingEngine(
     private val vivoScreenRefreshRateAppsList = OemPackageResolver.KEY_VIVO_SCREEN_REFRESH_RATE_APPS_LIST
 
     private val hardWhitelist = setOf(
+        context.packageName,            // Catsmoker itself — must never suspend itself
         "moe.shizuku.privileged.api",
-        context.packageName,
-        "com.topjohnwu.magisk"
+        "moe.shizuku.client",           // Shizuku client/app
+        "com.topjohnwu.magisk",
+        "com.topjohnwu.magisk.alpha",   // Magisk Alpha
+        "org.matrix.vector.manager",    // Vector (Xposed framework manager, related to LSPosed)
+        "org.lsposed.manager",          // LSPosed manager
+        "me.weishu.kernelsu",           // KernelSU
+        "me.weishu.kernelsu.next",      // KernelSU Next
+        "me.bmax.apatch",               // APatch
+        "moe.yuki.su",                  // YukiSU
+        "com.kitsune.mask",             // Kitsune Mask
+        "com.termux",                   // Termux
+        "com.termux.api",               // Termux API
+        "com.termux.boot",              // Termux Boot
+        "xyz.ladb",                     // LADB
+        "eu.kanade.ladb",               // LADB (legacy)
+        "com.bugjaeger",                // Bugjaeger
+        "com.bugjaeger.m",              // Bugjaeger Mobile
+        "me.aShellYou.ashell",          // aShellYou
+        "me.ashell.ashell",             // aShell
+        "com.adbshell",                 // ADBShell
+        "com.adb.appcontrol",           // ADBAppControl
+        // Xposed / hook frameworks
+        "de.robv.android.xposed.installer", // Original Xposed / EdXposed installer
+        "me.weishu.riru",               // Riru
+        "com.taichi.framework",         // TaiChi
+        "com.virtualxposed",            // VirtualXposed
+        "io.virtualapp",                // VirtualApp
+        "com.lspatch",                  // LSPatch
+        "re.frida.server",              // Frida server
+        "com.sandhook",                 // SandHook
+        "com.yahfa",                    // YAHFA
+        "com.dexposed"                  // Dexposed
     )
 
     suspend fun toggleGamingMode(active: Boolean, packageName: String? = null) {

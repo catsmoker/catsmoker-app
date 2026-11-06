@@ -52,7 +52,8 @@ fun AppAssignmentScreen(
         uiState.apps.filter {
             it.label.contains(searchQuery, ignoreCase = true) || it.packageName.contains(searchQuery, ignoreCase = true)
         }.sortedWith(
-            compareByDescending<SpoofDeviceViewModel.AppEntry> { it.assignedProfileName != null }
+            compareByDescending<SpoofDeviceViewModel.AppEntry> { it.isGame }
+                .thenByDescending { it.assignedProfileName != null }
                 .thenBy { it.label.lowercase() }
         )
     }

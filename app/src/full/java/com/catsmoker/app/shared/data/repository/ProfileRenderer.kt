@@ -83,6 +83,11 @@ object ProfileRenderer {
         addProp("ro.product.cpu.abilist32", profile.cpuAbiList32)
         addProp("ro.soc.model", profile.socModel)
         addProp("ro.soc.manufacturer", profile.socManufacturer)
+        addProp("ro.vendor.qti.soc_model", profile.socModel)
+        if (profile.socId.isNotBlank()) {
+            addProp("ro.vendor.qti.soc_id", profile.socId)
+        }
+        addProp("ro.board.platform", profile.boardPlatform)
 
         // User-declared hardware facts (M117). Each key renders only when its field is set — 0 is
         // the editor's blank, and an absent key means the hook is never consulted, so the target

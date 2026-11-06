@@ -50,6 +50,7 @@ data class DeviceProfile(
     var cpuAbiList32: String = "",
     var socModel: String = "",
     var socManufacturer: String = "",
+    var socId: String = "",
     var gpuVendor: String = "",
     var gpuRenderer: String = "",
     var gpuVersion: String = "",

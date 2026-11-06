@@ -80,7 +80,10 @@ class ProfileRendererTest {
         hwRamMb = 12288,
         hwHeapMb = 512,
         hwLargeHeapMb = 1024,
-        androidIdSeed = "0123456789abcdef"
+        androidIdSeed = "0123456789abcdef",
+        socModel = "SM8750",
+        socManufacturer = "QTI",
+        socId = "405"
     ).apply { applyFallbacks() }
 
     /** The `key` of every rendered `key=value` line. */
@@ -111,6 +114,8 @@ class ProfileRendererTest {
         "ro.product.cpu.abilist32",
         "ro.soc.model",
         "ro.soc.manufacturer",
+        "ro.vendor.qti.soc_model",
+        "ro.vendor.qti.soc_id",
         "webview.user_agent",
         LSPosedConfig.KEY_APPLY_SCREEN_METRICS,
         LSPosedConfig.KEY_SCREEN_REFRESH_RATE,
