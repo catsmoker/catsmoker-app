@@ -145,6 +145,7 @@
     <string name="gf_select_file_first">Elige primero un archivo</string>
     <string name="gf_success_saf">¡Éxito con SAF!</string>
     <string name="gf_success_shizuku">¡Éxito con Shizuku!</string>
+    <string name="gf_success_root">¡Éxito con root!</string>
     <string name="gf_game_not_installed_toast">Juego no instalado</string>
     <string name="gf_failed">Falló: %1$s</string>
     <string name="gf_zarchiver_copied">Archivo copiado a Descargas. Abre ZArchiver para pegarlo.</string>

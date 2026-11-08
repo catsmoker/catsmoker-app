@@ -9,6 +9,7 @@ A high-level map of the CatSmoker Android codebase and how the layers fit togeth
 | Language             | Kotlin 2.4.21                                |
 | UI                   | Jetpack Compose (Material 3, BOM 2026.09.00)   |
 | Navigation           | `androidx.navigation:navigation-compose`       |
+| UI state collection  | Lifecycle-aware Flow collection; paused below `STARTED` |
 | DI                   | Hilt (Dagger)                                  |
 | Async                | Kotlin Coroutines + Flow                       |
 | JSON                 | Gson                                           |

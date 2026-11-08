@@ -27,7 +27,9 @@
 
 [![Typing effect](https://readme-typing-svg.demolab.com?font=Fira+Code&size=20&duration=2800&pause=900&color=0EA5E9&center=true&vCenter=true&width=620&lines=%E8%B0%83%E4%BC%98%E4%BD%A0%E7%9A%84%E6%B8%B8%E6%88%8F%E3%80%82%E6%8E%8C%E6%8F%A1%E4%BD%A0%E7%9A%84%E8%AE%BE%E5%A4%87%E3%80%82;%E4%B8%BA%E8%AE%A4%E7%9C%9F%E6%B8%B8%E6%88%8F%E7%9A%84%E4%BD%A0%E8%80%8C%E7%94%9F%E7%9A%84%20Android%20%E5%B7%A5%E5%85%B7%E3%80%82)](https://github.com/catsmoker/com.catsmoker.app)
 
-[下载](https://github.com/catsmoker/com.catsmoker.app/releases) · [反馈问题](https://github.com/catsmoker/com.catsmoker.app/issues) · [English](README.md)
+[下载](https://github.com/catsmoker/com.catsmoker.app/releases) · [反馈问题](https://github.com/catsmoker/com.catsmoker.app/issues)
+
+[English](README.md) · [العربية](README.ar.md) · [Español](README.es.md) · [中文](README.zh-CN.md) · [日本語](README.ja.md) · [Português](README.pt-BR.md)
 </div>
 
 **CatSmoker** 是一款面向已支持游戏的 Android 优化工具。它将系统级深度整合、游戏配置文件修改、性能悬浮窗以及游戏专属操控集于一身。

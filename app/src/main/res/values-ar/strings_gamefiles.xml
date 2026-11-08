@@ -145,6 +145,7 @@
     <string name="gf_select_file_first">اختر ملفا أولا</string>
     <string name="gf_success_saf">نجح عبر SAF!</string>
     <string name="gf_success_shizuku">نجح عبر Shizuku!</string>
+    <string name="gf_success_root">نجح عبر Root!</string>
     <string name="gf_game_not_installed_toast">اللعبة غير مثبتة</string>
     <string name="gf_failed">فشل: %1$s</string>
     <string name="gf_zarchiver_copied">تم نسخ الملف إلى التنزيلات. افتح ZArchiver للصق.</string>

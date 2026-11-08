@@ -1,8 +1,6 @@
 package com.catsmoker.app.features.main
 
 import androidx.activity.compose.BackHandler
-import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
@@ -16,6 +14,7 @@ import androidx.compose.ui.Alignment
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.LifecycleOwner
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawWithCache
@@ -24,7 +23,6 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
-import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalInspectionMode
@@ -38,6 +36,7 @@ import android.widget.Toast
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalWindowInfo
+import androidx.compose.ui.unit.Dp
 import com.catsmoker.app.R
 import com.catsmoker.app.shared.data.model.FpsSource
 import com.catsmoker.app.shared.data.model.MetricReadStatus
@@ -50,21 +49,20 @@ import com.catsmoker.app.system.navigation.Routes
 import com.catsmoker.app.shared.ui.theme.CatsmokerTheme
 import com.catsmoker.app.shared.ui.theme.NothingRed
 import java.util.Locale
-import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
 
 @Composable
 fun MainRoute(onNavigate: (String) -> Unit) {
     val viewModel: MainViewModel = hiltViewModel()
     val settingsViewModel: com.catsmoker.app.features.settings.SettingsViewModel = hiltViewModel()
-    val settingsUiState by settingsViewModel.uiState.collectAsState()
-    val state by viewModel.metricsState.collectAsState()
-    val fpsHistory by viewModel.fpsHistory.collectAsState()
-    val cpuHistory by viewModel.cpuHistory.collectAsState()
-    val ramHistory by viewModel.ramHistory.collectAsState()
-    val tempHistory by viewModel.tempHistory.collectAsState()
-    val pingHistory by viewModel.pingHistory.collectAsState()
-    val adsEnabled by viewModel.adsEnabled.collectAsState()
+    val settingsUiState by settingsViewModel.uiState.collectAsStateWithLifecycle()
+    val state by viewModel.metricsState.collectAsStateWithLifecycle()
+    val fpsHistory by viewModel.fpsHistory.collectAsStateWithLifecycle()
+    val cpuHistory by viewModel.cpuHistory.collectAsStateWithLifecycle()
+    val ramHistory by viewModel.ramHistory.collectAsStateWithLifecycle()
+    val tempHistory by viewModel.tempHistory.collectAsStateWithLifecycle()
+    val pingHistory by viewModel.pingHistory.collectAsStateWithLifecycle()
+    val adsEnabled by viewModel.adsEnabled.collectAsStateWithLifecycle()
 
     val context = LocalContext.current
     // Configuration-aware read of the format; the count is substituted at press time.
@@ -147,22 +145,12 @@ fun MainScreen(
     onOpenSettings: () -> Unit
 ) {
     val isPreview = LocalInspectionMode.current
-    var hydrationPhase by remember { mutableIntStateOf(if (isPreview) 4 else 0) }
+    var hydrationPhase by remember { mutableIntStateOf(if (isPreview) 4 else 3) }
     var showAdsDeferred by remember { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
         if (isPreview) return@LaunchedEffect
-        // One-frame "breath" to let the system settle after splash removal
-        kotlinx.coroutines.delay(16.milliseconds) 
-        
-        // Progressive Hydration Timeline
-        kotlinx.coroutines.delay(50.milliseconds) 
-        hydrationPhase = 1
-        kotlinx.coroutines.delay(100.milliseconds) 
-        hydrationPhase = 2
-        kotlinx.coroutines.delay(150.milliseconds) 
-        hydrationPhase = 3
-        kotlinx.coroutines.delay(300.milliseconds) 
+        withFrameNanos { }
         hydrationPhase = 4
     }
 
@@ -171,10 +159,6 @@ fun MainScreen(
         kotlinx.coroutines.delay(5.seconds)
         showAdsDeferred = true
     }
-
-    val metricsAlpha by animateFloatAsState(if (hydrationPhase >= 1) 1f else 0f, tween(300), label = "metrics")
-    val actionsAlpha by animateFloatAsState(if (hydrationPhase >= 2) 1f else 0f, tween(300), label = "actions")
-    val chartAlpha by animateFloatAsState(if (hydrationPhase >= 3) 1f else 0f, tween(500), label = "chart")
 
     // Responsive dashboard: portrait keeps the existing no-scroll vertical rhythm
     // (performance card on top, quick actions below, ad slot reserved at the bottom);
@@ -212,13 +196,12 @@ fun MainScreen(
             }
         }
 
-        // 2. Performance Monitor (Progressive)
+        // 2. Performance Monitor
         if (hydrationPhase >= 1) {
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
                     .weight(1f)
-                    .graphicsLayer { alpha = metricsAlpha }
             ) {
                 SectionCard(modifier = Modifier.fillMaxSize(), contentPadding = 16.dp) {
                     Row(
@@ -300,7 +283,6 @@ fun MainScreen(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .weight(1f)
-                                .graphicsLayer { alpha = chartAlpha }
                         ) {
                             CombinedChart(
                                 fpsHistory = fpsHistory,
@@ -325,120 +307,17 @@ fun MainScreen(
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // 3. Quick Actions (Progressive)
+        // 3. Quick Actions
         if (hydrationPhase >= 2) {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .weight(1.5f)
-                    .graphicsLayer { alpha = actionsAlpha }
-            ) {
-                Text(
-                    text = stringResource(R.string.dash_quick_actions),
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.padding(start = 4.dp, bottom = 8.dp)
-                )
-
-                Column(
-                    modifier = Modifier.weight(1f),
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    // Spoof card exists only where the implementation is compiled in
-                    // (full variant). Play keeps the no-scroll 2x2 rhythm by letting
-                    // File Engineering span the row instead.
-                    if (VariantCapabilities.HAS_SPOOF) {
-                        Row(
-                            modifier = Modifier.weight(1f),
-                            horizontalArrangement = Arrangement.spacedBy(12.dp)
-                        ) {
-                            QuickActionButton(
-                                title = stringResource(R.string.dash_spoof_title),
-                                subtitle = stringResource(R.string.dash_spoof_subtitle),
-                                iconContainerColor = NothingRed.copy(alpha = 0.15f),
-                                iconContentColor = NothingRed,
-                                onClick = onOpenSpoofDevice,
-                                modifier = Modifier.weight(1f).fillMaxHeight(),
-                                spreadGridContent = true,
-                                showChevron = true,
-                                contentPadding = 12.dp,
-                                iconSize = 40.dp,
-                                icon = { Icon(Icons.Default.SettingsInputComponent, null) }
-                            )
-                            QuickActionButton(
-                                title = stringResource(R.string.dash_edit_files_title),
-                                subtitle = stringResource(R.string.dash_edit_files_subtitle),
-                                iconContainerColor = Color(0xFF3B82F6).copy(alpha = 0.15f),
-                                iconContentColor = Color(0xFF60A5FA),
-                                onClick = onOpenEditGameFiles,
-                                modifier = Modifier.weight(1f).fillMaxHeight(),
-                                spreadGridContent = true,
-                                showChevron = true,
-                                contentPadding = 12.dp,
-                                iconSize = 40.dp,
-                                icon = { Icon(Icons.Default.FolderOpen, null) }
-                            )
-                        }
-                    } else {
-                        Row(
-                            modifier = Modifier.weight(1f),
-                            horizontalArrangement = Arrangement.spacedBy(12.dp)
-                        ) {
-                            QuickActionButton(
-                                title = stringResource(R.string.dash_edit_files_title),
-                                subtitle = stringResource(R.string.dash_edit_files_subtitle),
-                                iconContainerColor = Color(0xFF3B82F6).copy(alpha = 0.15f),
-                                iconContentColor = Color(0xFF60A5FA),
-                                onClick = onOpenEditGameFiles,
-                                modifier = Modifier.weight(1f).fillMaxHeight(),
-                                spreadGridContent = true,
-                                showChevron = true,
-                                contentPadding = 12.dp,
-                                iconSize = 40.dp,
-                                icon = { Icon(Icons.Default.FolderOpen, null) }
-                            )
-                        }
-                    }
-
-                    Row(
-                        modifier = Modifier.weight(1f),
-                        horizontalArrangement = Arrangement.spacedBy(12.dp)
-                    ) {
-                        QuickActionButton(
-                            title = stringResource(R.string.Gaming_tools_title),
-                            subtitle = stringResource(R.string.dash_gaming_tools_subtitle),
-                            iconContainerColor = Color(0xFF10B981).copy(alpha = 0.15f),
-                            iconContentColor = Color(0xFF34D399),
-                            onClick = onOpenGamingTools,
-                            modifier = Modifier.weight(1f).fillMaxHeight(),
-                            spreadGridContent = true,
-                            showChevron = true,
-                            contentPadding = 12.dp,
-                            iconSize = 40.dp,
-                            icon = { Icon(Icons.Default.SportsEsports, null) }
-                        )
-                        Box(modifier = Modifier.weight(1f).fillMaxHeight()) {
-                            QuickActionButton(
-                                title = stringResource(R.string.core_settings_title),
-                                subtitle = stringResource(R.string.core_settings_subtitle),
-                                iconContainerColor = Color(0xFF8B5CF6).copy(alpha = 0.15f),
-                                iconContentColor = Color(0xFFA78BFA),
-                                onClick = onOpenSettings,
-                                modifier = Modifier.fillMaxSize(),
-                                spreadGridContent = true,
-                                showChevron = true,
-                                showIndicator = availableUpdateName != null,
-                                contentPadding = 12.dp,
-                                iconSize = 40.dp,
-                                icon = { Icon(Icons.Default.Settings, null) }
-                            )
-                            // Indicator is now drawn inside the Settings tile, on the icon's corner.
-                        }
-                    }
-                }
-
-                Spacer(modifier = Modifier.height(12.dp))
-            }
+            QuickActionsSection(
+                modifier = Modifier.fillMaxWidth().weight(1.5f),
+                compact = false,
+                availableUpdateName = availableUpdateName,
+                onOpenSpoofDevice = onOpenSpoofDevice,
+                onOpenEditGameFiles = onOpenEditGameFiles,
+                onOpenGamingTools = onOpenGamingTools,
+                onOpenSettings = onOpenSettings
+            )
         } else {
             Spacer(modifier = Modifier.weight(1.5f))
         }
@@ -477,7 +356,7 @@ fun MainScreen(
                     horizontalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
                     if (hydrationPhase >= 1) {
-                        Column(modifier = Modifier.weight(1f).fillMaxHeight().graphicsLayer { alpha = metricsAlpha }) {
+                        Column(modifier = Modifier.weight(1f).fillMaxHeight()) {
                             SectionCard(modifier = Modifier.fillMaxSize(), contentPadding = 12.dp) {
                                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
                                     Column {
@@ -500,7 +379,7 @@ fun MainScreen(
                                 }
                                 Spacer(modifier = Modifier.height(8.dp))
                                 if (hydrationPhase >= 4) {
-                                    Box(modifier = Modifier.fillMaxWidth().weight(1f).graphicsLayer { alpha = chartAlpha }) {
+                                    Box(modifier = Modifier.fillMaxWidth().weight(1f)) {
                                         CombinedChart(fpsHistory = fpsHistory, cpuHistory = cpuHistory, ramHistory = ramHistory, tempHistory = tempHistory, pingHistory = pingHistory, ramTotal = state.ramTotalGb, modifier = Modifier.fillMaxSize())
                                     }
                                 } else {
@@ -512,28 +391,15 @@ fun MainScreen(
                         Spacer(modifier = Modifier.weight(1f))
                     }
                     if (hydrationPhase >= 2) {
-                        Column(modifier = Modifier.weight(1f).fillMaxHeight().graphicsLayer { alpha = actionsAlpha }) {
-                            Text(text = stringResource(R.string.dash_quick_actions), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(start = 4.dp, bottom = 8.dp))
-                            Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                                if (VariantCapabilities.HAS_SPOOF) {
-                                    Row(modifier = Modifier.weight(1f), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                                        QuickActionButton(title = stringResource(R.string.dash_spoof_title), subtitle = stringResource(R.string.dash_spoof_subtitle), iconContainerColor = NothingRed.copy(alpha = 0.15f), iconContentColor = NothingRed, onClick = onOpenSpoofDevice, modifier = Modifier.weight(1f).fillMaxHeight(), spreadGridContent = true, showChevron = true, contentPadding = 8.dp, iconSize = 32.dp, icon = { Icon(Icons.Default.SettingsInputComponent, null) })
-                                        QuickActionButton(title = stringResource(R.string.dash_edit_files_title), subtitle = stringResource(R.string.dash_edit_files_subtitle), iconContainerColor = Color(0xFF3B82F6).copy(alpha = 0.15f), iconContentColor = Color(0xFF60A5FA), onClick = onOpenEditGameFiles, modifier = Modifier.weight(1f).fillMaxHeight(), spreadGridContent = true, showChevron = true, contentPadding = 8.dp, iconSize = 32.dp, icon = { Icon(Icons.Default.FolderOpen, null) })
-                                    }
-                                } else {
-                                    Row(modifier = Modifier.weight(1f), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                                        QuickActionButton(title = stringResource(R.string.dash_edit_files_title), subtitle = stringResource(R.string.dash_edit_files_subtitle), iconContainerColor = Color(0xFF3B82F6).copy(alpha = 0.15f), iconContentColor = Color(0xFF60A5FA), onClick = onOpenEditGameFiles, modifier = Modifier.weight(1f).fillMaxHeight(), spreadGridContent = true, showChevron = true, contentPadding = 8.dp, iconSize = 32.dp, icon = { Icon(Icons.Default.FolderOpen, null) })
-                                    }
-                                }
-                                Row(modifier = Modifier.weight(1f), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                                    QuickActionButton(title = stringResource(R.string.Gaming_tools_title), subtitle = stringResource(R.string.dash_gaming_tools_subtitle), iconContainerColor = Color(0xFF10B981).copy(alpha = 0.15f), iconContentColor = Color(0xFF34D399), onClick = onOpenGamingTools, modifier = Modifier.weight(1f).fillMaxHeight(), spreadGridContent = true, showChevron = true, contentPadding = 8.dp, iconSize = 32.dp, icon = { Icon(Icons.Default.SportsEsports, null) })
-                                    Box(modifier = Modifier.weight(1f).fillMaxHeight()) {
-                                        QuickActionButton(title = stringResource(R.string.core_settings_title), subtitle = stringResource(R.string.core_settings_subtitle), iconContainerColor = Color(0xFF8B5CF6).copy(alpha = 0.15f), iconContentColor = Color(0xFFA78BFA), onClick = onOpenSettings, modifier = Modifier.fillMaxSize(), spreadGridContent = true, showChevron = true, showIndicator = availableUpdateName != null, contentPadding = 8.dp, iconSize = 32.dp, icon = { Icon(Icons.Default.Settings, null) })
-                                    }
-                                }
-                            }
-                            Spacer(modifier = Modifier.height(4.dp))
-                        }
+                        QuickActionsSection(
+                            modifier = Modifier.weight(1f).fillMaxHeight(),
+                            compact = true,
+                            availableUpdateName = availableUpdateName,
+                            onOpenSpoofDevice = onOpenSpoofDevice,
+                            onOpenEditGameFiles = onOpenEditGameFiles,
+                            onOpenGamingTools = onOpenGamingTools,
+                            onOpenSettings = onOpenSettings
+                        )
                     } else {
                         Spacer(modifier = Modifier.weight(1f))
                     }
@@ -547,6 +413,134 @@ fun MainScreen(
             }
         }
     }
+}
+
+// Isolate stable navigation controls so telemetry updates can skip this subtree.
+@Composable
+private fun QuickActionsSection(
+    modifier: Modifier,
+    compact: Boolean,
+    availableUpdateName: String?,
+    onOpenSpoofDevice: () -> Unit,
+    onOpenEditGameFiles: () -> Unit,
+    onOpenGamingTools: () -> Unit,
+    onOpenSettings: () -> Unit
+) {
+    val spacing = if (compact) 8.dp else 12.dp
+    val contentPadding = if (compact) 8.dp else 12.dp
+    val iconSize = if (compact) 32.dp else 40.dp
+
+    Column(modifier = modifier) {
+        Text(
+            text = stringResource(R.string.dash_quick_actions),
+            style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.padding(start = 4.dp, bottom = 8.dp)
+        )
+
+        Column(
+            modifier = Modifier.weight(1f),
+            verticalArrangement = Arrangement.spacedBy(spacing)
+        ) {
+            if (VariantCapabilities.HAS_SPOOF) {
+                Row(
+                    modifier = Modifier.weight(1f),
+                    horizontalArrangement = Arrangement.spacedBy(spacing)
+                ) {
+                    QuickActionButton(
+                        title = stringResource(R.string.dash_spoof_title),
+                        subtitle = stringResource(R.string.dash_spoof_subtitle),
+                        iconContainerColor = NothingRed.copy(alpha = 0.15f),
+                        iconContentColor = NothingRed,
+                        onClick = onOpenSpoofDevice,
+                        modifier = Modifier.weight(1f).fillMaxHeight(),
+                        spreadGridContent = true,
+                        showChevron = true,
+                        contentPadding = contentPadding,
+                        iconSize = iconSize,
+                        icon = { Icon(Icons.Default.SettingsInputComponent, null) }
+                    )
+                    EditGameFilesAction(
+                        modifier = Modifier.weight(1f).fillMaxHeight(),
+                        contentPadding = contentPadding,
+                        iconSize = iconSize,
+                        onClick = onOpenEditGameFiles
+                    )
+                }
+            } else {
+                Row(
+                    modifier = Modifier.weight(1f),
+                    horizontalArrangement = Arrangement.spacedBy(spacing)
+                ) {
+                    EditGameFilesAction(
+                        modifier = Modifier.weight(1f).fillMaxHeight(),
+                        contentPadding = contentPadding,
+                        iconSize = iconSize,
+                        onClick = onOpenEditGameFiles
+                    )
+                }
+            }
+
+            Row(
+                modifier = Modifier.weight(1f),
+                horizontalArrangement = Arrangement.spacedBy(spacing)
+            ) {
+                QuickActionButton(
+                    title = stringResource(R.string.Gaming_tools_title),
+                    subtitle = stringResource(R.string.dash_gaming_tools_subtitle),
+                    iconContainerColor = Color(0xFF10B981).copy(alpha = 0.15f),
+                    iconContentColor = Color(0xFF34D399),
+                    onClick = onOpenGamingTools,
+                    modifier = Modifier.weight(1f).fillMaxHeight(),
+                    spreadGridContent = true,
+                    showChevron = true,
+                    contentPadding = contentPadding,
+                    iconSize = iconSize,
+                    icon = { Icon(Icons.Default.SportsEsports, null) }
+                )
+                Box(modifier = Modifier.weight(1f).fillMaxHeight()) {
+                    QuickActionButton(
+                        title = stringResource(R.string.core_settings_title),
+                        subtitle = stringResource(R.string.core_settings_subtitle),
+                        iconContainerColor = Color(0xFF8B5CF6).copy(alpha = 0.15f),
+                        iconContentColor = Color(0xFFA78BFA),
+                        onClick = onOpenSettings,
+                        modifier = Modifier.fillMaxSize(),
+                        spreadGridContent = true,
+                        showChevron = true,
+                        showIndicator = availableUpdateName != null,
+                        contentPadding = contentPadding,
+                        iconSize = iconSize,
+                        icon = { Icon(Icons.Default.Settings, null) }
+                    )
+                }
+            }
+        }
+
+        Spacer(modifier = Modifier.height(if (compact) 4.dp else 12.dp))
+    }
+}
+
+@Composable
+private fun EditGameFilesAction(
+    modifier: Modifier,
+    contentPadding: Dp,
+    iconSize: Dp,
+    onClick: () -> Unit
+) {
+    QuickActionButton(
+        title = stringResource(R.string.dash_edit_files_title),
+        subtitle = stringResource(R.string.dash_edit_files_subtitle),
+        iconContainerColor = Color(0xFF3B82F6).copy(alpha = 0.15f),
+        iconContentColor = Color(0xFF60A5FA),
+        onClick = onClick,
+        modifier = modifier,
+        spreadGridContent = true,
+        showChevron = true,
+        contentPadding = contentPadding,
+        iconSize = iconSize,
+        icon = { Icon(Icons.Default.FolderOpen, null) }
+    )
 }
 
 @Composable

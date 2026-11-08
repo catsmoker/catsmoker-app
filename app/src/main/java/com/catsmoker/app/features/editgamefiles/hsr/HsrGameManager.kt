@@ -150,8 +150,8 @@ class HsrGameManager @Inject constructor(
         val fileName = "$pkg.v2.playerprefs.xml"
         for (template in PREFS_PATH_TEMPLATES) {
             val path = template.format(pkg, fileName)
-            val probe = shellRunner.execResult("[ -f '$path' ] && echo exists")
-            if (probe.stdout.trim() == "exists") {
+            val probe = shellRunner.execSafeResult("test", "-f", path)
+            if (probe.isSuccess) {
                 cachedPrefsPath = path
                 return path
             }
@@ -570,13 +570,13 @@ class HsrGameManager @Inject constructor(
     }
 
     private suspend fun readPrefsBytes(path: String): ByteArray? {
-        val result = shellRunner.execResult("cat '$path'")
+        val result = shellRunner.execSafeResult("cat", path)
         if (!result.isSuccess || result.stdout.isEmpty()) return null
         return result.stdout.toByteArray()
     }
 
     private suspend fun readPrefsMap(path: String): MutableMap<String, HsrPlayerPrefsXml.Value>? {
-        val result = shellRunner.execResult("cat '$path'")
+        val result = shellRunner.execSafeResult("cat", path)
         if (!result.isSuccess || result.stdout.isEmpty()) return null
         val map = HsrPlayerPrefsXml.parse(result.stdout)
         if (map.isEmpty()) return null

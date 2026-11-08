@@ -138,6 +138,7 @@
     <string name="gf_select_file_first">Select a file first</string>
     <string name="gf_success_saf">Success via SAF!</string>
     <string name="gf_success_shizuku">Success via Shizuku!</string>
+    <string name="gf_success_root">Success via root!</string>
     <string name="gf_game_not_installed_toast">Game not installed</string>
     <string name="gf_failed">Failed: %1$s</string>
     <string name="gf_zarchiver_copied">File copied to Downloads. Open ZArchiver to paste.</string>

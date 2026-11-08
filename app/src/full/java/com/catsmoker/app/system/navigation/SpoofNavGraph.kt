@@ -1,12 +1,12 @@
 package com.catsmoker.app.system.navigation
 
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.composable
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.catsmoker.app.features.spoofdevice.AppAssignmentScreen
 import com.catsmoker.app.features.spoofdevice.DiagnosticsScreen
 import com.catsmoker.app.features.spoofdevice.ProfileEditorScreen
@@ -34,7 +34,7 @@ fun NavGraphBuilder.spoofGraph(navController: NavHostController) {
     composable(Routes.SPOOF_PROFILES) { backStackEntry ->
         val parentEntry = remember(backStackEntry) { navController.getBackStackEntry(Routes.SPOOF_DEVICE) }
         val viewModel: SpoofDeviceViewModel = hiltViewModel(parentEntry)
-        val uiState by viewModel.uiState.collectAsState()
+        val uiState by viewModel.uiState.collectAsStateWithLifecycle()
         ProfilesListScreen(
             uiState = uiState,
             presets = viewModel.presetsForPicker(),
@@ -56,7 +56,7 @@ fun NavGraphBuilder.spoofGraph(navController: NavHostController) {
         val profileId = backStackEntry.arguments?.getString("profileId") ?: return@composable
         val parentEntry = remember(backStackEntry) { navController.getBackStackEntry(Routes.SPOOF_DEVICE) }
         val viewModel: SpoofDeviceViewModel = hiltViewModel(parentEntry)
-        val uiState by viewModel.uiState.collectAsState()
+        val uiState by viewModel.uiState.collectAsStateWithLifecycle()
         ProfileEditorScreen(
             profileId = profileId,
             uiState = uiState,
@@ -73,7 +73,7 @@ fun NavGraphBuilder.spoofGraph(navController: NavHostController) {
     composable(Routes.SPOOF_APPS) {
         val parentEntry = remember(it) { navController.getBackStackEntry(Routes.SPOOF_DEVICE) }
         val viewModel: SpoofDeviceViewModel = hiltViewModel(parentEntry)
-        val uiState by viewModel.uiState.collectAsState()
+        val uiState by viewModel.uiState.collectAsStateWithLifecycle()
         AppAssignmentScreen(
             uiState = uiState,
             onLoadApps = { viewModel.loadApps() },
@@ -85,7 +85,7 @@ fun NavGraphBuilder.spoofGraph(navController: NavHostController) {
     composable(Routes.SPOOF_SAFE_MODE) {
         val parentEntry = remember(it) { navController.getBackStackEntry(Routes.SPOOF_DEVICE) }
         val viewModel: SpoofDeviceViewModel = hiltViewModel(parentEntry)
-        val uiState by viewModel.uiState.collectAsState()
+        val uiState by viewModel.uiState.collectAsStateWithLifecycle()
         SafeModeScreen(
             uiState = uiState,
             onLoadApps = { viewModel.loadApps() },

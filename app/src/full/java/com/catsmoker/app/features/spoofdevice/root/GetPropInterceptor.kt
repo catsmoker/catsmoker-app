@@ -8,6 +8,7 @@ import java.io.ByteArrayOutputStream
 import java.io.File
 import java.io.InputStream
 import java.io.OutputStream
+import java.util.concurrent.TimeUnit
 
 /**
  * Makes `getprop` subprocess calls agree with the hooked `SystemProperties` reads.
@@ -86,7 +87,7 @@ internal class GetPropInterceptor(
         // argv so the same parser sees them. Anything else falls through to the
         // ProcessBuilder shape below.
         (param.args.getOrNull(0) as? String)?.let { command ->
-            return command.trim().split(WHITESPACE).filter { it.isNotEmpty() }
+            return tokenizeShellLike(command).ifEmpty { null }
         }
         // Star-projection check first (reifiable, no unchecked cast), then keep only
         // the strings: ProcessBuilder.command() is List<String>, and anything else is
@@ -107,7 +108,10 @@ internal class GetPropInterceptor(
         // `sh -c "getprop ro.product.model"` is just as common as the direct form.
         if (first == "sh" || first == "su") {
             val flagIndex = argv.indexOf("-c")
-            if (flagIndex >= 0) return argv.getOrNull(flagIndex + 1)?.let(::parseShellLine)
+            if (flagIndex >= 0) {
+                val shellLine = argv.drop(flagIndex + 1).joinToString(" ")
+                return if (shellLine.isNotBlank()) parseShellLine(shellLine) else null
+            }
         }
         return null
     }
@@ -117,12 +121,54 @@ internal class GetPropInterceptor(
 
     /** Single-string commands (`Runtime.exec(String)`) split to argv before classifying. */
     internal fun classifyShellCommand(command: String): Request? =
-        parse(command.trim().split(WHITESPACE).filter { it.isNotEmpty() })
+        parse(tokenizeShellLike(command))
 
     private fun parseShellLine(line: String): Request? {
-        val parts = line.trim().split(WHITESPACE).filter { it.isNotEmpty() }
+        val trimmed = line.trim()
+        val normalized = if (trimmed.length >= 2 &&
+            ((trimmed.startsWith('"') && trimmed.endsWith('"')) || (trimmed.startsWith('\'') && trimmed.endsWith('\''))))
+            trimmed.substring(1, trimmed.length - 1)
+        else
+            trimmed
+        val parts = tokenizeShellLike(normalized).filter { it.isNotEmpty() }
         if (parts.firstOrNull()?.let(::leafName) != "getprop") return null
         return parts.getOrNull(1)?.let { Request.SingleKey(it) } ?: Request.FullDump
+    }
+
+    private fun tokenizeShellLike(line: String): List<String> {
+        val tokens = mutableListOf<String>()
+        val current = StringBuilder()
+        var quote: Char? = null
+        var escaped = false
+        for (ch in line) {
+            if (escaped) {
+                current.append(ch)
+                escaped = false
+                continue
+            }
+            when {
+                ch == '\\' -> {
+                    escaped = true
+                }
+                quote != null && ch == quote -> {
+                    quote = null
+                }
+                quote == null && (ch == '"' || ch == '\'') -> {
+                    quote = ch
+                }
+                ch.isWhitespace() && quote == null -> {
+                    if (current.isNotEmpty()) {
+                        tokens += current.toString()
+                        current.setLength(0)
+                    }
+                }
+                else -> {
+                    current.append(ch)
+                }
+            }
+        }
+        if (current.isNotEmpty()) tokens += current.toString()
+        return tokens
     }
 
     /**
@@ -137,14 +183,14 @@ internal class GetPropInterceptor(
             } else {
                 // The real subprocess still has to be drained and reaped, or its pipes and its
                 // zygote-forked child both leak.
-                drain(original.inputStream)
-                CannedProcess("$spoofed\n", drain(original.errorStream), exitCodeOf(original))
+                drain(original, original.inputStream)
+                CannedProcess("$spoofed\n", drain(original, original.errorStream), exitCodeOf(original))
             }
         }
 
         Request.FullDump -> {
-            val realDump = drain(original.inputStream)
-            val stderr = drain(original.errorStream)
+            val realDump = drain(original, original.inputStream)
+            val stderr = drain(original, original.errorStream)
             val exitCode = exitCodeOf(original)
             val merged = mergeDump(realDump)
             if (merged == null) null else CannedProcess(merged, stderr, exitCode)
@@ -182,14 +228,32 @@ internal class GetPropInterceptor(
             trimmed.substring(separator + 4, trimmed.length - 1)
     }
 
-    private fun drain(stream: InputStream?): String =
-        runCatching { stream?.readBytes()?.toString(Charsets.UTF_8) }.getOrNull().orEmpty()
+    private fun drain(process: Process, stream: InputStream?): String {
+        if (stream == null) return ""
+        val out = StringBuilder()
+        val drainer = Thread {
+            runCatching { out.append(stream.readBytes().toString(Charsets.UTF_8)) }
+        }.apply { isDaemon = true; start() }
+        drainer.join(COMMAND_TIMEOUT_MILLIS)
+        if (drainer.isAlive) {
+            runCatching { process.destroyForcibly() }
+            runCatching { stream.close() }
+            return ""
+        }
+        return out.toString()
+    }
 
     private fun exitCodeOf(process: Process): Int = try {
-        process.waitFor()
+        val finished = process.waitFor(COMMAND_TIMEOUT_SECONDS, TimeUnit.SECONDS)
+        if (!finished) {
+            runCatching { process.destroyForcibly() }
+            -1
+        } else {
+            process.exitValue()
+        }
     } catch (_: InterruptedException) {
         Thread.currentThread().interrupt()
-        0
+        -1
     }
 
     /** `/system/bin/getprop` and `getprop` are the same command. */
@@ -218,6 +282,8 @@ internal class GetPropInterceptor(
     }
 
     private companion object {
+        const val COMMAND_TIMEOUT_SECONDS = 5L
+        const val COMMAND_TIMEOUT_MILLIS = COMMAND_TIMEOUT_SECONDS * 1000L
         val WHITESPACE = Regex("\\s+")
     }
 }

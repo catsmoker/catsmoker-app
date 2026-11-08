@@ -603,12 +603,18 @@ object CleaningFeature {
      */
     private suspend fun duSizes(shellRunner: ShellRunner, globs: List<String>): List<Pair<String, Long>> {
         if (globs.isEmpty()) return emptyList()
-        val result = shellRunner.execResult("du -sk ${globs.joinToString(" ")} 2>/dev/null")
+        val quoted = globs.joinToString(" ") { shQuote(it) }
+        val result = shellRunner.execResult("du -sk $quoted 2>/dev/null")
         return result.stdout.lineSequence().mapNotNull { line ->
             val match = DU_LINE.matchEntire(line.trim()) ?: return@mapNotNull null
             val kb = match.groupValues[1].toLongOrNull() ?: return@mapNotNull null
             match.groupValues[2] to kb * 1024L
         }.toList()
+    }
+
+    private fun shQuote(value: String): String {
+        if (value.isEmpty()) return "''"
+        return "'" + value.replace("'", "'\\''") + "'"
     }
 
     /**

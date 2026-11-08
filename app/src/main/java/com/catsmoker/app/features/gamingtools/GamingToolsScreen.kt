@@ -24,6 +24,7 @@ import androidx.compose.material.icons.automirrored.filled.VolumeUp
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -97,7 +98,7 @@ fun GamingToolsRoute(
     onOpenCrosshairLibrary: () -> Unit
 ) {
     val viewModel: GamingToolsViewModel = hiltViewModel()
-    val uiState by viewModel.uiState.collectAsState()
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val context = LocalContext.current
     val noDevOptions = stringResource(R.string.gt_dialog_no_dev_options)
 
@@ -117,21 +118,21 @@ fun GamingToolsRoute(
         }
     }
 
-    val gamingState by viewModel.gamingState.collectAsState()
-    val gamingReport by viewModel.gamingReport.collectAsState()
-    val gamingRecovery by viewModel.gamingRecovery.collectAsState()
-    val isGamingSessionOpen by viewModel.isGamingSessionOpen.collectAsState()
-    val suspendedPackages by viewModel.suspendedPackages.collectAsState()
-    val isFixedPerformanceMode by viewModel.isFixedPerformanceMode.collectAsState()
-    val boosterLog by viewModel.boosterLog.collectAsState()
-    val boosterState by viewModel.boosterState.collectAsState()
-    val boosterHistory by viewModel.boosterHistory.collectAsState()
-    val animationScales by viewModel.animationScales.collectAsState()
-    val alwaysFinishActivities by viewModel.alwaysFinishActivities.collectAsState()
-    val backgroundProcessLimit by viewModel.backgroundProcessLimit.collectAsState()
-    val gameDevOptions by viewModel.gameDevOptions.collectAsState()
-    val interventionDownscale by viewModel.interventionDownscale.collectAsState()
-    val pointerSpeedChoice by viewModel.pointerSpeedChoice.collectAsState()
+    val gamingState by viewModel.gamingState.collectAsStateWithLifecycle()
+    val gamingReport by viewModel.gamingReport.collectAsStateWithLifecycle()
+    val gamingRecovery by viewModel.gamingRecovery.collectAsStateWithLifecycle()
+    val isGamingSessionOpen by viewModel.isGamingSessionOpen.collectAsStateWithLifecycle()
+    val suspendedPackages by viewModel.suspendedPackages.collectAsStateWithLifecycle()
+    val isFixedPerformanceMode by viewModel.isFixedPerformanceMode.collectAsStateWithLifecycle()
+    val boosterLog by viewModel.boosterLog.collectAsStateWithLifecycle()
+    val boosterState by viewModel.boosterState.collectAsStateWithLifecycle()
+    val boosterHistory by viewModel.boosterHistory.collectAsStateWithLifecycle()
+    val animationScales by viewModel.animationScales.collectAsStateWithLifecycle()
+    val alwaysFinishActivities by viewModel.alwaysFinishActivities.collectAsStateWithLifecycle()
+    val backgroundProcessLimit by viewModel.backgroundProcessLimit.collectAsStateWithLifecycle()
+    val gameDevOptions by viewModel.gameDevOptions.collectAsStateWithLifecycle()
+    val interventionDownscale by viewModel.interventionDownscale.collectAsStateWithLifecycle()
+    val pointerSpeedChoice by viewModel.pointerSpeedChoice.collectAsStateWithLifecycle()
 
     val overlayLauncher = rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) {
         viewModel.syncState()

@@ -2,7 +2,9 @@ package com.catsmoker.app.features.editgamefiles
 
 import com.catsmoker.app.shared.data.model.GameType
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Test
+import java.io.File
 
 /**
  * Pins the picker's PUBG group-dot rule: any install = green; all six probed and none
@@ -42,5 +44,18 @@ class InstallProbesTest {
         // Five probed and absent, one never answered — the sixth might still be installed.
         val five = variants.dropLast(1).associateWith { false }
         assertEquals(null, pubgGroupDot(five))
+    }
+
+    @Test
+    fun `new state package is visible to the install probe`() {
+        val manifest = listOf(
+            File("src/main/AndroidManifest.xml"),
+            File("app/src/main/AndroidManifest.xml")
+        ).firstOrNull { it.isFile }?.readText() ?: error("AndroidManifest.xml not found")
+
+        assertTrue(
+            "Package visibility must allow New State to resolve as installed or missing",
+            manifest.contains("""<package android:name="com.pubg.newstate" />""")
+        )
     }
 }

@@ -437,6 +437,7 @@ class CrosshairOverlayService : Service() {
                 if (isMoveMode) getString(R.string.gt_svc_cross_moving) else getString(R.string.gt_svc_cross_active)
             )
             .setSmallIcon(R.drawable.ic_stat_name)
+            .setOnlyAlertOnce(true)
             .setOngoing(true)
             .setGroup(CatsmokerNotifications.GROUP_KEY)
 
@@ -456,16 +457,37 @@ class CrosshairOverlayService : Service() {
         if (isMoveMode) {
             builder.setContentText(getString(R.string.gt_svc_cross_taking))
             builder.addAction(
-                android.R.drawable.ic_menu_close_clear_cancel,
+                R.drawable.ic_action_name,
                 getString(R.string.gt_svc_cross_done),
-                PendingIntent.getService(
+                PendingIntent.getForegroundService(
                     this,
                     REQUEST_EXIT_MOVE_MODE,
                     Intent(this, CrosshairOverlayService::class.java).setAction(ACTION_EXIT_MOVE_MODE),
                     PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
                 )
             )
+        } else {
+            builder.addAction(
+                R.drawable.ic_action_name,
+                getString(R.string.gt_crosshair_move_btn),
+                PendingIntent.getForegroundService(
+                    this,
+                    REQUEST_ENTER_MOVE_MODE,
+                    Intent(this, CrosshairOverlayService::class.java).setAction(ACTION_ENTER_MOVE_MODE),
+                    PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+                )
+            )
         }
+        builder.addAction(
+            R.drawable.ic_action_name,
+            getString(R.string.crosshair_move_recenter),
+            PendingIntent.getForegroundService(
+                this,
+                REQUEST_RESET_POSITION,
+                Intent(this, CrosshairOverlayService::class.java).setAction(ACTION_RESET_POSITION),
+                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+            )
+        )
         return builder.build()
     }
 
@@ -523,7 +545,9 @@ class CrosshairOverlayService : Service() {
         // addresses by ID app-wide, so equal IDs let one service's re-post replace the other's
         // notification. 107 is free (101/102/103/105/104/106 taken, 4201/4301 taken).
         private const val NOTIFICATION_ID = 107
+        private const val REQUEST_ENTER_MOVE_MODE = 1020
         private const val REQUEST_EXIT_MOVE_MODE = 1021
         private const val REQUEST_STOP_SERVICE = 1022
+        private const val REQUEST_RESET_POSITION = 1023
     }
 }

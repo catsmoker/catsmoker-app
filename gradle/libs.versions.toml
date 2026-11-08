@@ -66,6 +66,7 @@ compose-runtime-tracing = { group = "androidx.compose.runtime", name = "runtime-
 activity-compose = { group = "androidx.activity", name = "activity-compose", version.ref = "activity" }
 navigation-compose = { group = "androidx.navigation", name = "navigation-compose", version.ref = "navigationCompose" }
 lifecycle-runtime-ktx = { group = "androidx.lifecycle", name = "lifecycle-runtime-ktx", version.ref = "lifecycle" }
+lifecycle-runtime-compose = { group = "androidx.lifecycle", name = "lifecycle-runtime-compose", version.ref = "lifecycle" }
 
 # New additions
 hilt-android = { group = "com.google.dagger", name = "hilt-android", version.ref = "hilt" }

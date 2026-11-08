@@ -36,9 +36,12 @@ internal object CrosshairCatalog {
         val seen = HashSet<String>(files.length())
         for (index in 0 until files.length()) {
             val filename = files.getString(index)
-            require(isValidFilename(filename)) { "Invalid crosshair filename in catalog" }
-            require(seen.add(filename)) { "Duplicate crosshair filename in catalog" }
-            val number = filenamePattern.matchEntire(filename)!!.groupValues[1].toInt()
+            require(isValidFilename(filename)) { "Invalid crosshair filename in catalog: $filename" }
+            require(seen.add(filename)) { "Duplicate crosshair filename in catalog: $filename" }
+            val match = filenamePattern.matchEntire(filename)
+                ?: throw IllegalArgumentException("Unsupported crosshair filename in catalog: $filename")
+            val number = match.groupValues.getOrNull(1)?.toIntOrNull()
+                ?: throw IllegalArgumentException("Crosshair filename missing numeric suffix: $filename")
             entries += CrosshairCatalogEntry(filename, number, downloadUrl(filename))
         }
         return entries.sortedBy { it.number }

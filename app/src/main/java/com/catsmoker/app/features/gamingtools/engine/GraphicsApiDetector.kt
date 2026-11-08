@@ -2,6 +2,7 @@ package com.catsmoker.app.features.gamingtools.engine
 
 import android.content.Context
 import dagger.hilt.android.qualifiers.ApplicationContext
+import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -40,7 +41,7 @@ class GraphicsApiDetector @Inject constructor(
 
         // 1. SurfaceFlinger compositor flag — most direct answer.
         val sf = runCatching {
-            Runtime.getRuntime().exec("dumpsys SurfaceFlinger").inputStream.bufferedReader().readText()
+            readCommandOutput(arrayOf("dumpsys", "SurfaceFlinger"))
         }.getOrDefault("")
         val vulkanEngine = runCatching {
             sf.lines().firstOrNull { it.trim().startsWith("vulkan_renderengine:") }
@@ -54,7 +55,7 @@ class GraphicsApiDetector @Inject constructor(
 
         // 2. Vulkan GPU service reachable.
         val vk = runCatching {
-            Runtime.getRuntime().exec("cmd gpu vkjson").inputStream.bufferedReader().readText()
+            readCommandOutput(arrayOf("cmd", "gpu", "vkjson"))
         }.getOrDefault("")
         if (vk.isNotBlank() && !vk.contains("Failure") && !vk.contains("error")) {
             cachedVulkanLive = true
@@ -71,11 +72,43 @@ class GraphicsApiDetector @Inject constructor(
             "/odm/lib/libvulkan.so"
         ).any { java.io.File(it).exists() }
         val hwVulkan = runCatching {
-            Runtime.getRuntime().exec("getprop ro.hardware.vulkan").inputStream.bufferedReader().readText().trim()
-        }.getOrDefault("")
+            readCommandOutput(arrayOf("getprop", "ro.hardware.vulkan"))
+        }.getOrDefault("").trim()
         val result = libPresent && hwVulkan.isNotBlank()
         cachedVulkanLive = result
         return result
+    }
+
+    private fun readCommandOutput(command: Array<String>): String {
+        val process = ProcessBuilder(*command)
+            .redirectErrorStream(true)
+            .start()
+        val output = StringBuilder()
+        val reader = Thread {
+            try {
+                process.inputStream.bufferedReader().use { reader ->
+                    output.append(reader.readText())
+                }
+            } catch (_: Exception) {
+            }
+        }.apply { isDaemon = true; start() }
+        return try {
+            val finished = process.waitFor(10, TimeUnit.SECONDS)
+            if (!finished) {
+                process.destroyForcibly()
+                runCatching { process.outputStream.close() }
+                runCatching { process.inputStream.close() }
+                return ""
+            }
+            reader.join(1_000)
+            output.toString()
+        } catch (_: Exception) {
+            ""
+        } finally {
+            if (process.isAlive) process.destroyForcibly()
+            runCatching { process.outputStream.close() }
+            runCatching { process.inputStream.close() }
+        }
     }
 
     /** Whether OpenGL ES is a live graphics API on this device. Always true on Android, but kept

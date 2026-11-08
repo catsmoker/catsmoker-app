@@ -22,6 +22,7 @@ class LocaleParityTest {
         "values-en-rGB",
         "values-ar",
         "values-es",
+        "values-ja",
         "values-zh-rCN",
         "values-pt-rBR"
     )

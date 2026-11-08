@@ -25,6 +25,7 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.catsmoker.app.R
 import com.catsmoker.app.shared.ui.components.QuickActionButton
 import com.catsmoker.app.shared.ui.components.ScreenScaffold
@@ -39,7 +40,7 @@ fun SpoofRoute(
     onBack: () -> Unit
 ) {
     val viewModel: SpoofDeviceViewModel = hiltViewModel()
-    val uiState by viewModel.uiState.collectAsState()
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val context = LocalContext.current
 
     LaunchedEffect(Unit) {

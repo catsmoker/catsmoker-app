@@ -23,15 +23,8 @@ class FileService : IFileService.Stub {
     override fun executeCommand(command: Array<out String>?): Int {
         if (command == null) return -1
         return try {
-            val process = ProcessBuilder(*command).redirectErrorStream(true).start()
-            // Drain before waiting so the child cannot block on a full pipe.
-            process.inputStream.use { it.readBytes() }
-            if (process.waitFor(COMMAND_TIMEOUT_SECONDS, TimeUnit.SECONDS)) {
-                process.exitValue()
-            } else {
-                process.destroyForcibly()
-                -1
-            }
+            val result = runProcess(command)
+            result.exitCode
         } catch (_: Exception) {
             -1
         }
@@ -52,35 +45,59 @@ class FileService : IFileService.Stub {
         if (command == null) return result
 
         return try {
-            val process = ProcessBuilder(*command).start()
-            // stderr must be consumed on a separate thread; reading them serially deadlocks
-            // as soon as either pipe fills up.
-            val stderr = StringBuilder()
-            val errDrainer = Thread {
-                try {
-                    process.errorStream.bufferedReader().forEachLine { stderr.append(it).append('\n') }
-                } catch (_: Exception) {
-                }
-            }.apply { isDaemon = true; start() }
-
-            val stdout = try {
-                process.inputStream.bufferedReader().readText()
-            } catch (_: Exception) {
-                ""
-            }
-
-            val finished = process.waitFor(COMMAND_TIMEOUT_SECONDS, TimeUnit.SECONDS)
-            if (!finished) process.destroyForcibly()
-            errDrainer.join(DRAIN_JOIN_MILLIS)
-
-            result.output = stdout.trimEnd('\n')
-            result.error = stderr.toString().trimEnd('\n')
-            result.exitCode = if (finished) process.exitValue() else -1
-            result
+            runProcess(command)
         } catch (e: Exception) {
             result.error = e.message ?: e.javaClass.simpleName
             result
         }
+    }
+
+    private fun runProcess(command: Array<out String>): CommandResult {
+        val result = CommandResult()
+        result.output = ""
+        result.error = ""
+        result.exitCode = -1
+        val process = ProcessBuilder(*command).start()
+        val stdout = StringBuilder()
+        val stderr = StringBuilder()
+
+        val stdoutReader = Thread {
+            try {
+                process.inputStream.bufferedReader().forEachLine { stdout.append(it).append('\n') }
+            } catch (_: Exception) {
+            }
+        }.apply { isDaemon = true; start() }
+
+        val stderrReader = Thread {
+            try {
+                process.errorStream.bufferedReader().forEachLine { stderr.append(it).append('\n') }
+            } catch (_: Exception) {
+            }
+        }.apply { isDaemon = true; start() }
+
+        val finished = process.waitFor(COMMAND_TIMEOUT_SECONDS, TimeUnit.SECONDS)
+        if (!finished) {
+            process.destroyForcibly()
+            runCatching { process.inputStream.close() }
+            runCatching { process.errorStream.close() }
+            runCatching { process.outputStream.close() }
+            stdoutReader.join(DRAIN_JOIN_MILLIS)
+            stderrReader.join(DRAIN_JOIN_MILLIS)
+            result.exitCode = -1
+            result.output = stdout.toString().trimEnd('\n')
+            result.error = stderr.toString().trimEnd('\n')
+            return result
+        }
+
+        stdoutReader.join(DRAIN_JOIN_MILLIS)
+        stderrReader.join(DRAIN_JOIN_MILLIS)
+        runCatching { process.inputStream.close() }
+        runCatching { process.errorStream.close() }
+        runCatching { process.outputStream.close() }
+        result.output = stdout.toString().trimEnd('\n')
+        result.error = stderr.toString().trimEnd('\n')
+        result.exitCode = process.exitValue()
+        return result
     }
 
     override fun readSysfsThermal(): String {

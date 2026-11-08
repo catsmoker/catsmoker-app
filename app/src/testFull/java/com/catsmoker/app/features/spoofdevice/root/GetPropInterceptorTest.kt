@@ -43,11 +43,19 @@ class GetPropInterceptorTest {
             GetPropInterceptor.Request.FullDump,
             interceptor.classifyCommand(listOf("su", "-c", "getprop"))
         )
+        assertEquals(
+            GetPropInterceptor.Request.SingleKey("ro.product.model"),
+            interceptor.classifyCommand(listOf("sh", "-c", "\"getprop ro.product.model\""))
+        )
+        assertEquals(
+            GetPropInterceptor.Request.SingleKey("ro.product.model"),
+            interceptor.classifyShellCommand("sh -c \"getprop ro.product.model\"")
+        )
     }
 
     @Test
     fun singleStringExecShapes() {
-        // Runtime.exec(String): split to argv before classifying.
+        // Runtime.exec(String): shell-like tokenization keeps quoted payloads intact.
         assertEquals(
             GetPropInterceptor.Request.SingleKey("ro.product.model"),
             interceptor.classifyShellCommand("getprop ro.product.model")
@@ -55,6 +63,10 @@ class GetPropInterceptorTest {
         assertEquals(
             GetPropInterceptor.Request.FullDump,
             interceptor.classifyShellCommand("getprop")
+        )
+        assertEquals(
+            GetPropInterceptor.Request.SingleKey("ro.product.model"),
+            interceptor.classifyShellCommand("su -c \"getprop 'ro.product.model'\"")
         )
     }
 

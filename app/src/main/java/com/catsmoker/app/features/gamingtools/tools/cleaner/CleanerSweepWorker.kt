@@ -2,7 +2,9 @@ package com.catsmoker.app.features.gamingtools.tools.cleaner
 
 import android.app.Notification
 import android.app.NotificationManager
+import android.app.PendingIntent
 import android.content.Context
+import android.content.Intent
 import android.content.pm.ServiceInfo
 import android.os.Build
 import androidx.core.app.NotificationCompat
@@ -107,6 +109,19 @@ class CleanerSweepWorker @AssistedInject constructor(
             .setOnlyAlertOnce(true)
             .setOngoing(true)
             .setGroup(CatsmokerNotifications.GROUP_KEY)
+            .addAction(
+                R.drawable.ic_action_name,
+                applicationContext.getString(R.string.notification_stop),
+                PendingIntent.getBroadcast(
+                    applicationContext,
+                    REQUEST_STOP,
+                    Intent(applicationContext, CleanerSweepStopReceiver::class.java).apply {
+                        action = CleanerSweepStopReceiver.ACTION_STOP
+                        putExtra(CleanerSweepStopReceiver.EXTRA_WORK_ID, id.toString())
+                    },
+                    PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+                )
+            )
             .build()
         return foregroundInfo(notification)
     }
@@ -152,5 +167,6 @@ class CleanerSweepWorker @AssistedInject constructor(
         // 108/109: distinct from the manual/dexopt/overlay IDs so no notice replaces another.
         private const val NOTIFICATION_ID = 108
         private const val RESULT_NOTIFICATION_ID = 109
+        private const val REQUEST_STOP = 0
     }
 }

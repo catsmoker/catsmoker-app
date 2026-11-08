@@ -4,6 +4,7 @@ import android.util.Log
 import com.catsmoker.app.shared.data.model.LSPosedConfig
 import com.catsmoker.app.system.shell.NativeBridge
 import de.robv.android.xposed.XposedBridge
+import java.util.concurrent.TimeUnit
 
 /**
  * The native half of the spoof channel: properties read through NDK/bionic
@@ -175,6 +176,9 @@ internal object NativeSpoofChannel {
     /** The identity key a rendered profile normally answers; absent ⇒ nothing to probe. */
     private const val MODEL_KEY = "ro.product.model"
 
+    /** A process must not block the spoof install path forever. */
+    private const val COMMAND_TIMEOUT_SECONDS = 5L
+
     private const val TAG = "CatsmokerNative"
 
     /** Logcat for the app-side log; LSPosed log too, where a field report can reach it. */
@@ -190,9 +194,7 @@ internal object NativeSpoofChannel {
      */
     private fun isVulkanLive(): Boolean {
         // 1. SurfaceFlinger compositor flag.
-        val sf = runCatching {
-            Runtime.getRuntime().exec("dumpsys SurfaceFlinger").inputStream.bufferedReader().readText()
-        }.getOrDefault("")
+        val sf = captureCommandOutput("dumpsys", "SurfaceFlinger")
         val vulkanEngine = runCatching {
             sf.lines().firstOrNull { it.trim().startsWith("vulkan_renderengine:") }
                 ?.substringAfter("vulkan_renderengine:")
@@ -204,9 +206,7 @@ internal object NativeSpoofChannel {
         }
 
         // 2. Vulkan GPU service reachable.
-        val vk = runCatching {
-            Runtime.getRuntime().exec("cmd gpu vkjson").inputStream.bufferedReader().readText()
-        }.getOrDefault("")
+        val vk = captureCommandOutput("cmd", "gpu", "vkjson")
         if (vk.isNotBlank() && !vk.contains("Failure") && !vk.contains("error")) return true
 
         // 3. Fall back: Vulkan library present and a hardware Vulkan string reported.
@@ -218,9 +218,33 @@ internal object NativeSpoofChannel {
             "/odm/lib64/libvulkan.so",
             "/odm/lib/libvulkan.so"
         ).any { java.io.File(it).exists() }
-        val hwVulkan = runCatching {
-            Runtime.getRuntime().exec("getprop ro.hardware.vulkan").inputStream.bufferedReader().readText().trim()
-        }.getOrDefault("")
+        val hwVulkan = captureCommandOutput("getprop", "ro.hardware.vulkan").trim()
         return libPresent && hwVulkan.isNotBlank()
+    }
+
+    private fun captureCommandOutput(vararg command: String): String {
+        val process = ProcessBuilder(*command)
+            .redirectErrorStream(true)
+            .start()
+        return try {
+            val finished = process.waitFor(COMMAND_TIMEOUT_SECONDS, TimeUnit.SECONDS)
+            if (!finished) {
+                process.destroyForcibly()
+                runCatching { process.outputStream.close() }
+                runCatching { process.inputStream.close() }
+                ""
+            } else {
+                runCatching { process.inputStream.bufferedReader().readText() }
+                    .getOrDefault("")
+            }
+        } catch (_: Exception) {
+            ""
+        } finally {
+            if (process.isAlive) {
+                process.destroyForcibly()
+            }
+            runCatching { process.outputStream.close() }
+            runCatching { process.inputStream.close() }
+        }
     }
 }

@@ -21,6 +21,10 @@ bundled template over an embedded editor's screen.
 3. **Read back and verify.** `md5sum` on device for byte exactness — never
    `cat` for bytes. A write is not done until the device has confirmed it.
 
+The method chooser's **ROOT** route reads, backs up, writes, and verifies through
+the root shell; it must not require a running Shizuku binder. If root is
+unavailable, it reports the fallback and uses the Shizuku route instead.
+
 ## Editor UI contract (2026-10-25)
 
 The editors had three recurring honesty bugs: dead controls for fields the

@@ -782,30 +782,32 @@ class EditGameFilesViewModel @Inject constructor(
     fun onResetMethodSelected(which: Int) {
         _uiState.update { it.copy(showResetChooser = false) }
         when (which) {
-            0 -> performRootAction { resetViaShizuku() }
+            0 -> performRootAction(
+                rootAction = { resetViaShizuku(rootSelected = true) },
+                fallbackAction = { resetViaShizuku() }
+            )
             1 -> resetViaShizuku()
             2 -> resetViaSaf()
         }
     }
 
     /**
-     * Runs [action] through the privileged shell when root is present — the method chooser's
-     * "ROOT" entry — falling back to the Shizuku path when it is not. Kept as a gate rather
-     * than a separate copy of every action so each channel keeps its own single implementation.
+     * Runs the selected ROOT action through root, falling back to Shizuku only when root is
+     * unavailable.
      */
-    private fun performRootAction(action: () -> Unit) {
+    private fun performRootAction(rootAction: () -> Unit, fallbackAction: () -> Unit) {
         if (!shellRunner.isRootAvailable(force = true)) {
             showSnackbar(context.getString(R.string.gf_root_fallback))
-            action()
+            fallbackAction()
             return
         }
-        action()
+        rootAction()
     }
 
-    private fun resetViaShizuku() {
+    private fun resetViaShizuku(rootSelected: Boolean = false) {
         val config = gameConfigs[_uiState.value.selectedGame] ?: return
         val path = config.resetFilePath ?: return
-        if (!Shizuku.pingBinder()) {
+        if (!rootSelected && !Shizuku.pingBinder()) {
             showSnackbar(context.getString(R.string.gf_shizuku_not_running))
             return
         }
@@ -814,10 +816,12 @@ class EditGameFilesViewModel @Inject constructor(
             // exit-code-only report announced "deleted" for a file that never existed. The
             // empty read answers "not there" and gets its own message — "nothing to reset",
             // matching what the SAF reset path already reported.
-            val existing = shellRunner.readFileDirect(path, forceBind = true)
+            val existing = if (rootSelected) readRootFileIfPresent(path)
+            else shellRunner.readFileDirect(path, forceBind = true)
             val message = when {
                 existing == null ->
-                    if (Shizuku.pingBinder()) context.getString(R.string.gf_shizuku_channel_unavailable_short)
+                    if (rootSelected) context.getString(R.string.gf_existing_unreadable)
+                    else if (Shizuku.pingBinder()) context.getString(R.string.gf_shizuku_channel_unavailable_short)
                     else context.getString(R.string.gf_no_privileged_channel)
                 existing.isEmpty() -> context.getString(R.string.gf_not_there_nothing, config.resetFileLabel)
                 else -> {
@@ -951,7 +955,10 @@ class EditGameFilesViewModel @Inject constructor(
             return
         }
         when (which) {
-            0 -> performRootAction { restoreViaShizuku(entry) }
+            0 -> performRootAction(
+                rootAction = { restoreViaShizuku(entry, rootSelected = true) },
+                fallbackAction = { restoreViaShizuku(entry) }
+            )
             1 -> restoreViaShizuku(entry)
             2 -> restoreViaSaf(entry)
         }
@@ -972,13 +979,13 @@ class EditGameFilesViewModel @Inject constructor(
         }
     }
 
-    private fun restoreViaShizuku(entry: ConfigBackupStore.Entry) {
+    private fun restoreViaShizuku(entry: ConfigBackupStore.Entry, rootSelected: Boolean = false) {
         val config = gameConfigs[_uiState.value.selectedGame] ?: return
-        if (!Shizuku.pingBinder()) {
+        if (!rootSelected && !Shizuku.pingBinder()) {
             showSnackbar(context.getString(R.string.gf_shizuku_not_running))
             return
         }
-        if (Shizuku.checkSelfPermission() != PackageManager.PERMISSION_GRANTED) {
+        if (!rootSelected && Shizuku.checkSelfPermission() != PackageManager.PERMISSION_GRANTED) {
             showSnackbar(context.getString(R.string.gf_shizuku_permission_required))
             return
         }
@@ -1005,7 +1012,30 @@ class EditGameFilesViewModel @Inject constructor(
                 // The marker under the list promises the restore is reversible, so take the
                 // bytes being replaced first — a restore of the wrong generation is otherwise
                 // the end of the newer file.
-                val current = readCurrentFileForBackup(destPath)
+                val current = if (rootSelected) {
+                    val exists = shellRunner.execSafeResult("test", "-f", destPath)
+                    when {
+                        exists.isSuccess -> {
+                            val bytes = readRootFile(destPath)
+                            if (bytes == null) {
+                                withContext(Dispatchers.Main) {
+                                    showSnackbar(context.getString(R.string.gf_existing_unreadable))
+                                }
+                                return@launchIoWithLoading false
+                            }
+                            bytes
+                        }
+                        exists.exitCode == 1 -> null
+                        else -> {
+                            withContext(Dispatchers.Main) {
+                                showSnackbar(context.getString(R.string.gf_existing_unreadable))
+                            }
+                            return@launchIoWithLoading false
+                        }
+                    }
+                } else {
+                    readCurrentFileForBackup(destPath)
+                }
                 if (current != null && backupStore.save(config.packageName, targetName, current) == null) {
                     withContext(Dispatchers.Main) { showSnackbar(context.getString(R.string.gf_backup_failed_refused)) }
                     return@launchIoWithLoading false
@@ -1027,7 +1057,11 @@ class EditGameFilesViewModel @Inject constructor(
                         shellRunner.execSafe("chown", owner, destPath)
                     }
                 }
-                val readBack = if (result.isSuccess) readCurrentFileForBackup(destPath) else null
+                val readBack = if (result.isSuccess) {
+                    if (rootSelected) readRootFile(destPath) else readCurrentFileForBackup(destPath)
+                } else {
+                    null
+                }
                 val message = when {
                     !result.isSuccess -> context.getString(
                         R.string.gf_cp_failed,
@@ -1324,10 +1358,20 @@ class EditGameFilesViewModel @Inject constructor(
         }
     }
 
+    /** Keeps a missing root-readable file distinct from an existing file that root could not read. */
+    private suspend fun readRootFileIfPresent(path: String): ByteArray? {
+        val probe = shellRunner.execSafeResult("test", "-f", path)
+        if (!probe.isSuccess) return if (probe.exitCode == 1) ByteArray(0) else null
+        return readRootFile(path)
+    }
+
     fun onMethodSelected(which: Int) {
         _uiState.update { it.copy(showMethodChooser = false) }
         when (which) {
-            0 -> performRootAction { checkAndStartShizukuAction() }
+            0 -> performRootAction(
+                rootAction = { checkAndStartRootAction() },
+                fallbackAction = { checkAndStartShizukuAction() }
+            )
             1 -> checkAndStartShizukuAction()
             2 -> {
                 _events.tryEmit(EditEvent.LaunchSafPicker)
@@ -1779,9 +1823,23 @@ class EditGameFilesViewModel @Inject constructor(
         }
     }
 
-    private fun performShizukuCopy(config: GameConfig) {
+    private fun checkAndStartRootAction() {
+        val config = gameConfigs[_uiState.value.selectedGame] ?: return
+        if (selectedAssetPath == null) {
+            showSnackbar(context.getString(R.string.apply_profile_first))
+            return
+        }
+        performPrivilegedCopy(config, rootSelected = true)
+    }
+
+    private fun performShizukuCopy(config: GameConfig) = performPrivilegedCopy(config)
+
+    private fun performPrivilegedCopy(config: GameConfig, rootSelected: Boolean = false) {
         val assetPath = requireSelectedAssetPath() ?: return
-        launchIoWithLoading(BusyArea.PROFILE_PUSH, successMessage = context.getString(R.string.gf_success_shizuku)) {
+        val successMessage = context.getString(
+            if (rootSelected) R.string.gf_success_root else R.string.gf_success_shizuku
+        )
+        launchIoWithLoading(BusyArea.PROFILE_PUSH, successMessage = successMessage) {
             var pushFile: File? = null
             try {
                 val cacheDir = context.externalCacheDir ?: context.cacheDir
@@ -1801,11 +1859,13 @@ class EditGameFilesViewModel @Inject constructor(
                 // first): applying a profile re-adds the file with the bundled profile's bytes
                 // and the game takes over from its next launch. The save editor keeps its own
                 // refusal (pullSaveBytes → Missing) because patching needs the file's real bytes.
-                val existingBytes = shellRunner.readFileDirect(destPath, forceBind = true)
+                val existingBytes = if (rootSelected) readRootFileIfPresent(destPath)
+                else shellRunner.readFileDirect(destPath, forceBind = true)
                 if (existingBytes == null) {
                     withContext(Dispatchers.Main) {
                         showSnackbar(
-                            if (Shizuku.pingBinder()) context.getString(R.string.gf_shizuku_channel_unavailable_short)
+                            if (rootSelected) context.getString(R.string.gf_existing_unreadable)
+                            else if (Shizuku.pingBinder()) context.getString(R.string.gf_shizuku_channel_unavailable_short)
                             else context.getString(R.string.gf_no_privileged_channel)
                         )
                     }
@@ -1855,7 +1915,7 @@ class EditGameFilesViewModel @Inject constructor(
 
                 // Every step reports its own verdict. The old code discarded both results and
                 // announced success unconditionally, so a failed mkdir or a refused copy still
-                // produced "Success via Shizuku!".
+                // produced a success message unconditionally.
                 val mkdir = shellRunner.execSafeResult("mkdir", "-p", destDir)
                 if (!mkdir.isSuccess) {
                     showSnackbar(context.getString(
@@ -1888,7 +1948,8 @@ class EditGameFilesViewModel @Inject constructor(
 
                 // The copy is not the verdict either: read the device's file back and compare it
                 // with the bytes that were meant to land.
-                val readBack = shellRunner.readFileDirect(destPath, forceBind = true)
+                val readBack = if (rootSelected) readRootFile(destPath)
+                else shellRunner.readFileDirect(destPath, forceBind = true)
                 if (readBack == null || !readBack.contentEquals(inputBytes)) {
                     throw IOException("read-back at $destPath does not match the written bytes")
                 }

@@ -34,6 +34,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
+import java.util.concurrent.TimeUnit
 import kotlin.time.Duration.Companion.milliseconds
 
 sealed class GamingModeState {
@@ -2116,6 +2117,11 @@ class GamingEngine(
     /** What `cmd package compile` actually reported for one package. */
     private data class CompileOutcome(val succeeded: Boolean, val detail: String)
 
+    private fun shellCommandForSu(args: List<String>): String =
+        args.joinToString(" ") { arg ->
+            if (arg.isEmpty()) "''" else "'" + arg.replace("'", "'\\''") + "'"
+        }
+
     /**
      * Compiles one package and reports what the platform said about it.
      *
@@ -2139,16 +2145,36 @@ class GamingEngine(
             return@withContext classifyCompileOutput(result.exitCode, result.text)
         }
         try {
-            val process = ProcessBuilder("su", "-c", args.joinToString(" "))
+            val process = ProcessBuilder("su", "-c", shellCommandForSu(args))
                 .redirectErrorStream(true)
                 .start()
             currentCompileProcess = process
-            // Drained on this thread: an unread pipe fills up and stalls the compiler, and the
-            // output is also the only place the platform says whether it accepted the request.
-            val output = process.inputStream.bufferedReader().use { it.readText() }
-            val exit = process.waitFor()
-            currentCompileProcess = null
-            classifyCompileOutput(exit, output)
+            val output = StringBuilder()
+            val reader = Thread {
+                try {
+                    process.inputStream.bufferedReader().use { reader ->
+                        output.append(reader.readText())
+                    }
+                } catch (_: Exception) {
+                }
+            }.apply { isDaemon = true; start() }
+            val exit = try {
+                if (!process.waitFor(COMPILE_TIMEOUT_SECONDS, TimeUnit.SECONDS)) {
+                    process.destroyForcibly()
+                    runCatching { process.inputStream.close() }
+                    runCatching { process.errorStream.close() }
+                    -1
+                } else {
+                    process.exitValue()
+                }
+            } finally {
+                reader.join(1_000)
+                runCatching { process.inputStream.close() }
+                runCatching { process.errorStream.close() }
+                runCatching { process.outputStream.close() }
+                currentCompileProcess = null
+            }
+            classifyCompileOutput(exit, output.toString())
         } catch (e: Exception) {
             currentCompileProcess = null
             CompileOutcome(false, e.message ?: e.javaClass.simpleName)
@@ -3950,7 +3976,11 @@ class GamingEngine(
         val profile: Int? = null
     )
 
-    private companion object {        val WHITESPACE = Regex("\\s+")
+    private companion object {
+        val WHITESPACE = Regex("\\s+")
+
+        /** A bounded wait for a root compile request; a hung compiler must not stall the UI. */
+        private const val COMPILE_TIMEOUT_SECONDS = 60L
 
         /** Packages per `pm unsuspend` fork in the deactivation sweep; mirrors UID_BATCH_SIZE. */
         private const val UNSUSPEND_BATCH_SIZE = 25

@@ -14,7 +14,6 @@ import androidx.compose.material3.Checkbox
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -50,6 +49,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.LifecycleOwner
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 
 /**
  * Support-dialog prompt state, persisted in `app_prefs` next to `app_launch_count`.
@@ -98,7 +98,7 @@ class MainActivity : ComponentActivity() {    override fun attachBaseContext(new
         
         setContent {
             AppearanceStore.init(applicationContext)
-            val themeMode by AppearanceStore.themeMode.collectAsState()
+            val themeMode by AppearanceStore.themeMode.collectAsStateWithLifecycle()
             val darkTheme = when (themeMode) {
                 AppearanceStore.ThemeMode.DARK -> true
                 AppearanceStore.ThemeMode.LIGHT -> false

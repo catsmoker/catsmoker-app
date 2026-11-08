@@ -162,8 +162,21 @@ class ShellRunner @Inject constructor(
         if (path.split(":").any { dir -> runCatching { java.io.File(dir, "su").exists() }.getOrDefault(false) }) return true
         // Last resort, prompt-free: ask the shell whether `su` resolves.
         return runCatching {
-            val p = Runtime.getRuntime().exec(arrayOf("sh", "-c", "command -v su"))
-            p.waitFor() == 0 && p.inputStream.bufferedReader().readLine().orEmpty().isNotBlank()
+            val process = ProcessBuilder("sh", "-c", "command -v su")
+                .redirectErrorStream(true)
+                .start()
+            val output = try {
+                val finished = process.waitFor(5, TimeUnit.SECONDS)
+                if (!finished) {
+                    process.destroyForcibly()
+                    ""
+                } else {
+                    process.inputStream.bufferedReader().readLine().orEmpty()
+                }
+            } finally {
+                if (process.isAlive) process.destroyForcibly()
+            }
+            output.isNotBlank()
         }.getOrDefault(false)
     }
 
@@ -340,7 +353,11 @@ class ShellRunner @Inject constructor(
             if (result != null) {
                 if (!result.isSuccess) Log.w(TAG, "Root exec failed (exit ${result.code}): $command")
                 // Root is the highest privilege we have; retrying with less cannot help.
-                return@withContext ExecResult(result.code, result.out.joinToString("\n"), "")
+                return@withContext ExecResult(
+                    result.code,
+                    result.out.joinToString("\n"),
+                    result.err.joinToString("\n")
+                )
             }
         }
 
@@ -367,10 +384,9 @@ class ShellRunner @Inject constructor(
         val result = runCatching { Shell.cmd(command).exec() }.getOrNull()
             ?: return@withContext ExecResult.FAILED
         if (!result.isSuccess) {
-            // FLAG_REDIRECT_STDERR folds stderr into stdout, so result.err is empty here.
             Log.w(TAG, "Unprivileged shell failed (exit ${result.code}): $command")
         }
-        ExecResult(result.code, result.out.joinToString("\n"), "")
+        ExecResult(result.code, result.out.joinToString("\n"), result.err.joinToString("\n"))
     }
 
     /**
@@ -398,27 +414,35 @@ class ShellRunner @Inject constructor(
         return try {
             val process = newProcess.invoke(null, arrayOf("sh", "-c", command), null, null)
                 as? Process ?: return null
-            // Both pipes must be drained concurrently; reading stdout to EOF first deadlocks
-            // the moment stderr fills its 64 KB buffer.
+            // Both pipes must be drained concurrently; reading stdout/stderr to EOF in one
+            // thread can deadlock the moment either pipe fills its 64 KB buffer. The wait is
+            // also bounded: a wedged remote command must never keep the binder thread alive.
+            val stdout = StringBuilder()
             val stderr = StringBuilder()
+            val stdoutDrainer = Thread {
+                runCatching { process.inputStream.bufferedReader().readText() }
+                    .onSuccess { stdout.append(it) }
+            }.apply { isDaemon = true; start() }
             val errDrainer = Thread {
                 runCatching { process.errorStream.bufferedReader().readText() }
                     .onSuccess { stderr.append(it) }
             }.apply { isDaemon = true; start() }
-            val stdout = try {
+            try {
                 process.outputStream.use { it.write(stdin) }
-                process.inputStream.bufferedReader().readText()
             } catch (_: Exception) {
-                ""
             }
             val finished = process.waitFor(REMOTE_COMMAND_TIMEOUT_SECONDS, TimeUnit.SECONDS)
-            if (!finished) process.destroy()
+            if (!finished) {
+                process.destroy()
+                if (process.isAlive) process.destroyForcibly()
+            }
+            stdoutDrainer.join(DRAIN_JOIN_MILLIS)
             errDrainer.join(DRAIN_JOIN_MILLIS)
             val exitCode = if (finished) process.exitValue() else -1
             if (exitCode != 0) {
                 Log.w(TAG, "Shizuku remote exec exit $exitCode: ${stderr.toString().ifBlank { "no stderr" }}")
             }
-            ExecResult(exitCode, stdout.trimEnd('\n'), stderr.toString().trimEnd('\n'))
+            ExecResult(exitCode, stdout.toString().trimEnd('\n'), stderr.toString().trimEnd('\n'))
         } catch (t: Throwable) {
             Log.w(TAG, "Shizuku remote exec threw", t)
             null
@@ -716,13 +740,13 @@ class ShellRunner @Inject constructor(
     private suspend fun runProcStatStrategy(strategy: ProcStatStrategy): String = when (strategy) {
         ProcStatStrategy.DIRECT -> runCatching { File(PROC_STAT).readText() }.getOrDefault("")
         // exec() routes through root when it is available, so this is the root channel.
-        ProcStatStrategy.ROOT_SHELL -> if (isRootAvailable()) exec("cat $PROC_STAT") else ""
+        ProcStatStrategy.ROOT_SHELL -> if (isRootAvailable()) execSafe("cat", PROC_STAT) else ""
         ProcStatStrategy.SERVICE -> if (isRootAvailable()) {
             ""
         } else {
             runCatching { bindUserService()?.readProcStat().orEmpty() }.getOrDefault("")
         }
-        ProcStatStrategy.SHELL -> if (hasPrivilege()) exec("cat $PROC_STAT") else ""
+        ProcStatStrategy.SHELL -> if (hasPrivilege()) execSafe("cat", PROC_STAT) else ""
     }
 
     // ---------------------------------------------------------------- lifecycle
@@ -735,7 +759,7 @@ class ShellRunner @Inject constructor(
     suspend fun killCurrentProcess() {
         if (!hasPrivilege()) return
         for (pattern in COMPILE_PROCESS_PATTERNS) {
-            exec("pkill -f $pattern")
+            execSafe("pkill", "-f", pattern)
         }
     }
 

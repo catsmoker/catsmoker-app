@@ -955,7 +955,9 @@ class GamingToolsViewModel @Inject constructor(
         val results = linkedMapOf<String, Int?>()
         for (provider in DnsFeature.PROVIDERS) {
             val host = provider.addresses.firstOrNull() ?: continue
-            val output = runCatching { shellRunner.exec("ping -c 1 -W 2 $host") }.getOrNull().orEmpty()
+            val output = runCatching {
+                shellRunner.execSafe("ping", "-c", "1", "-W", "2", host)
+            }.getOrNull().orEmpty()
             results[host] = PingParser.parseTimeMs(output)
         }
         _uiState.update { it.copy(dnsPingMs = results, isMeasuringDnsPing = false) }

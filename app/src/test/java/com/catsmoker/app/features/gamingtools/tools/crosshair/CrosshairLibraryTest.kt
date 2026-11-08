@@ -31,9 +31,11 @@ class CrosshairLibraryTest {
     fun catalogRejectsPathTraversalAndDuplicateNames() {
         val unsafe = runCatching { CrosshairCatalog.parse("""{"files":["../secret.png"]}""") }
         val duplicate = runCatching { CrosshairCatalog.parse("""{"files":["scope1.png","scope1.png"]}""") }
+        val malformed = runCatching { CrosshairCatalog.parse("""{"files":["scope-not-a-number.png"]}""") }
 
         assertTrue(unsafe.isFailure)
         assertTrue(duplicate.isFailure)
+        assertTrue(malformed.isFailure)
     }
 
     @Test

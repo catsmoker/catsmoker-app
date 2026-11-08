@@ -455,7 +455,7 @@ class MetricsEngine(
             // privileged shell, then read each node through it. Same nulls-when-unreadable
             // contract as the file path.
             val root = "/sys/devices/system/cpu/cpufreq"
-            val dirs = runCatching { shellRunner.exec("ls $root") }.getOrNull()
+            val dirs = runCatching { shellRunner.execSafe("ls", root) }.getOrNull()
                 ?.lineSequence()
                 ?.map { it.trim() }
                 ?.filter { it.startsWith("policy") }
@@ -463,7 +463,7 @@ class MetricsEngine(
                 ?.toList()
                 .orEmpty()
             KernelInfo.readPoliciesSuspend(dirs) { file ->
-                runCatching { shellRunner.exec("cat ${file.path}") }
+                runCatching { shellRunner.execSafe("cat", file.path) }
                     .getOrNull()?.trim()?.takeIf { it.isNotEmpty() }
             }
         } else {
@@ -743,7 +743,7 @@ class MetricsEngine(
         return try {
             // -W bounds the wait so a dead link cannot stall this poll for the shell's timeout.
             // Shared PingParser (consolidation C2): one `time=` rule for dashboard + DNS diagnostics.
-            val output = shellRunner.exec("ping -c 1 -W $PING_TIMEOUT_SECONDS $PING_HOST")
+            val output = shellRunner.execSafe("ping", "-c", "1", "-W", PING_TIMEOUT_SECONDS.toString(), PING_HOST)
             val millis = PingParser.parseTimeMs(output)
             if (millis != null) {
                 PingReading(millis, MetricReadStatus.Ok)

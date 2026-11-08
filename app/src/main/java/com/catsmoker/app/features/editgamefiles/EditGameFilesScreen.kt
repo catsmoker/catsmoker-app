@@ -14,6 +14,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
@@ -48,7 +49,7 @@ import com.catsmoker.app.shared.ui.components.SquigglyProgressBar
 @Composable
 fun EditGameFilesRoute(onBack: () -> Unit) {
     val viewModel: EditGameFilesViewModel = hiltViewModel()
-    val uiState by viewModel.uiState.collectAsState()
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val context = LocalContext.current
     val zarchiverCopied = stringResource(R.string.gf_zarchiver_copied)
 

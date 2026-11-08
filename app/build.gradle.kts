@@ -18,8 +18,8 @@ android {
         // Only locales the app actually ships (see res/xml/locales_config.xml): strips the
         // dozens of transitive locales dragged in by material/ads/splashscreen/work.
         // Shrinking alone cannot do this. Qualifiers match res/values-* dirs exactly;
-        // in-app tags are en/ar/es/zh-CN/pt-BR (AppearanceStore), en-GB is a mirror.
-        localeFilters += setOf("en", "en-rGB", "ar", "es", "zh-rCN", "pt-rBR", "fr")
+        // in-app tags are en/ar/es/ja/zh-CN/pt-BR (AppearanceStore), en-GB is a mirror.
+        localeFilters += setOf("en", "en-rGB", "ar", "es", "ja", "zh-rCN", "pt-rBR", "fr")
     }
 
     defaultConfig {
@@ -222,6 +222,7 @@ dependencies {
     implementation(libs.activity.compose)
     implementation(libs.navigation.compose)
     implementation(libs.lifecycle.runtime.ktx)
+    implementation(libs.lifecycle.runtime.compose)
     implementation(libs.coil.compose)
 
     // --- Hilt DI ---

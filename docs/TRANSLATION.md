@@ -8,11 +8,10 @@ strings into resources.
 - The project uses Android resources for user-visible copy, split by area:
   `values/strings.xml` (core) + `strings_core/gamefiles/gaming/legal/sys.xml`
   in `src/main`, plus `strings_spoof.xml` in `src/full` (Full flavor only),
-  each mirrored key-for-key in `values-en-rGB/`, `values-ar/`, `values-es/`,
-  `values-zh-rCN/`, `values-pt-rBR/` (`en en-rGB ar es zh-CN pt-rBR`, declared
+  each mirrored key-for-key in   `values-en-rGB/`, `values-ar/`, `values-es/`, `values-ja/`,
+  `values-zh-rCN/`, `values-pt-rBR/` (`en en-rGB ar es ja zh-CN pt-rBR`, declared
   in `androidResources.localeFilters` + `res/xml/locales_config.xml`; in-app tags are
-  `en/ar/es/zh-CN/pt-BR`).
-  A key missing from a mirror falls back to the wrong language at runtime, so
+  `en/ar/es/ja/zh-CN/pt-BR`).  A key missing from a mirror falls back to the wrong language at runtime, so
   `LocaleParityTest` pins parity for user-visible copy — extend it when adding
   user-facing strings.
 - There IS a runtime language switcher: `LocaleHelper.wrap` in both

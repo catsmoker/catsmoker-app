@@ -3,13 +3,13 @@ package com.catsmoker.app.system.navigation
 import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.ExitTransition
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.catsmoker.app.features.about.AboutRoute
 import com.catsmoker.app.features.about.DonateRoute
 import com.catsmoker.app.features.about.LicensesRoute
@@ -57,7 +57,7 @@ fun AppNavHost(navController: NavHostController, startDestination: String) {
                 navController.getBackStackEntry(Routes.GAMING_TOOLS)
             }
             val gamingToolsViewModel: GamingToolsViewModel = hiltViewModel(parentEntry)
-            val uiState by gamingToolsViewModel.uiState.collectAsState()
+            val uiState by gamingToolsViewModel.uiState.collectAsStateWithLifecycle()
             CrosshairLibraryRoute(
                 selectedAsset = uiState.selectedCrosshair,
                 onBack = { navController.popBackStack() },

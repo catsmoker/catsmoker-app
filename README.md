@@ -27,10 +27,16 @@
 
 [![Typing effect](https://readme-typing-svg.demolab.com?font=Fira+Code&size=20&duration=2800&pause=900&color=0EA5E9&center=true&vCenter=true&width=620&lines=Tune+your+game.+Measure+your+device.;Android+gaming+tools+for+serious+sessions.)](https://github.com/catsmoker/com.catsmoker.app)
 
-[Download](https://github.com/catsmoker/com.catsmoker.app/releases) · [Report an issue](https://github.com/catsmoker/com.catsmoker.app/issues) · [简体中文](README.zh-CN.md)
+[Download](https://github.com/catsmoker/com.catsmoker.app/releases) · [Report an issue](https://github.com/catsmoker/com.catsmoker.app/issues)
+
+[English](/README.md) · [العربية](README.ar.md) · [Español](README.es.md) · [中文](README.zh-CN.md) · [日本語](README.ja.md) · [Português](README.pt-BR.md)
 </div>
 
 **CatSmoker** is an Android optimization utility for supported games. It combines system-level integrations, game configuration tools, performance overlays, and gaming-focused controls in one app.
+
+## Overview
+
+CatSmoker helps you tune game performance, inspect live device telemetry, and apply targeted optimizations for supported Android games. The app is designed for players who want better FPS, lower latency, clearer diagnostics, and more responsive system control without a bulky, generic toolbox.
 
 ---
 

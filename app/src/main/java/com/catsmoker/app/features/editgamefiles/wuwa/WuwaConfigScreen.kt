@@ -9,6 +9,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -50,7 +51,7 @@ import com.catsmoker.app.shared.ui.components.ChipFlowRow
 @Composable
 fun WuwaConfigRoute(onBack: (() -> Unit)? = null) {
     val viewModel: WuwaConfigViewModel = hiltViewModel()
-    val uiState by viewModel.uiState.collectAsState()
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val context = LocalContext.current
 
     // SAF folder picker: the tree grant lives under the game's Android/data root. The deploy
@@ -1114,4 +1115,3 @@ private fun DeployReportCard(report: WuwaConfigManager.DeploySuccess) {
         initiallyExpanded = true
     )
 }
-

@@ -140,6 +140,9 @@ These recur across the codebase — a reviewer will expect them:
   channel *and* on each `Builder`; the group renders as one stack only
   because of the shared summary row. One notification per service is
   required (each `startForeground` lifetime needs its own).
+- Ongoing service and in-progress scheduled-work notifications expose a stop
+  action. The cleaner's action stops only the current sweep and keeps its
+  enabled recurring schedule enrolled.
 - Small icons are `ic_stat_*` (white alpha mask), actions `ic_action_*` (red);
   never `android.R.drawable` placeholders.
 - Exported components: the launcher `MainActivity` and the guarded

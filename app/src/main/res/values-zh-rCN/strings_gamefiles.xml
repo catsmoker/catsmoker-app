@@ -145,6 +145,7 @@
     <string name="gf_select_file_first">请先选择文件</string>
     <string name="gf_success_saf">通过 SAF 成功！</string>
     <string name="gf_success_shizuku">通过 Shizuku 成功！</string>
+    <string name="gf_success_root">通过 root 成功！</string>
     <string name="gf_game_not_installed_toast">游戏未安装</string>
     <string name="gf_failed">失败：%1$s</string>
     <string name="gf_zarchiver_copied">文件已复制到下载目录。请打开 ZArchiver 粘贴。</string>
