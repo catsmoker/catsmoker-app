@@ -80,6 +80,7 @@ fun languageEndonym(tag: String): String = when (tag) {
     AppearanceStore.LANGUAGE_CHINESE -> "中文 (简体)"
     AppearanceStore.LANGUAGE_PORTUGUESE -> "Português (Brasil)"
     AppearanceStore.LANGUAGE_ENGLISH -> "English"
+    AppearanceStore.LANGUAGE_JAPANESE -> "日本語"
     else -> ""
 }
 
@@ -99,7 +100,8 @@ fun languageOptions(): List<String> = listOf(
     AppearanceStore.LANGUAGE_ARABIC,
     AppearanceStore.LANGUAGE_SPANISH,
     AppearanceStore.LANGUAGE_CHINESE,
-    AppearanceStore.LANGUAGE_PORTUGUESE
+    AppearanceStore.LANGUAGE_PORTUGUESE,
+    AppearanceStore.LANGUAGE_JAPANESE
 )
 
 @Composable

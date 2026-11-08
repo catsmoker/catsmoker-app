@@ -1,139 +1,139 @@
 <resources xmlns:tools="http://schemas.android.com/tools" tools:ignore="MissingTranslation">
     <!-- Legal screens (Privacy Policy + Terms & Conditions). Every key here is user-visible
-        and must be mirrored in all locale mirrors (see LocaleParityTest). Bodies describe
-        only verified behavior; the contact address is the project's own support inbox. -->
+         and must be mirrored in all locale mirrors (see LocaleParityTest). Bodies describe
+         only verified behavior; the contact address is the project's own support inbox. -->
 
-    <string name="legal_section_title">Legal</string>
-    <string name="legal_privacy_title">Privacy Policy</string>
-    <string name="legal_privacy_subtitle">What the app stores and shares.</string>
-    <string name="legal_privacy_updated">Last updated: 2026-10-25</string>
-    <string name="legal_terms_title">Terms &amp; Conditions</string>
-    <string name="legal_website_title">Legal Website</string>
-    <string name="legal_terms_subtitle">Rules for using the app.</string>
-    <string name="legal_terms_updated">Last updated: 2026-10-25</string>
+    <string name="legal_section_title">法的情報</string>
+    <string name="legal_privacy_title">プライバシーポリシー</string>
+    <string name="legal_privacy_subtitle">アプリが保存・共有する内容</string>
+    <string name="legal_privacy_updated">最終更新: 2026-10-25</string>
+    <string name="legal_terms_title">利用規約</string>
+    <string name="legal_website_title">法的情報Webサイト</string>
+    <string name="legal_terms_subtitle">アプリ利用のルール</string>
+    <string name="legal_terms_updated">最終更新: 2026-10-25</string>
 
-    <string name="legal_p_intro">CatSmoker is an open-source Android app with no accounts, no sign-in and no project-operated servers. Almost everything the app knows stays on your device. This policy explains what is stored locally, what the app\u2019s third-party SDKs send, and what rights you have. CatSmoker is the \u201cService Provider\u201d referred to below.</string>
+    <string name="legal_p_intro">CatSmokerは、アカウントなし、サインインなし、プロジェクト運営サーバーなしのオープンソースAndroidアプリです。アプリが知るほぼすべての情報はデバイス上に留まります。このポリシーでは、ローカルに保存されるデータ、サードパーティSDKが送信するデータ、あなたの権利について説明します。以下で言及される「サービスプロバイダ」はCatSmokerを指します。</string>
 
-    <string name="legal_p_local_title">1. Data stored on your device</string>
-    <string name="legal_p_local_body">Settings and app state are kept in on-device storage only: theme, language, onboarding choices, launch counters, ad preferences, update-check preferences, game library entries, spoofing profiles and per-app assignments, Gaming Mode options (DNS choice, refresh rate, cleaner patterns, suspend lists), overlay and crosshair positions, game-config backups, diagnostic logs and crash records. Nothing in this list is uploaded to the developer \u2014 there is no backend to upload it to. Uninstalling the app, or clearing its data, deletes it.</string>
+    <string name="legal_p_local_title">1. デバイス上に保存されるデータ</string>
+    <string name="legal_p_local_body">設定とアプリ状態はデバイス上のストレージのみに保存されます: テーマ、言語、オンボーディング選択、起動カウンター、広告プリファレンス、アップデート確認プリファレンス、ゲームライブラリエントリ、スプーフィングプロファイルとアプリごとの割り当て、ゲーミングモードオプション(DNS選択、リフレッシュレート、クリーナーパターン、サスペンドリスト)、オーバーレイとクロスヘア位置、ゲーム設定バックアップ、診断ログとクラッシュレコード。このリストのいずれも開発者にアップロードされません — アップロードするバックエンドが存在しないためです。アプリをアンインストールするか、データをクリアすると削除されます。</string>
 
-    <string name="legal_p_analytics_title">2. Analytics, cookies and tracking technologies</string>
-    <string name="legal_p_analytics_body">The app bundles Firebase Analytics (Google Analytics for Firebase) in both builds. Unless you turn it off, it sends Google automatic usage events (app opens, sessions, app updates and app exceptions) together with the app version, device model, language and a per-install identifier; Google also estimates an approximate location from your IP address. The app itself logs no custom events, so game titles, file paths, configuration contents and values you type are never sent. Firebase may also read the advertising identifier, as the ad SDKs do. Collection is on by default. The switch under Settings &gt; Send Analytics Data is saved on the device, re-applied to the SDK at every startup and applied immediately when changed; while it is off, no analytics events are sent. Neither build sets cookies or runs web pixels. The Firebase installations service may still contact Google to keep an installation ID current, and Google handles that data under its own privacy policy.</string>
+    <string name="legal_p_analytics_title">2. 解析、Cookie、追跡技術</string>
+    <string name="legal_p_analytics_body">アプリには両ビルドともFirebase Analytics(Google Analytics for Firebase)が同梱されています。オフにしない限り、アプリバージョン、デバイスモデル、言語、インストールごとの識別子とともに、自動利用イベント(アプリ起動、セッション、アプリ更新、アプリ例外)がGoogleに送信されます。GoogleはIPアドレスからおおよその位置も推定します。アプリ自体はカスタムイベントをログしません。ゲームタイトル、ファイルパス、設定内容、入力値は一切送信されません。Firebaseは広告識別子も読み取る場合があります(広告SDKと同様)。収集はデフォルトでオンです。設定→解析データを送信 のスイッチはデバイスに保存され、起動ごとにSDKへ再適用され、変更時は即座に反映されます。オフの間は解析イベントは送信されません。どちらのビルドもCookieを設定せず、Webピクセルも実行しません。Firebase InstallationsサービスがインストールIDの維持のためにGoogleへ接続する場合があり、そのデータはGoogleのプライバシーポリシーに従って処理されます。</string>
 
-    <string name="legal_p_ads_title">3. Advertising (Start.io or AdMob)</string>
-    <string name="legal_p_ads_body">Ads depend on the build. The full (GitHub) build shows banner ads from Start.io and has a free ads-off switch in Settings. The Play Store build shows ads from AdMob and lets you remove them with a one-time Google Play purchase. The ad SDK starts with the app and may collect your advertising ID, device information and IP address to serve and measure ads, under that provider\u2019s policy. Turning ads off or buying ad removal stops banners being requested and shown; it does not remove the SDK from the app.</string>
+    <string name="legal_p_ads_title">3. 広告 (Start.io または AdMob)</string>
+    <string name="legal_p_ads_body">広告はビルドによって異なります。フル版(GitHub版)はStart.ioのバナー広告を表示し、設定に無料の広告オフスイッチがあります。Playストア版はAdMobの広告を表示し、Google Playの買い切り購入で削除できます。広告SDKはアプリ起動時に開始し、広告配信と計測のため、各プロバイダのポリシーに従い広告ID、デバイス情報、IPアドレスを収集する場合があります。広告をオフにするか購入すると、バナーのリクエストと表示が停止します。SDK自体はアプリから削除されません。</string>
 
-    <string name="legal_p_updates_title">4. Update checks</string>
-    <string name="legal_p_updates_body">When you tap \u201cCheck for Updates\u201d (or when automatic checks run), the app queries the public GitHub releases API for this project. That request necessarily reveals your IP address and app version to GitHub, under GitHub\u2019s own privacy terms. In the full build automatic checks are on by default and can be turned off in Settings; the Play Store build never checks GitHub for updates. Downloaded update files are stored in the app\u2019s private external files directory and installed only after you confirm.</string>
+    <string name="legal_p_updates_title">4. アップデート確認</string>
+    <string name="legal_p_updates_body">「アップデートを確認」をタップするか(自動確認実行時)、アプリはこのプロジェクトの公開GitHubリリースAPIに問い合わせます。このリクエストは必然的にIPアドレスとアプリバージョンをGitHubに伝え、GitHubのプライバシー規約が適用されます。フル版では自動確認がデフォルトでオンで、設定でオフにできます。Playストア版はGitHubでのアップデート確認を行いません。ダウンロードしたアップデートファイルはアプリのプライベート外部ファイルディレクトリに保存され、確認後にのみインストールされます。</string>
 
-    <string name="legal_p_sharing_title">5. Logs, profiles and files you choose to share</string>
-    <string name="legal_p_sharing_body">Diagnostic logs, crash reports, exported profiles and game configs never leave the device on their own. They are exported only when you tap Share or Export, through Android\u2019s share sheet or a file picker, to a destination you choose. Logs can contain device and system details \u2014 review them before sending them to anyone.</string>
+    <string name="legal_p_sharing_title">5. あなたが共有を選択したログ、プロファイル、ファイル</string>
+    <string name="legal_p_sharing_body">診断ログ、クラッシュレポート、エクスポートしたプロファイルとゲーム設定は、自発的にデバイス外へ出ることはありません。共有またはエクスポートをタップしたときのみ、Androidの共有シートやファイルピッカーを通じて、あなたが選んだ宛先へ送られます。ログにはデバイスとシステムの詳細が含まれる場合があります — 送信前に確認してください。</string>
 
-    <string name="legal_p_permissions_title">6. Device permissions</string>
-    <string name="legal_p_permissions_body">The app requests permissions only to perform the features you ask for: file access for reading and backing up game configs, overlay permission for the performance and crosshair overlays, usage access to detect game sessions, notification access for Gaming Mode quiet-hours, microphone access only for the optional audio-visualizer boost, and Bluetooth information only to identify audio devices. Each can be denied \u2014 the related feature then reports itself as unavailable instead of failing silently.</string>
+    <string name="legal_p_permissions_title">6. デバイス権限</string>
+    <string name="legal_p_permissions_body">アプリは、あなたが要求した機能を実行するためにのみ権限を要求します: ゲーム設定の読み書きとバックアップのためのファイルアクセス、パフォーマンスとクロスヘアオーバーレイのためのオーバーレイ権限、ゲームセッション検知のための使用状況アクセス、ゲーミングモード静音時間のための通知アクセス、オプションのオーディオビジュアライザブーストのためのマイクアクセス、オーディオデバイス識別のためのBluetooth情報。各権限は拒否可能です — 関連機能は静かに失敗するのではなく、利用不可として報告されます。</string>
 
-    <string name="legal_p_vpn_title">7. Local VPN firewall</string>
-    <string name="legal_p_vpn_body">The optional app-network firewall uses Android\u2019s VPN framework as a local on-device filter. Traffic rules are applied on the phone itself; no traffic is sent to project servers, because there are none.</string>
+    <string name="legal_p_vpn_title">7. ローカルVPNファイアウォール</string>
+    <string name="legal_p_vpn_body">オプションのアプリネットワークファイアウォールは、AndroidのVPNフレームワークをローカルなオンデバイスフィルタとして使用します。トラフィックルールは端末上で適用され、プロジェクトサーバーへは一切送信されません — サーバーが存在しないためです。</string>
 
-    <string name="legal_p_external_title">8. External links and donations</string>
-    <string name="legal_p_external_body">Community links (GitHub, website, Discord, Telegram) and donation options (PayPal, Binance, crypto addresses) open outside the app. When you use them, those services receive the data they normally collect (such as your IP address and, for payments, your payment details) under their own policies. Donations are voluntary and processed entirely by those external services \u2014 the app never sees or stores your payment information.</string>
+    <string name="legal_p_external_title">8. 外部リンクと寄付</string>
+    <string name="legal_p_external_body">コミュニティリンク(GitHub、Webサイト、Discord、Telegram)と寄付オプション(PayPal、Binance、暗号資産アドレス)はアプリ外で開きます。利用時、それらのサービスは通常収集するデータ(IPアドレス、支払いの場合は支払い詳細など)を各自のポリシーに従って受け取ります。寄付は任意で、それら外部サービスによって完全に処理されます — アプリは支払い情報を見たり保存したりしません。</string>
 
-    <string name="legal_p_rights_title">9. Your rights (including California)</string>
-    <string name="legal_p_rights_body">You can ask the developer to access, correct or delete personal data the developer holds about you \u2014 in practice, support emails and any files you chose to send \u2014 and you can withdraw consent at any time without affecting processing already carried out. Write to catsmoker.lab@gmail.com. Data held by Google or Start.io is controlled by those providers; use their privacy tools or ask the developer for the right contact. California residents (CCPA/CPRA) have the right to know what personal information is collected, to delete it, to opt out of its sale or sharing, and not to be discriminated against for exercising these rights. The developer does not sell personal information and does not receive your raw analytics or advertising data; the providers named above may share identifiers for advertising under their own policies. Send CCPA/CPRA requests to catsmoker.lab@gmail.com.</string>
+    <string name="legal_p_rights_title">9. あなたの権利 (カリフォルニア州含む)</string>
+    <string name="legal_p_rights_body">開発者が保有するあなたの個人データへのアクセス、訂正、削除を求めることができます — 実際にはサポートメールとあなたが送信を選んだファイルです。また、処理済みのものに影響を与えず、いつでも同意を撤回できます。 catsmoker.lab@gmail.com へご連絡ください。GoogleやStart.ioが保有するデータは各プロバイダが管理します。それらのプライバシーツールを利用するか、開発者に適切な連絡先をお尋ねください。カリフォルニア州在住の方(CCPA/CPRA)は、収集される個人情報を知る権利、削除権、販売や共有のオプトアウト権、これらの権利行使による差別を受けない権利を持ちます。開発者は個人情報を販売せず、生の解析データや広告データを受け取りません。上記プロバイダは各自のポリシーに基づき識別子を広告目的で共有する場合があります。CCPA/CPRA請求は catsmoker.lab@gmail.com へ。</string>
 
-    <string name="legal_p_disclosure_title">10. Legal disclosure and service providers</string>
-    <string name="legal_p_disclosure_body">Data may be disclosed when required by law, such as to comply with a subpoena or similar legal process, or when the developer believes in good faith that disclosure is necessary to protect rights, safety or the safety of others, investigate fraud, or respond to a government request. Providers that work for the developer \u2014 for example the email service behind the support inbox \u2014 process data only for that purpose and under confidentiality obligations. The developer does not receive your raw app data from Firebase or the ad SDKs, only aggregated reports.</string>
+    <string name="legal_p_disclosure_title">10. 法的開示とサービスプロバイダ</string>
+    <string name="legal_p_disclosure_body">データは法的に要求された場合(召喚状や類似の法的手続きへの対応など)、または開発者が権利、安全、他者の安全の保護、詐欺調査、政府要請への対応のために誠実に必要と判断した場合に開示されることがあります。開発者のために働くプロバイダ(サポート受信箱裏のメールサービスなど)は、その目的のみでデータを処理し、守秘義務を負います。開発者はFirebaseや広告SDKからあなたの生のアプリデータを受け取らず、集計レポートのみを受け取ります。</string>
 
-    <string name="legal_p_transfers_title">11. International data transfers</string>
-    <string name="legal_p_transfers_body">Google (Firebase, AdMob, Google Play) and Start.io may process data in countries outside your own, including outside the European Economic Area. Where the law requires safeguards for such transfers, those providers use mechanisms such as Standard Contractual Clauses approved by the European Commission, adequacy decisions, or your consent where required and legally permitted. The developer\u2019s own correspondence is handled by email providers that may store it abroad. Data protection laws in other countries may differ from those where you live.</string>
+    <string name="legal_p_transfers_title">11. 国際的なデータ転送</string>
+    <string name="legal_p_transfers_body">Google(Firebase、AdMob、Google Play)とStart.ioは、あなたの国以外、欧州経済領域(EEA)外の国でもデータを処理する場合があります。法的にセーフガードが要求される場合、これらのプロバイダは欧州委員会承認の標準契約条項、適格性決定、法的に要求・許可される場合の同意などの仕組みを用います。開発者自身の通信は海外に保存される可能性のあるメールプロバイダが扱います。他国のデータ保護法はあなたの居住国のものと異なる場合があります。</string>
 
-    <string name="legal_p_retention_title">12. Data retention</string>
-    <string name="legal_p_retention_body">Data on your device stays until you uninstall the app or clear its data. Support emails and files you send are kept until you ask for deletion, or longer where the law requires it. Firebase and the ad providers keep data under their own retention policies; the developer cannot delete data held by them on your behalf \u2014 use their privacy controls or contact them. Aggregated statistics that no longer identify you may be kept indefinitely.</string>
+    <string name="legal_p_retention_title">12. データ保持</string>
+    <string name="legal_p_retention_body">デバイス上のデータは、アプリをアンインストールするかデータをクリアするまで保持されます。サポートメールと送信したファイルは、削除要請があるまで、または法的により長い保持が要求される場合はそれ以上保持されます。Firebaseと広告プロバイダは各自の保持ポリシーに従ってデータを保持します。開発者はそれらが保持するデータをあなたに代わって削除できません。それらのプライバシーコントロールを利用するか、直接連絡してください。個人を特定できなくなった集計統計は無期限に保持される場合があります。</string>
 
-    <string name="legal_p_children_title">13. Children</string>
-    <string name="legal_p_children_body">The app is not intended for children under 16, or the higher age required where you live, and the developer does not knowingly collect personal data from children or market the app to them. If a child has sent personal data \u2014 for example in an email \u2014 a parent or guardian can write to catsmoker.lab@gmail.com and it will be deleted. Where parental or guardian consent is required by law, the app is not intended for use without that consent.</string>
+    <string name="legal_p_children_title">13. 子ども</string>
+    <string name="legal_p_children_body">本アプリは、お住まいの地域で要求されるより高い年齢がない限り、16歳未満の子どもを対象としていません。開発者は子どもからの個人データを故意に収集せず、子ども向けにアプリをマーケティングしません。子どもが個人データを送信した場合(メールなど)、保護者または後見人が catsmoker.lab@gmail.com へ連絡すれば削除されます。法的に保護者同意が必要な場合、本アプリはその同意なしでの利用を想定していません。</string>
 
-    <string name="legal_p_security_title">14. Security and data breach notification</string>
-    <string name="legal_p_security_body">App data is protected by Android\u2019s app sandbox and your device lock. The developer operates no server that stores app data, so there is no central user database to breach; support emails are protected by the email provider\u2019s security. If a breach affects personal data the developer holds, affected users will be notified as required by law, including the nature of the breach and the steps taken to address it.</string>
+    <string name="legal_p_security_title">14. セキュリティとデータ漏洩通知</string>
+    <string name="legal_p_security_body">アプリデータはAndroidのアプリサンドボックスとデバイスロックで保護されます。開発者はアプリデータを保存するサーバーを運営しておらず、侵害される中央ユーザーデータベースは存在しません。サポートメールはメールプロバイダのセキュリティで保護されます。開発者が保有する個人データに影響する漏洩が発生した場合、法的に要求される通り、漏洩の性質と対応措置を含め、影響を受けたユーザーに通知します。</string>
 
-    <string name="legal_p_consent_title">15. Your consent and opt-out</string>
-    <string name="legal_p_consent_body">Optional features \u2014 overlays, the VPN filter, root or Shizuku actions and sharing \u2014 run only when you turn them on. You can withdraw consent by turning a feature off or uninstalling the app; this does not affect processing carried out before withdrawal. Uninstalling stops the app from collecting data on your device, but does not delete data already sent to Google or Start.io. To request deletion of data the developer holds, email catsmoker.lab@gmail.com.</string>
+    <string name="legal_p_consent_title">15. あなたの同意とオプトアウト</string>
+    <string name="legal_p_consent_body">オプション機能 — オーバーレイ、VPNフィルタ、RootやShizukuアクション、共有 — は、あなたがオンにしたときのみ動作します。機能をオフにするかアプリをアンインストールすることで同意を撤回できます。これは撤回前に実行された処理には影響しません。アンインストールするとデバイス上でのデータ収集は停止しますが、GoogleやStart.ioに既に送信されたデータは削除されません。開発者が保有するデータの削除を求める場合は catsmoker.lab@gmail.com へメールしてください。</string>
 
-    <string name="legal_p_changes_title">16. Changes to this policy</string>
-    <string name="legal_p_changes_body">The developer may update this policy from time to time. The current version always ships in the app on this screen with a new \u201clast updated\u201d date. Material changes are announced by posting the new text here; where the law requires consent to a material change, it will be requested before the change takes effect. Previous versions are available on request at catsmoker.lab@gmail.com.</string>
+    <string name="legal_p_changes_title">16. このポリシーの変更</string>
+    <string name="legal_p_changes_body">開発者はこのポリシーを随時更新する場合があります。最新版は常に「最終更新」日付を更新してアプリ内この画面に同梱されます。重大な変更はここに新しいテキストを掲載することで告知されます。法的に重大な変更への同意が必要な場合、変更発効前に同意を求めます。過去版は catsmoker.lab@gmail.com へ請求すれば入手可能です。</string>
 
-    <string name="legal_p_contact_title">17. Contact</string>
-    <string name="legal_p_contact_body">Questions about this policy, privacy requests, and reports of unlawful content or misuse can be sent to catsmoker.lab@gmail.com. The developer will respond within a reasonable period.</string>
+    <string name="legal_p_contact_title">17. 連絡先</string>
+    <string name="legal_p_contact_body">このポリシーに関する質問、プライバシー請求、違法コンテンツや不正利用の報告は catsmoker.lab@gmail.com へ送信できます。開発者は合理的な期間内に回答します。</string>
 
-    <string name="legal_t_intro">These Terms and Conditions apply to the CatSmoker app for mobile devices and to any related services operated by CatSmoker (together, the \u201cApplication\u201d). CatSmoker is the \u201cService Provider\u201d. By downloading, installing or using the Application, you agree to these Terms. Read them carefully before using the app. If you do not agree, do not use the Application. The app has no accounts and no project-operated servers, so these Terms mainly describe your responsibilities when using local features.</string>
+    <string name="legal_t_intro">これらの利用規約は、モバイルデバイス向けCatSmokerアプリおよびCatSmokerが運営する関連サービス(以下合わせて「アプリケーション」)に適用されます。CatSmokerは「サービスプロバイダ」です。アプリケーションをダウンロード、インストール、または使用することで、これらの規約に同意したことになります。使用前に注意深くお読みください。同意できない場合はアプリケーションを使用しないでください。アプリにはアカウントもプロジェクト運営サーバーもないため、これらの規約は主にローカル機能使用時のあなたの責任を説明します。</string>
 
-    <string name="legal_t_license_title">1. Open-source license</string>
-    <string name="legal_t_license_body">The Application\u2019s source code is distributed as open-source software under the Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International License (CC BY-NC-SA 4.0). Your use, reproduction and distribution of the Application are governed by that license. Nothing in these Terms restricts the rights that license gives you.</string>
+    <string name="legal_t_license_title">1. オープンソースライセンス</string>
+    <string name="legal_t_license_body">アプリケーションのソースコードは、クリエイティブ・コモンズ 表示-非営利-継承 4.0 国際ライセンス(CC BY-NC-SA 4.0)の下でオープンソースソフトウェアとして配布されています。アプリケーションの利用、複製、配布はこのライセンスに従います。これらの規約のいずれも、このライセンスが与える権利を制限しません。</string>
 
-    <string name="legal_t_ip_title">2. Intellectual property</string>
-    <string name="legal_t_ip_body">CatSmoker retains all intellectual property rights in the Application\u2019s code, design, name, logos and branding. The open-source license covers the code only. It does not grant you any right to use the CatSmoker name, logos or branding in a way that suggests endorsement or an official version. Do not remove or alter copyright, license or other proprietary notices displayed in the Application.</string>
+    <string name="legal_t_ip_title">2. 知的財産権</string>
+    <string name="legal_t_ip_body">CatSmokerは、アプリケーションのコード、デザイン、名称、ロゴ、ブランディングに関するすべての知的財産権を保有します。オープンソースライセンスはコードのみを対象とします。CatSmokerの名称、ロゴ、ブランディングを、公式版や推奨を示唆する形で使用する権利は与えません。アプリケーションに表示される著作権、ライセンス、その他の所有権表示を削除または変更しないでください。</string>
 
-    <string name="legal_t_eligibility_title">3. Eligibility</string>
-    <string name="legal_t_eligibility_body">You represent that the law of your jurisdiction permits you to use the Application. You must be at least 16 years old, or the age of digital consent in your jurisdiction if that is higher. If you are younger, a parent or legal guardian must review and accept these Terms on your behalf.</string>
+    <string name="legal_t_eligibility_title">3. 利用資格</string>
+    <string name="legal_t_eligibility_body">あなたは、お住まいの法域の法律がアプリケーションの利用を許可していることを表明します。16歳以上、またはお住まいの法域のデジタル同意年齢がそれより高い場合はその年齢以上である必要があります。未満の場合、保護者または法定代理人があなたに代わってこれらの規約を確認・同意する必要があります。</string>
 
-    <string name="legal_t_use_title">4. Acceptable use</string>
-    <string name="legal_t_use_body">Use the Application lawfully and only for its gaming-performance purpose. Do not use it to harm devices, networks or other people, to break the law or infringe intellectual property rights, or to misrepresent modified game clients as unmodified where that matters. Do not attempt to use the Application to interfere with another person\u2019s device or data.</string>
+    <string name="legal_t_use_title">4. 許容される利用</string>
+    <string name="legal_t_use_body">アプリケーションを合法的に、かつゲームパフォーマンス向上という目的にのみ使用してください。デバイス、ネットワーク、他者への危害、法令違反、知的財産権侵害、改変されたゲームクライアントを未改変と偽装する行為(それが問題となる場面では)に使用しないでください。他人のデバイスやデータへの干渉を目的とした使用を試みないでください。</string>
 
-    <string name="legal_t_games_title">5. Games\u2019 own rules still apply</string>
-    <string name="legal_t_games_body">Spoofing device identity or modifying game files may violate the terms of service of individual games and can lead to penalties such as restricted features or banned accounts. The developer is not responsible for account bans or any loss in third-party games. Use these features at your own risk.</string>
+    <string name="legal_t_games_title">5. ゲーム固有のルールは依然適用される</string>
+    <string name="legal_t_games_body">デバイスアイデンティティのスプーフィングやゲームファイルの改変は、個々のゲームの利用規約に違反する可能性があり、機能制限やアカウント停止などのペナルティを招くことがあります。開発者はサードパーティゲームでのアカウント停止やいかなる損失についても責任を負いません。これらの機能は自己責任でご利用ください。</string>
 
-    <string name="legal_t_risk_title">6. Root, Shizuku and system changes</string>
-    <string name="legal_t_risk_body">The Application works without root for many features. Advanced features (device spoofing, some system tweaks and file edits) require Shizuku, root or a generated Magisk module, and are optional. Rooting or jailbreaking a device removes security restrictions and can expose it to malware, void warranties, break banking or payment apps, or stop the app from working. Enable these features only if you understand and accept that risk. Features that change system settings (resolution, refresh rate, animation scales, DNS, audio, dexopt compilation) act on your instruction. The app backs up game configs before writing where it can, but you accept the risk of instability, boot problems or data loss. You can revert changes or uninstall the app at any time.</string>
+    <string name="legal_t_risk_title">6. Root、Shizuku、システム変更</string>
+    <string name="legal_t_risk_body">多くの機能はRootなしで動作します。高度な機能(デバイススプーフィング、一部のシステム調整、ファイル編集)にはShizuku、Root、または生成されたMagiskモジュールが必要で、オプションです。デバイスのRoot化やジェイルブレイクはセキュリティ制限を解除し、マルウェアへの曝露、保証無効化、銀行/決済アプリの動作停止、アプリの動作停止を招く可能性があります。これらのリスクを理解し受け入れる場合のみ有効にしてください。システム設定を変更する機能(解像度、リフレッシュレート、アニメーションスケール、DNS、オーディオ、dexoptコンパイル)はあなたの指示で動作します。可能な限り書き込み前にゲーム設定をバックアップしますが、不安定、起動問題、データ損失のリスクをあなたは受け入れます。いつでも変更を元に戻したり、アプリをアンインストールしたりできます。</string>
 
-    <string name="legal_t_content_title">7. Content you choose to share</string>
-    <string name="legal_t_content_body">The Application has no accounts, no public feed and no server that stores user content. You can export profiles, game configs, logs or recordings and send them through Android\u2019s share sheet or another app. You are responsible for what you share, for having the rights to it, and for any personal data in it (including other people\u2019s data, which needs their consent). Do not share illegal content, malware, or content that infringes someone else\u2019s rights. If you send content to the developer (for example a bug report), you give the developer permission to use it to investigate and improve the Application; it is not sold and is handled under the Privacy Policy. To report unlawful content or misuse, contact the developer at catsmoker.lab@gmail.com.</string>
+    <string name="legal_t_content_title">7. あなたが共有を選択したコンテンツ</string>
+    <string name="legal_t_content_body">アプリケーションにはアカウントも公開フィードも、ユーザーコンテンツを保存するサーバーもありません。プロファイル、ゲーム設定、ログ、録画をエクスポートし、Androidの共有シートや他のアプリを通じて送信できます。共有内容、それに対する権利、含まれる個人データ(他人のデータを含む場合はその同意が必要)についてはあなたが責任を持ちます。違法コンテンツ、マルウェア、他者の権利を侵害するコンテンツを共有しないでください。開発者にコンテンツを送信した場合(バグレポートなど)、調査とアプリケーション改善のために使用する許可を与えたことになります。これは販売されず、プライバシーポリシーに従って処理されます。違法コンテンツや不正利用の報告は catsmoker.lab@gmail.com へ。</string>
 
-    <string name="legal_t_thirdparty_title">8. Third-party services</string>
-    <string name="legal_t_thirdparty_body">Depending on the build you install, the Application uses these third-party services:\n\u2022 Both builds: Google Play Services (base libraries required by Firebase) and Google Analytics for Firebase.\n\u2022 Play Store build: AdMob for ads and Google Play Billing for the optional remove-ads purchase.\n\u2022 Full build (GitHub): Start.io (formerly StartApp) for ads.\nEach provider processes data under its own terms and privacy policy. The Privacy Policy explains what the app itself stores. Some features need an internet connection. Your mobile provider\u2019s terms still apply; you are responsible for data charges, including roaming charges, and if you are not the bill payer you confirm that you have permission. Game presets and other third-party information are provided for convenience \u2014 verify them before use. The developer is not responsible for third-party services, their availability, their content, or their decisions (including ad content or billing decisions).</string>
+    <string name="legal_t_thirdparty_title">8. サードパーティサービス</string>
+    <string name="legal_t_thirdparty_body">インストールするビルドに応じて、アプリケーションは以下のサードパーティサービスを使用します:\n\u2022 両ビルド: Google Play Services(Firebase必須のベースライブラリ)と Google Analytics for Firebase。\n\u2022 Playストア版: 広告用AdMobと、オプションの広告削除購入用Google Play Billing。\n\u2022 フル版(GitHub): 広告用Start.io(旧StartApp)。\n各プロバイダは各自の利用規約とプライバシーポリシーに従ってデータを処理します。プライバシーポリシーでアプリ自体が保存する内容を説明しています。一部機能はインターネット接続を必要とします。あなたのモバイルプロバイダの規約も適用され、データ通信料(ローミング含む)はあなたの負担です。請求書の支払い者でない場合は許可があることを確認してください。ゲームプリセットやその他のサードパーティ情報は利便性のために提供されます — 使用前に検証してください。開発者はサードパーティサービス、その可用性、コンテンツ、決定(広告コンテンツや課金決定を含む)について責任を負いません。</string>
 
-    <string name="legal_t_payments_title">9. Charges and donations</string>
-    <string name="legal_t_payments_body">The Application is free to use. The Play Store build offers an optional one-time purchase to remove ads; Google Play shows the price before you pay, and refunds follow Google Play\u2019s policy. Donations are voluntary gifts, are non-refundable, are processed entirely by external services, and do not unlock premium features or buy influence over the project. The developer may add or change paid features in the future; any charge will be shown clearly before you pay. The developer may also modify the Application at any time.</string>
+    <string name="legal_t_payments_title">9. 課金と寄付</string>
+    <string name="legal_t_payments_body">アプリケーションは無料で利用できます。Playストア版では広告削除のオプション買い切り購入を提供します。Google Playが購入前に価格を表示し、返金はGoogle Playのポリシーに従います。寄付は任意の贈与で、返金不可、外部サービスで完全に処理され、プレミアム機能のアンロックやプロジェクトへの影響力購入にはなりません。開発者は将来的に有料機能を追加・変更する場合があります。課金がある場合は支払い前に明示されます。開発者はアプリケーションをいつでも変更する場合があります。</string>
 
-    <string name="legal_t_privacy_title">10. Privacy and device security</string>
-    <string name="legal_t_privacy_body">The Application stores and processes data on your device as described in the Privacy Policy. You are responsible for keeping your device and access to the Application secure. Because there are no accounts, anyone with access to your unlocked device can use the app and see its local data. Uninstalling the app or clearing its data deletes that local data.</string>
+    <string name="legal_t_privacy_title">10. プライバシーとデバイスセキュリティ</string>
+    <string name="legal_t_privacy_body">アプリケーションはプライバシーポリシーに記載の通り、データをデバイス上で保存・処理します。デバイスとアプリケーションへのアクセスを安全に保つのはあなたの責任です。アカウントがないため、ロック解除されたデバイスへアクセスできる誰でもアプリを使用し、ローカルデータを見ることができます。アプリをアンインストールするかデータをクリアすると、そのローカルデータは削除されます。</string>
 
-    <string name="legal_t_updates_title">11. Updates and availability</string>
-    <string name="legal_t_updates_body">The developer may update the Application from time to time. Updates may be needed for the app to keep working with new Android versions; you can choose not to install them, but older versions may stop working or lose support. The developer does not guarantee that updates will always be available, compatible with your device, or relevant to you. The developer may also stop providing the Application at any time. The developer cannot be responsible if your device is out of battery, offline, or otherwise unable to run the app. If the Application is discontinued, the open-source license for code you already have continues under its own terms.</string>
+    <string name="legal_t_updates_title">11. アップデートと可用性</string>
+    <string name="legal_t_updates_body">開発者はアプリケーションを随時更新する場合があります。新しいAndroidバージョンで動作し続けるためにアップデートが必要になることがあります。インストールしない選択もできますが、古いバージョンは動作しなくなったりサポートを失ったりする可能性があります。開発者はアップデートが常に利用可能であること、あなたのデバイスと互換性があること、あなたにとって関連性があることを保証しません。開発者はいつでもアプリケーションの提供を停止する場合があります。デバイスがバッテリー切れ、オフライン、その他の理由でアプリを実行できない場合、開発者は責任を負いません。アプリケーションが提供停止になった場合、あなたが既に持っているコードのオープンソースライセンスは独自の条件で継続します。</string>
 
-    <string name="legal_t_termination_title">12. Termination</string>
-    <string name="legal_t_termination_body">If you materially breach these Terms, the developer may end your permission to use the Application\u2019s name, branding and any services the developer provides. Where the breach can be fixed, you will receive written notice and 14 days to fix it. The developer may act immediately, without notice, if you break the law, infringe intellectual property rights, or do something that could harm other users or the developer. Because the app has no accounts, \u201ctermination\u201d means the end of that permission; it does not delete anything from your device. The open-source license for code you already received is irrevocable and is not affected. On termination you must stop using the CatSmoker name and branding and, where the developer asks, stop using any related services.</string>
+    <string name="legal_t_termination_title">12. 終了</string>
+    <string name="legal_t_termination_body">あなたがこれらの規約に重大な違反をした場合、開発者はアプリケーションの名称、ブランディング、開発者が提供するサービスの利用許諾を終了できます。違反が修正可能な場合は書面で通知し、14日間の修正期間を与えます。法令違反、知的財産権侵害、他ユーザーや開発者への危害を及ぼす行為の場合は、通知なしで即座に措置を取る場合があります。アプリにアカウントがないため、「終了」とはその許諾の終了を意味し、デバイスから何かが削除されることはありません。あなたが既に受け取ったコードのオープンソースライセンスは取り消し不能であり、影響を受けません。終了時、CatSmokerの名称とブランディングの使用を停止し、開発者が求める場合は関連サービスの使用も停止しなければなりません。</string>
 
-    <string name="legal_t_liability_title">13. Limitation of liability</string>
-    <string name="legal_t_liability_body">The Application is provided \u201cas is\u201d and \u201cas available\u201d, without warranties of any kind, to the fullest extent permitted by law. The developer is not liable for indirect, incidental, special, consequential or punitive damages, including lost profits, data loss or business interruption, even if advised of the possibility. The developer remains fully liable for death or personal injury caused by negligence, for fraud or fraudulent misrepresentation, and for any liability that cannot be excluded or limited by law. To the fullest extent permitted by law, the developer\u2019s total liability for any claim is limited to the amount you paid for the Application in the 12 months before the claim, or the minimum amount required by law, whichever is greater. If the Application is free, that means the minimum amount permitted by law. Nothing in these Terms limits rights you have under mandatory consumer protection law.</string>
+    <string name="legal_t_liability_title">13. 責任制限</string>
+    <string name="legal_t_liability_body">アプリケーションは「現状有姿」で、いかなる保証もなく、法令が許す最大限の範囲で提供されます。開発者は間接的、付随的、特別、結果的、懲罰的損害(逸失利益、データ損失、業務中断を含む)について、その可能性を知らされていた場合でも責任を負いません。開発者は過失による死亡や人身傷害、詐欺や不正表示、法的に除外・制限できない責任については完全な責任を負います。法令が許す最大限の範囲で、開発者のいかなる請求に対する総責任は、請求前12か月にあなたがアプリケーションに支払った金額、または法的に要求される最小額のいずれか大きい方に制限されます。アプリが無料の場合、法的に許される最小額となります。これらの規約のいかなる部分も、強制的な消費者保護法の下でのあなたの権利を制限しません。</string>
 
-    <string name="legal_t_indemnity_title">14. Indemnification</string>
-    <string name="legal_t_indemnity_body">To the fullest extent permitted by law, you agree to indemnify and hold harmless the developer, its affiliates, officers, directors, employees and agents from any claims, liabilities, damages, losses and reasonable legal fees arising out of your breach of these Terms or your intentional misuse of the Application, including content you share in violation of these Terms. This does not apply to claims caused by the developer\u2019s own negligence, breach of these Terms or violation of law. Where consumer indemnification is restricted by law, this clause is limited to the maximum extent permitted.</string>
+    <string name="legal_t_indemnity_title">14. 補償</string>
+    <string name="legal_t_indemnity_body">法令が許す最大限の範囲で、あなたは、これらの規約への違反またはアプリケーションの故意の誤用(これらの規約に違反するコンテンツの共有を含む)から生じるいかなる請求、責任、損害、損失、合理的な弁護士費用についても、開発者、その関連会社、役員、取締役、従業員、代理人を補償し、損害を与えないことに同意します。これは開発者自身の過失、これらの規約違反、法令違反による請求には適用されません。消費者補償が法的に制限されている場合、この条項は許される最大限に制限されます。</string>
 
-    <string name="legal_t_law_title">15. Governing law and jurisdiction</string>
-    <string name="legal_t_law_body">These Terms are governed by the laws of the jurisdiction in which the developer is established, excluding conflict-of-law rules, except where mandatory consumer protection law provides otherwise. Disputes will be brought before the courts that have jurisdiction under applicable law. Nothing here limits your right to bring a claim in a court competent under mandatory law.</string>
+    <string name="legal_t_law_title">15. 準拠法と管轄</string>
+    <string name="legal_t_law_body">これらの規約は、開発者が所在する法域の法律に従い、抵触法規則を除いて解釈されます。ただし、強制的な消費者保護法が別途定める場合は除きます。紛争は適用法令に基づく管轄裁判所に提起されます。ここには、強制法に基づく管轄裁判所への提訴権を制限するものではありません。</string>
 
-    <string name="legal_t_misc_title">16. Severability and entire agreement</string>
-    <string name="legal_t_misc_body">If any provision is held invalid, illegal or unenforceable by a court of competent jurisdiction, it will be modified only as much as necessary to make it valid and enforceable, and the remaining provisions stay in full force. These Terms and the Privacy Policy are the entire agreement between you and the developer about the Application and replace any earlier agreement or understanding.</string>
+    <string name="legal_t_misc_title">16. 可分性と完全合意</string>
+    <string name="legal_t_misc_body">いかなる条項も、権限ある裁判所によって無効、違法、執行不能と判断された場合、有効かつ執行可能にするために必要最小限の範囲でのみ修正され、残りの条項は完全に効力を維持します。これらの規約とプライバシーポリシーは、アプリケーションに関するあなたと開発者の間の完全な合意を構成し、以前の合意や理解に優先します。</string>
 
-    <string name="legal_t_changes_title">17. Changes to these terms</string>
-    <string name="legal_t_changes_body">The developer may update these Terms from time to time. The current version always ships in the app on this screen, with a new \u201clast updated\u201d date. The developer will notify you of changes by posting the new Terms here. Previous versions are available on request at catsmoker.lab@gmail.com. These Terms are effective as of 2026-10-25.</string>
+    <string name="legal_t_changes_title">17. これらの規約の変更</string>
+    <string name="legal_t_changes_body">開発者はこれらの規約を随時更新する場合があります。最新版は常に「最終更新」日付を更新してアプリ内この画面に同梱されます。開発者はここに新しい規約を掲載することで変更を通知します。過去版は catsmoker.lab@gmail.com へ請求すれば入手可能です。これらの規約は2026-10-25から有効です。</string>
 
-    <string name="legal_t_contact_title">18. Contact</string>
-    <string name="legal_t_contact_body">Questions, reports of unlawful content or misuse, and requests for further review of a moderation decision can be sent to catsmoker.lab@gmail.com. The developer will respond within a reasonable period.</string>
+    <string name="legal_t_contact_title">18. 連絡先</string>
+    <string name="legal_t_contact_body">質問、違法コンテンツや不正利用の報告、モデレーション決定の再検討要請は catsmoker.lab@gmail.com へ送信できます。開発者は合理的な期間内に回答します。</string>
 
     <!-- Donate-screen voluntary-gift notice. -->
-    <string name="donate_notice">Donations are voluntary gifts and are non-refundable. Payments are processed externally by PayPal, Binance or the relevant crypto network — CatSmoker never sees your payment details.</string>
+    <string name="donate_notice">寄付は任意の贈与であり、返金不可です。支払いはPayPal、Binance、または該当する暗号資産ネットワークによって外部で処理されます — CatSmokerはあなたの支払い詳細を一切受け取りません。</string>
 
     <!-- Settings ads toggle explanation. -->
-    <string name="sys_ads_sub">Banner ads by Start.io keep the app free. Turn off to disable. See the Privacy Policy for what the ad provider collects.</string>
+    <string name="sys_ads_sub">Start.ioのバナー広告でアプリを無料提供しています。オフにすると無効化されます。広告プロバイダの収集内容についてはプライバシーポリシーをご覧ください。</string>
 
     <!-- Content descriptions for previously unlabeled icon-only buttons. -->
-    <string name="core_desc_add">Add</string>
-    <string name="core_desc_more">More options</string>
-    <string name="core_desc_save">Save</string>
-    <string name="core_desc_random">Generate random value</string>
+    <string name="core_desc_add">追加</string>
+    <string name="core_desc_more">その他のオプション</string>
+    <string name="core_desc_save">保存</string>
+    <string name="core_desc_random">ランダム値を生成</string>
 
     <!-- Onboarding legal dialogs. -->
-    <string name="core_terms_read_privacy">Read Privacy Policy</string>
-    <string name="core_terms_read_terms">Read Terms &amp; Conditions</string>
+    <string name="core_terms_read_privacy">プライバシーポリシーを読む</string>
+    <string name="core_terms_read_terms">利用規約を読む</string>
 </resources>

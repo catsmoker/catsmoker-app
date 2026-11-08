@@ -2,44 +2,44 @@
 <resources xmlns:tools="http://schemas.android.com/tools" tools:ignore="MissingTranslation">
     <!-- Core dashboard / navigation strings (feature: main, about, logs, permissions, startup). -->
     <!-- Back-press exit toast (%1$d = remaining taps). -->
-    <string name="core_exit_tap">Tap %1$d more times to exit</string>
+    <string name="core_exit_tap">あと %1$d 回タップで終了</string>
 
     <!-- Dashboard metric abbreviations (kept short in every locale). -->
     <string name="core_metric_cpu">CPU</string>
     <string name="core_metric_ram">RAM</string>
-    <string name="core_metric_soc">SOC</string>
-    <string name="core_metric_temp">TEMP</string>
+    <string name="core_metric_soc">SoC</string>
+    <string name="core_metric_temp">温度</string>
     <string name="core_metric_ping">PING</string>
 
     <!-- Compact fallback labels shown in place of a missing dashboard reading. -->
     <string name="core_compact_loading">…</string>
     <string name="core_compact_privilege">root?</string>
-    <string name="core_compact_unsupported">n/s</string>
+    <string name="core_compact_unsupported">非対応</string>
     <string name="core_compact_na">N/A</string>
 
     <!-- Dashboard Settings tile (only tile without a shared entry). -->
-    <string name="core_settings_title">Settings</string>
-    <string name="core_settings_subtitle">Configuration &amp; Preferences</string>
+    <string name="core_settings_title">設定</string>
+    <string name="core_settings_subtitle">設定とプリファレンス</string>
 
     <!-- About screen. -->
-    <string name="core_about_subtitle">App information and community.</string>
-    <string name="core_about_description">CatSmoker is an open-source Android toolkit that makes games run faster, smoother and more responsive.</string>
-    <string name="about_read_more">Read more</string>
-    <string name="about_read_less">Show less</string>
-    <string name="about_read_more_body">CatSmoker optimizes system resources so games keep a higher, steadier frame rate with lower input latency. Some features are still in development and may not work on every device. If something fails, open System Logs from Settings → Help &amp; Info and report it on GitHub.</string>
+    <string name="core_about_subtitle">アプリ情報とコミュニティ</string>
+    <string name="core_about_description">CatSmokerは、ゲームをより速く、より滑らかに、より応答良く動作させるオープンソースのAndroidツールキットです。</string>
+    <string name="about_read_more">続きを読む</string>
+    <string name="about_read_less">閉じる</string>
+    <string name="about_read_more_body">CatSmokerはシステムリソースを最適化し、ゲームがより高く安定したフレームレートを低い入力遅延で維持できるようにします。一部機能は開発中で、すべてのデバイスで動作するとは限りません。問題が発生した場合は、設定→ヘルプと情報→システムログを開き、GitHubで報告してください。</string>
 
     <!-- About section labels and rows. -->
-    <string name="about_section_contact">Developer &amp; Contact</string>
-    <string name="about_section_links">Links</string>
-    <string name="about_report_issue">Report an issue</string>
-    <string name="about_version">Version %1$s (%2$d)</string>
-    <string name="about_copied">Copied</string>
-    <string name="about_copy_version">Copy version</string>
-    <string name="about_licenses_title">Open Source Licenses</string>
-    <string name="about_licenses_summary">Third-party licenses</string>
-    <string name="about_licenses_subtitle">Software CatSmoker is built with.</string>
-    <string name="about_licenses_intro">CatSmoker is built on the following open-source libraries. Each entry names the license the library ships under.</string>
-    <string name="about_license_cc">License (CC BY-NC-SA 4.0)</string>
+    <string name="about_section_contact">開発者と連絡先</string>
+    <string name="about_section_links">リンク</string>
+    <string name="about_report_issue">問題を報告</string>
+    <string name="about_version">バージョン %1$s (%2$d)</string>
+    <string name="about_copied">コピーしました</string>
+    <string name="about_copy_version">バージョンをコピー</string>
+    <string name="about_licenses_title">オープンソース ライセンス</string>
+    <string name="about_licenses_summary">サードパーティ ライセンス</string>
+    <string name="about_licenses_subtitle">CatSmokerの構築に使用されたソフトウェア</string>
+    <string name="about_licenses_intro">CatSmokerは以下のオープンソースライブラリの上に構築されています。各項目は、そのライブラリが配布されているライセンスを示しています。</string>
+    <string name="about_license_cc">ライセンス (CC BY-NC-SA 4.0)</string>
     <string name="about_copyright">© 2026 CatSmoker. All rights reserved.</string>
 
     <!-- License and library names are proper nouns: kept verbatim in every locale. -->
@@ -58,75 +58,75 @@
     <string name="about_social_telegram">Telegram</string>
 
     <!-- Logs screen ViewModel messages (%1$s = detail). -->
-    <string name="core_logs_fetch_error">Error fetching logs: %1$s</string>
-    <string name="core_logs_share_title">Share Logs</string>
+    <string name="core_logs_fetch_error">ログ取得エラー: %1$s</string>
+    <string name="core_logs_share_title">ログを共有</string>
 
     <!-- Shared scaffold back button (talkback). -->
-    <string name="core_back">Back</string>
+    <string name="core_back">戻る</string>
 
     <!-- Button loading state label (shown with spinner while async work runs). -->
-    <string name="core_working">Working…</string>
+    <string name="core_working">処理中…</string>
 
     <!-- Onboarding terms step. Prefix/suffix carry their edge space via \u0020.
          The link opens the CC license text (not the app Terms — those open as dialogs below). -->
-    <string name="core_terms_prefix">Please read our\u0020</string>
-    <string name="core_terms_link">CC BY-NC-SA 4.0 license</string>
-    <string name="core_terms_suffix">\u0020before using the app.</string>
-    <string name="core_terms_title">Terms &amp; Conditions</string>
-    <string name="core_terms_agree">I agree to the terms.</string>
-    <string name="onb_terms_subtitle">Review the key points, then accept to continue.</string>
-    <string name="onb_terms_key_sections">Key sections</string>
-    <string name="onb_terms_required">Required to continue.</string>
-    <string name="core_continue">CONTINUE</string>
+    <string name="core_terms_prefix">ご利用前に\u0020</string>
+    <string name="core_terms_link">CC BY-NC-SA 4.0 ライセンス</string>
+    <string name="core_terms_suffix">\u0020をお読みください。</string>
+    <string name="core_terms_title">利用規約</string>
+    <string name="core_terms_agree">利用規約に同意します。</string>
+    <string name="onb_terms_subtitle">要点を確認し、同意して続行してください。</string>
+    <string name="onb_terms_key_sections">主要なセクション</string>
+    <string name="onb_terms_required">継続には必須です。</string>
+    <string name="core_continue">続行</string>
 
     <!-- Permissions screen. -->
-    <string name="core_permissions_title">Permissions</string>
-    <string name="core_permissions_subtitle">Grant permissions to enable all features.</string>
-    <string name="core_perm_root_title">Root Access</string>
-    <string name="core_perm_root_sub">Required for advanced optimizations.</string>
-    <string name="core_perm_shizuku_title">Shizuku Access</string>
-    <string name="core_perm_shizuku_sub">Alternative to Root for system tweaks.</string>
-    <string name="core_perm_root_denied">Root was not granted. Check the prompt or your root manager.</string>
-    <string name="core_perm_root_unavailable">Root is not available on this device. This feature requires a rooted device.</string>
-    <string name="core_perm_restricted_hint">If the toggle will not turn on: open App Info, tap the three-dot menu, choose "Allow restricted settings", then return here and retry.</string>
-    <string name="core_perm_shizuku_not_running">Shizuku is not running — start it in the Shizuku app first.</string>
-    <string name="core_perm_shizuku_not_granted">Shizuku is running — tap Grant to allow Catsmoker.</string>
-    <string name="core_perm_storage_title">Storage Access</string>
-    <string name="core_perm_storage_sub">To read/modify game configuration files.</string>
-    <string name="core_perm_battery_title">Battery Optimization</string>
-    <string name="core_perm_battery_sub">Allows the app to run smoothly in background.</string>
-    <string name="core_perm_notif_title">Notifications</string>
-    <string name="core_perm_notif_sub">To show service status.</string>
-    <string name="core_perm_overlay_title">Overlay</string>
-    <string name="core_perm_overlay_sub">To show performance monitors.</string>
-    <string name="core_perm_usage_title">Usage Stats</string>
-    <string name="core_perm_usage_sub">To track game playtime.</string>
-    <string name="core_perm_mic_title">Microphone</string>
-    <string name="core_perm_mic_sub">Required for Audio Boost features.</string>
+    <string name="core_permissions_title">権限</string>
+    <string name="core_permissions_subtitle">すべての機能を有効にするには権限を許可してください。</string>
+    <string name="core_perm_root_title">Rootアクセス</string>
+    <string name="core_perm_root_sub">高度な最適化に必要です。</string>
+    <string name="core_perm_shizuku_title">Shizukuアクセス</string>
+    <string name="core_perm_shizuku_sub">Rootの代替としてシステム調整に使用します。</string>
+    <string name="core_perm_root_denied">Rootが許可されませんでした。プロンプトまたはRoot管理アプリを確認してください。</string>
+    <string name="core_perm_root_unavailable">このデバイスではRootを利用できません。この機能にはRoot済みデバイスが必要です。</string>
+    <string name="core_perm_restricted_hint">トグルがオンにならない場合: アプリ情報を開き、三点メニューから「制限付き設定を許可」を選び、戻って再試行してください。</string>
+    <string name="core_perm_shizuku_not_running">Shizukuが実行されていません — 先にShizukuアプリで開始してください。</string>
+    <string name="core_perm_shizuku_not_granted">Shizukuは実行中です — 許可をタップしてCatSmokerへのアクセスを許可してください。</string>
+    <string name="core_perm_storage_title">ストレージアクセス</string>
+    <string name="core_perm_storage_sub">ゲーム設定ファイルの読み書きに必要です。</string>
+    <string name="core_perm_battery_title">バッテリー最適化</string>
+    <string name="core_perm_battery_sub">バックグラウンドでの円滑な動作を許可します。</string>
+    <string name="core_perm_notif_title">通知</string>
+    <string name="core_perm_notif_sub">サービス状態の表示に必要です。</string>
+    <string name="core_perm_overlay_title">オーバーレイ</string>
+    <string name="core_perm_overlay_sub">パフォーマンスモニターの表示に必要です。</string>
+    <string name="core_perm_usage_title">使用状況アクセス</string>
+    <string name="core_perm_usage_sub">ゲームプレイ時間の追跡に必要です。</string>
+    <string name="core_perm_mic_title">マイク</string>
+    <string name="core_perm_mic_sub">オーディオブースト機能に必要です。</string>
     <string name="core_perm_bt_title">Bluetooth</string>
-    <string name="core_perm_bt_sub">Required for Gamepad and headset optimizations.</string>
-    <string name="core_done">DONE</string>
-    <string name="core_grant">GRANT</string>
+    <string name="core_perm_bt_sub">ゲームパッドとヘッドセット最適化に必要です。</string>
+    <string name="core_done">完了</string>
+    <string name="core_grant">許可</string>
     <!-- Permission rows gated on Android version: shown disabled with a reason, never hidden. -->
-    <string name="core_perm_need_13">Requires Android 13 or newer.</string>
-    <string name="core_perm_need_12">Requires Android 12 or newer.</string>
+    <string name="core_perm_need_13">Android 13以降が必要です。</string>
+    <string name="core_perm_need_12">Android 12以降が必要です。</string>
     <!-- Onboarding permission checklist: group labels and compact status words. -->
-    <string name="onb_perm_group_essential">Essential</string>
-    <string name="onb_perm_group_system">System</string>
-    <string name="onb_perm_group_additional">Additional</string>
-    <string name="onb_perm_granted">Granted</string>
-    <string name="onb_perm_not_granted">Not granted</string>
-    <string name="onb_perm_unavailable">Unavailable</string>
-    <string name="onb_perm_not_running">Not running</string>
+    <string name="onb_perm_group_essential">必須</string>
+    <string name="onb_perm_group_system">システム</string>
+    <string name="onb_perm_group_additional">追加</string>
+    <string name="onb_perm_granted">許可済み</string>
+    <string name="onb_perm_not_granted">未許可</string>
+    <string name="onb_perm_unavailable">利用不可</string>
+    <string name="onb_perm_not_running">未実行</string>
     <!-- MetricReadStatus full labels: the reason shown in place of a value on the dashboard
          and in the performance overlay, when the device never reported a number. -->
-    <string name="core_read_loading">reading…</string>
+    <string name="core_read_loading">読み込み中…</string>
     <string name="core_read_ok">OK</string>
-    <string name="core_read_empty">no data</string>
-    <string name="core_read_parse">unreadable</string>
-    <string name="core_read_privilege">needs root/Shizuku</string>
-    <string name="core_read_unsupported">unsupported</string>
+    <string name="core_read_empty">データなし</string>
+    <string name="core_read_parse">読み取れません</string>
+    <string name="core_read_privilege">root/Shizukuが必要</string>
+    <string name="core_read_unsupported">非対応</string>
     <!-- Accessible names for the shared info (i) button and its bottom sheet. -->
-    <string name="info_more_about">More info about %1$s</string>
-    <string name="info_close">Close</string>
+    <string name="info_more_about">%1$s の詳細</string>
+    <string name="info_close">閉じる</string>
 </resources>

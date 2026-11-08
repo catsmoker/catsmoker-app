@@ -37,6 +37,7 @@ object LocaleHelper {
             "en" -> AppearanceStore.LANGUAGE_ENGLISH
             "zh" -> AppearanceStore.LANGUAGE_CHINESE
             "pt" -> AppearanceStore.LANGUAGE_PORTUGUESE
+            "ja" -> AppearanceStore.LANGUAGE_JAPANESE
             else -> tag
         }
     }
