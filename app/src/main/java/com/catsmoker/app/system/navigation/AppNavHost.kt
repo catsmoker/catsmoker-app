@@ -3,6 +3,10 @@ package com.catsmoker.app.system.navigation
 import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.ExitTransition
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -16,6 +20,8 @@ import com.catsmoker.app.features.logs.LogsRoute
 import com.catsmoker.app.features.main.MainRoute
 import com.catsmoker.app.features.editgamefiles.EditGameFilesRoute
 import com.catsmoker.app.features.gamingtools.GamingToolsRoute
+import com.catsmoker.app.features.gamingtools.GamingToolsViewModel
+import com.catsmoker.app.features.gamingtools.tools.crosshair.CrosshairLibraryRoute
 import com.catsmoker.app.features.permissions.PermissionRoute
 
 @Composable
@@ -42,7 +48,23 @@ fun AppNavHost(navController: NavHostController, startDestination: String) {
         }
         composable(Routes.GAMING_TOOLS) {
             GamingToolsRoute(
-                onBack = { navController.popBackStack() }
+                onBack = { navController.popBackStack() },
+                onOpenCrosshairLibrary = { navController.navigate(Routes.CROSSHAIR_LIBRARY) }
+            )
+        }
+        composable(Routes.CROSSHAIR_LIBRARY) {
+            val parentEntry = remember(navController) {
+                navController.getBackStackEntry(Routes.GAMING_TOOLS)
+            }
+            val gamingToolsViewModel: GamingToolsViewModel = hiltViewModel(parentEntry)
+            val uiState by gamingToolsViewModel.uiState.collectAsState()
+            CrosshairLibraryRoute(
+                selectedAsset = uiState.selectedCrosshair,
+                onBack = { navController.popBackStack() },
+                onUse = { asset ->
+                    gamingToolsViewModel.onSelectCrosshair(asset)
+                    navController.popBackStack()
+                }
             )
         }
         composable(Routes.EDIT_GAME_FILES) {

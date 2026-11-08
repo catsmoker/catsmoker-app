@@ -95,6 +95,15 @@
 
     <!-- Crosshair -->
     <string name="gt_crosshair_style">Elige estilo</string>
+    <string name="gt_crosshair_library">Biblioteca de miras</string>
+    <string name="gt_crosshair_library_sub">Descarga un diseño y toca Usar para seleccionarlo.</string>
+    <string name="gt_crosshair_number">Mira %1$d</string>
+    <string name="gt_crosshair_download">Descargar</string>
+    <string name="gt_crosshair_use">Usar</string>
+    <string name="gt_crosshair_selected">Seleccionada</string>
+    <string name="gt_crosshair_catalog_error">No se pudieron cargar las miras. Comprueba tu conexión a Internet.</string>
+    <string name="gt_crosshair_download_error">La descarga falló. Comprueba la conexión e inténtalo de nuevo.</string>
+    <string name="gt_crosshair_retry">Reintentar</string>
     <string name="gt_crosshair_position">Posición</string>
     <string name="gt_crosshair_off">Enciende el punto de mira para moverlo.</string>
     <string name="gt_crosshair_move">Arrastra el punto de mira en pantalla. Mientras lo mueves, los toques llegan al punto en vez de a tu juego.</string>

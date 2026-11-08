@@ -24,6 +24,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.core.content.edit
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
+import androidx.activity.enableEdgeToEdge
 import androidx.core.view.WindowCompat
 import androidx.navigation.compose.rememberNavController
 import com.catsmoker.app.shared.ui.theme.CatsmokerTheme
@@ -77,8 +78,8 @@ class MainActivity : ComponentActivity() {    override fun attachBaseContext(new
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        enableEdgeToEdge()
         installSplashScreen()
-        WindowCompat.setDecorFitsSystemWindows(window, false)
         // Request no title bar before super.onCreate
         requestWindowFeature(Window.FEATURE_NO_TITLE)
         

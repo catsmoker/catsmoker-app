@@ -222,6 +222,7 @@ dependencies {
     implementation(libs.activity.compose)
     implementation(libs.navigation.compose)
     implementation(libs.lifecycle.runtime.ktx)
+    implementation(libs.coil.compose)
 
     // --- Hilt DI ---
     implementation(libs.hilt.android)

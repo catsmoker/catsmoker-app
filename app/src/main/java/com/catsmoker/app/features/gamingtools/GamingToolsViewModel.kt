@@ -36,6 +36,7 @@ import com.catsmoker.app.features.gamingtools.tools.cleaner.CleanerScheduleStore
 import com.catsmoker.app.features.gamingtools.tools.cleaner.CleanerSweepScheduler
 import com.catsmoker.app.features.gamingtools.tools.forcestop.AutoForceStopService
 import com.catsmoker.app.features.gamingtools.tools.crosshair.CrosshairOverlayService
+import com.catsmoker.app.features.gamingtools.tools.crosshair.CrosshairAssets
 import com.catsmoker.app.features.gamingtools.tools.crosshair.CrosshairPositionStore
 import com.catsmoker.app.features.gamingtools.tools.dns.DnsFeature
 import com.catsmoker.app.features.gamingtools.tools.dns.PingParser
@@ -386,7 +387,7 @@ class GamingToolsViewModel @Inject constructor(
     init {
         _uiState.update {
             it.copy(
-                selectedCrosshair = appPrefs.getString("selected_scope", "scope2.png") ?: "scope2.png",
+                selectedCrosshair = CrosshairAssets.normalize(appPrefs.getString("selected_scope", "scope2.png")),
                 isCrosshairOffCentre = crosshairPositionStore.isOffCentre,
                 isOverlayMoved = performanceOverlayPositionStore.movedFromDefault,
                 boostLevel = appPrefs.getInt("boost_level", 0),
@@ -800,8 +801,9 @@ class GamingToolsViewModel @Inject constructor(
     }
 
     fun onSelectCrosshair(scope: String) {
-        appPrefs.edit { putString("selected_scope", scope) }
-        _uiState.update { it.copy(selectedCrosshair = scope) }
+        val normalized = CrosshairAssets.normalize(scope)
+        appPrefs.edit { putString("selected_scope", normalized) }
+        _uiState.update { it.copy(selectedCrosshair = normalized) }
         if (_uiState.value.isCrosshairRunning) startCrosshairService()
     }
 

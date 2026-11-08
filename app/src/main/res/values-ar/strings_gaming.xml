@@ -95,6 +95,15 @@
 
     <!-- Crosshair -->
     <string name="gt_crosshair_style">اختر الشكل</string>
+    <string name="gt_crosshair_library">مكتبة علامات التصويب</string>
+    <string name="gt_crosshair_library_sub">نزّل شكلاً ثم اختر «استخدام» لتفعيله.</string>
+    <string name="gt_crosshair_number">علامة التصويب %1$d</string>
+    <string name="gt_crosshair_download">تنزيل</string>
+    <string name="gt_crosshair_use">استخدام</string>
+    <string name="gt_crosshair_selected">محددة</string>
+    <string name="gt_crosshair_catalog_error">تعذر تحميل علامات التصويب. تحقق من اتصال الإنترنت.</string>
+    <string name="gt_crosshair_download_error">فشل التنزيل. تحقق من الاتصال وحاول مجدداً.</string>
+    <string name="gt_crosshair_retry">إعادة المحاولة</string>
     <string name="gt_crosshair_position">الموضع</string>
     <string name="gt_crosshair_off">شغّل علامة التصويب لتحريكها.</string>
     <string name="gt_crosshair_move">اسحب علامة التصويب على الشاشة. أثناء التحريك، تصل النقرات إلى العلامة بدل لعبتك.</string>

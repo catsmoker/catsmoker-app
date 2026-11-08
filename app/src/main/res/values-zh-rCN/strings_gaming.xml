@@ -95,6 +95,15 @@
 
     <!-- Crosshair -->
     <string name="gt_crosshair_style">选择样式</string>
+    <string name="gt_crosshair_library">准星库</string>
+    <string name="gt_crosshair_library_sub">下载样式后，点击“使用”即可启用。</string>
+    <string name="gt_crosshair_number">准星 %1$d</string>
+    <string name="gt_crosshair_download">下载</string>
+    <string name="gt_crosshair_use">使用</string>
+    <string name="gt_crosshair_selected">已选择</string>
+    <string name="gt_crosshair_catalog_error">无法加载准星。请检查网络连接。</string>
+    <string name="gt_crosshair_download_error">下载失败。请检查网络后重试。</string>
+    <string name="gt_crosshair_retry">重试</string>
     <string name="gt_crosshair_position">位置</string>
     <string name="gt_crosshair_off">打开准星后即可移动。</string>
     <string name="gt_crosshair_move">在屏幕上拖动准星。移动时，点击会落到准星上而非游戏。</string>

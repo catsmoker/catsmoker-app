@@ -207,6 +207,22 @@
             </intent-filter>
         </receiver>
 
+        <!--
+            Automatically restores apps suspended by Gaming Mode after a reboot.
+            Gaming Mode's `pm suspend` state survives reboots in
+            /data/system/package-restrictions.xml. The UI recovery card only runs
+            when the user opens the app; this receiver runs at boot so suspended
+            apps are woken even if the user never launches CatSmoker.
+        -->
+        <receiver
+            android:name=".features.gamingtools.engine.BootRecoveryReceiver"
+            android:enabled="true"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+            </intent-filter>
+        </receiver>
+
         <service
             android:name=".features.gamingtools.tools.booster.AppBoosterService"
             android:enabled="true"

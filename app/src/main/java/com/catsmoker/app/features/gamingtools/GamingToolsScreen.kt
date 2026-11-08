@@ -43,6 +43,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.graphics.drawable.toBitmap
 import androidx.core.net.toUri
+import androidx.compose.ui.layout.ContentScale
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
@@ -61,6 +62,8 @@ import com.catsmoker.app.features.gamingtools.tools.cleaner.CleanerScheduleStore
 import com.catsmoker.app.features.gamingtools.tools.dns.DnsFeature
 import com.catsmoker.app.features.gamingtools.tools.firewall.BackgroundDataRestrictor
 import com.catsmoker.app.features.gamingtools.tools.firewall.VpnFirewall
+import com.catsmoker.app.features.gamingtools.tools.crosshair.CrosshairAssets
+import java.io.File
 import com.catsmoker.app.features.gamingtools.tools.graphics.GameDeveloperOptions
 import com.catsmoker.app.features.gamingtools.tools.graphics.AngleDriverOptions
 import com.catsmoker.app.features.gamingtools.ui.*
@@ -89,7 +92,10 @@ private const val GAME_LIBRARY_PREVIEW = GAME_GRID_COLUMNS * 2
 private const val GAME_SEARCH_THRESHOLD = 8
 
 @Composable
-fun GamingToolsRoute(onBack: () -> Unit) {
+fun GamingToolsRoute(
+    onBack: () -> Unit,
+    onOpenCrosshairLibrary: () -> Unit
+) {
     val viewModel: GamingToolsViewModel = hiltViewModel()
     val uiState by viewModel.uiState.collectAsState()
     val context = LocalContext.current
@@ -208,7 +214,7 @@ fun GamingToolsRoute(onBack: () -> Unit) {
                 viewModel.toggleCrosshair(enable)
             }
         },
-        onSelectCrosshair = viewModel::onSelectCrosshair,
+        onOpenCrosshairLibrary = onOpenCrosshairLibrary,
         onSetCrosshairMoveMode = viewModel::setCrosshairMoveMode,
         onRecentreCrosshair = viewModel::recentreCrosshair,
         onSetBackgroundDataRestriction = viewModel::setBackgroundDataRestriction,
@@ -395,7 +401,7 @@ fun GamingToolsScreen(
     onSetOverlayMoveMode: (Boolean) -> Unit,
     onResetOverlayPosition: () -> Unit,
     onToggleCrosshair: (Boolean) -> Unit,
-    onSelectCrosshair: (String) -> Unit,
+    onOpenCrosshairLibrary: () -> Unit,
     onSetCrosshairMoveMode: (Boolean) -> Unit,
     onRecentreCrosshair: () -> Unit,
     onSetBackgroundDataRestriction: (Boolean) -> Unit,
@@ -763,7 +769,7 @@ fun GamingToolsScreen(
                 ExpandableToolCard(title = stringResource(R.string.gt_tool_crosshair_title), subtitle = stringResource(R.string.gt_tool_crosshair_sub), icon = Icons.Default.AddCircleOutline, isToggleable = true, isToggled = uiState.isCrosshairRunning, onToggleChange = onToggleCrosshair, forceExpand = uiState.isCrosshairRunning) {
                     CrosshairPicker(
                         selected = uiState.selectedCrosshair,
-                        onSelect = onSelectCrosshair,
+                        onOpenLibrary = onOpenCrosshairLibrary,
                         isRunning = uiState.isCrosshairRunning,
                         isMoveMode = uiState.isCrosshairMoveMode,
                         isOffCentre = uiState.isCrosshairOffCentre,
@@ -1280,7 +1286,7 @@ fun ResolutionChangerContent(
 @Composable
 fun CrosshairPicker(
     selected: String,
-    onSelect: (String) -> Unit,
+    onOpenLibrary: () -> Unit,
     isRunning: Boolean,
     isMoveMode: Boolean,
     isOffCentre: Boolean,
@@ -1288,25 +1294,47 @@ fun CrosshairPicker(
     onRecentre: () -> Unit
 ) {
     val context = LocalContext.current
-    val scopes = remember { (1..7).map { "scope$it.png" } }
+    val normalizedSelected = remember(selected) { CrosshairAssets.normalize(selected) }
     Column {
-        Text(stringResource(R.string.gt_crosshair_style), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Text(stringResource(R.string.gt_crosshair_style), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            IconButton(onClick = onOpenLibrary) {
+                Icon(Icons.Default.Add, contentDescription = stringResource(R.string.core_desc_add))
+            }
+        }
         Spacer(modifier = Modifier.height(12.dp))
-        // Crosshair tiles wrap in a grid instead of scrolling sideways: all seven
-        // visible at once on a phone (roughly 4+3), one row on a tablet.
-        ChipFlowRow {
-            scopes.forEach { scope ->
-                val isSelected = selected == scope
-                Surface(
-                    modifier = Modifier.size(64.dp).clip(RoundedCornerShape(12.dp)).clickable { onSelect(scope) },
-                    color = if (isSelected) MaterialTheme.colorScheme.primary.copy(alpha = 0.15f) else MaterialTheme.colorScheme.surfaceVariant,
-                    border = if (isSelected) BorderStroke(2.dp, MaterialTheme.colorScheme.primary) else null
-                ) {
-                    Box(contentAlignment = Alignment.Center, modifier = Modifier.padding(8.dp)) {
-                        val bitmap = remember(scope) { try { context.assets.open("crosshair/$scope").use { BitmapFactory.decodeStream(it) } } catch (_: Exception) { null } }
-                        if (bitmap != null) Image(bitmap = bitmap.asImageBitmap(), contentDescription = null, modifier = Modifier.fillMaxSize())
-                        else Icon(Icons.Default.BrokenImage, null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
+        Surface(
+            modifier = Modifier.size(80.dp).clip(RoundedCornerShape(12.dp)),
+            color = MaterialTheme.colorScheme.primary.copy(alpha = 0.15f),
+            border = BorderStroke(2.dp, MaterialTheme.colorScheme.primary)
+        ) {
+            Box(contentAlignment = Alignment.Center, modifier = Modifier.padding(8.dp)) {
+                val bitmap = remember(normalizedSelected) {
+                    if (CrosshairAssets.isDownloadedAsset(normalizedSelected)) {
+                        BitmapFactory.decodeFile(File(context.filesDir, "crosshairs/$normalizedSelected").absolutePath)
+                    } else {
+                        context.assets.open("crosshair/${CrosshairAssets.DEFAULT_ASSET}").use {
+                            BitmapFactory.decodeStream(it)
+                        }
                     }
+                }
+                if (bitmap != null) {
+                    Image(
+                        bitmap = bitmap.asImageBitmap(),
+                        contentDescription = null,
+                        contentScale = ContentScale.Fit,
+                        modifier = Modifier.fillMaxSize()
+                    )
+                } else {
+                    Icon(
+                        imageVector = Icons.Default.BrokenImage,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
                 }
             }
         }
@@ -3268,7 +3296,7 @@ fun GamingToolsPreview() {
             onSetOverlayMoveMode = {},
             onResetOverlayPosition = {},
             onToggleCrosshair = {},
-            onSelectCrosshair = {},
+            onOpenCrosshairLibrary = {},
             onSetCrosshairMoveMode = {},
             onRecentreCrosshair = {},
             onSetBackgroundDataRestriction = {},

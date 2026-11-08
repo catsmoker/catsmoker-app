@@ -100,6 +100,13 @@ offset from screen centre, the performance readout absolute top-left pixels
 read. Services broadcast their own start/stop/mode changes and the ViewModel
 follows those reports rather than the request that caused them.
 
+The crosshair picker bundles only `scope7.png`; its library reads a numeric PNG catalog from
+`catsmoker/catsmoker-app` on GitHub and stores validated downloads under the app's private
+`files/crosshairs/` directory. The library needs an internet connection to browse/download, but
+using an already downloaded or bundled crosshair needs only the overlay permission. Catalog and
+image files must be published to the repository's `main` branch before the online library is
+available to users.
+
 `gamingtools/tools/glyph/` is the one exception to that pattern: `GlyphController`
 binds Nothing's GDK proxy only to *display* something, mirrors
 `GamingEngine.state` onto the LEDs, writes nothing, and no-ops on every other

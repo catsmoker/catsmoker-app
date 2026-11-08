@@ -96,6 +96,15 @@
 
     <!-- Crosshair -->
     <string name="gt_crosshair_style">Select Style</string>
+    <string name="gt_crosshair_library">Crosshair Library</string>
+    <string name="gt_crosshair_library_sub">Download a design, then tap Use to equip it.</string>
+    <string name="gt_crosshair_number">Crosshair %1$d</string>
+    <string name="gt_crosshair_download">Download</string>
+    <string name="gt_crosshair_use">Use</string>
+    <string name="gt_crosshair_selected">Selected</string>
+    <string name="gt_crosshair_catalog_error">Couldn’t load crosshairs. Check your internet connection.</string>
+    <string name="gt_crosshair_download_error">Download failed. Check your connection and try again.</string>
+    <string name="gt_crosshair_retry">Retry</string>
     <string name="gt_crosshair_position">Position</string>
     <string name="gt_crosshair_off">Turn the crosshair on to move it.</string>
     <string name="gt_crosshair_move">Drag the crosshair on screen. While moving, taps hit the crosshair instead of your game.</string>

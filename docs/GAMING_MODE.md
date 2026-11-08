@@ -299,6 +299,17 @@ hidden and refused while Gaming Mode is `Active`/`Enabling`/`Disabling`/
 counts, never as a bare success. A session whose settings still need reverting
 stays Interrupted until the power button runs the full revert.
 
+After `BOOT_COMPLETED`, a receiver queues one unique WorkManager job when either
+the suspended-package record or the changed-app-op record remains. The worker
+waits for startup reconciliation before restoring, so the engine cannot reject
+the attempt just because it is still checking the saved session. It does not
+rely on `is_active` or a readable boot count: interrupted sessions can have
+their active flag cleared, and a reboot may reset settings while leaving package
+suspensions behind. Failed attempts are retried a limited number of times;
+remaining records stay available to the in-app recovery card. Automatic restore
+uses the existing privileged shell path (root or Shizuku); if it is unavailable,
+the records remain for manual recovery.
+
 ## Who runs a toggle, and the auto game session
 
 **The toggle never runs on a screen's scope.** `GamingModeJobRunner` (a `@Singleton`) owns one

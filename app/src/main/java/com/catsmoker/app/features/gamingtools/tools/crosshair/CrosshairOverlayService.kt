@@ -20,6 +20,7 @@ import com.catsmoker.app.R
 import com.catsmoker.app.shared.util.CatsmokerNotifications
 import com.catsmoker.app.shared.util.DisplayMetricsProvider
 import dagger.hilt.android.AndroidEntryPoint
+import java.io.File
 import kotlin.math.abs
 import kotlin.math.roundToInt
 import javax.inject.Inject
@@ -135,7 +136,7 @@ class CrosshairOverlayService : Service() {
             }
         }
 
-        currentAsset = intent?.getStringExtra(EXTRA_SCOPE_ASSET) ?: DEFAULT_ASSET
+        currentAsset = CrosshairAssets.normalize(intent?.getStringExtra(EXTRA_SCOPE_ASSET))
 
         showOverlay(currentAsset)
 
@@ -153,13 +154,17 @@ class CrosshairOverlayService : Service() {
         val view = LayoutInflater.from(this).inflate(R.layout.overlay_crosshair, null)
         val image = view.findViewById<ImageView>(R.id.crosshair_image)
 
-        try {
-            assets.open("crosshair/$assetName").use { input ->
-                val bitmap = BitmapFactory.decodeStream(input)
-                image?.setImageBitmap(bitmap)
-            }
-        } catch (_: Exception) {
+        val normalizedAsset = CrosshairAssets.normalize(assetName)
+        val bitmap = if (CrosshairAssets.isDownloadedAsset(normalizedAsset)) {
+            BitmapFactory.decodeFile(File(filesDir, "crosshairs/$normalizedAsset").absolutePath)
+        } else {
+            assets.open("crosshair/$normalizedAsset").use { input -> BitmapFactory.decodeStream(input) }
         }
+        image.setImageBitmap(
+            requireNotNull(bitmap) {
+                "Could not load crosshair $normalizedAsset"
+            }
+        )
 
         // Positioned from the centre so the stored offset means the same thing at any resolution, and
         // so a re-centre is simply an offset of zero. The stored offset is applied to the params
@@ -507,7 +512,7 @@ class CrosshairOverlayService : Service() {
         const val EXTRA_SCOPE_ASSET = "scope_asset_name"
         const val EXTRA_MOVE_MODE = "move_mode"
 
-        const val DEFAULT_ASSET = "scope2.png"
+        const val DEFAULT_ASSET = CrosshairAssets.DEFAULT_ASSET
 
         /** Keeps a dragged crosshair grabbable instead of letting it sit half off the panel. */
         private const val MOVE_EDGE_MARGIN_DP = 24f

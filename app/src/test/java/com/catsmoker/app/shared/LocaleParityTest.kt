@@ -289,6 +289,16 @@ class LocaleParityTest {
         "gt_downscale_off",
         "gt_downscale_off_set",
         "gt_downscale_set",
+        // Crosshair library screen and download states.
+        "gt_crosshair_library",
+        "gt_crosshair_library_sub",
+        "gt_crosshair_number",
+        "gt_crosshair_download",
+        "gt_crosshair_use",
+        "gt_crosshair_selected",
+        "gt_crosshair_catalog_error",
+        "gt_crosshair_download_error",
+        "gt_crosshair_retry",
         // Per-game graphics driver (ANGLE table shared with Developer Options).
         "gt_angle_title",
         "gt_angle_1",
