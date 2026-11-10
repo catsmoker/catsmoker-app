@@ -24,9 +24,8 @@ import org.json.JSONObject
 /**
  * Full-variant GitHub-release self-updater.
  *
- * Same FQN as the playstore variant's unsupported stub: [SettingsViewModel]
- * delegates here so the APK-download implementation is not compiled into the
- * Play Store variant at all (Play policy forbids self-updating).
+ * Called only by [FullSettingsViewModel]. Play has neither this implementation
+ * nor an updater stub, parser or orchestration state. Store updates stay with Play.
  *
  * Release contract (verified against the live API 2026-10-09): tags are
  * `{versionCode}-{versionName}` (`11-2.0.5`), so the authoritative comparison

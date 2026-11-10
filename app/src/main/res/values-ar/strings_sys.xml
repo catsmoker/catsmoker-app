@@ -3,32 +3,11 @@
     <string name="sys_settings_title">الإعدادات</string>
     <string name="sys_settings_subtitle">إعدادات التطبيق وتفضيلاته.</string>
     <string name="sys_section_general">عام</string>
-    <string name="sys_ads_title">تفعيل الإعلانات</string>
     <!-- Guilt-trip dialog when the free "Enable Ads" switch is turned off. -->
-    <string name="sys_ads_guilt_title">لا تتركني، أرجوك</string>
-    <string name="sys_ads_guilt_message">الإعلانات هي كيف أطعم قططي. بدونها، يحدّقون بي بحزن. والتبرع الصغير يساعد أيضًا.</string>
-    <string name="sys_ads_guilt_donate">تبرّع</string>
-    <string name="sys_ads_guilt_keep">أبقِ الإعلانات</string>
-    <string name="sys_ads_guilt_turn_off_anyway">أوقف الإعلانات رغم ذلك</string>
-    <string name="sys_ads_guilt_cat_desc">قطة حزينة</string>
     <!-- Play-variant paid ad removal (Google Play Billing one-time product remove_ads). -->
-    <string name="sys_remove_ads_title">إزالة الإعلانات</string>
-    <string name="sys_ads_removed_title">تمت إزالة الإعلانات</string>
-    <string name="sys_ads_removed_sub">شكرًا لدعمك — أنت تتصفح الآن بدون إعلانات.</string>
     <string name="sys_analytics_title">إرسال بيانات التحليلات</string>
-    <string name="sys_analytics_sub">تتلقى Google Firebase بيانات الاستخدام (إطلاق التطبيقات، وطول الجلسة، وطراز الجهاز، وإصدار التطبيق، وعنوان IP). أوقف هذا لإيقاف التجميع؛ وإلغاء تثبيت التطبيق يوقفه أيضًا. راجع سياسة الخصوصية.</string>
+    <string name="sys_analytics_sub">معطلة حتى تفعّلها. اسمح لـ Google Firebase Analytics بتلقي أحداث الاستخدام وتفاصيل الجهاز ومعرّف التثبيت وموقع تقريبي من IP. عطّلها لسحب جمع التحليلات اللاحق. خيارات الإعلانات منفصلة.</string>
     <!-- Nothing Glyph Interface mirror (Settings > General, shown only where the GDK works). -->
-    <string name="sys_billing_unavailable">خدمة فوترة Google Play غير متاحة. تحقق من اتصالك وحاول مجددًا.</string>
-    <string name="sys_remove_ads_pending">عملية الشراء قيد الانتظار. ستتوقف الإعلانات فور تأكيد Google Play.</string>
-    <string name="sys_remove_ads_failed">تعذر إتمام عملية الشراء: %1$s</string>
-    <string name="sys_section_updates">التحديثات</string>
-    <string name="sys_updating">جارٍ تنزيل التحديث…</string>
-    <string name="sys_check_updates">التحقق من وجود تحديثات</string>
-    <string name="sys_prerelease">تضمين الإصدارات الأولية</string>
-    <string name="sys_auto_check">التحقق التلقائي من التحديثات</string>
-    <string name="sys_update_available">يتوفر تحديث: %1$s</string>
-    <string name="sys_update_prompt">يتوفر إصدار جديد. هل تريد تنزيله وتثبيته الآن؟</string>
-    <string name="sys_download">تنزيل</string>
     <string name="sys_later">لاحقًا</string>
     <string name="sys_permissions_title">أذونات التطبيق</string>
     <string name="sys_logs_title">سجلات النظام</string>
@@ -41,15 +20,6 @@
     <string name="sys_theme_dynamic">لون ديناميكي</string>
     <string name="sys_language_title">اللغة</string>
     <string name="sys_lang_system">افتراضي النظام</string>
-    <string name="sys_checking_updates">جارٍ التحقق من وجود تحديثات…</string>
-    <string name="sys_no_releases">لم يتم العثور على إصدارات في GitHub</string>
-    <string name="sys_up_to_date">التطبيق محدّث (الإصدار %1$s)</string>
-    <string name="sys_no_suitable_release">لم يتم العثور على إصدار مناسب</string>
-    <string name="sys_update_check_failed">فشل التحقق من التحديث: %1$s</string>
-    <string name="sys_download_failed">فشل التنزيل: %1$s</string>
-    <string name="sys_update_cancelled">تم إلغاء تنزيل التحديث.</string>
-    <string name="sys_update_rejected">تم رفض حزمة التحديث: %1$s</string>
-    <string name="sys_update_installed">تم التحديث إلى %1$s.</string>
     <string name="sys_cancel">إلغاء</string>
     <string name="sys_support_title">ادعم المطوّر</string>
     <string name="sys_support_text">يرجى منح المشروع نجمة على GitHub والتبرع لدعم التطوير.</string>
@@ -82,17 +52,11 @@
     <string name="sys_notifications_title">الإشعارات</string>
     <string name="sys_notifications_allowed">مسموحة</string>
     <string name="sys_notifications_blocked">محظورة</string>
-    <string name="sys_updates_summary">الإصدار %1$s</string>
-    <string name="sys_updates_available">يتوفر تحديث %1$s</string>
-    <string name="sys_updates_badge">جديد</string>
     <string name="sys_state_on">مفعّل</string>
     <string name="sys_state_off">متوقف</string>
-    <string name="sys_remove_ads_summary">شراء لمرة واحدة</string>
     <string name="sys_permissions_open_system">فتح إعدادات النظام</string>
     <string name="sys_about_summary">الإصدار %1$s · CC BY-NC-SA 4.0</string>
     <string name="sys_info_what_title">ما الذي يفعله</string>
-    <string name="sys_rate_app_title">قيم التطبيق</string>
-    <string name="sys_rate_app_summary">قيم على متجر Google Play</string>
     <string name="sys_share_app_title">مشاركة التطبيق</string>
     <string name="sys_share_app_summary">مشاركة ملف التطبيق</string>
     <string name="sys_share_app_failed">تعذّرت مشاركة التطبيق</string>

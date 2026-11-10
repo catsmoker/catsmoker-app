@@ -3,21 +3,20 @@ package com.catsmoker.app.system.config
 import android.content.Context
 import androidx.core.content.edit
 import com.google.firebase.analytics.FirebaseAnalytics
+import com.google.firebase.FirebaseApp
 
 /**
  * The single owner of the user's analytics choice and of its effect on the SDK.
  *
- * The Settings switch used to write a preference nothing read: Firebase Analytics is
- * bundled in both flavours (`firebase-analytics`, initialised by `FirebaseInitProvider`
- * before any of our code runs), so the toggle claimed a control it did not have. This
- * object closes that gap — it holds the preference, and every write also tells
- * [FirebaseAnalytics] whether collection is allowed.
+ * Both distributions bundle Analytics, but its automatic provider is removed. Only
+ * an explicit, current-version Settings choice may initialize Firebase/Analytics.
  *
  * The choice lives in `app_prefs` (key `analytics_enabled`) rather than a new file
  * because the key already shipped in [com.catsmoker.app.features.settings.SettingsViewModel];
- * reusing it keeps users who already flipped the switch on their stored answer.
+ * reusing it preserves the preference identity; a separate choice version ensures
+ * an old default-on value is never mistaken for a new explicit opt-in.
  *
- * Default is enabled, matching Firebase's own default and the toggle's existing copy.
+ * Default is disabled. A legacy default-on preference is not explicit consent.
  * [sync] runs from [com.catsmoker.app.system.CatsmokerApp.onCreate] on every process
  * start, because the SDK persists its own flag and the two can drift if the app data is
  * restored without the SDK's preferences, or if the user changes the choice while a
@@ -28,10 +27,15 @@ object AnalyticsConsent {
     const val PREFS = "app_prefs"
     const val KEY_ENABLED = "analytics_enabled"
 
-    /** Firebase collects until the user says otherwise; the legal text states this. */
-    const val DEFAULT_ENABLED = true
+    /** Fresh installs and legacy defaults remain off until a deliberate Settings opt-in. */
+    const val DEFAULT_ENABLED = false
 
-    fun isEnabled(context: Context): Boolean = appPrefs(context).getBoolean(KEY_ENABLED, DEFAULT_ENABLED)
+    private const val KEY_CHOICE_VERSION = "analytics_choice_version"
+
+    fun isEnabled(context: Context): Boolean = appPrefs(context).let {
+        PrivacyPolicy.analyticsAllowed(it.getBoolean(KEY_ENABLED, DEFAULT_ENABLED),
+            it.getInt(KEY_CHOICE_VERSION, 0))
+    }
 
     /**
      * Persists the choice first, then applies it. A failed SDK call must never lose the
@@ -39,7 +43,10 @@ object AnalyticsConsent {
      * next start.
      */
     fun setEnabled(context: Context, enabled: Boolean) {
-        appPrefs(context).edit { putBoolean(KEY_ENABLED, enabled) }
+        appPrefs(context).edit {
+            putBoolean(KEY_ENABLED, enabled)
+            putInt(KEY_CHOICE_VERSION, PrivacyPolicy.VERSION)
+        }
         apply(context, enabled)
     }
 
@@ -58,7 +65,21 @@ object AnalyticsConsent {
      */
     private fun apply(context: Context, enabled: Boolean) {
         runCatching {
-            FirebaseAnalytics.getInstance(context).setAnalyticsCollectionEnabled(enabled)
+            if (FirebaseApp.getApps(context).isEmpty()) {
+                if (!enabled) return@runCatching
+                if (FirebaseApp.initializeApp(context) == null) return@runCatching
+            }
+            val analytics = FirebaseAnalytics.getInstance(context)
+            // Analytics opt-in is not advertising consent. Keep advertising uses denied here;
+            // Play's independent CMP controls its advertising SDK.
+            analytics.setConsent(mapOf(
+                FirebaseAnalytics.ConsentType.ANALYTICS_STORAGE to if (enabled)
+                    FirebaseAnalytics.ConsentStatus.GRANTED else FirebaseAnalytics.ConsentStatus.DENIED,
+                FirebaseAnalytics.ConsentType.AD_STORAGE to FirebaseAnalytics.ConsentStatus.DENIED,
+                FirebaseAnalytics.ConsentType.AD_USER_DATA to FirebaseAnalytics.ConsentStatus.DENIED,
+                FirebaseAnalytics.ConsentType.AD_PERSONALIZATION to FirebaseAnalytics.ConsentStatus.DENIED
+            ))
+            analytics.setAnalyticsCollectionEnabled(enabled)
         }
     }
 }

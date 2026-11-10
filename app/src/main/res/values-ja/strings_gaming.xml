@@ -54,7 +54,6 @@
     <string name="gt_tool_dnd_title">迷惑メール防止</string>
     <string name="gt_tool_dnd_sub">プレイ中の通知をミュート。</string>
     <string name="gt_tool_net_title">バックグラウンドデータ</string>
-    <string name="gt_tool_net_sub">他アプリをインターネットから遮断。</string>
     <string name="gt_tool_dns_title">プライベートDNS</string>
     <string name="gt_tool_dns_sub">プライベートDNSプロバイダを選択。</string>
     <string name="gt_tool_afs_title">自動フォースストップ</string>
@@ -149,9 +148,9 @@
     <string name="gt_cleaner_what_2">「スキャン」は見るだけです。何も削除されません。「クリーニング」を押すまで。</string>
     <string name="gt_cleaner_what_3">各行の数値は、見つかった数と容量です。推定ではなく実測です。</string>
     <string name="gt_cleaner_safe_title">安全？赤いのは何？</string>
-    <string name="gt_cleaner_safe_1">通常の行は安全: 端末が必要になれば勝手に再構築します。</string>
+    <string name="gt_cleaner_safe_1">通常の項目にもキャッシュ、空ファイル、古いインストーラーが含まれます。すべて復元できるとは限りません。清掃や予約の前に対象を確認してください。</string>
     <string name="gt_cleaner_safe_2">赤字の行は強力です。アプリからログアウトさせたり、クリーニング後の初回起動を遅くしたりする可能性があります。最初はチェックが外れています。</string>
-    <string name="gt_cleaner_safe_3">写真、メッセージ、ファイル、アプリには決して触れません。</string>
+    <string name="gt_cleaner_safe_3">保護パスは除外しますが、選択したファイルは削除します。清掃は取り消せません。必要なものは対象外に保管してください。</string>
     <string name="gt_cleaner_none_found">見つかりませんでした</string>
     <string name="gt_cleaner_not_scanned">未スキャン</string>
     <string name="gt_cleaner_scan">スキャン</string>
@@ -220,19 +219,8 @@
     <string name="gt_scan_lim_no_datadir">%1$s が存在しないため、そこのアプリキャッシュはスキャンされませんでした。</string>
 
     <!-- Network block -->
-    <string name="gt_net_what_1">他アプリのバックグラウンド通信を止め、ゲームが接続を独占できるようにします。</string>
-    <string name="gt_net_what_2">やり方は2つ。どちらかだけでも、両方同時にでも使えます。ゲームは常に除外されます。</string>
-    <string name="gt_net_vpn_title">アプリ遮断 (VPN)</string>
-    <string name="gt_net_vpn_sub">Wi-Fiとモバイルデータ両方で動作。Root不要。端末のVPNスロットを使用。</string>
-    <string name="gt_net_vpn_on_count">オン — %1$d アプリを遮断</string>
     <string name="gt_net_on">オン</string>
     <string name="gt_net_off">オフ</string>
-    <string name="gt_net_vpn_error">オンにできませんでした: %1$s</string>
-    <string name="gt_net_vpn_how_title">VPN方式の仕組み</string>
-    <string name="gt_net_vpn_how_1">Androidはアプリにプライベート接続(VPN)を作らせ、どのアプリを通すか選ばせます。このアプリは他アプリをそこに通し、彼らが送るものをすべて捨てます。ゲームは通さないため、完全に無影響です。</string>
-    <string name="gt_net_vpn_how_2">これはファイアウォールではなくVPNです。何もどこにも送られず、端末から出ません — 単にどこにも行かないだけです。</string>
-    <string name="gt_net_vpn_how_3">知っておくべき2点: 遮断されたアプリは「インターネットなし」ではなく永遠に読み込み中に見えます。また端末は同時に1つのVPNしか許可しないため、他のVPNアプリを使っているとこれがそれをオフにします。</string>
-    <string name="gt_net_vpn_how_4">Androidが一度だけ許可を尋ねます。拒否すれば何も遮断されません。</string>
     <string name="gt_net_ds_title">データセーバー</string>
     <string name="gt_net_ds_sub">Android標準の設定。RootまたはShizukuが必要。従量制Wi-Fiを含む従量制ネットワークに適用されます。</string>
     <string name="gt_net_ds_need">データセーバーにはRootまたはShizukuが必要です。Androidは通常アプリによる変更を許可しません。</string>
@@ -242,7 +230,6 @@
     <string name="gt_net_ds_off_stopped">オフ — だが %1$d アプリはまだ停止中</string>
     <string name="gt_net_engaged">CatSmokerがオンにしました — オフにすると端末を元の状態に戻します。</string>
     <string name="gt_net_metered">このネットワークは従量制です。バックグラウンド通信の制限を適用できます。オン・オフの状態は上の表示で確認してください。</string>
-    <string name="gt_net_unmetered">通常のWi-Fiなのでデータセーバーは何もしません。VPNスイッチを使ってください。</string>
     <string name="gt_net_unknown_net">どの種類のネットワークか判別できませんでした。</string>
     <string name="gt_net_no_perapp">この端末のバージョンではアプリごとの停止ができないため、端末全体のデータセーバー設定のみ利用可能です。</string>
     <string name="gt_net_exempt">常に許可 (%1$d): %2$s</string>
@@ -250,11 +237,6 @@
     <string name="gt_net_ds_how_1">Androidの設定にあるのと同じ設定を使い、端末に他アプリのバックグラウンド通信をオフにさせます。ゲームは最初に「常に許可」リストに入れるため、動き続けます。</string>
     <string name="gt_net_ds_how_2">すべての変更は後で端末から読み戻すため、上に見えるのは端末の回答であり、このアプリの推測ではありません。</string>
     <string name="gt_net_ds_how_3">モバイルデータ、または有料とマークしたWi-Fiでのみ動作。通常のWi-Fiでは何もしません。</string>
-    <string name="gt_net_which_title">どっちを使うべき？</string>
-    <string name="gt_net_which_1">モバイルデータでは: データセーバーだけで十分、バッテリーも消費しません。</string>
-    <string name="gt_net_which_2">Wi-Fiでは: VPNスイッチを使う — データセーバーは何もしません。</string>
-    <string name="gt_net_which_3">最強にしたい: 両方オンにする。</string>
-    <string name="gt_net_which_4">どちらも、あなたが実際に見ているアプリは遮断しません。それは意図的です。</string>
 
     <!-- Background data engine notes -->
     <string name="gt_bdr_no_verify">端末がどのアプリを遮断したか教えてくれなかったため、何も変更しませんでした</string>
@@ -274,15 +256,6 @@
     <string name="gt_bdr_unblock_some">%1$d / %2$d アプリが再びデータ通信可能 — %3$d はまだ停止中</string>
 
     <!-- VPN engine -->
-    <string name="gt_vpn_consent">まだVPNに同意していません。スイッチをもう一度タップしてOKを選んでください。</string>
-    <string name="gt_vpn_unknown">AndroidがVPN許可かどうか教えてくれません (%1$s)。スイッチをもう一度タップしてください。</string>
-    <string name="gt_vpn_nothing">遮断するものがありません — 端末のすべてのアプリがAndroid本体かあなたのゲームです。</string>
-    <string name="gt_vpn_start_fail">端末が開始しませんでした (%1$s)</string>
-    <string name="gt_vpn_fail_empty">遮断するアプリがないためVPNを開始しませんでした</string>
-    <string name="gt_vpn_fail_accept">Androidが遮断対象アプリをどれも受け入れませんでした</string>
-    <string name="gt_vpn_fail_refused">AndroidがVPNを拒否 (%1$s)</string>
-    <string name="gt_vpn_fail_interface">AndroidがVPNインターフェースを作成しませんでした</string>
-    <string name="gt_vpn_fail_revoke">他のVPNアプリが奪ったか、あなたがVPN許可を取り消しました</string>
 
     <!-- Developer options card -->
     <string name="gt_dev_anim">アニメーション速度</string>
@@ -530,9 +503,6 @@
 
     <!-- ViewModel messages -->
     <string name="gt_vm_something_wrong">何かがうまくいきませんでした</string>
-    <string name="gt_vm_vpn_unblocked">他アプリが再びインターネット使用可能に</string>
-    <string name="gt_vm_vpn_unknown">AndroidがVPN許可かどうか教えてくれません (%1$s)</string>
-    <string name="gt_vm_vpn_no">拒否したため何も遮断しません</string>
     <string name="gt_vm_scan_denied">ストレージを調べられませんでした — 下の注記参照</string>
     <string name="gt_vm_scan_empty">完了: クリーニングするものなし</string>
     <string name="gt_vm_scan_empty_items">%1$d 個の空ファイルを発見 — 容量は0</string>

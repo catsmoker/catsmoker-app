@@ -1,0 +1,35 @@
+<resources>
+    <!-- Local network block: full distribution only. -->
+    <string name="gt_net_what_2">توجد طريقتان لفعل ذلك. يمكنك استخدام واحدة أو الاثنتين معاً. ألعابك تُترك دائماً.</string>
+    <string name="gt_net_vpn_title">حظر التطبيقات (VPN)</string>
+    <string name="gt_net_vpn_sub">يعمل على Wi-Fi وبيانات الهاتف. لا يحتاج روت. يستخدم فتحة VPN في هاتفك.</string>
+    <string name="gt_net_vpn_on_count">مشغّل — يوقف %1$d من التطبيقات</string>
+    <string name="gt_net_vpn_error">تعذر تشغيله: %1$s</string>
+    <string name="gt_net_vpn_how_title">كيف يعمل VPN؟</string>
+    <string name="gt_net_vpn_how_1">يسمح أندرويد لتطبيق بإنشاء اتصال خاص، يسمى VPN، واختيار التطبيقات التي تمر عبره. هذا التطبيق يرسل التطبيقات الأخرى إليه ثم يسقط كل ما ترسله. ألعابك لا تمر عبره إطلاقاً، فلا يمسها شيء.</string>
+    <string name="gt_net_vpn_how_2">إنه VPN وليس جدار حماية. لا يُرسل شيء إلى أي مكان ولا يغادر هاتفك شيء — بل يذهب إلى لا مكان ببساطة.</string>
+    <string name="gt_net_vpn_how_3">أمران يجب معرفتهما: التطبيق المحظور سيبدو وكأنه يحمّل للأبد بدل قول \"لا إنترنت\"، وهاتفك يسمح بـ VPN واحد فقط في المرة الواحدة، لذا فهذا يوقف أي تطبيق VPN آخر تستخدمه.</string>
+    <string name="gt_net_vpn_how_4">سيطلب منك أندرويد مرة واحدة السماح به. إذا قلت لا، لن يُحظر شيء.</string>
+    <string name="gt_net_which_title">أيهما يجب أن أستخدم؟</string>
+    <string name="gt_net_which_1">على بيانات الهاتف: توفير البيانات وحده كافٍ، ولا يكلف بطارية.</string>
+    <string name="gt_net_which_2">على Wi-Fi: استخدم مفتاح VPN — لن يفعل توفير البيانات شيئاً.</string>
+    <string name="gt_net_which_3">تريد أقوى إعداد: شغّل الاثنين.</string>
+    <string name="gt_net_which_4">لا أحد منهما يحظر التطبيق الذي تنظر إليه فعلاً. هذا مقصود.</string>
+    <string name="gt_vpn_consent">لم تقل نعم لـ VPN بعد. انقر المفتاح مجدداً واختر موافق.</string>
+    <string name="gt_vpn_unknown">لم يقل أندرويد إن كان VPN مسموحاً (%1$s). انقر المفتاح مجدداً.</string>
+    <string name="gt_vpn_nothing">لا يوجد ما يُحظر — كل تطبيق في هاتفك إما جزء من أندرويد نفسه أو من ألعابك.</string>
+    <string name="gt_vpn_start_fail">لم يقبل هاتفك تشغيله (%1$s)</string>
+    <string name="gt_vpn_fail_empty">لا توجد تطبيقات لحظرها، لذا لم يبدأ VPN</string>
+    <string name="gt_vpn_fail_accept">لم يقبل أندرويد أياً من التطبيقات المراد حظرها</string>
+    <string name="gt_vpn_fail_refused">رفض أندرويد VPN (%1$s)</string>
+    <string name="gt_vpn_fail_interface">لم ينشئ أندرويد واجهة VPN</string>
+    <string name="gt_vpn_fail_revoke">تطبيق VPN آخر تولى الأمر، أو ألغيت إذن VPN</string>
+    <string name="gt_vm_vpn_unblocked">يمكن للتطبيقات الأخرى استخدام الإنترنت مجدداً</string>
+    <string name="gt_vm_vpn_unknown">لم يقل أندرويد إن كان VPN مسموحاً (%1$s)</string>
+    <string name="gt_vm_vpn_no">قلت لا، لذا لا يُحظر شيء</string>
+    <string name="gt_svc_vpn_title">حظر شبكة التطبيقات</string>
+    <string name="gt_svc_vpn_session">Catsmoker app block</string>
+    <string name="gt_svc_vpn_blocking">يحظر %1$d من التطبيقات</string>
+    <string name="gt_svc_vpn_ipv4"> · IPv4 فقط على هذا الجهاز</string>
+    <string name="gt_svc_vpn_channel">حظر شبكة التطبيقات</string>
+</resources>

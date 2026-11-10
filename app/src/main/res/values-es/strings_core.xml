@@ -86,17 +86,17 @@
     <string name="core_perm_storage_title">Acceso al almacenamiento</string>
     <string name="core_perm_storage_sub">Para leer y modificar archivos de configuración de juegos.</string>
     <string name="core_perm_battery_title">Optimización de batería</string>
-    <string name="core_perm_battery_sub">Permite que la app funcione bien en segundo plano.</string>
+    <string name="core_perm_battery_sub">Abre los ajustes generales de optimización de batería, sin pedir una exención directa.</string>
     <string name="core_perm_notif_title">Notificaciones</string>
     <string name="core_perm_notif_sub">Para mostrar el estado del servicio.</string>
     <string name="core_perm_overlay_title">Superposición</string>
     <string name="core_perm_overlay_sub">Para mostrar monitores de rendimiento.</string>
     <string name="core_perm_usage_title">Estadísticas de uso</string>
-    <string name="core_perm_usage_sub">Para registrar el tiempo de juego.</string>
+    <string name="core_perm_usage_sub">Con tu consentimiento opcional, observa la app en primer plano para sesiones o Silent Hunter. Se pueden detener apps que no son juegos.</string>
     <string name="core_perm_mic_title">Micrófono</string>
-    <string name="core_perm_mic_sub">Necesario para las funciones de mejora de audio.</string>
+    <string name="core_perm_mic_sub">Visualizador opcional del audio de salida para la mejora de audio; no graba el micrófono.</string>
     <string name="core_perm_bt_title">Bluetooth</string>
-    <string name="core_perm_bt_sub">Necesario para optimizaciones de mandos y auriculares.</string>
+    <string name="core_perm_bt_sub">Identificación opcional de la salida de audio Bluetooth para controles de audio.</string>
     <string name="core_done">LISTO</string>
     <string name="core_grant">OTORGAR</string>
     <!-- Permission rows gated on Android version: shown disabled with a reason, never hidden. -->

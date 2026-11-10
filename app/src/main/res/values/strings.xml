@@ -138,8 +138,6 @@
     <!-- Frame-rate label for the vsync fallback: this app's own frames, not the game's -->
     <string name="dash_fps_label_ui"> UI FPS</string>
     <string name="dash_quick_actions">ENGINEERING CONSOLE</string>
-    <string name="dash_spoof_title">Device Spoofing</string>
-    <string name="dash_spoof_subtitle">Identity &amp; Prop Overrides</string>
     <string name="dash_edit_files_title">File Engineering</string>
     <string name="dash_edit_files_subtitle">Data Optimization Tools</string>
     <string name="dash_gaming_tools_subtitle">Overlays, Network &amp; Logic</string>

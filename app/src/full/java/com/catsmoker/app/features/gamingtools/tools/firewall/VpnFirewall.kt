@@ -18,10 +18,9 @@ import javax.inject.Singleton
 /**
  * A local VPN that drops other apps' traffic — the same mechanism NetGuard uses.
  *
- * **Full build only.** Google Play's VpnService policy requires the VPN to be core
- * functionality, which this app is not, so the Play variant compiles a no-op
- * [VpnFirewall] stub instead and hides the switch. The Data Saver half of
- * network blocking stays available there.
+ * **Full build only.** Following this app's Play rejection, the service, controller and UI are
+ * excluded from Play's inputs. Play keeps the independent Data Saver mechanism. Play's VPN policy
+ * has eligibility exceptions; a non-core VPN is not universally prohibited in every app category.
  *
  * **This is a local VPN, not a kernel firewall, and the wording in the UI says so.** Nothing here
  * talks to netfilter or iptables. Android hands an app a `tun` interface, lets it name which packages
@@ -107,7 +106,7 @@ class VpnFirewall @Inject constructor(
     // Partial visibility is fine: invisible apps are skipped, never blocked.
     // Shared InstalledAppQuery (consolidation C4): one user-app + INTERNET rule.
     fun blockTargets(gamePackages: List<String>): List<String> =
-        InstalledAppQuery.blockTargets(context.packageManager, context.packageName, gamePackages)
+        InstalledAppQuery.blockTargets(context, context.packageName, gamePackages)
 
     /**
      * Starts the local VPN for every app in [gamePackages]'s complement.

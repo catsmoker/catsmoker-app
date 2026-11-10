@@ -1,0 +1,43 @@
+<resources>
+    <string name="dash_spoof_title">Device Spoofing</string>
+    <string name="dash_spoof_subtitle">Identity &amp; Prop Overrides</string>
+    <string name="about_license_ads_components" translatable="false">Start.io</string>
+    <string name="gt_tool_net_sub">Keep other apps off the internet.</string>
+    <string name="gt_net_what_1">It stops other apps using the internet in the background, so your game gets the whole connection to itself.</string>
+    <string name="gt_net_unmetered">You are on normal Wi-Fi, so Data Saver does nothing here. Use the VPN switch instead.</string>
+    <string name="legal_privacy_updated">Last updated: 2026-10-25</string>
+    <string name="legal_p_local_body">Settings and app state are kept in on-device storage only: theme, language, onboarding choices, launch counters, ad preferences, update-check preferences, game library entries, spoofing profiles and per-app assignments, Gaming Mode options (DNS choice, refresh rate, cleaner patterns, suspend lists), overlay and crosshair positions, game-config backups, diagnostic logs and crash records. Nothing in this list is uploaded to the developer \u2014 there is no backend to upload it to. Uninstalling the app, or clearing its data, deletes it.</string>
+    <string name="legal_p_vpn_title">7. Local VPN firewall</string>
+    <string name="legal_p_vpn_body">The optional app-network firewall uses Android\u2019s VPN framework as a local on-device filter. Traffic rules are applied on the phone itself; no traffic is sent to project servers, because there are none.</string>
+    <string name="legal_p_consent_body">Optional features \u2014 overlays, the VPN filter, root or Shizuku actions and sharing \u2014 run only when you turn them on. You can withdraw consent by turning a feature off or uninstalling the app; this does not affect processing carried out before withdrawal. Uninstalling stops the app from collecting data on your device, but does not delete data already sent to Google or Start.io. To request deletion of data the developer holds, email catsmoker.lab@gmail.com.</string>
+    <string name="legal_t_games_body">Spoofing device identity or modifying game files may violate the terms of service of individual games and can lead to penalties such as restricted features or banned accounts. The developer is not responsible for account bans or any loss in third-party games. Use these features at your own risk.</string>
+    <string name="legal_t_risk_body">The Application works without root for many features. Advanced features (device spoofing, some system tweaks and file edits) require Shizuku, root or a generated Magisk module, and are optional. Rooting or jailbreaking a device removes security restrictions and can expose it to malware, void warranties, break banking or payment apps, or stop the app from working. Enable these features only if you understand and accept that risk. Features that change system settings (resolution, refresh rate, animation scales, DNS, audio, dexopt compilation) act on your instruction. The app backs up game configs before writing where it can, but you accept the risk of instability, boot problems or data loss. You can revert changes or uninstall the app at any time.</string>
+    <string name="sys_ads_sub">Banner ads by Start.io keep the app free. Turn off to disable. See the Privacy Policy for what the ad provider collects.</string>
+    <string name="sys_ads_title">Enable Ads</string>
+    <string name="sys_ads_guilt_title">Please don\'t leave me</string>
+    <string name="sys_ads_guilt_message">Ads are how I feed my cats. Without them, they just stare at me sadly. A small donation works too.</string>
+    <string name="sys_ads_guilt_donate">Donate</string>
+    <string name="sys_ads_guilt_keep">Keep ads</string>
+    <string name="sys_ads_guilt_turn_off_anyway">Turn off ads anyway</string>
+    <string name="sys_ads_guilt_cat_desc">Sad cat</string>
+    <string name="sys_section_updates">Updates</string>
+    <string name="sys_updating">Downloading update…</string>
+    <string name="sys_check_updates">Check for Updates</string>
+    <string name="sys_prerelease">Include pre-releases</string>
+    <string name="sys_auto_check">Auto Check Updates</string>
+    <string name="sys_update_available">Update Available: %1$s</string>
+    <string name="sys_update_prompt">A new version is available. Download and install now?</string>
+    <string name="sys_download">DOWNLOAD</string>
+    <string name="sys_checking_updates">Checking for updates…</string>
+    <string name="sys_no_releases">No releases found on GitHub</string>
+    <string name="sys_up_to_date">App is up to date (v%1$s)</string>
+    <string name="sys_no_suitable_release">No suitable release found</string>
+    <string name="sys_update_check_failed">Update check failed: %1$s</string>
+    <string name="sys_download_failed">Download failed: %1$s</string>
+    <string name="sys_update_cancelled">Update download cancelled.</string>
+    <string name="sys_update_rejected">Update package rejected: %1$s</string>
+    <string name="sys_update_installed">Updated to %1$s.</string>
+    <string name="sys_updates_summary">Version %1$s</string>
+    <string name="sys_updates_available">Update %1$s available</string>
+    <string name="sys_updates_badge">New</string>
+</resources>

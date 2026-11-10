@@ -86,17 +86,17 @@
     <string name="core_perm_storage_title">الوصول إلى التخزين</string>
     <string name="core_perm_storage_sub">لقراءة ملفات إعدادات الألعاب وتعديلها.</string>
     <string name="core_perm_battery_title">تحسين البطارية</string>
-    <string name="core_perm_battery_sub">للسماح للتطبيق بالعمل بسلاسة في الخلفية.</string>
+    <string name="core_perm_battery_sub">فتح إعدادات تحسين البطارية العامة دون طلب إعفاء مباشر.</string>
     <string name="core_perm_notif_title">الإشعارات</string>
     <string name="core_perm_notif_sub">لعرض حالة الخدمة.</string>
     <string name="core_perm_overlay_title">التراكب</string>
     <string name="core_perm_overlay_sub">لعرض مراقبي الأداء.</string>
     <string name="core_perm_usage_title">إحصاءات الاستخدام</string>
-    <string name="core_perm_usage_sub">لتتبع وقت اللعب.</string>
+    <string name="core_perm_usage_sub">بموافقتك الاختيارية، راقب التطبيق الأمامي لجلسات اللعب أو الصياد الصامت. قد تُوقف تطبيقات غير الألعاب إجباريًا.</string>
     <string name="core_perm_mic_title">الميكروفون</string>
-    <string name="core_perm_mic_sub">مطلوب لميزات تعزيز الصوت.</string>
+    <string name="core_perm_mic_sub">عارض اختياري لصوت الخرج لتعزيز الصوت؛ ليس لتسجيل الميكروفون.</string>
     <string name="core_perm_bt_title">البلوتوث</string>
-    <string name="core_perm_bt_sub">مطلوب لتحسينات وحدات التحكم وسماعات الرأس.</string>
+    <string name="core_perm_bt_sub">تمييز اختياري لمخرج صوت البلوتوث لأدوات التحكم بالصوت.</string>
     <string name="core_done">تم</string>
     <string name="core_grant">منح</string>
     <!-- Permission rows gated on Android version: shown disabled with a reason, never hidden. -->

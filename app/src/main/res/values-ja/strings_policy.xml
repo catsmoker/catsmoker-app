@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="policy_access_title">ゲーム機能の任意アクセス</string>
+    <string name="policy_access_intro">項目ごとに選択してください。この選択で Android の権限は付与されません。拒否しても対象のツール以外は利用できます。アクセス情報はローカルで使い、当方のサーバーには送りません。分析は設定で有効にするまでオフです。広告の選択は別です。設定からいつでも見直せます。</string>
+    <string name="policy_inventory">ゲームライブラリ、アプリ選択、最適化、バックグラウンド制限、クリーナーの確認のため、CatSmoker から見えるインストール済みアプリを検出します。</string>
+    <string name="policy_usage">セッション検出または Silent Hunter の動作中、前面のアプリを監視します。セッション検出はゲームに合わせてゲームモードを有効にします。Silent Hunter はゲーム以外も含めて直前のアプリを強制停止するため、作業やメッセージが中断される場合があります。各機能の通知から停止できます。</string>
+    <string name="policy_notifications">ゲームモードの通知抑制中、他のアプリの既存および新着通知を消去します。単なる消音ではありません。CatSmoker は消去した通知を復元できず、重要なメッセージを見逃す場合があります。この機能はメッセージ本文を読みません。抑制をオフにすると以後の通知が届きます。</string>
+    <string name="policy_save_choices">選択を保存</string>
+    <string name="policy_decline">すべて拒否</string>
+    <string name="policy_review_access">アプリ検出、前面アプリの監視、通知消去の選択を確認または撤回します。</string>
+    <string name="policy_access_needed">このツールを使う前に、設定で該当する任意アクセスを許可してください。</string>
+</resources>

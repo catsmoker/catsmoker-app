@@ -86,17 +86,17 @@
     <string name="core_perm_storage_title">存储权限</string>
     <string name="core_perm_storage_sub">用于读取/修改游戏配置文件。</string>
     <string name="core_perm_battery_title">电池优化</string>
-    <string name="core_perm_battery_sub">允许应用在后台流畅运行。</string>
+    <string name="core_perm_battery_sub">打开常规电池优化设置，不直接申请豁免。</string>
     <string name="core_perm_notif_title">通知</string>
     <string name="core_perm_notif_sub">用于显示服务状态。</string>
     <string name="core_perm_overlay_title">悬浮窗</string>
     <string name="core_perm_overlay_sub">用于显示性能监控。</string>
     <string name="core_perm_usage_title">使用情况统计</string>
-    <string name="core_perm_usage_sub">用于统计游戏时长。</string>
+    <string name="core_perm_usage_sub">经您自愿同意后，为会话检测或 Silent Hunter 监测前台应用。非游戏应用也可能被强行停止。</string>
     <string name="core_perm_mic_title">麦克风</string>
-    <string name="core_perm_mic_sub">音频增强功能所需。</string>
+    <string name="core_perm_mic_sub">音频增强的可选输出 Visualizer，不进行麦克风录音。</string>
     <string name="core_perm_bt_title">蓝牙</string>
-    <string name="core_perm_bt_sub">手柄与耳机优化所需。</string>
+    <string name="core_perm_bt_sub">可选识别蓝牙音频输出，用于音频控制。</string>
     <string name="core_done">完成</string>
     <string name="core_grant">授予</string>
     <!-- Permission rows gated on Android version: shown disabled with a reason, never hidden. -->

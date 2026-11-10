@@ -1,0 +1,35 @@
+<resources>
+    <!-- Local network block: full distribution only. -->
+    <string name="gt_net_what_2">有两种方式，可任选其一或同时使用。你的游戏永远不受影响。</string>
+    <string name="gt_net_vpn_title">应用拦截（VPN）</string>
+    <string name="gt_net_vpn_sub">适用于 Wi-Fi 和移动数据。无需 Root。占用手机的 VPN 通道。</string>
+    <string name="gt_net_vpn_on_count">已开启 — 正在阻止 %1$d 个应用</string>
+    <string name="gt_net_vpn_error">无法开启：%1$s</string>
+    <string name="gt_net_vpn_how_title">VPN 方式如何工作？</string>
+    <string name="gt_net_vpn_how_1">Android 允许应用建立名为 VPN 的私有连接，并选择哪些应用经过它。此应用把其他应用送入其中并丢弃它们发送的一切。你的游戏完全不经过它，因此不受影响。</string>
+    <string name="gt_net_vpn_how_2">它是 VPN，不是防火墙。没有任何数据被发送到别处，也没有离开手机——只是无处可去。</string>
+    <string name="gt_net_vpn_how_3">两点须知：被阻止的应用看起来像一直在加载，而不会提示“无网络”；且手机一次只允许一个 VPN，因此这会关闭你用的其他 VPN 应用。</string>
+    <string name="gt_net_vpn_how_4">Android 会请求一次授权。若你拒绝，则不会阻止任何内容。</string>
+    <string name="gt_net_which_title">该用哪一个？</string>
+    <string name="gt_net_which_1">移动数据下：仅流量节省程序就够，且不耗电。</string>
+    <string name="gt_net_which_2">Wi-Fi 下：用 VPN 开关——流量节省程序无效。</string>
+    <string name="gt_net_which_3">想要最强设置：两个都开。</string>
+    <string name="gt_net_which_4">两者都不会阻止你正在看的应用，这是故意的。</string>
+    <string name="gt_vpn_consent">你尚未同意 VPN。请再次点击开关并选择确定。</string>
+    <string name="gt_vpn_unknown">Android 未说明 VPN 是否被允许（%1$s），请再次点击开关。</string>
+    <string name="gt_vpn_nothing">没有可阻止的内容 — 手机上的每个应用要么是 Android 自身，要么是你的游戏。</string>
+    <string name="gt_vpn_start_fail">手机不愿启动它（%1$s）</string>
+    <string name="gt_vpn_fail_empty">没有可阻止的应用，因此未启动 VPN</string>
+    <string name="gt_vpn_fail_accept">Android 未接受任何待阻止的应用</string>
+    <string name="gt_vpn_fail_refused">Android 拒绝了 VPN（%1$s）</string>
+    <string name="gt_vpn_fail_interface">Android 未创建 VPN 接口</string>
+    <string name="gt_vpn_fail_revoke">另一个 VPN 应用接管了，或你撤销了 VPN 权限</string>
+    <string name="gt_vm_vpn_unblocked">其他应用可重新使用互联网</string>
+    <string name="gt_vm_vpn_unknown">Android 未说明 VPN 是否被允许（%1$s）</string>
+    <string name="gt_vm_vpn_no">你点了拒绝，因此没有阻止任何内容</string>
+    <string name="gt_svc_vpn_title">应用断网</string>
+    <string name="gt_svc_vpn_session">Catsmoker app block</string>
+    <string name="gt_svc_vpn_blocking">正在阻止 %1$d 个应用</string>
+    <string name="gt_svc_vpn_ipv4"> · 此设备仅 IPv4</string>
+    <string name="gt_svc_vpn_channel">应用断网</string>
+</resources>

@@ -68,8 +68,6 @@
     <string name="dash_fps_label"> FPS</string>
     <string name="dash_fps_label_ui"> FPS da IU</string>
     <string name="dash_quick_actions">CONSOLE DE ENGENHARIA</string>
-    <string name="dash_spoof_title">Falsificação de dispositivo</string>
-    <string name="dash_spoof_subtitle">Identidade e substituição de props</string>
     <string name="dash_edit_files_title">Engenharia de arquivos</string>
     <string name="dash_edit_files_subtitle">Ferramentas de otimização de dados</string>
     <string name="dash_gaming_tools_subtitle">Sobreposições, rede e lógica</string>

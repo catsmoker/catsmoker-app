@@ -1,16 +1,12 @@
 package com.catsmoker.app.features.gamingtools.tools.cleaner
 
-import android.app.Notification
 import android.app.NotificationManager
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
-import android.content.pm.ServiceInfo
-import android.os.Build
 import androidx.core.app.NotificationCompat
 import androidx.hilt.work.HiltWorker
 import androidx.work.CoroutineWorker
-import androidx.work.ForegroundInfo
 import androidx.work.WorkerParameters
 import com.catsmoker.app.R
 import com.catsmoker.app.shared.util.CatsmokerNotifications
@@ -27,11 +23,9 @@ import dagger.assisted.AssistedInject
  * report, data belonging to something installed under an unresolvable name), and an
  * unattended run cannot ask. They stay manual-only by construction, not by flag.
  *
- * Foreground with a progress notification while running (same specialUse shape as the dexopt
- * worker), then a result notification with the measured figures — or a skipped notice when
- * the run never began (schedule off, nothing readable), so a silent schedule leaves a trace.
- * On Android 12+ a refused `setForeground` degrades to ordinary background work rather than
- * crashing, mirroring the dexopt worker.
+ * Ordinary, deferrable WorkManager work with normal progress/result notifications when
+ * permitted, never a specialUse foreground service. System cancellation/time limits apply.
+ * Installer files remain an explicit category; non-aggressive does not mean reconstructible.
  */
 @HiltWorker
 class CleanerSweepWorker @AssistedInject constructor(
@@ -48,13 +42,8 @@ class CleanerSweepWorker @AssistedInject constructor(
         if (!scheduleStore.isEnabled()) return Result.success()
 
         ensureChannel()
-        val foreground = try {
-            setForeground(foregroundInfo(null))
-            CatsmokerNotifications.attachOwner(applicationContext, "CleanerSweep")
-            true
-        } catch (_: Exception) {
-            false
-        }
+        CatsmokerNotifications.attachOwner(applicationContext, "CleanerSweep")
+        postProgress(null)
 
         try {
             val report = CleaningFeature.scan(
@@ -79,7 +68,7 @@ class CleanerSweepWorker @AssistedInject constructor(
                 )
                 return Result.success()
             }
-            if (foreground) runCatching { setForeground(foregroundInfo(safe.sumOf { it.sizeBytes })) }
+            postProgress(safe.sumOf { it.sizeBytes })
             val result = CleaningFeature.clean(shellRunner, safe)
             postResultNotification(
                 applicationContext.getString(R.string.cleaner_scheduled_title),
@@ -89,14 +78,14 @@ class CleanerSweepWorker @AssistedInject constructor(
                     result.deletedItems
                 )
             )
-            CatsmokerNotifications.detachOwner(applicationContext, "CleanerSweep")
             return Result.success()
         } finally {
-            if (foreground) runCatching { CatsmokerNotifications.detachOwner(applicationContext, "CleanerSweep") }
+            applicationContext.getSystemService(NotificationManager::class.java)?.cancel(NOTIFICATION_ID)
+            CatsmokerNotifications.detachOwner(applicationContext, "CleanerSweep")
         }
     }
 
-    private fun foregroundInfo(foundBytes: Long?): ForegroundInfo {
+    private fun postProgress(foundBytes: Long?) {
         val text = if (foundBytes == null) {
             applicationContext.getString(R.string.cleaner_scheduled_scanning)
         } else {
@@ -123,14 +112,8 @@ class CleanerSweepWorker @AssistedInject constructor(
                 )
             )
             .build()
-        return foregroundInfo(notification)
-    }
-
-    private fun foregroundInfo(notification: Notification): ForegroundInfo {
-        return if (Build.VERSION.SDK_INT >= 34) {
-            ForegroundInfo(NOTIFICATION_ID, notification, ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE)
-        } else {
-            ForegroundInfo(NOTIFICATION_ID, notification)
+        runCatching {
+            applicationContext.getSystemService(NotificationManager::class.java)?.notify(NOTIFICATION_ID, notification)
         }
     }
 

@@ -60,9 +60,9 @@
 
         <!--
             Full-only local VPN: BIND_VPN_SERVICE is enforced by the system, so it
-            is declared on the service rather than requested at install. Play's
-            VpnService policy requires the VPN to be core functionality, so the
-            Play variant omits this service entirely and keeps Data Saver only.
+            is declared on the service rather than requested at install. Following
+            this app's rejection, Play omits it and keeps Data Saver only; the
+            policy's eligible-use exceptions are not a blanket approval.
         -->
         <service
             android:name=".features.gamingtools.tools.firewall.VpnFirewallService"

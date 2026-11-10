@@ -1,0 +1,30 @@
+<resources>
+    <!-- Local network block: full distribution only. -->
+    <string name="gt_net_what_2">やり方は2つ。どちらかだけでも、両方同時にでも使えます。ゲームは常に除外されます。</string>
+    <string name="gt_net_vpn_title">アプリ遮断 (VPN)</string>
+    <string name="gt_net_vpn_sub">Wi-Fiとモバイルデータ両方で動作。Root不要。端末のVPNスロットを使用。</string>
+    <string name="gt_net_vpn_on_count">オン — %1$d アプリを遮断</string>
+    <string name="gt_net_vpn_error">オンにできませんでした: %1$s</string>
+    <string name="gt_net_vpn_how_title">VPN方式の仕組み</string>
+    <string name="gt_net_vpn_how_1">Androidはアプリにプライベート接続(VPN)を作らせ、どのアプリを通すか選ばせます。このアプリは他アプリをそこに通し、彼らが送るものをすべて捨てます。ゲームは通さないため、完全に無影響です。</string>
+    <string name="gt_net_vpn_how_2">これはファイアウォールではなくVPNです。何もどこにも送られず、端末から出ません — 単にどこにも行かないだけです。</string>
+    <string name="gt_net_vpn_how_3">知っておくべき2点: 遮断されたアプリは「インターネットなし」ではなく永遠に読み込み中に見えます。また端末は同時に1つのVPNしか許可しないため、他のVPNアプリを使っているとこれがそれをオフにします。</string>
+    <string name="gt_net_vpn_how_4">Androidが一度だけ許可を尋ねます。拒否すれば何も遮断されません。</string>
+    <string name="gt_net_which_title">どっちを使うべき？</string>
+    <string name="gt_net_which_1">モバイルデータでは: データセーバーだけで十分、バッテリーも消費しません。</string>
+    <string name="gt_net_which_2">Wi-Fiでは: VPNスイッチを使う — データセーバーは何もしません。</string>
+    <string name="gt_net_which_3">最強にしたい: 両方オンにする。</string>
+    <string name="gt_net_which_4">どちらも、あなたが実際に見ているアプリは遮断しません。それは意図的です。</string>
+    <string name="gt_vpn_consent">まだVPNに同意していません。スイッチをもう一度タップしてOKを選んでください。</string>
+    <string name="gt_vpn_unknown">AndroidがVPN許可かどうか教えてくれません (%1$s)。スイッチをもう一度タップしてください。</string>
+    <string name="gt_vpn_nothing">遮断するものがありません — 端末のすべてのアプリがAndroid本体かあなたのゲームです。</string>
+    <string name="gt_vpn_start_fail">端末が開始しませんでした (%1$s)</string>
+    <string name="gt_vpn_fail_empty">遮断するアプリがないためVPNを開始しませんでした</string>
+    <string name="gt_vpn_fail_accept">Androidが遮断対象アプリをどれも受け入れませんでした</string>
+    <string name="gt_vpn_fail_refused">AndroidがVPNを拒否 (%1$s)</string>
+    <string name="gt_vpn_fail_interface">AndroidがVPNインターフェースを作成しませんでした</string>
+    <string name="gt_vpn_fail_revoke">他のVPNアプリが奪ったか、あなたがVPN許可を取り消しました</string>
+    <string name="gt_vm_vpn_unblocked">他アプリが再びインターネット使用可能に</string>
+    <string name="gt_vm_vpn_unknown">AndroidがVPN許可かどうか教えてくれません (%1$s)</string>
+    <string name="gt_vm_vpn_no">拒否したため何も遮断しません</string>
+</resources>

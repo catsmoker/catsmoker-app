@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<paths>
+    <external-path name="external_files" path="." />
+    <!-- Full's self-updater downloads into the external app files directory. -->
+    <external-files-path name="external_app_files" path="." />
+    <cache-path name="shared_logs" path="shared/" />
+    <cache-path name="shared_apk" path="shared_apk/" />
+    <files-path name="session_logs" path="session_logs/" />
+</paths>

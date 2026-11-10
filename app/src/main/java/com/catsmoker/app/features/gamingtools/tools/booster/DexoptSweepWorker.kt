@@ -5,12 +5,9 @@ import android.app.NotificationManager
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
-import android.content.pm.ServiceInfo
-import android.os.Build
 import androidx.core.app.NotificationCompat
 import androidx.hilt.work.HiltWorker
 import androidx.work.CoroutineWorker
-import androidx.work.ForegroundInfo
 import androidx.work.WorkerParameters
 import com.catsmoker.app.R
 import com.catsmoker.app.features.gamingtools.engine.BoosterOutcome
@@ -27,24 +24,12 @@ import kotlin.math.roundToInt
  * The recurring ART dexopt sweep: the same engine run the App Booster button starts
  * ([GamingEngine.runArtOptimization]), driven on a schedule instead of a tap.
  *
- * What comes from the reference project (`reference/gamingtools/art`, its
- * `presentation/worker/OptimizationWorker.kt`, read in full): the worker shape itself — a
- * `@HiltWorker` that calls `setForeground` before doing anything, a progress job that re-calls
- * `setForeground` as the engine's state advances, and a stop path that cancels the optimization
- * rather than only the coroutine. What does **not** come from the reference: any kind of
- * scheduling. It has no periodic work anywhere — its scheduler only enqueues one-time work for
- * the visible screen. The recurrence is this app's own addition, and it is honest about the two
- * things a background schedule cannot promise: the interval is WorkManager's, which defers work
- * in Doze to batch it with other jobs (so "every 24 hours" means "roughly"), and each run needs
- * a privileged shell to be alive at that moment or the run is *skipped*, not failed — an
- * [BoosterOutcome.Unavailable] run never began, so the engine deliberately records no history
- * entry for it, and the skipped-run notification below is the only surface it gets.
- *
- * On Android 12+ the system may refuse the `setForeground` call outright when the app is in the
- * background. That is caught rather than crashed on: the sweep then runs as ordinary background
- * work, which the OS may kill mid-sweep — and if it does, the engine's own teardown marks the
- * run stopped, so the history says what actually happened instead of the schedule quietly
- * claiming every run succeeded.
+ * Scheduled maintenance is deferrable ordinary WorkManager work, never a specialUse
+ * foreground service. A normal progress notification retains the Stop action when
+ * notification permission allows it. WorkManager may defer or cancel a run; the engine
+ * handles coroutine cancellation and destroys its compile process. No uninterrupted
+ * execution or exact interval is promised. An unavailable privileged shell is a skipped
+ * run, reported separately because the engine creates no history for a run that never began.
  */
 @HiltWorker
 class DexoptSweepWorker @AssistedInject constructor(
@@ -65,14 +50,7 @@ class DexoptSweepWorker @AssistedInject constructor(
         if (gamingEngine.boosterState.value.isRunning) return Result.success()
 
         ensureChannel()
-        val foreground = try {
-            setForeground(foregroundInfo(gamingEngine.boosterState.value))
-            CatsmokerNotifications.attachOwner(applicationContext, "DexoptSweep")
-            true
-        } catch (_: Exception) {
-            // ForegroundServiceStartNotAllowedException on Android 12+ — see the class KDoc.
-            false
-        }
+        CatsmokerNotifications.attachOwner(applicationContext, "DexoptSweep")
 
         // The reference's own pattern: the notification follows the engine's real counts, which
         // only advance when a command actually ran and answered. A child of doWork's scope
@@ -81,7 +59,10 @@ class DexoptSweepWorker @AssistedInject constructor(
         return coroutineScope {
             val progressJob = launch {
                 gamingEngine.boosterState.collect { state ->
-                    if (foreground) runCatching { setForeground(foregroundInfo(state)) }
+                    runCatching {
+                        applicationContext.getSystemService(NotificationManager::class.java)
+                            ?.notify(NOTIFICATION_ID, buildNotification(state))
+                    }
                 }
             }
 
@@ -99,10 +80,11 @@ class DexoptSweepWorker @AssistedInject constructor(
                 }
                 // Completed / Cancelled / Failed are all recorded by the engine in its own history,
                 // which the App Booster card shows; the worker has nothing to add on top.
-                CatsmokerNotifications.detachOwner(applicationContext, "DexoptSweep")
                 Result.success()
             } finally {
                 progressJob.cancel()
+                applicationContext.getSystemService(NotificationManager::class.java)?.cancel(NOTIFICATION_ID)
+                CatsmokerNotifications.detachOwner(applicationContext, "DexoptSweep")
             }
         }
     }
@@ -115,15 +97,6 @@ class DexoptSweepWorker @AssistedInject constructor(
      * through WorkManager at all: it routes through [DexoptSweepStopReceiver] to
      * [GamingEngine.cancelArtOptimization], so the recurring schedule survives the stop.
      */
-
-    private fun foregroundInfo(state: BoosterState): ForegroundInfo {
-        val notification = buildNotification(state)
-        return if (Build.VERSION.SDK_INT >= 34) {
-            ForegroundInfo(NOTIFICATION_ID, notification, ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE)
-        } else {
-            ForegroundInfo(NOTIFICATION_ID, notification)
-        }
-    }
 
     /** Mirrors [AppBoosterService]'s notification, with the scheduled sweep's own title. */
     private fun buildNotification(state: BoosterState): Notification {

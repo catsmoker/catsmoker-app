@@ -134,8 +134,11 @@ These recur across the codebase — a reviewer will expect them:
   `GamingModeService`). Notification IDs in use: **101** booster, **102**
   gaming mode, **103**/**105** dexopt run/skipped, **104** overlay, **106**
   game session watch, **107** crosshair, **108**/**109** cleaner sweep
-  FGS/result, **4201** force-stop, **4301** firewall, **100** group summary.
+  progress/result, **4201** force-stop, **4301** firewall, **100** group summary.
   Check a new ID against this list.
+- Scheduled dexopt and cleaner notifications are ordinary progress notifications,
+  not foreground services. Their workers honor WorkManager time limits and
+  cancellation; do not reintroduce `specialUse` just to extend deferrable work.
 - Every notification joins the `CatsmokerNotifications` group — set it on the
   channel *and* on each `Builder`; the group renders as one stack only
   because of the shared summary row. One notification per service is

@@ -68,8 +68,6 @@
     <string name="dash_fps_label"> FPS</string>
     <string name="dash_fps_label_ui"> UI FPS</string>
     <string name="dash_quick_actions">工程控制台</string>
-    <string name="dash_spoof_title">设备伪装</string>
-    <string name="dash_spoof_subtitle">身份与属性覆盖</string>
     <string name="dash_edit_files_title">文件工程</string>
     <string name="dash_edit_files_subtitle">数据优化工具</string>
     <string name="dash_gaming_tools_subtitle">悬浮窗、网络与逻辑</string>

@@ -68,8 +68,6 @@
     <string name="dash_fps_label"> FPS</string>
     <string name="dash_fps_label_ui"> UI FPS</string>
     <string name="dash_quick_actions">CONSOLA DE INGENIERÍA</string>
-    <string name="dash_spoof_title">Suplantación de dispositivo</string>
-    <string name="dash_spoof_subtitle">Identidad y propiedades</string>
     <string name="dash_edit_files_title">Ingeniería de archivos</string>
     <string name="dash_edit_files_subtitle">Herramientas de datos</string>
     <string name="dash_gaming_tools_subtitle">Superposiciones, red y lógica</string>

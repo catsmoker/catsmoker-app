@@ -11,9 +11,6 @@ import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
-import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.LifecycleEventObserver
-import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -44,7 +41,7 @@ import com.catsmoker.app.shared.data.model.MetricsState
 import com.catsmoker.app.shared.ui.components.QuickActionButton
 import com.catsmoker.app.shared.ui.components.SectionCard
 import com.catsmoker.app.shared.ui.components.AdBanner
-import com.catsmoker.app.system.VariantCapabilities
+import com.catsmoker.app.features.settings.rememberAvailableUpdateName
 import com.catsmoker.app.system.navigation.Routes
 import com.catsmoker.app.shared.ui.theme.CatsmokerTheme
 import com.catsmoker.app.shared.ui.theme.NothingRed
@@ -54,8 +51,7 @@ import kotlin.time.Duration.Companion.seconds
 @Composable
 fun MainRoute(onNavigate: (String) -> Unit) {
     val viewModel: MainViewModel = hiltViewModel()
-    val settingsViewModel: com.catsmoker.app.features.settings.SettingsViewModel = hiltViewModel()
-    val settingsUiState by settingsViewModel.uiState.collectAsStateWithLifecycle()
+    val availableUpdateName = rememberAvailableUpdateName()
     val state by viewModel.metricsState.collectAsStateWithLifecycle()
     val fpsHistory by viewModel.fpsHistory.collectAsStateWithLifecycle()
     val cpuHistory by viewModel.cpuHistory.collectAsStateWithLifecycle()
@@ -94,24 +90,6 @@ fun MainRoute(onNavigate: (String) -> Unit) {
         viewModel.startMetrics()
     }
 
-    // Returning to the foreground re-evaluates the update status (throttled), so
-    // a release published while the app was backgrounded still surfaces as a badge.
-    DisposableEffect(context) {
-        val owner = context as? LifecycleOwner
-        val observer = LifecycleEventObserver { _, event ->
-            if (event == Lifecycle.Event.ON_RESUME) {
-                settingsViewModel.refreshUpdateStatus()
-                settingsViewModel.refreshUpdates()
-                settingsViewModel.onResume()
-                settingsViewModel.checkForUpdatesIfNeeded()
-            }
-        }
-        if (owner != null) owner.lifecycle.addObserver(observer)
-        onDispose {
-            if (owner != null) owner.lifecycle.removeObserver(observer)
-        }
-    }
-
     MainScreen(
         state = state,
         fpsHistory = fpsHistory,
@@ -120,8 +98,8 @@ fun MainRoute(onNavigate: (String) -> Unit) {
         tempHistory = tempHistory,
         pingHistory = pingHistory,
         adsEnabled = adsEnabled,
-        availableUpdateName = settingsUiState.availableUpdateName,
-        onOpenSpoofDevice = { onNavigate(Routes.SPOOF_DEVICE) },
+        availableUpdateName = availableUpdateName,
+        onNavigateDistribution = onNavigate,
         onOpenEditGameFiles = { onNavigate(Routes.EDIT_GAME_FILES) },
         onOpenGamingTools = { onNavigate(Routes.GAMING_TOOLS) },
         onOpenSettings = { onNavigate(Routes.SETTINGS) }
@@ -139,7 +117,7 @@ fun MainScreen(
     adsEnabled: Boolean,
     /** Version name of a release the last check found, null when up to date. Drives the update indicator on the Settings tile. */
     availableUpdateName: String? = null,
-    onOpenSpoofDevice: () -> Unit,
+    onNavigateDistribution: (String) -> Unit,
     onOpenEditGameFiles: () -> Unit,
     onOpenGamingTools: () -> Unit,
     onOpenSettings: () -> Unit
@@ -313,7 +291,7 @@ fun MainScreen(
                 modifier = Modifier.fillMaxWidth().weight(1.5f),
                 compact = false,
                 availableUpdateName = availableUpdateName,
-                onOpenSpoofDevice = onOpenSpoofDevice,
+                onNavigateDistribution = onNavigateDistribution,
                 onOpenEditGameFiles = onOpenEditGameFiles,
                 onOpenGamingTools = onOpenGamingTools,
                 onOpenSettings = onOpenSettings
@@ -395,7 +373,7 @@ fun MainScreen(
                             modifier = Modifier.weight(1f).fillMaxHeight(),
                             compact = true,
                             availableUpdateName = availableUpdateName,
-                            onOpenSpoofDevice = onOpenSpoofDevice,
+                            onNavigateDistribution = onNavigateDistribution,
                             onOpenEditGameFiles = onOpenEditGameFiles,
                             onOpenGamingTools = onOpenGamingTools,
                             onOpenSettings = onOpenSettings
@@ -421,7 +399,7 @@ private fun QuickActionsSection(
     modifier: Modifier,
     compact: Boolean,
     availableUpdateName: String?,
-    onOpenSpoofDevice: () -> Unit,
+    onNavigateDistribution: (String) -> Unit,
     onOpenEditGameFiles: () -> Unit,
     onOpenGamingTools: () -> Unit,
     onOpenSettings: () -> Unit
@@ -442,43 +420,17 @@ private fun QuickActionsSection(
             modifier = Modifier.weight(1f),
             verticalArrangement = Arrangement.spacedBy(spacing)
         ) {
-            if (VariantCapabilities.HAS_SPOOF) {
-                Row(
-                    modifier = Modifier.weight(1f),
-                    horizontalArrangement = Arrangement.spacedBy(spacing)
-                ) {
-                    QuickActionButton(
-                        title = stringResource(R.string.dash_spoof_title),
-                        subtitle = stringResource(R.string.dash_spoof_subtitle),
-                        iconContainerColor = NothingRed.copy(alpha = 0.15f),
-                        iconContentColor = NothingRed,
-                        onClick = onOpenSpoofDevice,
-                        modifier = Modifier.weight(1f).fillMaxHeight(),
-                        spreadGridContent = true,
-                        showChevron = true,
-                        contentPadding = contentPadding,
-                        iconSize = iconSize,
-                        icon = { Icon(Icons.Default.SettingsInputComponent, null) }
-                    )
-                    EditGameFilesAction(
-                        modifier = Modifier.weight(1f).fillMaxHeight(),
-                        contentPadding = contentPadding,
-                        iconSize = iconSize,
-                        onClick = onOpenEditGameFiles
-                    )
-                }
-            } else {
-                Row(
-                    modifier = Modifier.weight(1f),
-                    horizontalArrangement = Arrangement.spacedBy(spacing)
-                ) {
-                    EditGameFilesAction(
-                        modifier = Modifier.weight(1f).fillMaxHeight(),
-                        contentPadding = contentPadding,
-                        iconSize = iconSize,
-                        onClick = onOpenEditGameFiles
-                    )
-                }
+            Row(
+                modifier = Modifier.weight(1f),
+                horizontalArrangement = Arrangement.spacedBy(spacing)
+            ) {
+                DistributionQuickAction(onNavigateDistribution, contentPadding, iconSize)
+                EditGameFilesAction(
+                    modifier = Modifier.weight(1f).fillMaxHeight(),
+                    contentPadding = contentPadding,
+                    iconSize = iconSize,
+                    onClick = onOpenEditGameFiles
+                )
             }
 
             Row(
@@ -723,7 +675,7 @@ fun MainPreview() {
             tempHistory = listOf(37f, 38f, 38f),
             pingHistory = listOf(20, 24, 22),
             adsEnabled = true,
-            onOpenSpoofDevice = {},
+            onNavigateDistribution = {},
             onOpenEditGameFiles = {},
             onOpenGamingTools = {},
             onOpenSettings = {}

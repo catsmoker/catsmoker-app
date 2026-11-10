@@ -1,8 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <paths>
     <external-path name="external_files" path="." />
-    <!-- External app files dir used by SelfUpdater for update APK downloads -->
-    <external-files-path name="external_app_files" path="." />
     <!-- Log files shared from the Logs screen; pruned to the newest few on every share. -->
     <cache-path name="shared_logs" path="shared/" />
     <!-- The installed base APK copied by the Settings "Share App" card; one file, replaced per share. -->

@@ -2,6 +2,8 @@ package com.catsmoker.app.shared.util
 
 import android.content.pm.ApplicationInfo
 import android.content.pm.PackageManager
+import android.content.Context
+import com.catsmoker.app.system.config.GamingAccessConsent
 
 /**
  * Shared installed-app query + feature predicates (consolidation C4).
@@ -69,7 +71,9 @@ object InstalledAppQuery {
     // ------------------------------------------------------------ Android-bound half
 
     /** Full installed set as detached entries. Partial visibility is fine — skipped, never blocked. */
-    fun queryEntries(pm: PackageManager): List<AppEntry> {
+    fun queryEntries(context: Context): List<AppEntry> {
+        if (!GamingAccessConsent.allows(context, GamingAccessConsent.INVENTORY)) return emptyList()
+        val pm = context.packageManager
         val installed = runCatching { pm.getInstalledApplications(0) }.getOrNull().orEmpty()
         return installed.map { info ->
             val internet = runCatching {
@@ -82,18 +86,18 @@ object InstalledAppQuery {
 
     /** Packages the VPN switch will block, computed fresh from the installed set. */
     fun blockTargets(
-        pm: PackageManager,
+        context: Context,
         selfPackage: String,
         gamePackages: List<String>
     ): List<String> =
-        filterBlockPackageNames(queryEntries(pm), selfPackage, gamePackages.toSet())
+        filterBlockPackageNames(queryEntries(context), selfPackage, gamePackages.toSet())
 
     /** UIDs eligible for per-app netpolicy denial. */
     fun restrictableUids(
-        pm: PackageManager,
+        context: Context,
         selfPackage: String,
         gamePackages: List<String>,
         minUid: Int = MIN_APP_UID
     ): Set<Int> =
-        filterRestrictableUids(queryEntries(pm), selfPackage, gamePackages.toSet(), minUid)
+        filterRestrictableUids(queryEntries(context), selfPackage, gamePackages.toSet(), minUid)
 }

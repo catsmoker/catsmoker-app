@@ -1,4 +1,7 @@
 import java.util.Properties
+import com.android.build.api.artifact.SingleArtifact
+import org.gradle.api.artifacts.result.ResolvedComponentResult
+import org.gradle.api.artifacts.result.ResolvedDependencyResult
 
 plugins {
     alias(libs.plugins.android.application)
@@ -6,7 +9,7 @@ plugins {
     alias(libs.plugins.compose.compiler)
     alias(libs.plugins.hilt.android)
     // Firebase (google-services.json, project catsmoker-5b6c6, gitignored).
-    // Shared by both variants — same project, automatic Analytics init.
+    // Shared configuration; Analytics startup is explicit and consent-gated.
     alias(libs.plugins.google.services)
 }
 
@@ -67,17 +70,16 @@ android {
 
     // Single codebase, two distribution variants:
     // full = complete GitHub app (spoof/LSPosed/Magisk/Start.io/self-updater),
-    // playstore = Play-safe build (no spoof implementation, AdMob instead of Start.io).
-    // src/main stays Play-safe shared code; variant code lives in src/full and src/playstore.
+    // playstore = Play distribution (no spoof implementation, AdMob instead of Start.io).
+    // Flavor isolation is not a promise of Play policy approval.
     flavorDimensions += "distribution"
     productFlavors {
         create("full") {
             dimension = "distribution"
             // Full-only R8/ProGuard rules (Start.io, LSPosed, spoof models).
             proguardFile("src/full/proguard-rules.pro")
-            // Full-only native source: the spoof half of the bridge (src/main/jni/catsmoker_spoof.c,
-            // selected in Android.mk). Same library for both flavors, one extra translation unit —
-            // the Play build must not carry spoof hooking, so this rides the flavor, not a flag.
+            // Android.mk selects the entire full-only bridge from src/full/jni.
+            // Play builds no app native module (including the Unity delivery code).
             externalNativeBuild {
                 ndkBuild {
                     arguments.add("CATSMOKER_FULL=1")
@@ -175,8 +177,7 @@ android {
 
     ndkVersion = "28.2.13676358"
 
-    // In-app native bridge (M152 NDK spike): ndk-build, whose scripts ship inside the NDK
-    // itself, so no CMake SDK component is needed. The library is one C file today.
+    // Shared selection script only; implementation sources and JNI caller are full-only.
     externalNativeBuild {
         ndkBuild {
             path("src/main/jni/Android.mk")
@@ -243,8 +244,8 @@ dependencies {
     implementation(libs.gson)
 
     // --- Firebase Analytics (SHARED: full + playstore, same project) ---
-    // No code references: initialization is automatic via the merged provider,
-    // exactly as on the old playstore branch. No custom consent gating exists.
+    // AnalyticsConsent explicitly initializes only after a current opt-in.
+    // The automatic Firebase provider is removed in the shared manifest.
     implementation(platform(libs.firebase.bom))
     implementation(libs.firebase.analytics)
 
@@ -253,6 +254,7 @@ dependencies {
     // playstoreImplementation, ...) are not available as Kotlin-DSL members here.
     add("fullImplementation", libs.startio.sdk)
     add("playstoreImplementation", libs.play.services.ads)
+    add("playstoreImplementation", libs.ump)
     // Google Play Billing (remove_ads one-time product) is Play-only like AdMob.
     add("playstoreImplementation", libs.billing.ktx)
 
@@ -283,4 +285,84 @@ dependencies {
 ksp {
     arg("dagger.fastInit", "ENABLED")
     arg("dagger.hilt.android.internal.disableAndroidSuperclassValidation", "true")
+}
+
+abstract class DistributionAuditTask : DefaultTask() {
+    @get:InputFile
+    @get:PathSensitive(PathSensitivity.NONE)
+    abstract val mergedManifest: RegularFileProperty
+
+    @get:Input
+    abstract val components: ListProperty<String>
+
+    @get:Input
+    abstract val compileComponents: ListProperty<String>
+
+    @get:Input
+    abstract val sourceDirectories: ListProperty<String>
+
+    @get:InputFiles
+    @get:PathSensitive(PathSensitivity.NONE)
+    abstract val runtimeFiles: ConfigurableFileCollection
+
+    @get:OutputDirectory
+    abstract val reportDirectory: DirectoryProperty
+
+    @TaskAction
+    fun export() {
+        val directory = reportDirectory.get().asFile.apply { mkdirs() }
+        mergedManifest.get().asFile.copyTo(directory.resolve("AndroidManifest.xml"), overwrite = true)
+        directory.resolve("dependencies.txt").writeText(components.get().sorted().joinToString("\n", postfix = "\n"))
+        directory.resolve("compile-dependencies.txt").writeText(compileComponents.get().sorted().joinToString("\n", postfix = "\n"))
+        directory.resolve("sources.txt").writeText(sourceDirectories.get().sorted().joinToString("\n", postfix = "\n"))
+        directory.resolve("artifacts.txt").writeText(
+            runtimeFiles.files.map { it.absolutePath }.sorted().joinToString("\n", postfix = "\n")
+        )
+    }
+}
+
+// Explicit exports from AGP's selected source providers and resolved graphs. Generated
+// directories are included; no inferred main+flavor directory list or fallback assumptions.
+androidComponents.onVariants(
+    androidComponents.selector().withBuildType("release")
+) { variant ->
+    val manifest = variant.artifacts.get(SingleArtifact.MERGED_MANIFEST)
+    val runtime = configurations.named("${variant.name}RuntimeClasspath")
+    val compile = configurations.named("${variant.name}CompileClasspath")
+    fun graph(configuration: NamedDomainObjectProvider<Configuration>) =
+        configuration.flatMap { it.incoming.resolutionResult.rootComponent }.map { root ->
+            val visited = mutableSetOf<ResolvedComponentResult>()
+            fun visit(component: ResolvedComponentResult) {
+                if (!visited.add(component)) return
+                component.dependencies.filterIsInstance<ResolvedDependencyResult>().forEach { visit(it.selected) }
+            }
+            visit(root)
+            visited.map { it.id.displayName }
+        }
+    val selectedSources = objects.listProperty(String::class.java).convention(emptyList())
+    variant.sources.java?.all?.let { provider ->
+        selectedSources.addAll(provider.map { dirs -> dirs.map { "java\t${it.asFile.absolutePath}" } })
+    }
+    variant.sources.kotlin?.all?.let { provider ->
+        selectedSources.addAll(provider.map { dirs -> dirs.map { "kotlin\t${it.asFile.absolutePath}" } })
+    }
+    variant.sources.res?.all?.let { provider ->
+        selectedSources.addAll(provider.map { groups -> groups.flatten().map { "res\t${it.asFile.absolutePath}" } })
+    }
+    variant.sources.assets?.all?.let { provider ->
+        selectedSources.addAll(provider.map { groups -> groups.flatten().map { "assets\t${it.asFile.absolutePath}" } })
+    }
+    variant.sources.jniLibs?.all?.let { provider ->
+        selectedSources.addAll(provider.map { groups -> groups.flatten().map { "jniLibs\t${it.asFile.absolutePath}" } })
+    }
+    tasks.register<DistributionAuditTask>("write${variant.name.replaceFirstChar { it.uppercaseChar() }}Audit") {
+        group = "verification"
+        description = "Export selected ${variant.name} sources, merged manifest and resolved compile/runtime graphs"
+        mergedManifest.set(manifest)
+        runtimeFiles.from(runtime)
+        components.set(graph(runtime))
+        compileComponents.set(graph(compile))
+        sourceDirectories.set(selectedSources)
+        reportDirectory.set(layout.buildDirectory.dir("reports/${variant.productFlavors.single { it.first == "distribution" }.second}-boundary"))
+    }
 }

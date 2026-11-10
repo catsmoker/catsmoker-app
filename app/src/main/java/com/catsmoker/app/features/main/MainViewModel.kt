@@ -5,7 +5,6 @@ import android.content.SharedPreferences
 import androidx.lifecycle.ViewModel
 import com.catsmoker.app.features.main.engine.MetricsEngine
 import com.catsmoker.app.system.ads.AdManager
-import com.catsmoker.app.system.ads.RemoveAdsPolicy
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -32,10 +31,8 @@ class MainViewModel @Inject constructor(
     val adsEnabled: StateFlow<Boolean> = _adsEnabled.asStateFlow()
 
     private val prefsListener = SharedPreferences.OnSharedPreferenceChangeListener { _, key ->
-        // Full variant flips the legacy toggle; the Play variant flips the verified
-        // entitlement instead (its AdManager ignores the legacy key). Watching both
-        // keeps the banner gate live on either variant with one listener.
-        if (key == RemoveAdsPolicy.LEGACY_PREF_KEY || key == RemoveAdsPolicy.ENTITLED_PREF_KEY) {
+        // The selected gateway owns its preference key; no billing policy enters Full.
+        if (adManager.isPreferenceKey(key)) {
             _adsEnabled.update { adManager.isEnabled() }
         }
     }

@@ -3,32 +3,11 @@
     <string name="sys_settings_title">Configurações</string>
     <string name="sys_settings_subtitle">Configuração e preferências do app.</string>
     <string name="sys_section_general">Geral</string>
-    <string name="sys_ads_title">Ativar anúncios</string>
     <!-- Guilt-trip dialog when the free "Enable Ads" switch is turned off. -->
-    <string name="sys_ads_guilt_title">Por favor, não me deixe</string>
-    <string name="sys_ads_guilt_message">Os anúncios são como eu alimento meus gatos. Sem eles, eles ficam me encarando com tristeza. Uma pequena doação também ajuda.</string>
-    <string name="sys_ads_guilt_donate">Doar</string>
-    <string name="sys_ads_guilt_keep">Manter anúncios</string>
-    <string name="sys_ads_guilt_turn_off_anyway">Desligar anúncios mesmo assim</string>
-    <string name="sys_ads_guilt_cat_desc">Gato triste</string>
     <!-- Play-variant paid ad removal (Google Play Billing one-time product remove_ads). -->
-    <string name="sys_remove_ads_title">Remover anúncios</string>
-    <string name="sys_ads_removed_title">Anúncios removidos</string>
-    <string name="sys_ads_removed_sub">Obrigado pelo apoio — você está navegando sem anúncios.</string>
     <string name="sys_analytics_title">Enviar dados de análise</string>
-    <string name="sys_analytics_sub">O Google Firebase recebe dados de uso (inicializações do app, duração da sessão, modelo do dispositivo, versão do app, endereço IP). Desative para interromper a coleta; desinstalar o app também a interrompe. Consulte a Política de Privacidade.</string>
+    <string name="sys_analytics_sub">Desativado até você ativar. Permita que o Google Firebase Analytics receba eventos de uso, detalhes do aparelho, identificador de instalação e localização aproximada por IP. Desative para retirar a coleta futura. As escolhas de anúncios são separadas.</string>
     <!-- Nothing Glyph Interface mirror (Settings > General, shown only where the GDK works). -->
-    <string name="sys_billing_unavailable">O Google Play Faturamento não está disponível. Verifique sua conexão e tente novamente.</string>
-    <string name="sys_remove_ads_pending">Sua compra está pendente. Os anúncios serão desativados quando o Google Play confirmar.</string>
-    <string name="sys_remove_ads_failed">Não foi possível concluir a compra: %1$s</string>
-    <string name="sys_section_updates">Atualizações</string>
-    <string name="sys_updating">Baixando atualização…</string>
-    <string name="sys_check_updates">Verificar atualizações</string>
-    <string name="sys_prerelease">Incluir versões de pré-lançamento</string>
-    <string name="sys_auto_check">Verificar atualizações automaticamente</string>
-    <string name="sys_update_available">Atualização disponível: %1$s</string>
-    <string name="sys_update_prompt">Uma nova versão está disponível. Baixar e instalar agora?</string>
-    <string name="sys_download">BAIXAR</string>
     <string name="sys_later">MAIS TARDE</string>
     <string name="sys_permissions_title">Permissões do app</string>
     <string name="sys_logs_title">Logs do sistema</string>
@@ -41,15 +20,6 @@
     <string name="sys_theme_dynamic">Cor dinâmica</string>
     <string name="sys_language_title">Idioma</string>
     <string name="sys_lang_system">Padrão do sistema</string>
-    <string name="sys_checking_updates">Verificando atualizações…</string>
-    <string name="sys_no_releases">Nenhuma versão encontrada no GitHub</string>
-    <string name="sys_up_to_date">O app está atualizado (v%1$s)</string>
-    <string name="sys_no_suitable_release">Nenhuma versão adequada encontrada</string>
-    <string name="sys_update_check_failed">Falha na verificação de atualizações: %1$s</string>
-    <string name="sys_download_failed">Falha no download: %1$s</string>
-    <string name="sys_update_cancelled">Download da atualização cancelado.</string>
-    <string name="sys_update_rejected">Pacote de atualização rejeitado: %1$s</string>
-    <string name="sys_update_installed">Atualizado para %1$s.</string>
     <string name="sys_cancel">CANCELAR</string>
     <string name="sys_support_title">Apoie o desenvolvedor</string>
     <string name="sys_support_text">Dê uma estrela ao projeto no GitHub e doe para apoiar o desenvolvimento.</string>
@@ -82,17 +52,11 @@
     <string name="sys_notifications_title">Notificações</string>
     <string name="sys_notifications_allowed">Permitidas</string>
     <string name="sys_notifications_blocked">Bloqueadas</string>
-    <string name="sys_updates_summary">Versão %1$s</string>
-    <string name="sys_updates_available">Atualização %1$s disponível</string>
-    <string name="sys_updates_badge">Nova</string>
     <string name="sys_state_on">Ativado</string>
     <string name="sys_state_off">Desativado</string>
-    <string name="sys_remove_ads_summary">Compra única</string>
     <string name="sys_permissions_open_system">Abrir configurações do sistema</string>
     <string name="sys_about_summary">Versão %1$s · CC BY-NC-SA 4.0</string>
     <string name="sys_info_what_title">O que faz</string>
-    <string name="sys_rate_app_title">Avaliar App</string>
-    <string name="sys_rate_app_summary">Avaliar no Google Play</string>
     <string name="sys_share_app_title">Compartilhar App</string>
     <string name="sys_share_app_summary">Compartilhar o APK</string>
     <string name="sys_share_app_failed">Não foi possível compartilhar o app</string>

@@ -71,6 +71,16 @@ both variants) and `app/src/testFull/` (full-only: spoof/LSPosed/Magisk) and
 cover pure-Kotlin logic: parsers, config templates, the Magisk module builder,
 gaming interventions, and related utilities.
 
+Play-only tests live in `app/src/testPlaystore/`. Run only the focused classes
+affected by a task, not this entire example suite by default.
+
+Firebase configuration is shared, but its automatic startup provider is removed.
+`AnalyticsConsent` initializes it only after a current explicit Settings opt-in.
+UMP is a pinned Play-only dependency; the account privacy message and production
+ad identifiers must be configured separately. See `PLAY_POLICY_REMEDIATION.md`
+for focused checks and external gates; a debug test run does not rebuild or
+certify release bundles.
+
 ## Lint
 
 Lint is configured **not** to abort the build on errors (`abortOnError = false`,

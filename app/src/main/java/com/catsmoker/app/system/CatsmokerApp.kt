@@ -78,9 +78,7 @@ class CatsmokerApp : Application(), Configuration.Provider {
         // file that stored it, so removed exceptions cannot survive an app update.
         deleteSharedPreferences("AutoForceStopPrefs")
 
-        // Firebase Analytics is bundled in both flavours and its provider starts collecting
-        // before this method runs. Apply the user's persisted choice immediately so a switch
-        // flipped in a previous session is honoured for this one too (see AnalyticsConsent).
+        // The automatic provider is removed. Initialize only after a current explicit opt-in.
         AnalyticsConsent.sync(this)
 
         // Live app-log collection starts with the process (own-UID logcat, no

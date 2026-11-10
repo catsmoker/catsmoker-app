@@ -140,6 +140,4 @@
     <string name="logs_clear_title">Clear logs?</string>
     <string name="logs_clear_body">Clears the logs shown here. New lines keep arriving afterwards. This cannot be undone.</string>
     <string name="notif_summary_sub">Tap to open Catsmoker</string>
-    <string name="dash_spoof_title">Device Spoofing</string>
-    <string name="dash_spoof_subtitle">Identity &amp; Prop Overrides</string>
 </resources>

@@ -25,20 +25,20 @@ import com.catsmoker.app.features.spoofdevice.SpoofRoute
  * `hiltViewModel(parentEntry)` — preserved from the pre-flavor AppNavHost.
  */
 fun NavGraphBuilder.spoofGraph(navController: NavHostController) {
-    composable(Routes.SPOOF_DEVICE) {
+    composable(SpoofRoutes.SPOOF_DEVICE) {
         SpoofRoute(
             onNavigate = { navController.navigate(it) },
             onBack = { navController.popBackStack() }
         )
     }
-    composable(Routes.SPOOF_PROFILES) { backStackEntry ->
-        val parentEntry = remember(backStackEntry) { navController.getBackStackEntry(Routes.SPOOF_DEVICE) }
+    composable(SpoofRoutes.SPOOF_PROFILES) { backStackEntry ->
+        val parentEntry = remember(backStackEntry) { navController.getBackStackEntry(SpoofRoutes.SPOOF_DEVICE) }
         val viewModel: SpoofDeviceViewModel = hiltViewModel(parentEntry)
         val uiState by viewModel.uiState.collectAsStateWithLifecycle()
         ProfilesListScreen(
             uiState = uiState,
             presets = viewModel.presetsForPicker(),
-            onNavigateToEditor = { navController.navigate(Routes.SPOOF_EDITOR.replace("{profileId}", it)) },
+            onNavigateToEditor = { navController.navigate(SpoofRoutes.SPOOF_EDITOR.replace("{profileId}", it)) },
             onCreateProfile = { name, preset -> viewModel.createProfile(name, preset) },
             onDeleteProfile = { viewModel.deleteProfile(it) },
             onShareProfile = { viewModel.shareProfile(it) },
@@ -52,9 +52,9 @@ fun NavGraphBuilder.spoofGraph(navController: NavHostController) {
             onBack = { navController.popBackStack() }
         )
     }
-    composable(Routes.SPOOF_EDITOR) { backStackEntry ->
+    composable(SpoofRoutes.SPOOF_EDITOR) { backStackEntry ->
         val profileId = backStackEntry.arguments?.getString("profileId") ?: return@composable
-        val parentEntry = remember(backStackEntry) { navController.getBackStackEntry(Routes.SPOOF_DEVICE) }
+        val parentEntry = remember(backStackEntry) { navController.getBackStackEntry(SpoofRoutes.SPOOF_DEVICE) }
         val viewModel: SpoofDeviceViewModel = hiltViewModel(parentEntry)
         val uiState by viewModel.uiState.collectAsStateWithLifecycle()
         ProfileEditorScreen(
@@ -70,8 +70,8 @@ fun NavGraphBuilder.spoofGraph(navController: NavHostController) {
             onBack = { navController.popBackStack() }
         )
     }
-    composable(Routes.SPOOF_APPS) {
-        val parentEntry = remember(it) { navController.getBackStackEntry(Routes.SPOOF_DEVICE) }
+    composable(SpoofRoutes.SPOOF_APPS) {
+        val parentEntry = remember(it) { navController.getBackStackEntry(SpoofRoutes.SPOOF_DEVICE) }
         val viewModel: SpoofDeviceViewModel = hiltViewModel(parentEntry)
         val uiState by viewModel.uiState.collectAsStateWithLifecycle()
         AppAssignmentScreen(
@@ -82,8 +82,8 @@ fun NavGraphBuilder.spoofGraph(navController: NavHostController) {
             onBack = { navController.popBackStack() }
         )
     }
-    composable(Routes.SPOOF_SAFE_MODE) {
-        val parentEntry = remember(it) { navController.getBackStackEntry(Routes.SPOOF_DEVICE) }
+    composable(SpoofRoutes.SPOOF_SAFE_MODE) {
+        val parentEntry = remember(it) { navController.getBackStackEntry(SpoofRoutes.SPOOF_DEVICE) }
         val viewModel: SpoofDeviceViewModel = hiltViewModel(parentEntry)
         val uiState by viewModel.uiState.collectAsStateWithLifecycle()
         SafeModeScreen(
@@ -94,7 +94,7 @@ fun NavGraphBuilder.spoofGraph(navController: NavHostController) {
             onBack = { navController.popBackStack() }
         )
     }
-    composable(Routes.SPOOF_DIAGNOSTICS) {
+    composable(SpoofRoutes.SPOOF_DIAGNOSTICS) {
         DiagnosticsScreen(onBack = { navController.popBackStack() })
     }
 }

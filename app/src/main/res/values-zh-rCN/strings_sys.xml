@@ -3,32 +3,11 @@
     <string name="sys_settings_title">设置</string>
     <string name="sys_settings_subtitle">应用配置和偏好设置。</string>
     <string name="sys_section_general">通用</string>
-    <string name="sys_ads_title">启用广告</string>
     <!-- Guilt-trip dialog when the free "Enable Ads" switch is turned off. -->
-    <string name="sys_ads_guilt_title">请不要离开我</string>
-    <string name="sys_ads_guilt_message">广告是我养活猫咪的方式。没有广告，它们会难过地盯着我看。一点小小的捐赠也能帮上忙。</string>
-    <string name="sys_ads_guilt_donate">捐赠</string>
-    <string name="sys_ads_guilt_keep">保留广告</string>
-    <string name="sys_ads_guilt_turn_off_anyway">仍然关闭广告</string>
-    <string name="sys_ads_guilt_cat_desc">悲伤的猫</string>
     <!-- Play-variant paid ad removal (Google Play Billing one-time product remove_ads). -->
-    <string name="sys_remove_ads_title">移除广告</string>
-    <string name="sys_ads_removed_title">已移除广告</string>
-    <string name="sys_ads_removed_sub">感谢你的支持——你现在使用的是无广告版本。</string>
     <string name="sys_analytics_title">发送分析数据</string>
-    <string name="sys_analytics_sub">Google Firebase 接收使用数据（应用启动、会话时长、设备型号、应用版本、IP 地址）。关闭此项即可停止收集；卸载应用也会停止。请参阅隐私政策。</string>
+    <string name="sys_analytics_sub">在您主动开启前保持关闭。允许 Google Firebase Analytics 接收使用事件、设备信息、安装标识符及根据 IP 推算的概略位置。关闭可撤回后续分析收集。广告选项单独管理。</string>
     <!-- Nothing Glyph Interface mirror (Settings > General, shown only where the GDK works). -->
-    <string name="sys_billing_unavailable">Google Play 结算服务不可用。请检查网络连接后重试。</string>
-    <string name="sys_remove_ads_pending">购买正在处理中。Google Play 确认后广告将会关闭。</string>
-    <string name="sys_remove_ads_failed">无法完成购买：%1$s</string>
-    <string name="sys_section_updates">更新</string>
-    <string name="sys_updating">正在下载更新…</string>
-    <string name="sys_check_updates">检查更新</string>
-    <string name="sys_prerelease">包含预发布版本</string>
-    <string name="sys_auto_check">自动检查更新</string>
-    <string name="sys_update_available">有可用更新：%1$s</string>
-    <string name="sys_update_prompt">有新版本可用。现在下载并安装吗？</string>
-    <string name="sys_download">下载</string>
     <string name="sys_later">稍后</string>
     <string name="sys_permissions_title">应用权限</string>
     <string name="sys_logs_title">系统日志</string>
@@ -41,15 +20,6 @@
     <string name="sys_theme_dynamic">动态颜色</string>
     <string name="sys_language_title">语言</string>
     <string name="sys_lang_system">跟随系统</string>
-    <string name="sys_checking_updates">正在检查更新…</string>
-    <string name="sys_no_releases">在 GitHub 上未找到版本</string>
-    <string name="sys_up_to_date">应用已是最新版本 (v%1$s)</string>
-    <string name="sys_no_suitable_release">未找到合适的版本</string>
-    <string name="sys_update_check_failed">检查更新失败：%1$s</string>
-    <string name="sys_download_failed">下载失败：%1$s</string>
-    <string name="sys_update_cancelled">已取消更新下载。</string>
-    <string name="sys_update_rejected">更新包被拒绝：%1$s</string>
-    <string name="sys_update_installed">已更新到%1$s。</string>
     <string name="sys_cancel">取消</string>
     <string name="sys_support_title">支持开发者</string>
     <string name="sys_support_text">请在 GitHub 上为项目点星，或捐赠以支持开发。</string>
@@ -82,17 +52,11 @@
     <string name="sys_notifications_title">通知</string>
     <string name="sys_notifications_allowed">已允许</string>
     <string name="sys_notifications_blocked">已阻止</string>
-    <string name="sys_updates_summary">版本 %1$s</string>
-    <string name="sys_updates_available">有可用更新 %1$s</string>
-    <string name="sys_updates_badge">新</string>
     <string name="sys_state_on">开启</string>
     <string name="sys_state_off">关闭</string>
-    <string name="sys_remove_ads_summary">一次性购买</string>
     <string name="sys_permissions_open_system">打开系统设置</string>
     <string name="sys_about_summary">版本 %1$s · CC BY-NC-SA 4.0</string>
     <string name="sys_info_what_title">作用</string>
-    <string name="sys_rate_app_title">评分应用</string>
-    <string name="sys_rate_app_summary">在 Google Play 上评分</string>
     <string name="sys_share_app_title">分享应用</string>
     <string name="sys_share_app_summary">分享 APK 文件</string>
     <string name="sys_share_app_failed">无法分享应用</string>

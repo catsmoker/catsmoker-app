@@ -4,7 +4,6 @@ import android.app.AppOpsManager
 import android.content.Context
 import android.content.pm.PackageManager
 import android.os.Build
-import android.os.Environment
 import android.os.PowerManager
 import android.os.Process
 import android.provider.Settings
@@ -73,9 +72,6 @@ class PermissionViewModel @Inject constructor(
 
     private val _events = MutableSharedFlow<UiEvent>(extraBufferCapacity = 1)
     val events: SharedFlow<UiEvent> = _events.asSharedFlow()
-
-    @Volatile
-    private var rootRequestAttempted = false
 
     init {
         // Reopened from Settings after onboarding (`is_first_run` — what MainActivity gates
@@ -175,12 +171,6 @@ class PermissionViewModel @Inject constructor(
             val granted = shellRunner.isRootAvailable(force = true)
             withContext(Dispatchers.Main) {
                 _uiState.update { it.copy(rootAvailable = implemented, rootGranted = granted) }
-                // Auto-request once when root is present but not yet authorized, so Magisk
-                // can show its grant dialog at an appropriate point in the workflow.
-                if (implemented && !granted && !rootRequestAttempted) {
-                    rootRequestAttempted = true
-                    requestRootPermission()
-                }
             }
         }
         shellRunner.refreshShizukuPermission()
@@ -213,6 +203,7 @@ class PermissionViewModel @Inject constructor(
             return
         }
         viewModelScope.launch(Dispatchers.IO) {
+            shellRunner.allowRootRequest()
             // Build a *fresh* root shell instead of reusing libsu's cached one. A cached
             // non-root shell (e.g. from an earlier denied probe) would make `Shell.cmd`
             // reuse it silently and never re-trigger the superuser manager's prompt, so
@@ -253,7 +244,7 @@ class PermissionViewModel @Inject constructor(
 
     private fun checkStoragePermission(): Boolean =
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-            Environment.isExternalStorageManager()
+            com.catsmoker.app.system.StorageAccess.hasModernAccess()
         } else {
             context.checkSelfPermission(android.Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED
         }

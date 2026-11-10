@@ -138,11 +138,20 @@ class ShellRunner @Inject constructor(
         // granted" from "granted, but the shell daemon failed to start" — the old code
         // consulted it only when getShell() threw, so the second case read as unrooted.
         val granted = runCatching { Shell.isAppGrantedRoot() == true }.getOrDefault(false)
-        val rooted = granted || runCatching { Shell.getShell().isRoot }.getOrDefault(false)
+        // State probes must not summon a superuser dialog. Only an explained Grant tap
+        // may opt into opening a new root shell, including after a process restart.
+        val requested = context.getSharedPreferences("privilege_consent", Context.MODE_PRIVATE)
+            .getBoolean("root_requested", false)
+        val rooted = granted || (requested && runCatching { Shell.getShell().isRoot }.getOrDefault(false))
 
         cachedRootAvailable = rooted
         lastRootCheckTime = now
         return rooted
+    }
+
+    fun allowRootRequest() {
+        context.getSharedPreferences("privilege_consent", Context.MODE_PRIVATE).edit()
+            .putBoolean("root_requested", true).apply()
     }
 
     /**

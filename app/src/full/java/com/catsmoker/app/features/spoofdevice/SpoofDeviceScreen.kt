@@ -32,7 +32,7 @@ import com.catsmoker.app.shared.ui.components.ScreenScaffold
 import com.catsmoker.app.shared.ui.components.SectionCard
 import com.catsmoker.app.shared.ui.components.SectionLabel
 import com.catsmoker.app.shared.ui.theme.CatsmokerSpacing
-import com.catsmoker.app.system.navigation.Routes
+import com.catsmoker.app.system.navigation.SpoofRoutes
 
 @Composable
 fun SpoofRoute(
@@ -291,7 +291,7 @@ fun SpoofDeviceScreen(
                     subtitle = stringResource(R.string.spoof_menu_identities, uiState.profiles.size),
                     icon = Icons.Default.AccountBox,
                     modifier = Modifier.weight(1f),
-                    onClick = { onNavigate(Routes.SPOOF_PROFILES) }
+                    onClick = { onNavigate(SpoofRoutes.SPOOF_PROFILES) }
                 )
                 SpoofMenuCard(
                     title = stringResource(R.string.spoof_menu_apps),
@@ -301,7 +301,7 @@ fun SpoofDeviceScreen(
                     subtitle = stringResource(R.string.spoof_menu_hooked, (uiState.assignments.keys + uiState.rateAssignments.keys).size),
                     icon = Icons.Default.Apps,
                     modifier = Modifier.weight(1f),
-                    onClick = { onNavigate(Routes.SPOOF_APPS) }
+                    onClick = { onNavigate(SpoofRoutes.SPOOF_APPS) }
                 )
             }
 
@@ -318,14 +318,14 @@ fun SpoofDeviceScreen(
                     ),
                     icon = Icons.Default.Security,
                     modifier = Modifier.weight(1f),
-                    onClick = { onNavigate(Routes.SPOOF_SAFE_MODE) }
+                    onClick = { onNavigate(SpoofRoutes.SPOOF_SAFE_MODE) }
                 )
                 SpoofMenuCard(
                     title = stringResource(R.string.spoof_menu_diag),
                     subtitle = stringResource(R.string.spoof_menu_verify),
                     icon = Icons.Default.Troubleshoot,
                     modifier = Modifier.weight(1f),
-                    onClick = { onNavigate(Routes.SPOOF_DIAGNOSTICS) }
+                    onClick = { onNavigate(SpoofRoutes.SPOOF_DIAGNOSTICS) }
                 )
             }
 

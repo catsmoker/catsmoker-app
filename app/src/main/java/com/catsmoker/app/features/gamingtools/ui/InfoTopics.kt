@@ -250,52 +250,6 @@ object InfoTopics {
     // ---------------------------------------------------------------------------------------------
 
     /**
-     * Background Data: the shared purpose, both mechanisms, and which one to use.
-     *
-     * [hasVpn] is false on Play, where the VpnService is not compiled in. The
-     * VPN section and the "which should I use" comparison are omitted there
-     * instead of describing a switch that does not exist.
-     */
-    fun backgroundData(hasVpn: Boolean): InfoTopic {
-        val whatParagraphs = if (hasVpn) {
-            intArrayOf(R.string.gt_net_what_1, R.string.gt_net_what_2)
-        } else {
-            intArrayOf(R.string.gt_net_what_1)
-        }
-        val sections = mutableListOf(
-            section(R.string.gt_explainer_what, *whatParagraphs)
-        )
-        if (hasVpn) {
-            sections += section(
-                R.string.gt_net_vpn_how_title,
-                R.string.gt_net_vpn_how_1,
-                R.string.gt_net_vpn_how_2,
-                R.string.gt_net_vpn_how_3,
-                R.string.gt_net_vpn_how_4
-            )
-        }
-        sections += section(
-            R.string.gt_net_ds_how_title,
-            R.string.gt_net_ds_how_1,
-            R.string.gt_net_ds_how_2,
-            R.string.gt_net_ds_how_3
-        )
-        if (hasVpn) {
-            sections += section(
-                R.string.gt_net_which_title,
-                R.string.gt_net_which_1,
-                R.string.gt_net_which_2,
-                R.string.gt_net_which_3,
-                R.string.gt_net_which_4
-            )
-        }
-        return InfoTopic(
-            name = InfoText.Res(R.string.gt_tool_net_title),
-            sections = sections
-        )
-    }
-
-    /**
      * Private DNS: the two standing questions, plus the selected provider's own note.
      *
      * [provider] is non-null only when the device is actually in provider mode, so the extra section
@@ -415,7 +369,7 @@ object InfoTopics {
     // Builders
     // ---------------------------------------------------------------------------------------------
 
-    private fun section(
+    internal fun section(
         @StringRes title: Int,
         vararg paragraphs: Int,
         tone: InfoTone = InfoTone.Neutral

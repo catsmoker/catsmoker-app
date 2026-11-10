@@ -1,0 +1,11 @@
+<resources>
+    <string name="sys_remove_ads_title">Remover anúncios</string>
+    <string name="sys_ads_removed_title">Anúncios removidos</string>
+    <string name="sys_ads_removed_sub">Obrigado pelo apoio — você está navegando sem anúncios.</string>
+    <string name="sys_billing_unavailable">O Google Play Faturamento não está disponível. Verifique sua conexão e tente novamente.</string>
+    <string name="sys_remove_ads_pending">Sua compra está pendente. Os anúncios serão desativados quando o Google Play confirmar.</string>
+    <string name="sys_remove_ads_failed">Não foi possível concluir a compra: %1$s</string>
+    <string name="sys_remove_ads_summary">Compra única</string>
+    <string name="sys_rate_app_title">Avaliar App</string>
+    <string name="sys_rate_app_summary">Avaliar no Google Play</string>
+</resources>

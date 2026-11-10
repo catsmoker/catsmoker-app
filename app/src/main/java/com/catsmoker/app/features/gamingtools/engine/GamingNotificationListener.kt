@@ -59,6 +59,7 @@ class GamingNotificationListener : NotificationListenerService() {
     }
 
     override fun onNotificationPosted(sbn: StatusBarNotification?) {
+        if (!hasConsent()) return
         if (sbn == null) return
         // Never our own: cancelling the Gaming Mode foreground notification would tear down
         // the mode's own stop control, and the overlays' notifications are live telemetry.
@@ -78,6 +79,7 @@ class GamingNotificationListener : NotificationListenerService() {
      * already on screen.
      */
     private fun purgeExistingNotifications() {
+        if (!hasConsent()) return
         val current = try {
             activeNotifications
         } catch (_: Exception) {
@@ -92,4 +94,8 @@ class GamingNotificationListener : NotificationListenerService() {
             }
         }
     }
+
+    private fun hasConsent() = com.catsmoker.app.system.config.GamingAccessConsent.allows(
+        this, com.catsmoker.app.system.config.GamingAccessConsent.NOTIFICATIONS
+    )
 }

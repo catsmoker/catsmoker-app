@@ -119,13 +119,19 @@ source set — neither SDK is packaged into the other flavor:
   `com.android.billingclient:billing-ktx` via `playstoreImplementation`,
   acknowledged non-consumable, never consumed); the `ads_enabled` preference
   is ignored there, so no local toggle can disable ads on that variant.
-- Shared code only calls the common `AdManager` API / `AdBanner()` slot, plus
-  the `RemoveAdsRepository` seam (no-op stub on full, Play Billing on Play).
+- Shared code calls the selected `AdManager` API / `AdBanner()` slot and
+  distribution settings extension. `RemoveAdsRepository`, entitlement policy and
+  purchase UI exist only in Play; there is no Full billing repository stub.
+  Full's free-ad preference/gate and updater state/UI are Full-only, not shared
+  implementation hidden behind capability flags.
 
 This is a real supply-chain + data-flow consideration: any `build.gradle.kts`
 change here should be reviewed like any other third-party dependency (pinned
 via the version catalog, not floating). Firebase Analytics is additionally
-shared by both variants (same project, automatic init — see `BUILD.md`).
+shared by both variants (same project, explicit opt-in initialization — see
+`PLAY_POLICY_REMEDIATION.md`). Play advertising now uses a separate UMP gate;
+SDK integration is not a substitute for published account privacy messages or
+regional runtime verification.
 
 ## Permissions requested (AndroidManifest)
 
@@ -136,7 +142,8 @@ Most are expected for the feature set. A few deserve explicit justification:
   cards. Root or Shizuku remain the normal paths. The code checks
   `canWriteAnimationScales()` before offering it.
 - `PACKAGE_USAGE_STATS` — needs user grant via Settings; used for app/game
-  presence heuristics.
+  presence heuristics only after the separate foreground-usage choice. It
+  observes foreground non-game apps too for Silent Hunter; this is disclosed.
 - `MANAGE_EXTERNAL_STORAGE` — **full build only**. Play rejected it as
   non-core (2026-10-31), so `src/playstore` does not declare it; Play file
   work goes through SAF/MediaStore, plus the ordinary legacy storage grant on
@@ -146,10 +153,33 @@ Most are expected for the feature set. A few deserve explicit justification:
   for the audio boost. These are breadth of capability, not covert use.
 - VPN (`BIND_VPN_SERVICE`) — **full build only**. The local VPN is a
   network block that routes selected apps into a `tun` and never forwards it;
-  the user consents through Android's VPN dialog. Play's VpnService policy
-  requires the VPN to be core functionality, so `src/playstore` compiles a
-  no-op `VpnFirewall` stub and does not declare the service. Play keeps the
-  `BackgroundDataRestrictor` half (Data Saver + `cmd netpolicy`, root/Shizuku).
+  the user consents through Android's VPN dialog. This app's Play submission
+  was rejected; the policy also has eligible-use exceptions, so a blanket
+  “VPN must be the core product” claim is inaccurate. Play has no `VpnFirewall`
+  stub or service, only an empty network-controls extension. It keeps
+  `BackgroundDataRestrictor` (Data Saver + `cmd netpolicy`, root/Shizuku).
+
+## Separate Play policy and backup gates
+
+Flavor exclusion is not policy approval for shared features. The fourth-pass
+audit is historical; [`PLAY_POLICY_REMEDIATION.md`](PLAY_POLICY_REMEDIATION.md)
+records subsequent code changes and remaining owner/runtime gates. Gameplay
+changes and inter-app controls remain in Play pending review at the owner's
+explicit direction, not because their eligibility has been established.
+
+The manifest now disables backup and supplies legacy and Android 12+ rules that
+exclude every app-state domain from cloud backup/device transfer. Persistent
+crash reports, config backups, consent and privilege state are included in these
+exclusions. Rules cannot erase existing provider backups or guarantee every OEM
+migration implementation. The legal copy states that limit; no device transport
+verification or provider deletion was performed.
+
+Root refresh does not open a fresh root shell until the user has used the Grant
+action; the earlier automatic onboarding request was removed. Direct battery
+exemption permission/request was removed in favor of general system settings.
+Discovery queries are limited to launcher/game/explicit interoperability queries
+and inventory readers require the optional choice. This narrows access but does
+not automatically establish Play core-function eligibility.
 
 ## Gaming Mode invariants that matter for safety
 

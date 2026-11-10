@@ -27,6 +27,7 @@ import com.catsmoker.app.shared.data.model.DeviceProfile
 import com.catsmoker.app.shared.data.model.LSPosedConfig
 import com.catsmoker.app.shared.data.repository.SpoofRepository
 import com.catsmoker.app.system.shell.ShellRunner
+import com.catsmoker.app.system.config.GamingAccessConsent
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CancellationException
@@ -140,10 +141,22 @@ class SpoofDeviceViewModel @Inject constructor(
     private val deviceContext by lazy { context.createDeviceProtectedStorageContext() }
     private val userPrefs by lazy { openLsposedPrefs(context) }
     private val devicePrefs by lazy { openLsposedPrefs(deviceContext) }
+    private val accessPrefs = context.getSharedPreferences(GamingAccessConsent.PREFS, Context.MODE_PRIVATE)
+    private val accessListener = SharedPreferences.OnSharedPreferenceChangeListener { _, _ ->
+        if (!GamingAccessConsent.allows(context, GamingAccessConsent.INVENTORY)) {
+            _uiState.update { it.copy(apps = emptyList(), isLoadingApps = false) }
+        }
+    }
 
     init {
+        accessPrefs.registerOnSharedPreferenceChangeListener(accessListener)
         refreshStatus()
         observeStore()
+    }
+
+    override fun onCleared() {
+        accessPrefs.unregisterOnSharedPreferenceChangeListener(accessListener)
+        super.onCleared()
     }
 
     /**
@@ -772,6 +785,11 @@ class SpoofDeviceViewModel @Inject constructor(
     // --- App Assignments ---
 
     fun loadApps() {
+        if (!GamingAccessConsent.allows(context, GamingAccessConsent.INVENTORY)) {
+            _uiState.update { it.copy(apps = emptyList(), isLoadingApps = false) }
+            _toasts.tryEmit(context.getString(R.string.policy_access_needed))
+            return
+        }
         if (_uiState.value.apps.isNotEmpty()) return
         _uiState.update { it.copy(isLoadingApps = true) }
         viewModelScope.launch(Dispatchers.IO) {
@@ -795,6 +813,10 @@ class SpoofDeviceViewModel @Inject constructor(
             )
 
             withContext(Dispatchers.Main) {
+                if (!GamingAccessConsent.allows(context, GamingAccessConsent.INVENTORY)) {
+                    _uiState.update { it.copy(apps = emptyList(), isLoadingApps = false) }
+                    return@withContext
+                }
                 // Labels come from the same derivation the store collector uses, so a ladder
                 // package shows its winner here too rather than looking unassigned until the next
                 // store change.

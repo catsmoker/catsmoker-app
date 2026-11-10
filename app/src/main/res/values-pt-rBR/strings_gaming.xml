@@ -54,7 +54,6 @@
     <string name="gt_tool_dnd_title">Não Perturbe</string>
     <string name="gt_tool_dnd_sub">Silencie as notificações enquanto joga.</string>
     <string name="gt_tool_net_title">Dados em segundo plano</string>
-    <string name="gt_tool_net_sub">Mantenha outros apps fora da internet.</string>
     <string name="gt_tool_dns_title">DNS privado</string>
     <string name="gt_tool_dns_sub">Escolha o provedor de DNS privado.</string>
     <string name="gt_tool_afs_title">Parada forçada automática</string>
@@ -149,9 +148,9 @@
     <string name="gt_cleaner_what_2">\"Analisar\" só olha. Nada é apagado até você tocar em \"Limpar\".</string>
     <string name="gt_cleaner_what_3">O número ao lado de cada linha mostra quantos itens foram encontrados e quanto espaço eles ocupam. É medido, não estimado.</string>
     <string name="gt_cleaner_safe_title">É seguro? O que são as linhas vermelhas?</string>
-    <string name="gt_cleaner_safe_1">As linhas normais são seguras: seu celular recria esses arquivos sozinho quando precisa deles de novo.</string>
+    <string name="gt_cleaner_safe_1">Linhas normais podem incluir caches, arquivos vazios e instaladores antigos. Nem todo arquivo pode ser recriado; revise as categorias antes de limpar ou agendar.</string>
     <string name="gt_cleaner_safe_2">As linhas em vermelho são mais fortes. Podem desconectar você dos apps ou fazer um app abrir devagar na primeira vez após a limpeza. Elas começam desmarcadas.</string>
-    <string name="gt_cleaner_safe_3">Suas fotos, mensagens, arquivos e apps nunca são tocados.</string>
+    <string name="gt_cleaner_safe_3">Caminhos protegidos são excluídos, mas os arquivos selecionados são apagados. Não há desfazer; guarde o que precisar fora das categorias selecionadas.</string>
     <string name="gt_cleaner_none_found">nada encontrado</string>
     <string name="gt_cleaner_not_scanned">não analisado</string>
     <string name="gt_cleaner_scan">Analisar</string>
@@ -220,19 +219,8 @@
     <string name="gt_scan_lim_no_datadir">%1$s não existe, então os caches de apps ali não foram analisados.</string>
 
     <!-- Network block -->
-    <string name="gt_net_what_1">Impede que outros apps usem a internet em segundo plano, assim seu jogo fica com toda a conexão para ele.</string>
-    <string name="gt_net_what_2">Há duas maneiras de fazer isso. Você pode usar uma ou as duas ao mesmo tempo. Seus jogos sempre ficam intactos.</string>
-    <string name="gt_net_vpn_title">Bloqueio de apps (VPN)</string>
-    <string name="gt_net_vpn_sub">Funciona em Wi-Fi e dados móveis. Não precisa de root. Usa o espaço de VPN do seu celular.</string>
-    <string name="gt_net_vpn_on_count">Ativo — parando %1$d apps</string>
     <string name="gt_net_on">Ativo</string>
     <string name="gt_net_off">Desativado</string>
-    <string name="gt_net_vpn_error">Não foi possível ativar: %1$s</string>
-    <string name="gt_net_vpn_how_title">Como funciona o modo VPN?</string>
-    <string name="gt_net_vpn_how_1">O Android permite que um app crie uma conexão privada chamada VPN e escolha quais apps passam por ela. Este app manda os outros apps para lá e descarta tudo o que eles enviam. Seus jogos não passam por ela, então ficam intactos.</string>
-    <string name="gt_net_vpn_how_2">É uma VPN, não um firewall. Nada é enviado a lugar nenhum e nada sai do seu celular — simplesmente não vai a lugar algum.</string>
-    <string name="gt_net_vpn_how_3">Duas coisas para saber: um app bloqueado vai parecer que está carregando para sempre em vez de dizer \"sem internet\", e seu celular só permite uma VPN por vez, então isto desativa qualquer outro app de VPN que você use.</string>
-    <string name="gt_net_vpn_how_4">O Android vai pedir sua permissão uma vez. Se você recusar, nada é bloqueado.</string>
     <string name="gt_net_ds_title">Economia de dados</string>
     <string name="gt_net_ds_sub">Configuração própria do Android. Precisa de root ou Shizuku. Aplica-se a redes limitadas, incluindo Wi-Fi limitado.</string>
     <string name="gt_net_ds_need">A Economia de dados precisa de root ou Shizuku. O Android não permite que um app normal mude isso.</string>
@@ -242,7 +230,6 @@
     <string name="gt_net_ds_off_stopped">Desativado — mas %1$d apps continuam parados</string>
     <string name="gt_net_engaged">Ativado pelo Catsmoker — desativar devolve seu celular ao estado anterior.</string>
     <string name="gt_net_metered">Esta rede é limitada. Restrições em segundo plano podem ser aplicadas aqui; veja acima se estão ativadas ou desativadas.</string>
-    <string name="gt_net_unmetered">Você está em um Wi-Fi normal, então a Economia de dados não faz nada aqui. Use a chave de VPN.</string>
     <string name="gt_net_unknown_net">Não foi possível saber que tipo de rede você está usando.</string>
     <string name="gt_net_no_perapp">A versão do seu celular não consegue parar apps um por um, então aqui só está disponível a configuração de Economia de dados para o celular inteiro.</string>
     <string name="gt_net_exempt">Sempre permitidos (%1$d): %2$s</string>
@@ -250,11 +237,6 @@
     <string name="gt_net_ds_how_1">Usa a mesma configuração que você encontraria nas Configurações do Android e pede ao seu celular que desligue a internet em segundo plano dos outros apps. Seus jogos são adicionados primeiro à lista de \"sempre permitidos\", então continuam funcionando.</string>
     <string name="gt_net_ds_how_2">Toda alteração é lida de volta do seu celular depois, então o que você vê acima é a resposta do seu celular, não um palpite deste app.</string>
     <string name="gt_net_ds_how_3">Só funciona em dados móveis, ou em Wi-Fi que você marcou como pago. Em Wi-Fi normal não faz nada.</string>
-    <string name="gt_net_which_title">Qual devo usar?</string>
-    <string name="gt_net_which_1">Em dados móveis: só a Economia de dados já basta, e não gasta bateria.</string>
-    <string name="gt_net_which_2">Em Wi-Fi: use a chave de VPN — a Economia de dados não fará nada.</string>
-    <string name="gt_net_which_3">Quer a configuração mais forte: ative as duas.</string>
-    <string name="gt_net_which_4">Nenhuma das duas bloqueia o app que você está vendo. Isso é de propósito.</string>
 
     <!-- Background data engine notes -->
     <string name="gt_bdr_no_verify">seu celular não quis dizer quais apps estão bloqueados, então nada foi alterado</string>
@@ -274,15 +256,6 @@
     <string name="gt_bdr_unblock_some">%1$d de %2$d apps podem usar dados de novo — %3$d continuam parados</string>
 
     <!-- VPN engine -->
-    <string name="gt_vpn_consent">Você ainda não aceitou a VPN. Toque na chave de novo e escolha OK.</string>
-    <string name="gt_vpn_unknown">O Android não quis dizer se a VPN é permitida (%1$s). Toque na chave de novo.</string>
-    <string name="gt_vpn_nothing">Não há nada para bloquear — todo app no seu celular faz parte do Android ou é um dos seus jogos.</string>
-    <string name="gt_vpn_start_fail">Seu celular não quis iniciar (%1$s)</string>
-    <string name="gt_vpn_fail_empty">Nenhum app para bloquear, então a VPN não foi iniciada</string>
-    <string name="gt_vpn_fail_accept">O Android não aceitou nenhum dos apps para bloquear</string>
-    <string name="gt_vpn_fail_refused">O Android recusou a VPN (%1$s)</string>
-    <string name="gt_vpn_fail_interface">O Android não criou a interface de VPN</string>
-    <string name="gt_vpn_fail_revoke">Outro app de VPN assumiu, ou você revogou a permissão de VPN</string>
 
     <!-- Developer options card -->
     <string name="gt_dev_anim">Velocidade das animações</string>
@@ -530,9 +503,6 @@
 
     <!-- ViewModel messages -->
     <string name="gt_vm_something_wrong">algo deu errado</string>
-    <string name="gt_vm_vpn_unblocked">Os outros apps podem usar a internet de novo</string>
-    <string name="gt_vm_vpn_unknown">O Android não quis dizer se a VPN é permitida (%1$s)</string>
-    <string name="gt_vm_vpn_no">Você disse não, então nada está bloqueado</string>
     <string name="gt_vm_scan_denied">Não foi possível olhar no seu armazenamento — veja as notas abaixo</string>
     <string name="gt_vm_scan_empty">Tudo pronto: nada para limpar</string>
     <string name="gt_vm_scan_empty_items">%1$d itens vazios encontrados — eles não ocupam espaço</string>
@@ -679,11 +649,6 @@
     <string name="gt_svc_cross_taking">A mira está capturando toques enquanto você a move.</string>
     <string name="gt_svc_cross_done">Concluir movimento</string>
     <string name="gt_svc_cross_channel">Sobreposição de mira</string>
-    <string name="gt_svc_vpn_title">Bloqueio de rede de apps</string>
-    <string name="gt_svc_vpn_session">Bloqueio de apps do Catsmoker</string>
-    <string name="gt_svc_vpn_blocking">Bloqueando %1$d app(s)</string>
-    <string name="gt_svc_vpn_ipv4"> · Somente IPv4 neste dispositivo</string>
-    <string name="gt_svc_vpn_channel">Bloqueio de rede de apps</string>
     <string name="gt_svc_afs_title">Parada forçada automática</string>
     <string name="gt_svc_afs_no_usage">Precisa de Acesso ao uso — toque para conceder, nada está sendo fechado</string>
     <string name="gt_svc_afs_no_priv">Precisa de root ou Shizuku — o Android se recusa a fechar outros apps, nada é fechado</string>

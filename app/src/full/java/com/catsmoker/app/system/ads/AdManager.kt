@@ -12,6 +12,8 @@ class AdManager @Inject constructor(
     @ApplicationContext private val context: Context
 ) {
 
+    fun isPreferenceKey(key: String?): Boolean = key == "ads_enabled"
+
     fun isEnabled(): Boolean {
         val prefs = context.getSharedPreferences("app_prefs", Context.MODE_PRIVATE)
         return prefs.getBoolean("ads_enabled", true)

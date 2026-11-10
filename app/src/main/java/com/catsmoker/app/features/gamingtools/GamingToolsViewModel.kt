@@ -41,7 +41,6 @@ import com.catsmoker.app.features.gamingtools.tools.crosshair.CrosshairPositionS
 import com.catsmoker.app.features.gamingtools.tools.dns.DnsFeature
 import com.catsmoker.app.features.gamingtools.tools.dns.PingParser
 import com.catsmoker.app.features.gamingtools.tools.firewall.BackgroundDataRestrictor
-import com.catsmoker.app.features.gamingtools.tools.firewall.VpnFirewall
 import com.catsmoker.app.features.gamingtools.tools.GamingModeAdvancedStore
 import com.catsmoker.app.features.gamingtools.tools.glyph.GlyphController
 import com.catsmoker.app.features.gamingtools.tools.glyph.GlyphSyncStore
@@ -89,7 +88,6 @@ class GamingToolsViewModel @Inject constructor(
     private val performanceOverlayPositionStore: PerformanceOverlayPositionStore,
     private val cleanerPatternStore: CleanerPatternStore,
     private val backgroundDataRestrictor: BackgroundDataRestrictor,
-    private val vpnFirewall: VpnFirewall,
     private val dnsFeature: DnsFeature,
     /** Shared with spoof profiles so both features quote the same display numbers. */
     private val displayMetrics: DisplayMetricsProvider,
@@ -142,19 +140,6 @@ class GamingToolsViewModel @Inject constructor(
         val isChangingBackgroundData: Boolean = false,
         /** Whether this app is the one holding the restriction on, per its own record. */
         val backgroundDataEngaged: Boolean = false,
-        /**
-         * The local VPN's real condition — established or not, how many apps Android accepted into
-         * it, and why the last attempt failed. Independent of Data Saver above: either switch, both,
-         * or neither can be on.
-         */
-        val vpnFirewallState: VpnFirewall.State = VpnFirewall.State(),
-        /** True while the VPN is being started or stopped. */
-        val isChangingVpnFirewall: Boolean = false,
-        /**
-         * Set when Android's VPN consent dialog has to be shown before the switch can do anything.
-         * Consumed by the screen, which is the only place that can launch an Activity.
-         */
-        val vpnConsentRequest: Boolean = false,
         /**
          * The real Private DNS configuration read from the device, or null before the first read.
          * Includes the resolvers the active network is actually using, which is the only honest
@@ -383,8 +368,16 @@ class GamingToolsViewModel @Inject constructor(
 
     private var scanJob: Job? = null
     private var cleanJob: Job? = null
+    private val accessPrefs = context.getSharedPreferences(
+        com.catsmoker.app.system.config.GamingAccessConsent.PREFS, Context.MODE_PRIVATE
+    )
+    private val accessListener = android.content.SharedPreferences.OnSharedPreferenceChangeListener { _, _ ->
+        syncGames()
+        loadSuspendExemptCandidates()
+    }
 
     init {
+        accessPrefs.registerOnSharedPreferenceChangeListener(accessListener)
         _uiState.update {
             it.copy(
                 selectedCrosshair = CrosshairAssets.normalize(appPrefs.getString("selected_scope", "scope2.png")),
@@ -435,14 +428,6 @@ class GamingToolsViewModel @Inject constructor(
         if (gameSessionManager.isEnabled()) {
             GameSessionService.start(context)
             _uiState.update { it.copy(isGameSessionActive = true) }
-        }
-
-        viewModelScope.launch {
-            // The VPN's own report of what it established, so the switch follows the interface rather
-            // than the fact that a start was requested.
-            vpnFirewall.state.collect { state ->
-                _uiState.update { it.copy(vpnFirewallState = state) }
-            }
         }
 
         viewModelScope.launch {
@@ -517,6 +502,7 @@ class GamingToolsViewModel @Inject constructor(
     }
 
     override fun onCleared() {
+        accessPrefs.unregisterOnSharedPreferenceChangeListener(accessListener)
         // AudioBoostController is deliberately *not* released here. It is a process-scoped singleton
         // whose effects sit on the global output mix so the boost keeps working once the user leaves
         // this screen for a game. Releasing it here also latched its `released` flag, so every later
@@ -557,6 +543,12 @@ class GamingToolsViewModel @Inject constructor(
     // ---- Game library ----
 
     fun syncGames() {
+        if (!com.catsmoker.app.system.config.GamingAccessConsent.allows(context,
+                com.catsmoker.app.system.config.GamingAccessConsent.INVENTORY)) {
+            _uiState.update { it.copy(games = emptyList(), allApps = emptyList(), anglePkg = null) }
+            gameSessionManager.setGames(emptySet())
+            return
+        }
         viewModelScope.launch(Dispatchers.IO) {
             val pm = context.packageManager
             val userAdded = appPrefs.getStringSet("user_games", emptySet()) ?: emptySet()
@@ -583,6 +575,8 @@ class GamingToolsViewModel @Inject constructor(
             }
             val games = newGames.distinctBy { it.packageName }
             withContext(Dispatchers.Main) {
+                if (!com.catsmoker.app.system.config.GamingAccessConsent.allows(context,
+                        com.catsmoker.app.system.config.GamingAccessConsent.INVENTORY)) return@withContext
                 _uiState.update {
                     it.copy(
                         games = games,
@@ -601,6 +595,12 @@ class GamingToolsViewModel @Inject constructor(
 
     // Partial visibility is fine: the picker just lists whatever the platform returns.
     fun loadAllApps() {
+        if (!com.catsmoker.app.system.config.GamingAccessConsent.allows(context,
+                com.catsmoker.app.system.config.GamingAccessConsent.INVENTORY)) {
+            _uiState.update { it.copy(allApps = emptyList(), isPickingGame = false) }
+            _toasts.tryEmit(context.getString(R.string.policy_access_needed))
+            return
+        }
         viewModelScope.launch(Dispatchers.IO) {
             val pm = context.packageManager
             val apps = pm.getInstalledApplications(PackageManager.GET_META_DATA)
@@ -611,6 +611,8 @@ class GamingToolsViewModel @Inject constructor(
                 .toList()
 
             withContext(Dispatchers.Main) {
+                if (!com.catsmoker.app.system.config.GamingAccessConsent.allows(context,
+                        com.catsmoker.app.system.config.GamingAccessConsent.INVENTORY)) return@withContext
                 _uiState.update { it.copy(allApps = apps) }
             }
         }
@@ -828,72 +830,6 @@ class GamingToolsViewModel @Inject constructor(
         }
     }
 
-    /**
-     * Turns the local VPN block on or off.
-     *
-     * Needs no root or Shizuku, but does need Android's one-time VPN consent. When that is missing the
-     * switch does *not* move: [UiState.vpnConsentRequest] is raised instead, the screen launches the
-     * system dialog, and [onVpnConsentResult] decides what actually happened.
-     */
-    fun setVpnFirewall(enable: Boolean) {
-        if (!VariantCapabilities.HAS_VPN_FIREWALL) return
-        viewModelScope.launch {
-            if (!enable) {
-                _uiState.update { it.copy(isChangingVpnFirewall = true) }
-                vpnFirewall.stop()
-                _uiState.update { it.copy(isChangingVpnFirewall = false) }
-                _toasts.tryEmit(context.getString(R.string.gt_vm_vpn_unblocked))
-                return@launch
-            }
-            when (val consent = vpnFirewall.consent()) {
-                is VpnFirewall.Consent.Required -> {
-                    _uiState.update { it.copy(vpnConsentRequest = true) }
-                    return@launch
-                }
-                is VpnFirewall.Consent.Unknown -> {
-                    // Not the same as "you have not agreed": we could not ask. Say so instead of
-                    // showing a dialog we do not have or claiming consent we never confirmed.
-                    _toasts.tryEmit(
-                        context.getString(R.string.gt_vm_vpn_unknown, consent.reason)
-                    )
-                    return@launch
-                }
-                VpnFirewall.Consent.Granted -> startVpnFirewall()
-            }
-        }
-    }
-
-    /**
-     * Android's VPN consent Intent, or null when there is nothing to show — consent is already in
-     * place, or the check itself failed.
-     *
-     * The dialog belongs to the system and can only be shown from an Activity, so the Intent is handed
-     * to the screen rather than launched here. Null is safe to treat as "go ahead and try": the honest
-     * gate is [VpnFirewall.start], which re-checks and returns the device's own refusal.
-     */
-    fun vpnConsentIntent(): Intent? {
-        if (!VariantCapabilities.HAS_VPN_FIREWALL) return null
-        return (vpnFirewall.consent() as? VpnFirewall.Consent.Required)?.intent
-    }
-
-    /** Called by the screen once Android's consent dialog has been answered. */
-    fun onVpnConsentResult(granted: Boolean) {
-        if (!VariantCapabilities.HAS_VPN_FIREWALL) return
-        _uiState.update { it.copy(vpnConsentRequest = false) }
-        if (!granted) {
-            _toasts.tryEmit(context.getString(R.string.gt_vm_vpn_no))
-            return
-        }
-        viewModelScope.launch { startVpnFirewall() }
-    }
-
-    private fun startVpnFirewall() {
-        _uiState.update { it.copy(isChangingVpnFirewall = true) }
-        val refusal = vpnFirewall.start(_uiState.value.games.map { it.packageName })
-        _uiState.update { it.copy(isChangingVpnFirewall = false) }
-        if (refusal != null) _toasts.tryEmit(refusal)
-    }
-
     /** Re-reads the real policy state, so the toggle reflects the system and not a local guess. */
     fun refreshBackgroundDataStatus() {
         viewModelScope.launch {
@@ -903,15 +839,6 @@ class GamingToolsViewModel @Inject constructor(
                     backgroundDataStatus = status,
                     backgroundDataEngaged = backgroundDataRestrictor.isEngaged()
                 )
-            }
-            if (VariantCapabilities.HAS_VPN_FIREWALL) {
-                // Cross-checked against the connectivity service rather than trusted from our own record:
-                // Android tears a VPN down when another VPN app starts, without telling us, and a switch
-                // still showing "on" would then be claiming a block that no longer exists.
-                val vpnState = vpnFirewall.state.value
-                if (vpnState.running && vpnFirewall.systemReportsVpn() == false) {
-                    vpnFirewall.stop()
-                }
             }
         }
     }
@@ -992,15 +919,7 @@ class GamingToolsViewModel @Inject constructor(
      * storage permission covers it instead.
      */
     fun allFilesAccessIntent(): Intent? {
-        if (!VariantCapabilities.HAS_ALL_FILES_ACCESS) return null
-        if (android.os.Build.VERSION.SDK_INT < android.os.Build.VERSION_CODES.R) return null
-        return try {
-            Intent(Settings.ACTION_MANAGE_ALL_FILES_ACCESS_PERMISSION).apply {
-                data = "package:${context.packageName}".toUri()
-            }
-        } catch (_: Exception) {
-            Intent(Settings.ACTION_MANAGE_ALL_FILES_ACCESS_PERMISSION)
-        }
+        return com.catsmoker.app.system.StorageAccess.settingsIntent(context)
     }
 
     // ---- System cleaner ----

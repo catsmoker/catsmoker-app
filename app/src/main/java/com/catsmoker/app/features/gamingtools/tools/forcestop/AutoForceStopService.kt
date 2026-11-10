@@ -94,6 +94,11 @@ class AutoForceStopService : Service() {
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        if (!com.catsmoker.app.system.config.GamingAccessConsent.allows(this,
+                com.catsmoker.app.system.config.GamingAccessConsent.USAGE)) {
+            stopSelf()
+            return START_NOT_STICKY
+        }
         // The notification's Stop action arrives as a fresh start of this already-foreground service,
         // so it must not restart the poll loop after onDestroy cancelled it.
         if (intent?.action == ACTION_STOP) {
@@ -117,6 +122,11 @@ class AutoForceStopService : Service() {
 
         while (true) {
             delay(POLL_INTERVAL_MS.milliseconds)
+            if (!com.catsmoker.app.system.config.GamingAccessConsent.allows(this,
+                    com.catsmoker.app.system.config.GamingAccessConsent.USAGE)) {
+                stopSelf()
+                return
+            }
 
             // Re-checked every cycle rather than once at startup, so the service starts working the
             // moment the user grants what is missing — no restart, no toggling the switch again.
@@ -218,7 +228,7 @@ class AutoForceStopService : Service() {
     private fun hasUsageAccess(): Boolean = ForegroundWatcher.hasUsageAccess(this)
 
     private fun queryLatestForegroundPackage(usm: UsageStatsManager, begin: Long, end: Long): String? =
-        ForegroundWatcher.queryLatestForegroundPackage(usm, begin, end)
+        ForegroundWatcher.queryLatestForegroundPackage(this, usm, begin, end)
 
     private fun postStatus(text: String) {
         if (text == lastStatus) return

@@ -9,10 +9,11 @@ junit = "4.13.2"
 material = "1.14.0"
 activity = "1.13.0"
 startioSdk = "5.4.0"
-# Play distribution variant only (AdMob banner + interstitial). Declared here so the
+# Play distribution variant only (AdMob banner and consent management). Declared here so the
 # version is pinned; the dependency itself is added via playstoreImplementation in
 # app/build.gradle.kts and never enters the full variant.
 playServicesAds = "25.5.0"
+ump = "4.0.0"
 # Play distribution variant only (ad-removal one-time product). Same isolation as
 # the ads SDK: pinned here, added via playstoreImplementation, never in full.
 billing = "9.1.0"
@@ -48,6 +49,7 @@ material = { group = "com.google.android.material", name = "material", version.r
 activity = { group = "androidx.activity", name = "activity", version.ref = "activity" }
 startio-sdk = { module = "com.startapp:inapp-sdk", version.ref = "startioSdk" }
 play-services-ads = { module = "com.google.android.gms:play-services-ads", version.ref = "playServicesAds" }
+ump = { module = "com.google.android.ump:user-messaging-platform", version.ref = "ump" }
 billing-ktx = { module = "com.android.billingclient:billing-ktx", version.ref = "billing" }
 # Firebase BoM (import via platform()) + products (version comes from the BoM).
 firebase-bom = { group = "com.google.firebase", name = "firebase-bom", version.ref = "firebaseBom" }

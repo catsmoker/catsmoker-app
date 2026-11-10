@@ -48,8 +48,6 @@
     <string name="about_license_google" translatable="false">Google APIs Terms of Service</string>
     <string name="about_license_google_libs" translatable="false">Firebase Analytics</string>
     <string name="about_license_ads" translatable="false">Ads SDK Terms</string>
-    <string name="about_license_ads_full" translatable="false">Start.io</string>
-    <string name="about_license_ads_play" translatable="false">Google AdMob</string>
 
     <!-- About screen community-button titles (brand names stay verbatim). -->
     <string name="about_social_github">GitHub</string>
@@ -94,17 +92,17 @@
     <string name="core_perm_storage_title">Storage Access</string>
     <string name="core_perm_storage_sub">To read/modify game configuration files.</string>
     <string name="core_perm_battery_title">Battery Optimization</string>
-    <string name="core_perm_battery_sub">Allows the app to run smoothly in background.</string>
+    <string name="core_perm_battery_sub">Open general battery-optimization settings. No direct exemption is requested.</string>
     <string name="core_perm_notif_title">Notifications</string>
     <string name="core_perm_notif_sub">To show service status.</string>
     <string name="core_perm_overlay_title">Overlay</string>
     <string name="core_perm_overlay_sub">To show performance monitors.</string>
     <string name="core_perm_usage_title">Usage Stats</string>
-    <string name="core_perm_usage_sub">To track game playtime.</string>
+    <string name="core_perm_usage_sub">With your optional consent, monitor the foreground app for game sessions or Silent Hunter. Non-game apps may be force-stopped.</string>
     <string name="core_perm_mic_title">Microphone</string>
-    <string name="core_perm_mic_sub">Required for Audio Boost features.</string>
+    <string name="core_perm_mic_sub">Optional output-audio Visualizer for Audio Boost; not microphone recording.</string>
     <string name="core_perm_bt_title">Bluetooth</string>
-    <string name="core_perm_bt_sub">Required for Gamepad and headset optimizations.</string>
+    <string name="core_perm_bt_sub">Optional identification of Bluetooth audio output for audio controls.</string>
     <string name="core_done">DONE</string>
     <string name="core_grant">GRANT</string>
     <!-- Permission rows gated on Android version: shown disabled with a reason, never hidden. -->

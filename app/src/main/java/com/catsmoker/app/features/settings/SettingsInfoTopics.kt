@@ -21,13 +21,7 @@ object SettingsInfoTopics {
         body = R.string.sys_analytics_sub
     )
 
-    /** Ads: the full disclosure of what the ad provider collects. */
-    val ads: InfoTopic = topic(
-        name = R.string.sys_ads_title,
-        body = R.string.sys_ads_sub
-    )
-
-    private fun topic(@StringRes name: Int, @StringRes body: Int): InfoTopic = InfoTopic(
+    internal fun topic(@StringRes name: Int, @StringRes body: Int): InfoTopic = InfoTopic(
         name = InfoText.Res(name),
         sections = listOf(
             InfoSection(

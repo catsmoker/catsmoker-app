@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="policy_access_title">Optional gaming access</string>
+    <string name="policy_access_intro">Choose separately. These choices do not grant Android permissions. Declining keeps the app usable without the affected tools. Access is used locally, not sent to our server. Analytics is off until enabled in Settings; advertising choices are separate. Review these choices in Settings.</string>
+    <string name="policy_inventory">Discover installed apps visible to CatSmoker for the game library, app selection, optimisation, background restrictions and cleaner checks.</string>
+    <string name="policy_usage">Observe which app is in the foreground while session detection or Silent Hunter is on. Session detection activates Gaming Mode for your games. Silent Hunter force-stops the previous app, including non-game apps, which may interrupt work or messages. Stop either feature from its notification.</string>
+    <string name="policy_notifications">Dismiss existing and new notifications from other apps while Gaming Mode suppression is on. This is not just silencing: dismissed notifications cannot be restored by CatSmoker and important messages may be missed. Message bodies are not read by this feature. Turning suppression off allows future notifications.</string>
+    <string name="policy_save_choices">Save choices</string>
+    <string name="policy_decline">Decline all</string>
+    <string name="policy_review_access">Review or withdraw app discovery, foreground monitoring and notification-dismissal choices.</string>
+    <string name="policy_access_needed">Allow the relevant optional access in Settings before using this tool.</string>
+</resources>

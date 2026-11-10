@@ -42,16 +42,36 @@ app/src/
 │                           # Magisk builder, native spoof channel: native_init +
 │                           # NativeSpoofChannel), SpoofRepository et al, Start.io
 │                           # AdManager/AdBanner/AdsInit, SelfUpdater, scope
-│                           # array, xposed_init, spoof manifest entries
+│                           # array, xposed_init, spoof manifest entries,
+│                           # VPN controls/service/help, native bridge + jni/,
+│                           # FullSettingsViewModel + updater/free-ad UI, SpoofRoutes
 ├── playstore/              # Play-only: AdMob AdManager/AdBanner/AdsInit,
-│                           # no-op variant shims, AdMob App ID manifest entry
-└── testFull/               # full-only unit tests (src/test/ runs on both)
+│                           # Billing policy/repository/purchase UI + Rate App,
+│                           # empty extensions, AdMob App ID manifest entry
+├── testFull/               # full-only unit tests
+└── testPlaystore/          # Play-only unit tests (src/test/ runs on both)
 ```
 
 Variant seams are same-FQN pairs (`VariantCapabilities`, `AdsInit`,
 `AdManager`, `AdBanner`, `spoofGraph()`, `ProfileShareHandler`,
-`SelfUpdater`): `src/main` never imports `src/full`, so the Play compile
+`Distribution*Settings`, `rememberAvailableUpdateName`, `DistributionQuickAction`,
+`StorageAccess`, background network controls/help): `src/main` never imports `src/full`, so the Play compile
 cannot see the restricted implementations at all.
+
+Both native C implementations and `system/shell/NativeBridge.kt` are full-only.
+The main Android.mk selects them only when `CATSMOKER_FULL=1`; it builds no app
+native module for Play. VPN state/consent and its Hilt ViewModel are also full-only,
+not fields in the shared gaming ViewModel. `StorageAccess` selects modern all-files
+APIs versus an unavailable Play implementation; legacy storage stays shared.
+
+Common settings retain appearance, analytics, notification status and APK sharing.
+Full owns the entire updater state/UI/notes parser, free-ad donation gate/artwork,
+graphics probe used by spoof diagnostics and the reference-only Unity target-list
+parser. Play owns purchase state, billing policy/repository and store actions.
+There is no Play SelfUpdater or Full RemoveAdsRepository stub. Selected resource
+files own their corresponding labels/disclosures; the common license screen uses
+one flavor-provided ads-component label. Spoof route constants and the dashboard
+entry are Full-only; the shared navigation extension is intentionally empty on Play.
 
 ## Dependency direction
 
@@ -91,8 +111,8 @@ Application entry point and Compose host. A Hilt module provides
 ### Overlay & background services
 Several long-running `Service` implementations live under
 `gamingtools/tools/` (crosshair, performance overlay, auto force-stop,
-app booster). The local `VpnFirewallService` is full-only (Play's VpnService
-policy rejects a non-core VPN). Each reads/writes shared prefs and StateFlows
+app booster). The local `VpnFirewallService` is full-only following this app's
+Play rejection (the general policy has eligible categories/exceptions). Each reads/writes shared prefs and StateFlows
 so the Compose UI and the overlay stay in sync. Both visible overlays
 reposition through a move mode — the window is `FLAG_NOT_TOUCHABLE` until the
 user asks to drag it, so taps otherwise reach the game; the crosshair stores an
@@ -132,7 +152,25 @@ phone (see `GAMING_MODE.md`).
 - **Game files**: back up the device's bytes → push → read-back verify
   (`md5sum`, never `cat` for bytes; see `FILE_ENGINEERING.md`).
 - **Scheduled dexopt**: `DexoptSweepScheduler` unique periodic work (`UPDATE`)
-  → `DexoptSweepWorker` → `GamingEngine.runArtOptimization`.
+  → ordinary `DexoptSweepWorker` → `GamingEngine.runArtOptimization`. Cleaner
+  scheduling is ordinary work too; progress/Stop notifications do not elevate
+  either worker to a foreground service. System time limits and deferral apply.
+- **Privacy choices**: `GamingPrivacyGate` records separate, versioned, optional
+  inventory/foreground-usage/notification-dismissal choices before feature
+  composition. Readers check `GamingAccessConsent`; retained game-list state is
+  cleared on withdrawal and watchers stop on their next cycle. Settings can review
+  or withdraw choices. Android permissions remain a separate prerequisite.
+- **Analytics**: automatic `FirebaseInitProvider` startup is removed. Both flavors
+  use `AnalyticsConsent` to initialize Firebase only after a current explicit
+  Settings opt-in; a legacy default-on flag is not consent. Advertising consent
+  is independent and Analytics advertising consent types remain denied.
+- **Play advertising**: the selected `DistributionPrivacyGate` gathers UMP consent
+  after onboarding. `AdConsentManager` gates SDK initialization and banners on a
+  successful current update/form result, `canRequestAds`, initialization and
+  ad-free entitlement. Required privacy options appear in Play settings; Full
+  has no UMP implementation. Billing acknowledgement is additionally reconciled
+  by ordinary, network-constrained unique work using fresh Play queries, not
+  purchase tokens stored in work input.
 - **Diagnostics**: own-PID logcat → in-memory buffer (`AppLogCollector`) → the
   crash handler writes `filesDir/crash_reports` (newest five) → the Logs screen's
   Export action builds a ZIP in `cacheDir/shared` and shares it through the

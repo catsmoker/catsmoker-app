@@ -21,6 +21,8 @@ import com.google.android.gms.ads.AdRequest
 import com.google.android.gms.ads.AdSize
 import com.google.android.gms.ads.AdView
 import com.google.android.gms.ads.LoadAdError
+import com.catsmoker.app.system.ads.AdConsentManager
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 
 /**
  * Play Store-variant banner (AdMob).
@@ -40,6 +42,8 @@ import com.google.android.gms.ads.LoadAdError
 @Composable
 fun AdBanner(modifier: Modifier = Modifier) {
     if (LocalInspectionMode.current) return
+    val consentReady by AdConsentManager.canLoad.collectAsStateWithLifecycle()
+    if (!consentReady) return
 
     val adUnitId = BuildConfig.ADMOB_BANNER_ID
     if (adUnitId.isEmpty()) return

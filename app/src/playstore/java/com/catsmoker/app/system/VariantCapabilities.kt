@@ -5,8 +5,8 @@ package com.catsmoker.app.system
  *
  * Same fully qualified name as the full variant's [VariantCapabilities]:
  * spoofing and the GitHub self-updater are NOT compiled into this variant,
- * so shared code must consult these flags instead of referencing the
- * implementations directly.
+ * along with their orchestration and UI. Selected adapters, not visibility
+ * flags, provide the build-time boundary; common capability checks are facts.
  */
 object VariantCapabilities {
     /** Device-spoofing UI + LSPosed/Magisk implementation is absent. */
@@ -18,11 +18,11 @@ object VariantCapabilities {
     /**
      * No free Settings "Enable Ads" toggle on this variant: ads follow only
      * the verified `remove_ads` purchase ([com.catsmoker.app.system.ads.AdManager]
-     * ignores `ads_enabled`), so the toggle must stay hidden and unwired here.
+     * ignores `ads_enabled`). The free-toggle implementation is Full-only.
      */
     const val HAS_FREE_ADS_TOGGLE = false
 
-    /** Google Play Store is available — used to gate Play-only entries like "Rate App". */
+    /** Distribution fact; store settings are compiled from this flavor. */
     const val HAS_PLAY_STORE = true
 
     /**
@@ -34,9 +34,9 @@ object VariantCapabilities {
     const val HAS_ALL_FILES_ACCESS = false
 
     /**
-     * Play's VpnService policy requires the VPN to be core functionality. This
-     * variant therefore compiles the `VpnFirewall` stub instead of the real
-     * service; the Data Saver half of network blocking remains available.
+     * This app's rejected VPN implementation, consent UI and service are not
+     * compiled here; there is no VpnFirewall stub. Shared Data Saver remains.
+     * VPN policy's eligible-use exceptions do not establish this app's approval.
      */
     const val HAS_VPN_FIREWALL = false
 }

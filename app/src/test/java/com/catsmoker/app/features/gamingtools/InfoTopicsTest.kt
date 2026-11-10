@@ -2,8 +2,10 @@ package com.catsmoker.app.features.gamingtools
 
 import com.catsmoker.app.features.gamingtools.tools.dns.DnsFeature
 import com.catsmoker.app.features.gamingtools.ui.InfoTopics
+import com.catsmoker.app.features.gamingtools.ui.backgroundDataInfo
 import com.catsmoker.app.shared.ui.components.InfoText
 import com.catsmoker.app.shared.ui.components.InfoTone
+import com.catsmoker.app.system.VariantCapabilities
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -34,7 +36,7 @@ class InfoTopicsTest {
         "game default frame rate" to InfoTopics.gameDefaultFrameRate,
         "ANGLE driver" to InfoTopics.angleDriver,
         "resolution" to InfoTopics.resolution("your phone"),
-        "background data" to InfoTopics.backgroundData(true),
+        "background data" to backgroundDataInfo(),
         "private DNS" to InfoTopics.dns(null),
         "auto force stop" to InfoTopics.autoForceStop,
         "cleaner" to InfoTopics.cleaning,
@@ -127,17 +129,11 @@ class InfoTopicsTest {
     }
 
     @Test
-    fun playBackgroundDataOmitsTheFullOnlyVpnQuestions() {
-        val full = InfoTopics.backgroundData(hasVpn = true)
-        val play = InfoTopics.backgroundData(hasVpn = false)
-        assertTrue(
-            "the full topic explains the VPN and the Data Saver choice",
-            full.sections.size > play.sections.size
-        )
+    fun selectedBackgroundDataTopicMatchesItsDistribution() {
         assertEquals(
-            "Play keeps only the what + Data Saver sections",
-            2,
-            play.sections.size
+            "Full explains VPN and the choice; Play keeps only what + Data Saver",
+            if (VariantCapabilities.HAS_VPN_FIREWALL) 4 else 2,
+            backgroundDataInfo().sections.size
         )
     }
 }

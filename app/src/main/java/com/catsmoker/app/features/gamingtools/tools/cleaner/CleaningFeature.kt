@@ -270,7 +270,7 @@ object CleaningFeature {
      */
     fun hasStorageAccess(context: Context): Boolean =
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-            VariantCapabilities.HAS_ALL_FILES_ACCESS && Environment.isExternalStorageManager()
+            com.catsmoker.app.system.StorageAccess.hasModernAccess()
         } else {
             context.checkSelfPermission(Manifest.permission.READ_EXTERNAL_STORAGE) ==
                 PackageManager.PERMISSION_GRANTED
@@ -719,6 +719,8 @@ object CleaningFeature {
      */
     // Partial visibility is fine: this is unioned with the shell package list.
     private suspend fun resolveInstalledPackages(context: Context, shellRunner: ShellRunner): Set<String>? {
+        if (!com.catsmoker.app.system.config.GamingAccessConsent.allows(context,
+                com.catsmoker.app.system.config.GamingAccessConsent.INVENTORY)) return null
         if (!shellRunner.hasPrivilege()) return null
         val result = shellRunner.execResult("pm list packages")
         if (!result.isSuccess) return null

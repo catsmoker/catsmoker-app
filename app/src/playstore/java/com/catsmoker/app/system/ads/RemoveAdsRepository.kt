@@ -31,9 +31,8 @@ import javax.inject.Singleton
 /**
  * Play Store-variant ad-removal gateway (Google Play Billing).
  *
- * Same FQN, constructor and public API as the full variant's no-op
- * [RemoveAdsRepository] so shared callers ([SettingsViewModel]) compile
- * against both. The product is the [RemoveAdsPolicy.PRODUCT_ID] non-consumable
+ * Owned entirely by Play's ad initialization and purchase settings; Full has no
+ * billing repository stub. The product is the [RemoveAdsPolicy.PRODUCT_ID] non-consumable
  * one-time product: it is never consumed, and the ad-free entitlement is
  * granted only while Play reports it PURCHASED ([RemoveAdsPolicy]).
  *
@@ -304,14 +303,19 @@ class RemoveAdsRepository @Inject constructor(
     }
 
     private fun acknowledge(purchase: Purchase) {
+        // Queue before the immediate attempt so process death or a missed callback cannot
+        // make acknowledgement depend on the user reopening Settings.
+        BillingAcknowledgementWorker.enqueue(context, purchase.purchaseToken)
         val params = AcknowledgePurchaseParams.newBuilder()
             .setPurchaseToken(purchase.purchaseToken)
             .build()
-        billingClient?.acknowledgePurchase(params) {
-            // Best-effort: the entitlement above was already granted from the
-            // PURCHASED state, and the next successful query retries while
-            // isAcknowledged stays false. Play refunds only after three days
-            // without acknowledgement, so a transient failure self-heals.
+        billingClient?.acknowledgePurchase(params) { result ->
+            if (result.responseCode == BillingClient.BillingResponseCode.ITEM_NOT_OWNED) {
+                billingClient?.let(::queryPurchases)
+            }
+            if (BillingAcknowledgementPolicy.shouldRetry(result.responseCode)) {
+                BillingAcknowledgementWorker.enqueue(context, purchase.purchaseToken)
+            }
         }
     }
 }

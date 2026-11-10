@@ -3,32 +3,11 @@
     <string name="sys_settings_title">設定</string>
     <string name="sys_settings_subtitle">アプリの設定とプリファレンス</string>
     <string name="sys_section_general">一般</string>
-    <string name="sys_ads_title">広告を有効にする</string>
     <!-- Guilt-trip dialog when the free "Enable Ads" switch is turned off. -->
-    <string name="sys_ads_guilt_title">やめてください</string>
-    <string name="sys_ads_guilt_message">広告は私の猫たちの餌代です。広告がないと、彼らは悲しそうに私を見つめます。少額の寄付でも助かります。</string>
-    <string name="sys_ads_guilt_donate">寄付</string>
-    <string name="sys_ads_guilt_keep">広告を続ける</string>
-    <string name="sys_ads_guilt_turn_off_anyway">とにかく広告をオフにする</string>
-    <string name="sys_ads_guilt_cat_desc">悲しい猫</string>
     <!-- Play-variant paid ad removal (Google Play Billing one-time product remove_ads). -->
-    <string name="sys_remove_ads_title">広告を削除</string>
-    <string name="sys_ads_removed_title">広告を削除しました</string>
-    <string name="sys_ads_removed_sub">ご支援ありがとうございます — 広告なしでご利用いただけます。</string>
     <string name="sys_analytics_title">解析データを送信</string>
-    <string name="sys_analytics_sub">Google Firebaseが利用データ（アプリ起動、セッション長、デバイスモデル、アプリバージョン、IPアドレス）を受信します。オフにすると収集を停止します。アプリをアンインストールしても停止します。プライバシーポリシーをご覧ください。</string>
+    <string name="sys_analytics_sub">有効にするまでオフです。Google Firebase Analytics に利用イベント、端末情報、インストール識別子、IP に基づく概略位置を送信することを許可します。オフにすると以後の分析収集を撤回します。広告の選択は別です。</string>
     <!-- Nothing Glyph Interface mirror (Settings > General, shown only where the GDK works). -->
-    <string name="sys_billing_unavailable">Play Billingを利用できません。接続を確認して再試行してください。</string>
-    <string name="sys_remove_ads_pending">購入が保留中です。Google Playが確認次第、広告がオフになります。</string>
-    <string name="sys_remove_ads_failed">購入を完了できませんでした: %1$s</string>
-    <string name="sys_section_updates">アップデート</string>
-    <string name="sys_updating">アップデートをダウンロード中…</string>
-    <string name="sys_check_updates">アップデートを確認</string>
-    <string name="sys_prerelease">プレリリースを含める</string>
-    <string name="sys_auto_check">自動アップデート確認</string>
-    <string name="sys_update_available">アップデートあり: %1$s</string>
-    <string name="sys_update_prompt">新しいバージョンが利用可能です。今すぐダウンロードしてインストールしますか？</string>
-    <string name="sys_download">ダウンロード</string>
     <string name="sys_later">後で</string>
     <string name="sys_permissions_title">アプリ権限</string>
     <string name="sys_logs_title">システムログ</string>
@@ -41,15 +20,6 @@
     <string name="sys_theme_dynamic">ダイナミックカラー</string>
     <string name="sys_language_title">言語</string>
     <string name="sys_lang_system">システム設定に従う</string>
-    <string name="sys_checking_updates">アップデートを確認中…</string>
-    <string name="sys_no_releases">GitHubでリリースが見つかりませんでした</string>
-    <string name="sys_up_to_date">アプリは最新です (v%1$s)</string>
-    <string name="sys_no_suitable_release">適切なリリースが見つかりませんでした</string>
-    <string name="sys_update_check_failed">アップデート確認に失敗: %1$s</string>
-    <string name="sys_download_failed">ダウンロードに失敗: %1$s</string>
-    <string name="sys_update_cancelled">アップデートのダウンロードをキャンセルしました</string>
-    <string name="sys_update_rejected">アップデートパッケージが拒否されました: %1$s</string>
-    <string name="sys_update_installed">%1$s にアップデートしました</string>
     <string name="sys_cancel">キャンセル</string>
     <string name="sys_support_title">開発者を支援</string>
     <string name="sys_support_text">GitHubでスターを付け、寄付で開発を支援してください。</string>
@@ -82,17 +52,11 @@
     <string name="sys_notifications_title">通知</string>
     <string name="sys_notifications_allowed">許可</string>
     <string name="sys_notifications_blocked">ブロック</string>
-    <string name="sys_updates_summary">バージョン %1$s</string>
-    <string name="sys_updates_available">アップデート %1$s あり</string>
-    <string name="sys_updates_badge">New</string>
     <string name="sys_state_on">オン</string>
     <string name="sys_state_off">オフ</string>
-    <string name="sys_remove_ads_summary">買い切り購入</string>
     <string name="sys_permissions_open_system">システム設定を開く</string>
     <string name="sys_about_summary">バージョン %1$s · CC BY-NC-SA 4.0</string>
     <string name="sys_info_what_title">このアプリの機能</string>
-    <string name="sys_rate_app_title">アプリを評価</string>
-    <string name="sys_rate_app_summary">Google Playで評価</string>
     <string name="sys_share_app_title">アプリを共有</string>
     <string name="sys_share_app_summary">APKを共有</string>
     <string name="sys_share_app_failed">アプリを共有できませんでした</string>

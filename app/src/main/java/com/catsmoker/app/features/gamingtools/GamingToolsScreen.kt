@@ -62,7 +62,6 @@ import com.catsmoker.app.features.gamingtools.tools.booster.DexoptScheduleStore
 import com.catsmoker.app.features.gamingtools.tools.cleaner.CleanerScheduleStore
 import com.catsmoker.app.features.gamingtools.tools.dns.DnsFeature
 import com.catsmoker.app.features.gamingtools.tools.firewall.BackgroundDataRestrictor
-import com.catsmoker.app.features.gamingtools.tools.firewall.VpnFirewall
 import com.catsmoker.app.features.gamingtools.tools.crosshair.CrosshairAssets
 import java.io.File
 import com.catsmoker.app.features.gamingtools.tools.graphics.GameDeveloperOptions
@@ -151,31 +150,6 @@ fun GamingToolsRoute(
         viewModel.syncState()
     }
 
-    // Android's VPN consent dialog. RESULT_OK is the only answer that means the interface may be
-    // established, so anything else is reported as "not given" rather than retried silently.
-    val vpnConsentLauncher = rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
-        viewModel.onVpnConsentResult(result.resultCode == android.app.Activity.RESULT_OK)
-    }
-
-    // Raised by the ViewModel when the switch was turned on without consent in place. Only an
-    // Activity can show the dialog, so the request is handed back here.
-    LaunchedEffect(uiState.vpnConsentRequest) {
-        if (uiState.vpnConsentRequest) {
-            val intent = viewModel.vpnConsentIntent()
-            if (intent == null) {
-                // Nothing to ask for: consent arrived between the check and here, or the check itself
-                // failed. Either way start() re-checks and reports the device's own answer.
-                viewModel.onVpnConsentResult(true)
-            } else {
-                try {
-                    vpnConsentLauncher.launch(intent)
-                } catch (_: Exception) {
-                    viewModel.onVpnConsentResult(false)
-                }
-            }
-        }
-    }
-
     LaunchedEffect(Unit) {
         viewModel.toasts.collect { message ->
             Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
@@ -219,7 +193,6 @@ fun GamingToolsRoute(
         onSetCrosshairMoveMode = viewModel::setCrosshairMoveMode,
         onRecentreCrosshair = viewModel::recentreCrosshair,
         onSetBackgroundDataRestriction = viewModel::setBackgroundDataRestriction,
-        onSetVpnFirewall = viewModel::setVpnFirewall,
         onToggleDnd = { enable ->
             if (!viewModel.toggleDnd(enable)) {
                 context.startActivity(Intent(Settings.ACTION_NOTIFICATION_POLICY_ACCESS_SETTINGS))
@@ -246,12 +219,7 @@ fun GamingToolsRoute(
                     try {
                         storageAccessLauncher.launch(intent)
                     } catch (_: Exception) {
-                        // API 30+ only; allFilesAccessIntent() is null below R so this is unreachable there.
-                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                            storageAccessLauncher.launch(Intent(Settings.ACTION_MANAGE_ALL_FILES_ACCESS_PERMISSION))
-                        } else {
-                            context.startActivity(Intent(Settings.ACTION_SETTINGS))
-                        }
+                        context.startActivity(Intent(Settings.ACTION_SETTINGS))
                     }
                 }
             }
@@ -406,7 +374,6 @@ fun GamingToolsScreen(
     onSetCrosshairMoveMode: (Boolean) -> Unit,
     onRecentreCrosshair: () -> Unit,
     onSetBackgroundDataRestriction: (Boolean) -> Unit,
-    onSetVpnFirewall: (Boolean) -> Unit,
     onToggleDnd: (Boolean) -> Unit,
     onPerformMaintenance: (List<CleaningFeature.Category>) -> Unit,
     onScanJunk: () -> Unit,
@@ -791,19 +758,16 @@ fun GamingToolsScreen(
                 ExpandableToolCard(
                     title = stringResource(R.string.gt_tool_net_title),
                     subtitle = stringResource(R.string.gt_tool_net_sub),
-                    icon = if (VariantCapabilities.HAS_VPN_FIREWALL) Icons.Default.VpnLock else Icons.Default.DataUsage,
-                    info = InfoTopics.backgroundData(VariantCapabilities.HAS_VPN_FIREWALL)
+                    icon = backgroundNetworkIcon(),
+                    info = backgroundDataInfo()
                 ) {
                     BackgroundDataContent(
                         status = uiState.backgroundDataStatus,
                         engaged = uiState.backgroundDataEngaged,
                         isChanging = uiState.isChangingBackgroundData,
                         hasPrivilege = hasPrivilege,
-                        vpnState = uiState.vpnFirewallState,
-                        isChangingVpn = uiState.isChangingVpnFirewall,
-                        vpnAvailable = VariantCapabilities.HAS_VPN_FIREWALL,
-                        onSetDataSaver = onSetBackgroundDataRestriction,
-                        onSetVpn = onSetVpnFirewall
+                        games = uiState.games,
+                        onSetDataSaver = onSetBackgroundDataRestriction
                     )
                 }
                 ExpandableToolCard(
@@ -2040,9 +2004,8 @@ private fun categoryLabel(category: CleaningFeature.Category): String = stringRe
  *
  * Everything shown is read from the device: [BackgroundDataRestrictor.Status] carries nulls for
  * anything that could not be read, and those render as an explicit unavailable line rather than a
- * default that would look like a reading. The VPN half reports [VpnFirewall.State], whose `running`
- * flag comes from `establish()` returning a real descriptor; [vpnAvailable] is false on Play, where
- * that service is not compiled in.
+ * default that would look like a reading. Distribution-specific controls are supplied by the
+ * selected flavor, not hidden shared implementations.
  */
 @Composable
 fun BackgroundDataContent(
@@ -2050,44 +2013,11 @@ fun BackgroundDataContent(
     engaged: Boolean,
     isChanging: Boolean,
     hasPrivilege: Boolean,
-    vpnState: VpnFirewall.State,
-    isChangingVpn: Boolean,
-    vpnAvailable: Boolean,
-    onSetDataSaver: (Boolean) -> Unit,
-    onSetVpn: (Boolean) -> Unit
+    games: List<GameInfo>,
+    onSetDataSaver: (Boolean) -> Unit
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-        if (vpnAvailable) {
-            // ---------- Switch 1: the local VPN (full build only) ----------
-            NetworkBlockSwitch(
-                title = stringResource(R.string.gt_net_vpn_title),
-                // Never called a firewall: it is a local VPN, and saying otherwise would misdescribe what
-                // the app does. The subtitle names both the mechanism and the one real trade-off.
-                subtitle = stringResource(R.string.gt_net_vpn_sub),
-                checked = vpnState.running,
-                enabled = !isChangingVpn,
-                busy = isChangingVpn,
-                onCheckedChange = onSetVpn
-            )
-            Text(
-                text = when {
-                    vpnState.running && vpnState.blockedCount > 0 ->
-                        stringResource(R.string.gt_net_vpn_on_count, vpnState.blockedCount)
-                    vpnState.running -> stringResource(R.string.gt_net_on)
-                    else -> stringResource(R.string.gt_net_off)
-                },
-                fontSize = 11.sp,
-                color = if (vpnState.running) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
-            )
-            // Kept on screen after a failure so the switch flicking back off is explained rather than
-            // looking like the tap was missed.
-            vpnState.lastError?.let { error ->
-                Text(stringResource(R.string.gt_net_vpn_error, error), fontSize = 11.sp, color = Color(0xFFEF9A9A), lineHeight = 15.sp)
-            }
-
-            // ---------- Switch 2: Android's own Data Saver ----------
-            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
-        }
+        BackgroundNetworkControls(games)
         NetworkBlockSwitch(
             title = stringResource(R.string.gt_net_ds_title),
             subtitle = stringResource(R.string.gt_net_ds_sub),
@@ -2170,12 +2100,12 @@ fun BackgroundDataContent(
 /**
  * One labelled on/off row for [BackgroundDataContent].
  *
- * The switch is driven by real state only — `vpnState.running` and the read-back Data Saver value —
+ * Switches use measured state: the flavor's network control and read-back Data Saver value —
  * so it never moves on tap alone. [busy] shows a spinner in place of the switch while the operation
  * is in flight, which is what stops a second tap racing the first.
  */
 @Composable
-private fun NetworkBlockSwitch(
+internal fun NetworkBlockSwitch(
     title: String,
     subtitle: String,
     checked: Boolean,
@@ -3332,7 +3262,6 @@ fun GamingToolsPreview() {
             onSelectAnglePackage = {},
             onSetAngleDriver = {},
             onOpenDeveloperOptions = {},
-            onSetVpnFirewall = {},
             onRefreshDns = {},
             onApplyDnsProvider = {},
             onSetDnsAutomatic = {},

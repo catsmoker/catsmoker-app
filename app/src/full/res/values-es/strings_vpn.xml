@@ -1,0 +1,35 @@
+<resources>
+    <!-- Local network block: full distribution only. -->
+    <string name="gt_net_what_2">Hay dos formas de hacerlo. Puedes usar una, o ambas a la vez. Tus juegos siempre se dejan en paz.</string>
+    <string name="gt_net_vpn_title">Bloqueo de apps (VPN)</string>
+    <string name="gt_net_vpn_sub">Funciona en Wi-Fi y datos móviles. Sin root. Usa la ranura VPN de tu teléfono.</string>
+    <string name="gt_net_vpn_on_count">Activado — deteniendo %1$d apps</string>
+    <string name="gt_net_vpn_error">No se pudo activar: %1$s</string>
+    <string name="gt_net_vpn_how_title">¿Cómo funciona el VPN?</string>
+    <string name="gt_net_vpn_how_1">Android deja que una app cree una conexión privada, llamada VPN, y elija qué apps pasan por ella. Esta app manda a las demás apps allí y luego descarta todo lo que envían. Tus juegos no pasan por ahí, así que no se tocan.</string>
+    <string name="gt_net_vpn_how_2">Es un VPN, no un cortafuegos. Nada se envía a ningún lado ni sale de tu teléfono — simplemente no va a ninguna parte.</string>
+    <string name="gt_net_vpn_how_3">Dos cosas que debes saber: una app bloqueada parecerá que carga para siempre en vez de decir \"sin internet\", y tu teléfono solo permite un VPN a la vez, así que esto apaga cualquier otra app de VPN que uses.</string>
+    <string name="gt_net_vpn_how_4">Android te pedirá permiso una vez. Si dices que no, no se bloquea nada.</string>
+    <string name="gt_net_which_title">¿Cuál debería usar?</string>
+    <string name="gt_net_which_1">En datos móviles: Ahorro de datos solo basta, y no gasta batería.</string>
+    <string name="gt_net_which_2">En Wi-Fi: usa el interruptor de VPN — Ahorro de datos no hará nada.</string>
+    <string name="gt_net_which_3">¿Quieres lo más fuerte? Activa ambos.</string>
+    <string name="gt_net_which_4">Ninguno bloquea la app que estás mirando. Es a propósito.</string>
+    <string name="gt_vpn_consent">Aún no has aceptado el VPN. Toca el interruptor de nuevo y elige Aceptar.</string>
+    <string name="gt_vpn_unknown">Android no diría si el VPN está permitido (%1$s). Toca el interruptor de nuevo.</string>
+    <string name="gt_vpn_nothing">No hay nada que bloquear — cada app de tu teléfono es parte de Android o uno de tus juegos.</string>
+    <string name="gt_vpn_start_fail">Tu teléfono no quiso iniciarlo (%1$s)</string>
+    <string name="gt_vpn_fail_empty">No hay apps que bloquear, así que el VPN no se inició</string>
+    <string name="gt_vpn_fail_accept">Android no aceptó ninguna de las apps a bloquear</string>
+    <string name="gt_vpn_fail_refused">Android rechazó el VPN (%1$s)</string>
+    <string name="gt_vpn_fail_interface">Android no creó la interfaz VPN</string>
+    <string name="gt_vpn_fail_revoke">Otra app de VPN tomó el control, o revocaste el permiso de VPN</string>
+    <string name="gt_vm_vpn_unblocked">Las demás apps pueden usar internet de nuevo</string>
+    <string name="gt_vm_vpn_unknown">Android no diría si el VPN está permitido (%1$s)</string>
+    <string name="gt_vm_vpn_no">Dijiste que no, así que no se bloquea nada</string>
+    <string name="gt_svc_vpn_title">Bloqueo de red de apps</string>
+    <string name="gt_svc_vpn_session">Catsmoker app block</string>
+    <string name="gt_svc_vpn_blocking">Bloqueando %1$d app(s)</string>
+    <string name="gt_svc_vpn_ipv4"> · Solo IPv4 en este dispositivo</string>
+    <string name="gt_svc_vpn_channel">Bloqueo de red de apps</string>
+</resources>

@@ -1,0 +1,4 @@
+<resources>
+    <string name="policy_ad_privacy">广告隐私选项</string>
+    <string name="policy_ad_privacy_summary">查看或撤回您所在地区提供的广告选项。</string>
+</resources>

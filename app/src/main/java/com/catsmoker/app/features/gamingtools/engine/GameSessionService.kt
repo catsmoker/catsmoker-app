@@ -94,6 +94,11 @@ class GameSessionService : Service() {
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        if (!com.catsmoker.app.system.config.GamingAccessConsent.allows(this,
+                com.catsmoker.app.system.config.GamingAccessConsent.USAGE)) {
+            stopSelf()
+            return START_NOT_STICKY
+        }
         if (intent?.action == ACTION_STOP) {
             stopSelf()
             return START_NOT_STICKY
@@ -110,6 +115,11 @@ class GameSessionService : Service() {
 
         while (true) {
             delay(POLL_INTERVAL_MS.milliseconds)
+            if (!com.catsmoker.app.system.config.GamingAccessConsent.allows(this,
+                    com.catsmoker.app.system.config.GamingAccessConsent.USAGE)) {
+                stopSelf()
+                return
+            }
 
             if (!sessionManager.isEnabled()) {
                 postStatus(getString(R.string.gt_svc_session_off))
@@ -190,7 +200,7 @@ class GameSessionService : Service() {
         usm: UsageStatsManager,
         begin: Long,
         end: Long
-    ): String? = ForegroundWatcher.queryLatestForegroundPackage(usm, begin, end)
+    ): String? = ForegroundWatcher.queryLatestForegroundPackage(this, usm, begin, end)
 
     private fun postStatus(text: String) {
         if (text == lastStatus) return

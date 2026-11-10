@@ -143,7 +143,7 @@ not silently rewrite history.
   registers the named libraries, and its `do_dlopen` hook calls a matching
   library's `native_init` with the framework's own inline-hook engine â€” the
   same both-channels question as the bullet above, one layer down
-  (`NativeSpoofChannel` + `app/src/main/jni/catsmoker_spoof.c`, full flavor
+  (`NativeSpoofChannel` + `app/src/full/jni/catsmoker_spoof.c`, full flavor
   only). Constraints taken from that code, not invented: the registry mutex is
   held across `native_init` (so no `dlopen` and no hook install inside it â€” the
   property hooks install from the JNI setter on the first profile, the GL hooks
@@ -214,6 +214,64 @@ not silently rewrite history.
   instead of leaving the row off silently.
 
 ## Gaming engine
+
+- **Explicit privacy choices and ordinary scheduled maintenance** (2026-11-10).
+  Reverse default-on Analytics: remove automatic Firebase startup, require a
+  versioned explicit opt-in and do not migrate old default-on values as consent.
+  Play UMP gates initialization/requests after onboarding; Full remains separate.
+  Local app discovery, foreground watching and notification dismissal have
+  independent optional choices and reader-side guards. Remove automatic root
+  requests and direct battery-exemption requests; narrow manifest discovery.
+  Disable app backup with cloud/transfer exclusions and qualify OEM/old-backup
+  limits. Replace scheduled dexopt/cleaner specialUse foreground work with
+  ordinary deferrable work and progress/Stop notifications; uninterrupted runs
+  are not promised. Billing acknowledgement gets durable fresh-query retries.
+  The owner explicitly chose to keep gameplay/interference features in Play
+  **pending review** rather than move them Full-only. This is not an eligibility
+  finding. See `PLAY_POLICY_REMEDIATION.md` for checks and remaining gates.
+
+- **Do not substitute artifact boundaries for policy evidence** (2026-11-10,
+  fourth pass). Reject “no QUERY_ALL_PACKAGES means unrestricted discovery”,
+  “specialUse plus a notification means approved”, “root grant authorizes every
+  inter-app effect”, and “no app uploader means files never leave the device”
+  as audit shortcuts. Review actual discovery/access, gameplay effects, SDK
+  consent, OS backup and each foreground operation independently. This records
+  an evidence standard, not approval or removal of existing features. Open
+  findings and closure criteria: `FOURTH_PASS_PLAY_POLICY_AUDIT.md`.
+
+- **Inspect complete delivery sets, not whatever files happen to remain**
+  (2026-11-10, third pass). Reject partial APK sets, a single matching native
+  filename, and public-SDK-package-only exclusion as sufficient evidence.
+  Reconcile bundletool's TOC, package/version and each targeted variant's payload;
+  require universal and split coverage. Bind Full APKs to Gradle output metadata
+  and their expected bridge ABIs, exact loader targets and required exports.
+  Check internal SDK implementation namespaces while preserving shared
+  advertising-ID support. No additional app-feature leak was found in this
+  pass; these are proven checker corrections. See `THIRD_PASS_FLAVOR_AUDIT.md`.
+
+- **Distribution settings are implementations, not shared flags** (2026-11-10,
+  second pass). Full owns updater orchestration/UI/notes, the free-ad donation
+  gate/artwork, spoof routes/quick action, spoof-only graphics probe and reference
+  Unity target-list parser. Play owns Billing policy/repository/purchase UI and
+  Rate App. Shared settings retain only common preferences/actions and selected
+  UI extensions; remove unnecessary reciprocal updater/billing stubs. Localized
+  distribution resources and the updater's FileProvider path follow that ownership.
+  Reject shared hidden implementation as a boundary, but retain genuinely shared
+  gaming/root/Shizuku code without duplication. Verify both directions with AGP
+  source providers, compile/runtime graphs, original R8 names/file facades and
+  actual release packages. See `SECOND_PASS_FLAVOR_AUDIT.md`; the first audit's
+  artifact hashes do not certify subsequent builds.
+
+- **Flavor exclusions, not flags or shrinking, enforce distribution boundaries**
+  (2026-11-10). Tightens the 2026-10-31 omission without removing Full features:
+  VPN consent/state/UI/help/service strings and both native bridge C sources plus
+  their Kotlin caller are full-only. Modern all-files API calls use a selected
+  flavor adapter. Shared root/Shizuku gaming features, legacy storage and
+  third-party VPN detection stay shared intentionally. Play has no VPN controller
+  stub; an empty composable extension replaces the whole panel. R8 is an
+  optimization, not evidence of source exclusion. The focused source/manifest/
+  dependency/DEX/mapping guard and release audit export document this boundary;
+  policy approval remains separate. See `PLAYSTORE_BOUNDARY_AUDIT.md`.
 
 - **Play build declares neither All files access nor a VpnService** (2026-10-31).
   Google Play rejected both as non-core for a gaming optimizer. The

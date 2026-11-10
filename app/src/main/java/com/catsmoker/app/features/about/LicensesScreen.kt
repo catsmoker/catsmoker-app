@@ -21,7 +21,6 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.catsmoker.app.R
 import com.catsmoker.app.shared.ui.components.ScreenScaffold
-import com.catsmoker.app.system.VariantCapabilities
 
 /**
  * Third-party license inventory, moved out of Settings (Help & Info) into About → Legal.
@@ -119,12 +118,6 @@ private fun licenseEntries(): List<LicenseEntry> = listOf(
     ),
     LicenseEntry(
         license = stringResource(R.string.about_license_ads),
-        components = stringResource(
-            if (VariantCapabilities.HAS_PLAY_STORE) {
-                R.string.about_license_ads_play
-            } else {
-                R.string.about_license_ads_full
-            }
-        )
+        components = stringResource(R.string.about_license_ads_components)
     )
 )

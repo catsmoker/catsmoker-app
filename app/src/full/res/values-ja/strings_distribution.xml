@@ -1,0 +1,43 @@
+<resources>
+    <string name="dash_spoof_title">デバイス スプーフィング</string>
+    <string name="dash_spoof_subtitle">アイデンティティとプロパティ上書き</string>
+    <string name="about_license_ads_components" translatable="false">Start.io</string>
+    <string name="gt_tool_net_sub">他アプリをインターネットから遮断。</string>
+    <string name="gt_net_what_1">他アプリのバックグラウンド通信を止め、ゲームが接続を独占できるようにします。</string>
+    <string name="gt_net_unmetered">通常のWi-Fiなのでデータセーバーは何もしません。VPNスイッチを使ってください。</string>
+    <string name="legal_privacy_updated">最終更新: 2026-10-25</string>
+    <string name="legal_p_local_body">設定とアプリ状態はデバイス上のストレージのみに保存されます: テーマ、言語、オンボーディング選択、起動カウンター、広告プリファレンス、アップデート確認プリファレンス、ゲームライブラリエントリ、スプーフィングプロファイルとアプリごとの割り当て、ゲーミングモードオプション(DNS選択、リフレッシュレート、クリーナーパターン、サスペンドリスト)、オーバーレイとクロスヘア位置、ゲーム設定バックアップ、診断ログとクラッシュレコード。このリストのいずれも開発者にアップロードされません — アップロードするバックエンドが存在しないためです。アプリをアンインストールするか、データをクリアすると削除されます。</string>
+    <string name="legal_p_vpn_title">7. ローカルVPNファイアウォール</string>
+    <string name="legal_p_vpn_body">オプションのアプリネットワークファイアウォールは、AndroidのVPNフレームワークをローカルなオンデバイスフィルタとして使用します。トラフィックルールは端末上で適用され、プロジェクトサーバーへは一切送信されません — サーバーが存在しないためです。</string>
+    <string name="legal_p_consent_body">オプション機能 — オーバーレイ、VPNフィルタ、RootやShizukuアクション、共有 — は、あなたがオンにしたときのみ動作します。機能をオフにするかアプリをアンインストールすることで同意を撤回できます。これは撤回前に実行された処理には影響しません。アンインストールするとデバイス上でのデータ収集は停止しますが、GoogleやStart.ioに既に送信されたデータは削除されません。開発者が保有するデータの削除を求める場合は catsmoker.lab@gmail.com へメールしてください。</string>
+    <string name="legal_t_games_body">デバイスアイデンティティのスプーフィングやゲームファイルの改変は、個々のゲームの利用規約に違反する可能性があり、機能制限やアカウント停止などのペナルティを招くことがあります。開発者はサードパーティゲームでのアカウント停止やいかなる損失についても責任を負いません。これらの機能は自己責任でご利用ください。</string>
+    <string name="legal_t_risk_body">多くの機能はRootなしで動作します。高度な機能(デバイススプーフィング、一部のシステム調整、ファイル編集)にはShizuku、Root、または生成されたMagiskモジュールが必要で、オプションです。デバイスのRoot化やジェイルブレイクはセキュリティ制限を解除し、マルウェアへの曝露、保証無効化、銀行/決済アプリの動作停止、アプリの動作停止を招く可能性があります。これらのリスクを理解し受け入れる場合のみ有効にしてください。システム設定を変更する機能(解像度、リフレッシュレート、アニメーションスケール、DNS、オーディオ、dexoptコンパイル)はあなたの指示で動作します。可能な限り書き込み前にゲーム設定をバックアップしますが、不安定、起動問題、データ損失のリスクをあなたは受け入れます。いつでも変更を元に戻したり、アプリをアンインストールしたりできます。</string>
+    <string name="sys_ads_sub">Start.ioのバナー広告でアプリを無料提供しています。オフにすると無効化されます。広告プロバイダの収集内容についてはプライバシーポリシーをご覧ください。</string>
+    <string name="sys_ads_title">広告を有効にする</string>
+    <string name="sys_ads_guilt_title">やめてください</string>
+    <string name="sys_ads_guilt_message">広告は私の猫たちの餌代です。広告がないと、彼らは悲しそうに私を見つめます。少額の寄付でも助かります。</string>
+    <string name="sys_ads_guilt_donate">寄付</string>
+    <string name="sys_ads_guilt_keep">広告を続ける</string>
+    <string name="sys_ads_guilt_turn_off_anyway">とにかく広告をオフにする</string>
+    <string name="sys_ads_guilt_cat_desc">悲しい猫</string>
+    <string name="sys_section_updates">アップデート</string>
+    <string name="sys_updating">アップデートをダウンロード中…</string>
+    <string name="sys_check_updates">アップデートを確認</string>
+    <string name="sys_prerelease">プレリリースを含める</string>
+    <string name="sys_auto_check">自動アップデート確認</string>
+    <string name="sys_update_available">アップデートあり: %1$s</string>
+    <string name="sys_update_prompt">新しいバージョンが利用可能です。今すぐダウンロードしてインストールしますか？</string>
+    <string name="sys_download">ダウンロード</string>
+    <string name="sys_checking_updates">アップデートを確認中…</string>
+    <string name="sys_no_releases">GitHubでリリースが見つかりませんでした</string>
+    <string name="sys_up_to_date">アプリは最新です (v%1$s)</string>
+    <string name="sys_no_suitable_release">適切なリリースが見つかりませんでした</string>
+    <string name="sys_update_check_failed">アップデート確認に失敗: %1$s</string>
+    <string name="sys_download_failed">ダウンロードに失敗: %1$s</string>
+    <string name="sys_update_cancelled">アップデートのダウンロードをキャンセルしました</string>
+    <string name="sys_update_rejected">アップデートパッケージが拒否されました: %1$s</string>
+    <string name="sys_update_installed">%1$s にアップデートしました</string>
+    <string name="sys_updates_summary">バージョン %1$s</string>
+    <string name="sys_updates_available">アップデート %1$s あり</string>
+    <string name="sys_updates_badge">New</string>
+</resources>

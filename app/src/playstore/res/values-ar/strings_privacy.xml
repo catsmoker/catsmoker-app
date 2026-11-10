@@ -1,0 +1,4 @@
+<resources>
+    <string name="policy_ad_privacy">خيارات خصوصية الإعلانات</string>
+    <string name="policy_ad_privacy_summary">راجع أو اسحب خيارات الإعلانات المتاحة لمنطقتك.</string>
+</resources>

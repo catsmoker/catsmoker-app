@@ -1,0 +1,4 @@
+<resources>
+    <string name="policy_ad_privacy">Advertising privacy choices</string>
+    <string name="policy_ad_privacy_summary">Review or withdraw the advertising choices offered for your region.</string>
+</resources>

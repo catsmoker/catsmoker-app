@@ -639,15 +639,9 @@ fun PermissionsListScreen(
                     else R.string.onb_perm_not_granted,
                     onClick = {
                         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                            try {
-                                context.startActivity(
-                                    Intent(Settings.ACTION_MANAGE_ALL_FILES_ACCESS_PERMISSION).apply {
-                                        data = "package:${context.packageName}".toUri()
-                                    }
-                                )
-                            } catch (_: Exception) {
+                            com.catsmoker.app.system.StorageAccess.settingsIntent(context)?.let {
                                 try {
-                                    context.startActivity(Intent(Settings.ACTION_MANAGE_ALL_FILES_ACCESS_PERMISSION))
+                                    context.startActivity(it)
                                 } catch (_: Exception) {
                                     context.startActivity(Intent(Settings.ACTION_SETTINGS))
                                 }
@@ -668,15 +662,7 @@ fun PermissionsListScreen(
                 statusRes = if (uiState.batteryGranted) R.string.onb_perm_granted
                 else R.string.onb_perm_not_granted,
                 onClick = {
-                    try {
-                        context.startActivity(
-                            Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS).apply {
-                                data = "package:${context.packageName}".toUri()
-                            }
-                        )
-                    } catch (_: Exception) {
-                        context.startActivity(Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS))
-                    }
+                    context.startActivity(Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS))
                 }
             )
         )

@@ -250,7 +250,7 @@ its own native code still sees the device — and a process answering two
 different models to two of its own readers is worse off than one answering the
 real device to both. `NativeSpoofChannel`
 (`src/full/…/features/spoofdevice/root/NativeSpoofChannel.kt`) closes that gap;
-the hooks live in `app/src/main/jni/catsmoker_spoof.c` (full-flavor-only
+the hooks live in `app/src/full/jni/catsmoker_spoof.c` (full-flavor-only
 translation unit, like the class).
 
 How it arrives: LSPosed/Vector read a module's `assets/native_init` (legacy

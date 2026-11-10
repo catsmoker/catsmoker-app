@@ -53,7 +53,6 @@
     <string name="gt_tool_dnd_title">عدم الإزعاج</string>
     <string name="gt_tool_dnd_sub">اكتم الإشعارات أثناء اللعب.</string>
     <string name="gt_tool_net_title">بيانات الخلفية</string>
-    <string name="gt_tool_net_sub">أبقِ التطبيقات الأخرى بعيدًا عن الإنترنت.</string>
     <string name="gt_tool_dns_title">DNS خاص</string>
     <string name="gt_tool_dns_sub">اختر موفر DNS الخاص.</string>
     <string name="gt_tool_afs_title">إيقاف تلقائي قسري</string>
@@ -148,9 +147,9 @@
     <string name="gt_cleaner_what_2">\"فحص\" ينظر فقط. لا يُحذف شيء حتى تضغط \"تنظيف\".</string>
     <string name="gt_cleaner_what_3">الرقم بجانب كل صف هو عدد ما تم العثور عليه وحجمه. إنه مقاس وليس تقديراً.</string>
     <string name="gt_cleaner_safe_title">هل هو آمن؟ ما الحمراء منها؟</string>
-    <string name="gt_cleaner_safe_1">الصفوف العادية آمنة: هاتفك يعيد بناء تلك الملفات بنفسه عندما يحتاجها مجدداً.</string>
+    <string name="gt_cleaner_safe_1">قد تشمل الصفوف العادية ملفات مؤقتة وفارغة ومثبتات قديمة. ليس كل ملف محذوف قابلًا لإعادة الإنشاء؛ راجع الفئات قبل التنظيف أو الجدولة.</string>
     <string name="gt_cleaner_safe_2">الصفوف المكتوبة بالأحمر أقوى. قد تسجّل خروجك من التطبيقات أو تجعل التطبيق يبدأ ببطء في المرة الأولى بعد التنظيف. وهي غير محددة في البداية.</string>
-    <string name="gt_cleaner_safe_3">صورك ورسائلك وملفاتك وتطبيقاتك لا تُمس أبداً.</string>
+    <string name="gt_cleaner_safe_3">تُستبعد المسارات المحمية، لكن الملفات المحددة تُحذف. لا يمكن التراجع عن التنظيف؛ احتفظ بما تحتاجه خارج الفئات المحددة.</string>
     <string name="gt_cleaner_none_found">لا يوجد</string>
     <string name="gt_cleaner_not_scanned">لم يُفحص</string>
     <string name="gt_cleaner_scan">فحص</string>
@@ -219,19 +218,8 @@
     <string name="gt_scan_lim_no_datadir">%1$s غير موجود، لذا لم تُفحص ذواكر التطبيقات المؤقتة هناك.</string>
 
     <!-- Network block -->
-    <string name="gt_net_what_1">يمنع التطبيقات الأخرى من استخدام الإنترنت في الخلفية، لتحصل لعبتك على الاتصال كاملاً لنفسها.</string>
-    <string name="gt_net_what_2">توجد طريقتان لفعل ذلك. يمكنك استخدام واحدة أو الاثنتين معاً. ألعابك تُترك دائماً.</string>
-    <string name="gt_net_vpn_title">حظر التطبيقات (VPN)</string>
-    <string name="gt_net_vpn_sub">يعمل على Wi-Fi وبيانات الهاتف. لا يحتاج روت. يستخدم فتحة VPN في هاتفك.</string>
-    <string name="gt_net_vpn_on_count">مشغّل — يوقف %1$d من التطبيقات</string>
     <string name="gt_net_on">مشغّل</string>
     <string name="gt_net_off">متوقف</string>
-    <string name="gt_net_vpn_error">تعذر تشغيله: %1$s</string>
-    <string name="gt_net_vpn_how_title">كيف يعمل VPN؟</string>
-    <string name="gt_net_vpn_how_1">يسمح أندرويد لتطبيق بإنشاء اتصال خاص، يسمى VPN، واختيار التطبيقات التي تمر عبره. هذا التطبيق يرسل التطبيقات الأخرى إليه ثم يسقط كل ما ترسله. ألعابك لا تمر عبره إطلاقاً، فلا يمسها شيء.</string>
-    <string name="gt_net_vpn_how_2">إنه VPN وليس جدار حماية. لا يُرسل شيء إلى أي مكان ولا يغادر هاتفك شيء — بل يذهب إلى لا مكان ببساطة.</string>
-    <string name="gt_net_vpn_how_3">أمران يجب معرفتهما: التطبيق المحظور سيبدو وكأنه يحمّل للأبد بدل قول \"لا إنترنت\"، وهاتفك يسمح بـ VPN واحد فقط في المرة الواحدة، لذا فهذا يوقف أي تطبيق VPN آخر تستخدمه.</string>
-    <string name="gt_net_vpn_how_4">سيطلب منك أندرويد مرة واحدة السماح به. إذا قلت لا، لن يُحظر شيء.</string>
     <string name="gt_net_ds_title">توفير البيانات</string>
     <string name="gt_net_ds_sub">إعداد أندرويد نفسه. يتطلب روت أو Shizuku. ينطبق على الشبكات المحدودة، بما فيها Wi-Fi المحدودة.</string>
     <string name="gt_net_ds_need">توفير البيانات يحتاج روت أو Shizuku. لا يسمح أندرويد لتطبيق عادي بتغييره.</string>
@@ -241,7 +229,6 @@
     <string name="gt_net_ds_off_stopped">متوقف — لكن %1$d من التطبيقات ما زالت متوقفة</string>
     <string name="gt_net_engaged">شغّله Catsmoker — إيقافه يعيد هاتفك كما كان.</string>
     <string name="gt_net_metered">هذه الشبكة محدودة. يمكن تطبيق قيود بيانات الخلفية هنا؛ راجع حالة التشغيل أو الإيقاف أعلاه.</string>
-    <string name="gt_net_unmetered">أنت على Wi-Fi عادي، لذا لا يفعل توفير البيانات شيئاً هنا. استخدم مفتاح VPN بدلاً منه.</string>
     <string name="gt_net_unknown_net">تعذر معرفة نوع الشبكة التي أنت عليها.</string>
     <string name="gt_net_no_perapp">نسخة هاتفك لا تستطيع إيقاف التطبيقات واحداً واحداً، لذا يتوفر هنا إعداد توفير البيانات للهاتف كله فقط.</string>
     <string name="gt_net_exempt">مسموح دائماً (%1$d): %2$s</string>
@@ -249,11 +236,6 @@
     <string name="gt_net_ds_how_1">يستخدم نفس الإعداد الذي تجده في إعدادات أندرويد، ويطلب من هاتفك إيقاف إنترنت الخلفية للتطبيقات الأخرى. تُضاف ألعابك أولاً إلى قائمة \"المسموح دائماً\"، فتستمر في العمل.</string>
     <string name="gt_net_ds_how_2">كل تغيير يُقرأ من هاتفك بعد ذلك، فما تراه أعلاه هو إجابة هاتفك وليس تخميناً من هذا التطبيق.</string>
     <string name="gt_net_ds_how_3">يعمل فقط على بيانات الهاتف، أو Wi-Fi حددته كمكلف. على Wi-Fi العادي لا يفعل شيئاً.</string>
-    <string name="gt_net_which_title">أيهما يجب أن أستخدم؟</string>
-    <string name="gt_net_which_1">على بيانات الهاتف: توفير البيانات وحده كافٍ، ولا يكلف بطارية.</string>
-    <string name="gt_net_which_2">على Wi-Fi: استخدم مفتاح VPN — لن يفعل توفير البيانات شيئاً.</string>
-    <string name="gt_net_which_3">تريد أقوى إعداد: شغّل الاثنين.</string>
-    <string name="gt_net_which_4">لا أحد منهما يحظر التطبيق الذي تنظر إليه فعلاً. هذا مقصود.</string>
 
     <!-- Background data engine notes -->
     <string name="gt_bdr_no_verify">لم يقل هاتفك أي التطبيقات محظورة، لذا لم يُغيَّر شيء</string>
@@ -273,15 +255,6 @@
     <string name="gt_bdr_unblock_some">يمكن لـ %1$d من %2$d من التطبيقات استخدام البيانات مجدداً — ما زال %3$d متوقفاً</string>
 
     <!-- VPN engine -->
-    <string name="gt_vpn_consent">لم تقل نعم لـ VPN بعد. انقر المفتاح مجدداً واختر موافق.</string>
-    <string name="gt_vpn_unknown">لم يقل أندرويد إن كان VPN مسموحاً (%1$s). انقر المفتاح مجدداً.</string>
-    <string name="gt_vpn_nothing">لا يوجد ما يُحظر — كل تطبيق في هاتفك إما جزء من أندرويد نفسه أو من ألعابك.</string>
-    <string name="gt_vpn_start_fail">لم يقبل هاتفك تشغيله (%1$s)</string>
-    <string name="gt_vpn_fail_empty">لا توجد تطبيقات لحظرها، لذا لم يبدأ VPN</string>
-    <string name="gt_vpn_fail_accept">لم يقبل أندرويد أياً من التطبيقات المراد حظرها</string>
-    <string name="gt_vpn_fail_refused">رفض أندرويد VPN (%1$s)</string>
-    <string name="gt_vpn_fail_interface">لم ينشئ أندرويد واجهة VPN</string>
-    <string name="gt_vpn_fail_revoke">تطبيق VPN آخر تولى الأمر، أو ألغيت إذن VPN</string>
 
     <!-- Developer options card -->
     <string name="gt_dev_anim">سرعة الحركة</string>
@@ -529,9 +502,6 @@
 
     <!-- ViewModel messages -->
     <string name="gt_vm_something_wrong">حدث خطأ ما</string>
-    <string name="gt_vm_vpn_unblocked">يمكن للتطبيقات الأخرى استخدام الإنترنت مجدداً</string>
-    <string name="gt_vm_vpn_unknown">لم يقل أندرويد إن كان VPN مسموحاً (%1$s)</string>
-    <string name="gt_vm_vpn_no">قلت لا، لذا لا يُحظر شيء</string>
     <string name="gt_vm_scan_denied">تعذرت رؤية مساحة التخزين — انظر الملاحظات أدناه</string>
     <string name="gt_vm_scan_empty">انتهى كل شيء: لا يوجد ما يُنظف</string>
     <string name="gt_vm_scan_empty_items">تم العثور على %1$d أشياء فارغة — لا تشغل مساحة</string>
@@ -678,11 +648,6 @@
     <string name="gt_svc_cross_taking">علامة التصويب تلتقط النقرات أثناء تحريكها.</string>
     <string name="gt_svc_cross_done">انتهى التحريك</string>
     <string name="gt_svc_cross_channel">طبقة علامة التصويب</string>
-    <string name="gt_svc_vpn_title">حظر شبكة التطبيقات</string>
-    <string name="gt_svc_vpn_session">Catsmoker app block</string>
-    <string name="gt_svc_vpn_blocking">يحظر %1$d من التطبيقات</string>
-    <string name="gt_svc_vpn_ipv4"> · IPv4 فقط على هذا الجهاز</string>
-    <string name="gt_svc_vpn_channel">حظر شبكة التطبيقات</string>
     <string name="gt_svc_afs_title">إيقاف تلقائي قسري</string>
     <string name="gt_svc_afs_no_usage">يتطلب الوصول إلى الاستخدام — انقر للمنح، لا يُغلق شيء</string>
     <string name="gt_svc_afs_no_priv">يتطلب روت أو Shizuku — يرفض أندرويد إغلاق التطبيقات الأخرى، لا يُغلق شيء</string>

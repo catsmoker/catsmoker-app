@@ -214,7 +214,10 @@ class MainActivity : ComponentActivity() {    override fun attachBaseContext(new
                     if (showStartup) {
                         StartupScreen(onFinished = { showStartup = false })
                     } else {
-                        AppNavHost(navController = navController, startDestination = startDestination)
+                        com.catsmoker.app.system.config.GamingPrivacyGate {
+                            AppNavHost(navController = navController, startDestination = startDestination)
+                            DistributionPrivacyGate()
+                        }
                     }
                 }
             }

@@ -201,7 +201,7 @@
     <string name="spoof_root_available">Rootアクセスあり</string>
     <string name="spoof_root_unavailable">Rootアクセスなし</string>
     <string name="spoof_error_name_empty">プロファイル名は空にできません</string>
-    <string name="spoof_toast_created">プロファイル '%1$s' を作成しました</string>
+    <string name="spoof_toast_created">プロファイル \'%1$s\' を作成しました</string>
     <string name="spoof_toast_updated">プロファイルを更新しました</string>
     <string name="spoof_toast_deleted">プロファイルを削除しました</string>
     <string name="spoof_error_gone">そのプロファイルはもう存在しません</string>
@@ -225,14 +225,14 @@
     <string name="spoof_action_import">インポート</string>
     <string name="spoof_create_choose_preset">プリセットを選択</string>
     <string name="spoof_selector_saved">保存済みプリセット</string>
-    <string name="spoof_dialog_delete_preset_title">プリセット '%1$s' を削除しますか？</string>
+    <string name="spoof_dialog_delete_preset_title">プリセット \'%1$s\' を削除しますか？</string>
     <string name="spoof_dialog_delete_preset_text">プリセットが削除されます。このプリセットから作成された既存プロファイルには影響しません。</string>
-    <string name="spoof_dialog_delete_title">'%1$s' を削除しますか？</string>
+    <string name="spoof_dialog_delete_title">\'%1$s\' を削除しますか？</string>
     <string name="spoof_dialog_delete_text">プロファイルとそのアプリ割り当てが削除されます。元に戻せません。</string>
     <string name="spoof_action_save_preset">プリセットとして保存</string>
     <string name="spoof_dialog_save_preset">プリセットとして保存</string>
     <string name="spoof_field_preset_name">プリセット名</string>
-    <string name="spoof_toast_preset_saved">プリセット '%1$s' を保存しました</string>
+    <string name="spoof_toast_preset_saved">プリセット \'%1$s\' を保存しました</string>
     <string name="spoof_toast_preset_deleted">プリセットを削除しました</string>
     <string name="spoof_import_title">プロファイルをインポート</string>
     <string name="spoof_import_source">ソース</string>
@@ -241,8 +241,8 @@
     <string name="spoof_import_save_preset">プリセットとして保存</string>
     <string name="spoof_import_invalid_title">プロファイルをインポートできません</string>
     <string name="spoof_import_name_taken">その名前は使用済みです — 編集するか、提案された名前にしてください。</string>
-    <string name="spoof_toast_imported">プロファイル '%1$s' をインポートしました</string>
-    <string name="spoof_error_export_failed">'%1$s' をエクスポートできませんでした</string>
+    <string name="spoof_toast_imported">プロファイル \'%1$s\' をインポートしました</string>
+    <string name="spoof_error_export_failed">\'%1$s\' をエクスポートできませんでした</string>
     <string name="spoof_error_no_share_target">共有先アプリがありません</string>
     <!-- LSPosed inactive warning when assigning profiles (F-02). -->
     <string name="spoof_lsposed_inactive_title">Xposedモジュールが非作動</string>

@@ -276,7 +276,7 @@ class BackgroundDataRestrictor @Inject constructor(
     // Shared InstalledAppQuery (consolidation C4): same user-app + INTERNET rule as the VPN.
     private fun restrictableUids(gamePackages: List<String>): Set<Int> =
         InstalledAppQuery.restrictableUids(
-            context.packageManager, context.packageName, gamePackages, MIN_APP_UID
+            context, context.packageName, gamePackages, MIN_APP_UID
         )
 
     /**

@@ -1,0 +1,12 @@
+<resources>
+    <string name="about_license_ads_components" translatable="false">Google AdMob</string>
+    <string name="sys_remove_ads_title">広告を削除</string>
+    <string name="sys_ads_removed_title">広告を削除しました</string>
+    <string name="sys_ads_removed_sub">ご支援ありがとうございます — 広告なしでご利用いただけます。</string>
+    <string name="sys_billing_unavailable">Play Billingを利用できません。接続を確認して再試行してください。</string>
+    <string name="sys_remove_ads_pending">購入が保留中です。Google Playが確認次第、広告がオフになります。</string>
+    <string name="sys_remove_ads_failed">購入を完了できませんでした: %1$s</string>
+    <string name="sys_remove_ads_summary">買い切り購入</string>
+    <string name="sys_rate_app_title">アプリを評価</string>
+    <string name="sys_rate_app_summary">Google Playで評価</string>
+</resources>

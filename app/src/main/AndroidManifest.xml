@@ -33,6 +33,7 @@
         <package android:name="com.HoYoverse.hkrpgsamsung" />
         <intent>
             <action android:name="android.intent.action.MAIN" />
+            <category android:name="android.intent.category.LAUNCHER" />
         </intent>
         <intent>
             <action android:name="android.intent.action.VIEW" />
@@ -65,7 +66,6 @@
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS"/>
     <uses-permission android:name="android.permission.RECORD_AUDIO"/>
-    <uses-permission android:name="android.permission.AD_ID" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <uses-permission android:name="android.permission.ACCESS_NOTIFICATION_POLICY" />
     <!-- Legacy shared-storage grant, used only on Android 8–10 (API 27–29).
@@ -89,7 +89,6 @@
         offer a channel the app could never hold. Root and Shizuku remain the normal paths.
     -->
     <uses-permission android:name="android.permission.WRITE_SECURE_SETTINGS" tools:ignore="ProtectedPermissions" />
-    <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
     <!-- Needed by the overlay boot receiver: without the declaration, BOOT_COMPLETED is never delivered. -->
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
     <uses-permission android:name="moe.shizuku.manager.permission.API_V23" />
@@ -97,7 +96,9 @@
     <!-- localeConfig is required for Android 13+ per-app locales; safely ignored below API 33 (minSdk 27). -->
     <application
         android:name="com.catsmoker.app.system.CatsmokerApp"
-        android:allowBackup="true"
+        android:allowBackup="false"
+        android:fullBackupContent="@xml/backup_rules"
+        android:dataExtractionRules="@xml/data_extraction_rules"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
         android:requestLegacyExternalStorage="true"
@@ -111,6 +112,14 @@
         android:theme="@style/Theme.Catsmoker">
 
         <meta-data android:name="moe.shizuku.client.V3_SUPPORT" android:value="true" />
+        <meta-data android:name="firebase_analytics_collection_enabled" android:value="false" />
+        <meta-data android:name="google_analytics_default_allow_analytics_storage" android:value="false" />
+        <meta-data android:name="google_analytics_default_allow_ad_storage" android:value="false" />
+        <meta-data android:name="google_analytics_default_allow_ad_user_data" android:value="false" />
+        <meta-data android:name="google_analytics_default_allow_ad_personalization_signals" android:value="false" />
+        <!-- No persisted legacy SDK flag can initialize Analytics before an explicit choice. -->
+        <provider android:name="com.google.firebase.provider.FirebaseInitProvider"
+            android:authorities="${applicationId}.firebaseinitprovider" tools:node="remove" />
 
         <!--
             Nothing reads this at registration time. Supplied by a manifest placeholder so the
@@ -165,24 +174,15 @@
                 tools:node="remove" />
         </provider>
 
-        <!--
-            WorkManager's own foreground service, re-declared so a worker's setForeground() can run
-            as specialUse — the same type and subtype property every other long-running service in
-            this app uses. Without the type, a setForeground on Android 14+ throws.
-        -->
-        <service
-            android:name="androidx.work.impl.foreground.SystemForegroundService"
-            android:foregroundServiceType="specialUse"
-            tools:node="merge">
-            <property android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE" android:value="Scheduled dexopt sweep" />
-        </service>
+        <!-- Scheduled maintenance is ordinary, deferrable work, never specialUse FGS. -->
+        <service android:name="androidx.work.impl.foreground.SystemForegroundService" tools:node="remove" />
 
         <service
             android:name=".features.gamingtools.tools.crosshair.CrosshairOverlayService"
             android:exported="false"
             android:enabled="true"
             android:foregroundServiceType="specialUse">
-            <property android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE" android:value="Crosshair" />
+            <property android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE" android:value="User-enabled aiming overlay visible over a game; stopped by its notification action" />
         </service>
 
         <service
@@ -190,7 +190,7 @@
             android:enabled="true"
             android:exported="false"
             android:foregroundServiceType="specialUse">
-            <property android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE" android:value="Performance Overlay" />
+            <property android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE" android:value="User-enabled on-screen device performance telemetry with a persistent Stop action" />
         </service>
 
         <!--
@@ -229,7 +229,7 @@
             android:enabled="true"
             android:exported="false"
             android:foregroundServiceType="specialUse">
-            <property android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE" android:value="Booster" />
+            <property android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE" android:value="User-started app compilation progress; cancellable from its notification and ends when compilation ends" />
         </service>
 
         <!--
@@ -251,7 +251,7 @@
             android:enabled="true"
             android:exported="false"
             android:foregroundServiceType="specialUse">
-            <property android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE" android:value="Silent Hunter" />
+            <property android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE" android:value="User-enabled foreground-app observation and previous-app force-stop with a persistent Stop action" />
         </service>
 
         <service
@@ -259,7 +259,7 @@
             android:enabled="true"
             android:exported="false"
             android:foregroundServiceType="specialUse">
-            <property android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE" android:value="Gaming Mode" />
+            <property android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE" android:value="User-enabled gaming configuration session with ongoing status and Stop/restore control" />
         </service>
 
         <service
@@ -267,7 +267,7 @@
             android:enabled="true"
             android:exported="false"
             android:foregroundServiceType="specialUse">
-            <property android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE" android:value="Auto game session" />
+            <property android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE" android:value="User-enabled foreground game detection and automatic gaming-session management with a persistent Stop action" />
         </service>
 
         <!--
@@ -288,9 +288,9 @@
         </service>
 
         <!--
-            VpnFirewallService is full-only: Play's VpnService policy requires
-            the VPN to be core functionality, which this app is not. Its
-            declaration lives in src/full/AndroidManifest.xml.
+            VpnFirewallService is full-only following this app's Play rejection.
+            The policy has eligible-use exceptions; this distribution does not
+            claim one. Its declaration lives in src/full/AndroidManifest.xml.
         -->
 
     </application>

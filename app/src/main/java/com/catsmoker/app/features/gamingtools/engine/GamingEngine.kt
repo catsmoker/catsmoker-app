@@ -632,6 +632,8 @@ class GamingEngine(
      * "armed" and "not applicable" in [GamingModeReport.notificationSuppression].
      */
     private fun isNotificationListenerEnabled(): Boolean =
+        com.catsmoker.app.system.config.GamingAccessConsent.allows(context,
+            com.catsmoker.app.system.config.GamingAccessConsent.NOTIFICATIONS) &&
         androidx.core.app.NotificationManagerCompat
             .getEnabledListenerPackages(context)
             .contains(context.packageName)
@@ -1757,6 +1759,11 @@ class GamingEngine(
             // `cmd package compile` is refused for other packages without a privileged shell.
             // Checking first means the log says why nothing happened, instead of listing apps that
             // were never touched and then reporting a success that never took place.
+            if (!hasInventoryConsent()) {
+                val reason = context.getString(R.string.policy_access_needed)
+                fail(BoosterOutcome.Unavailable(reason), context.getString(R.string.gt_eng_booster_unavail, reason))
+                return
+            }
             if (!shellRunner.hasPrivilege()) {
                 val reason = context.getString(R.string.gt_eng_booster_no_priv)
                 fail(BoosterOutcome.Unavailable(reason), context.getString(R.string.gt_eng_booster_unavail, reason))
@@ -1804,6 +1811,11 @@ class GamingEngine(
 
             for (pkg in apps) {
                 if (boosterCancelRequested.get()) return
+                if (!hasInventoryConsent()) {
+                    val reason = context.getString(R.string.policy_access_needed)
+                    fail(BoosterOutcome.Unavailable(reason), context.getString(R.string.gt_eng_booster_unavail, reason))
+                    return
+                }
 
                 // One decision path for skips: already optimal (or recently compiled to it) is
                 // "already done"; `verify` under speed-profile is "nothing to do yet" — a
@@ -2016,6 +2028,7 @@ class GamingEngine(
      */
     // Partial visibility is fine: an invisible app simply misses this sweep.
     private fun eligibleBoosterPackages(force: Boolean = false): List<String> {
+        if (!hasInventoryConsent()) return emptyList()
         val userAdded = context.getSharedPreferences("AppPrefs", Context.MODE_PRIVATE)
             .getStringSet("user_games", emptySet()) ?: emptySet()
         return context.packageManager.getInstalledApplications(PackageManager.GET_META_DATA)
@@ -2060,7 +2073,8 @@ class GamingEngine(
 
     private suspend fun queryDexoptStatuses(): Map<String, String> {
         return withContext(Dispatchers.IO) {
-            DexoptStatusParser.parse(execute("dumpsys package dexopt"))
+            if (!hasInventoryConsent()) emptyMap()
+            else DexoptStatusParser.parse(execute("dumpsys package dexopt"))
         }
     }
 
@@ -2107,6 +2121,9 @@ class GamingEngine(
      * read" must not lead to the same recovery decision.
      */
     private suspend fun querySuspendedPackages(): Set<String>? {
+        // Returning unknown preserves recorded recovery targets; refusal must not silently
+        // enumerate the entire package inventory or prevent targeted undo commands.
+        if (!hasInventoryConsent()) return null
         val result = runCatching {
             shellRunner.execSafeResult("dumpsys", "package")
         }.getOrNull() ?: return null
@@ -2333,6 +2350,7 @@ class GamingEngine(
 
     // Partial visibility is fine: invisible packages are excluded, never suspended.
     private fun getSuspendTargets(activeGamePkg: String?): List<String> {
+        if (!hasInventoryConsent()) return emptyList()
         val pm = context.packageManager
         val installedApps = pm.getInstalledApplications(PackageManager.GET_META_DATA)
         val appPrefs = context.getSharedPreferences("AppPrefs", Context.MODE_PRIVATE)
@@ -2385,6 +2403,7 @@ class GamingEngine(
      * would promise a protection nothing needs. The picker filters this to what it can label.
      */
     fun suspendCandidatePackages(): List<String> {
+        if (!hasInventoryConsent()) return emptyList()
         val pm = context.packageManager
         val installedApps = pm.getInstalledApplications(PackageManager.GET_META_DATA)
         val userApps = installedApps
@@ -2400,12 +2419,17 @@ class GamingEngine(
     }
 
     private fun getLauncherPackages(): Set<String> {
+        if (!hasInventoryConsent()) return emptySet()
         val intent = android.content.Intent(android.content.Intent.ACTION_MAIN)
             .addCategory(android.content.Intent.CATEGORY_HOME)
         return context.packageManager.queryIntentActivities(intent, 0)
             .mapNotNull { it.activityInfo?.packageName }
             .toSet()
     }
+
+    private fun hasInventoryConsent() = com.catsmoker.app.system.config.GamingAccessConsent.allows(
+        context, com.catsmoker.app.system.config.GamingAccessConsent.INVENTORY
+    )
 
     /**
      * Reads the user's real state and stores it, before activation writes anything at all.

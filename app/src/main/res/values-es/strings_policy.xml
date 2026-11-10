@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="policy_access_title">Acceso opcional para jugar</string>
+    <string name="policy_access_intro">Elige cada opción por separado. Estas opciones no conceden permisos de Android. Puedes rechazar y usar la app sin las herramientas afectadas. El acceso se usa localmente, sin enviarlo a nuestro servidor. Las estadísticas están desactivadas hasta activarlas en Ajustes; las opciones de publicidad son independientes. Revisa tus elecciones en Ajustes.</string>
+    <string name="policy_inventory">Detectar las apps instaladas visibles para CatSmoker para la biblioteca de juegos, selección de apps, optimización, restricciones en segundo plano y comprobaciones de limpieza.</string>
+    <string name="policy_usage">Observar qué app está en primer plano mientras la detección de sesiones o Silent Hunter está activa. La detección activa el modo de juego para tus juegos. Silent Hunter fuerza la detención de la app anterior, aunque no sea un juego, y puede interrumpir tareas o mensajes. Detén cada función desde su notificación.</string>
+    <string name="policy_notifications">Descartar notificaciones existentes y nuevas de otras apps mientras el modo de juego las bloquea. No es solo silenciarlas: CatSmoker no puede restaurarlas y podrías perder mensajes importantes. Esta función no lee el contenido de los mensajes. Al desactivarla se permiten las notificaciones futuras.</string>
+    <string name="policy_save_choices">Guardar opciones</string>
+    <string name="policy_decline">Rechazar todo</string>
+    <string name="policy_review_access">Revisa o retira tus opciones de detección de apps, observación del primer plano y descarte de notificaciones.</string>
+    <string name="policy_access_needed">Permite el acceso opcional correspondiente en Ajustes antes de usar esta herramienta.</string>
+</resources>

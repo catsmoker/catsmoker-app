@@ -138,8 +138,6 @@
     <!-- Frame-rate label for the vsync fallback: this app's own frames, not the game's -->
     <string name="dash_fps_label_ui"> UI FPS</string>
     <string name="dash_quick_actions">エンジニアリングコンソール</string>
-    <string name="dash_spoof_title">デバイス スプーフィング</string>
-    <string name="dash_spoof_subtitle">アイデンティティとプロパティ上書き</string>
     <string name="dash_edit_files_title">ファイル エンジニアリング</string>
     <string name="dash_edit_files_subtitle">データ最適化ツール</string>
     <string name="dash_gaming_tools_subtitle">オーバーレイ、ネットワーク、ロジック</string>

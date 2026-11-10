@@ -5,6 +5,7 @@ import android.app.usage.UsageEvents
 import android.app.usage.UsageStatsManager
 import android.content.Context
 import android.os.Process
+import com.catsmoker.app.system.config.GamingAccessConsent
 
 /**
  * Shared foreground-app monitoring (consolidation C7).
@@ -18,6 +19,7 @@ object ForegroundWatcher {
 
     /** Whether usage access is granted (an appop, not a runtime permission). */
     fun hasUsageAccess(context: Context): Boolean {
+        if (!GamingAccessConsent.allows(context, GamingAccessConsent.USAGE)) return false
         val appOps = context.getSystemService(Context.APP_OPS_SERVICE) as? AppOpsManager
             ?: return false
         // checkOpNoThrow is the non-deprecated spelling on the compile SDK and has
@@ -37,10 +39,12 @@ object ForegroundWatcher {
      * query failed / nothing moved. A null foreground is never acted on.
      */
     fun queryLatestForegroundPackage(
+        context: Context,
         usm: UsageStatsManager,
         begin: Long,
         end: Long
     ): String? {
+        if (!hasUsageAccess(context)) return null
         val events = try {
             usm.queryEvents(begin, end)
         } catch (_: Exception) {

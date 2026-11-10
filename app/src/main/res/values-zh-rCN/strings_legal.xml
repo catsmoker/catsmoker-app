@@ -4,7 +4,6 @@
     <string name="legal_section_title">法律信息</string>
     <string name="legal_privacy_title">隐私政策</string>
     <string name="legal_privacy_subtitle">本应用存储与共享的内容。</string>
-    <string name="legal_privacy_updated">最后更新：2026-10-25</string>
     <string name="legal_terms_title">条款与条件</string>
     <string name="legal_website_title">法律网站</string>
     <string name="legal_terms_subtitle">使用本应用的规则。</string>
@@ -13,25 +12,22 @@
     <string name="legal_p_intro">CatSmoker 是一款开源 Android 应用，无账号、无登录，也没有项目方运营的服务器。应用所知的一切几乎都保留在你的设备上。本政策说明哪些数据保存在本地、应用的第三方 SDK 会发送哪些数据，以及你拥有哪些权利。下文所称“服务提供方”即 CatSmoker。</string>
 
     <string name="legal_p_local_title">1. 保存在设备上的数据</string>
-    <string name="legal_p_local_body">设置与应用状态仅保存在设备存储中：主题、语言、初始选项、启动计数、广告偏好、更新检查偏好、游戏库、机型伪装配置与按应用分配、游戏模式选项（DNS 选择、刷新率、清理规则、冻结列表）、性能浮窗与准星位置、游戏配置文件备份、诊断日志与崩溃记录。以上内容均不会上传给开发者——因为根本没有可上传的后端服务器。卸载应用或清除数据即可将其删除。</string>
 
     <string name="legal_p_analytics_title">2. 分析、Cookie 与跟踪技术</string>
-    <string name="legal_p_analytics_body">应用在两种版本中都内置了 Firebase Analytics（Google Analytics for Firebase）。除非你关闭它，否则它会向 Google 发送自动使用事件（应用打开、会话、应用更新和应用异常），以及应用版本、设备型号、语言和每次安装的标识符；Google 还会根据你的 IP 地址估算大致位置。应用本身不记录任何自定义事件，因此游戏名称、文件路径、配置内容和输入的值都不会发送。Firebase 还可能读取广告标识符，广告 SDK 也会这样做。数据收集默认开启。设置 &gt; 发送分析数据 中的开关保存在设备上，每次启动时重新应用到 SDK，更改后立即生效；关闭期间不会发送任何分析事件。两种版本都不使用 Cookie，也不运行网页像素。Firebase 安装服务仍可能联系 Google 以维护安装 ID，这些数据由 Google 按其自身隐私政策处理。</string>
+    <string name="legal_p_analytics_body">两种版本都包含 Firebase Analytics，但在您于设置中明确开启前保持关闭。以前默认开启的偏好不视为同意。启用后，Google 会按照其政策接收自动使用事件、设备和应用信息、安装标识符及根据 IP 推算的概略位置。应用不添加自定义事件。可在设置中撤回；分析同意不授权广告存储或个性化，广告选项单独管理。</string>
 
     <string name="legal_p_ads_title">3. 广告（Start.io 或 AdMob）</string>
-    <string name="legal_p_ads_body">广告因版本而异。完整版（GitHub）展示 Start.io 的横幅广告，并在设置中提供免费的广告关闭开关。Play 商店版展示 AdMob 广告，可通过 Google Play 一次性购买移除。广告 SDK 随应用启动，可能收集你的广告 ID、设备信息和 IP 地址以投放和统计广告，具体受该提供商政策约束。关闭广告或购买去广告只会停止请求和展示横幅，并不会从应用中移除该 SDK。</string>
+    <string name="legal_p_ads_body">Full 使用可免费关闭的 Start.io 横幅；Play 使用 AdMob，可通过 Google Play 一次性购买去广告。Play 在初始设置后检查广告同意，仅在允许时初始化或请求广告；需要的隐私选项可在设置中管理。Full 的广告集成独立。提供商可能按其政策处理标识符、设备信息、IP 推算的位置、互动及诊断数据。关闭横幅不会移除 SDK 或删除提供商的数据。分析同意单独管理。</string>
 
     <string name="legal_p_updates_title">4. 更新检查</string>
     <string name="legal_p_updates_body">当你点击“检查更新”（或自动检查运行时），应用会查询本项目的 GitHub releases 公开 API。该请求会向 GitHub 暴露你的 IP 地址与应用版本，受 GitHub 自身隐私条款约束。完整版默认开启自动检查，可在设置中关闭；Play 商店版从不检查 GitHub 更新。下载的更新文件保存在应用私有目录中，仅在你确认后才会安装。</string>
 
     <string name="legal_p_sharing_title">5. 由你主动分享的日志、配置与文件</string>
-    <string name="legal_p_sharing_body">诊断日志、崩溃报告、导出的配置与游戏配置文件绝不会自行离开设备。只有当你点击“分享”或“导出”时，才会通过 Android 分享菜单或文件选择器发送到你选择的目标。日志可能包含设备与系统信息——发送给他人之前请先检查。</string>
+    <string name="legal_p_sharing_body">应用不会自动上传诊断日志、崩溃报告或游戏配置备份。分享和导出会将所选文件发送到您指定的目标；请先检查设备和系统信息。备份及传输规则排除应用状态和文件，但厂商迁移行为可能不同，以前的备份也可能仍存在。分析与广告 SDK 数据另行说明。</string>
 
     <string name="legal_p_permissions_title">6. 设备权限</string>
-    <string name="legal_p_permissions_body">应用仅为实现你要求的功能而请求权限：文件访问用于读取与备份游戏配置，悬浮窗权限用于性能浮窗与准星，使用情况访问用于检测游戏会话，通知访问用于游戏模式静音时段，麦克风仅用于可选的音频可视化增强，蓝牙信息仅用于识别音频设备。每项权限都可以拒绝——相关功能会显示为不可用，而不会静默失败。</string>
+    <string name="legal_p_permissions_body">发现应用、监测前台应用和移除通知前，会先征求可选访问选择。会话检测和 Silent Hunter 运行时会观察前台应用；Silent Hunter 可能强停非游戏应用并中断消息。通知移除不是静音，且无法恢复。文件用于游戏编辑和备份，浮窗显示性能或准星。音频权限用于可选的输出 Visualizer，不用于录音；蓝牙用于识别音频输出。root 通过授权按钮申请。Android 权限独立，可在设置中撤回选择。</string>
 
-    <string name="legal_p_vpn_title">7. 本地 VPN 防火墙</string>
-    <string name="legal_p_vpn_body">可选的应用联网防火墙使用 Android VPN 框架作为设备本地过滤器。规则在手机本机执行；不会向项目服务器发送任何流量，因为根本不存在这样的服务器。</string>
 
     <string name="legal_p_external_title">8. 外部链接与捐赠</string>
     <string name="legal_p_external_body">社区链接（GitHub、官网、Discord、Telegram）与捐赠方式（PayPal、Binance、加密货币地址）均在应用外部打开。使用这些服务时，对方会按其自身政策收集常规数据（如 IP 地址，支付时包括支付信息）。捐赠完全自愿，由外部服务处理——应用不会看到或保存你的支付信息。</string>
@@ -46,7 +42,7 @@
     <string name="legal_p_transfers_body">Google（Firebase、AdMob、Google Play）和 Start.io 可能在您所在国家/地区以外的国家/地区处理数据，包括欧洲经济区以外。在法律要求为此类传输提供保障时，这些提供商会采用欧盟委员会批准的标准合同条款、充分性认定等机制，或在法律要求且允许的情况下征得你的同意。开发者自身的往来邮件由可能将数据存储在境外的邮件服务商处理。其他国家的数据保护法律可能与您所在国家/地区不同。</string>
 
     <string name="legal_p_retention_title">12. 数据保留</string>
-    <string name="legal_p_retention_body">设备上的数据会一直保留，直到你卸载应用或清除其数据。支持邮件和你发送的文件会保留到你要求删除为止，或按法律要求保留更长时间。Firebase 和广告提供商按其自身保留政策保存数据；开发者无法代为删除他们持有的数据——请使用其隐私控制功能或联系他们。不再能识别你身份的汇总统计可能被无限期保留。</string>
+    <string name="legal_p_retention_body">清除应用数据或卸载可删除本地数据。最多保留五份崩溃报告及每个游戏十份配置备份。新规则排除应用状态和文件，但不会删除已有云备份，也无法保证所有厂商的传输行为。支持文件保留至收到删除请求或法律规定的期限。Google 和广告提供商有各自的保留和删除规则；撤回收集不会删除其已有数据。</string>
 
     <string name="legal_p_children_title">13. 儿童</string>
     <string name="legal_p_children_body">本应用不面向 16 岁以下儿童，或您所在地区规定的更高年龄；开发者不会在知情情况下收集儿童的个人数据，也不会向儿童推广本应用。如果儿童发送了个人数据——例如通过电子邮件——父母或监护人可写信至 catsmoker.lab@gmail.com，相关数据将被删除。在法律要求父母或监护人同意的情况下，本应用不得在未获得该同意时使用。</string>
@@ -55,7 +51,6 @@
     <string name="legal_p_security_body">应用数据受 Android 应用沙箱和设备锁保护。开发者不运营存储应用数据的服务器，因此不存在可能被攻破的中央用户数据库；支持邮件受邮件服务商的安全保护。如果发生影响开发者所持个人数据的泄露，将按法律要求通知受影响用户，包括泄露的性质和已采取的应对措施。</string>
 
     <string name="legal_p_consent_title">15. 你的同意与退出</string>
-    <string name="legal_p_consent_body">可选功能——浮窗、VPN 过滤、root 或 Shizuku 操作以及分享——仅在你开启时运行。你可以通过关闭功能或卸载应用来撤回同意；这不影响撤回前已进行的处理。卸载会停止应用在你的设备上收集数据，但不会删除已发送给 Google 或 Start.io 的数据。如需请求删除开发者持有的数据，请发送邮件至 catsmoker.lab@gmail.com。</string>
 
     <string name="legal_p_changes_title">16. 本政策的变更</string>
     <string name="legal_p_changes_body">开发者可能不时更新本政策。当前版本始终随应用发布在本页面，并标注新的更新日期。重大变更将通过在此发布新文本予以公告；在法律要求就重大变更征得同意时，会在变更生效前征求你的同意。如需旧版本，可发送邮件至 catsmoker.lab@gmail.com 索取。</string>
@@ -78,10 +73,8 @@
     <string name="legal_t_use_body">请合法使用本应用，且仅用于提升游戏性能。不得利用本应用损害设备、网络或他人，不得违法或侵犯知识产权，也不得在重要场合将修改过的游戏客户端冒充为未修改版本。不得试图利用本应用干扰他人的设备或数据。</string>
 
     <string name="legal_t_games_title">5. 游戏自身规则仍然适用</string>
-    <string name="legal_t_games_body">伪装设备身份或修改游戏文件可能违反各游戏的服务条款，并导致功能受限或封号等处罚。开发者不对第三方游戏中的封号或任何损失负责。使用这些功能风险自负。</string>
 
     <string name="legal_t_risk_title">6. Root、Shizuku 与系统更改</string>
-    <string name="legal_t_risk_body">本应用的许多功能无需 root 即可使用。高级功能（设备伪装、部分系统调整和文件编辑）需要 Shizuku、root 或生成的 Magisk 模块，且均为可选。对设备进行 root 或越狱会移除安全限制，可能使其暴露于恶意软件、失去保修、导致银行或支付应用无法使用，或使本应用无法运行。仅在你理解并接受这些风险时才启用相关功能。更改系统设置（分辨率、刷新率、动画缩放、DNS、音频、dexopt 编译）的功能均按你的指令执行。应用会在可行时先备份游戏配置，但你需自行承担不稳定、启动问题或数据丢失的风险。你可以随时还原更改或卸载应用。</string>
 
     <string name="legal_t_content_title">7. 你选择分享的内容</string>
     <string name="legal_t_content_body">本应用没有账号、没有公开内容流，也没有存储用户内容的服务器。你可以通过 Android 分享菜单或其他应用发送导出的文件和诊断日志。你对自己的分享内容、你是否拥有相关权利，以及内容中的个人数据负责（包括他人的数据，须经其同意）。不得分享违法内容、恶意软件或侵犯他人权利的内容。若你向开发者发送内容（例如错误报告），即授予开发者使用该内容进行调查和改进本应用的许可；该内容不会被出售，并按隐私政策处理。如需举报违法内容或滥用行为，请联系 catsmoker.lab@gmail.com。</string>
@@ -123,7 +116,6 @@
     <string name="donate_notice">捐赠为自愿赠与，不可退款。付款由 PayPal、Binance 或相应加密货币网络在外部处理——CatSmoker 不会看到你的支付信息。</string>
 
     <!-- Settings ads toggle explanation. -->
-    <string name="sys_ads_sub">Start.io 横幅广告让本应用保持免费。关闭即可停用。广告方收集哪些数据，请见隐私政策。</string>
 
     <!-- Content descriptions for previously unlabeled icon-only buttons. -->
     <string name="core_desc_add">添加</string>

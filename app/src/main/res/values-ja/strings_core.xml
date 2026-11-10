@@ -48,8 +48,6 @@
     <string name="about_license_google" translatable="false">Google APIs Terms of Service</string>
     <string name="about_license_google_libs" translatable="false">Firebase Analytics</string>
     <string name="about_license_ads" translatable="false">Ads SDK Terms</string>
-    <string name="about_license_ads_full" translatable="false">Start.io</string>
-    <string name="about_license_ads_play" translatable="false">Google AdMob</string>
 
     <!-- About screen community-button titles (brand names stay verbatim). -->
     <string name="about_social_github">GitHub</string>
@@ -94,17 +92,17 @@
     <string name="core_perm_storage_title">ストレージアクセス</string>
     <string name="core_perm_storage_sub">ゲーム設定ファイルの読み書きに必要です。</string>
     <string name="core_perm_battery_title">バッテリー最適化</string>
-    <string name="core_perm_battery_sub">バックグラウンドでの円滑な動作を許可します。</string>
+    <string name="core_perm_battery_sub">一般のバッテリー最適化設定を開きます。直接の除外は要求しません。</string>
     <string name="core_perm_notif_title">通知</string>
     <string name="core_perm_notif_sub">サービス状態の表示に必要です。</string>
     <string name="core_perm_overlay_title">オーバーレイ</string>
     <string name="core_perm_overlay_sub">パフォーマンスモニターの表示に必要です。</string>
     <string name="core_perm_usage_title">使用状況アクセス</string>
-    <string name="core_perm_usage_sub">ゲームプレイ時間の追跡に必要です。</string>
+    <string name="core_perm_usage_sub">任意の同意により、セッション検出や Silent Hunter が前面アプリを監視します。ゲーム以外も強制停止される場合があります。</string>
     <string name="core_perm_mic_title">マイク</string>
-    <string name="core_perm_mic_sub">オーディオブースト機能に必要です。</string>
+    <string name="core_perm_mic_sub">音声ブースト用の任意の出力 Visualizer です。マイク録音ではありません。</string>
     <string name="core_perm_bt_title">Bluetooth</string>
-    <string name="core_perm_bt_sub">ゲームパッドとヘッドセット最適化に必要です。</string>
+    <string name="core_perm_bt_sub">音声制御のための任意の Bluetooth 音声出力識別です。</string>
     <string name="core_done">完了</string>
     <string name="core_grant">許可</string>
     <!-- Permission rows gated on Android version: shown disabled with a reason, never hidden. -->

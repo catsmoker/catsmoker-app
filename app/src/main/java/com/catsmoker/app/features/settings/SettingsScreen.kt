@@ -1,12 +1,10 @@
 package com.catsmoker.app.features.settings
 
-import android.app.Activity
 import android.annotation.SuppressLint
 import android.content.Context
 import android.content.Intent
 import androidx.core.net.toUri
 import android.provider.Settings
-import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -42,7 +40,6 @@ import androidx.lifecycle.LifecycleOwner
 import com.catsmoker.app.BuildConfig
 import com.catsmoker.app.R
 import com.catsmoker.app.shared.ui.components.CardGroup
-import com.catsmoker.app.shared.ui.components.CatsmokerButton
 import com.catsmoker.app.shared.ui.components.InfoButton
 import com.catsmoker.app.shared.ui.components.InfoTopic
 import com.catsmoker.app.shared.ui.components.LanguageOptions
@@ -53,7 +50,6 @@ import com.catsmoker.app.shared.ui.components.ThemeModeOptions
 import com.catsmoker.app.shared.ui.components.languageDisplayName
 import com.catsmoker.app.shared.ui.theme.CatsmokerSpacing
 import com.catsmoker.app.shared.ui.theme.CatsmokerTheme
-import com.catsmoker.app.system.VariantCapabilities
 import com.catsmoker.app.system.config.AppearanceStore
 import com.catsmoker.app.system.config.LocaleHelper
 
@@ -68,6 +64,37 @@ fun SettingsRoute(
     val viewModel: SettingsViewModel = hiltViewModel()
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val context = LocalContext.current
+    var showGamingPrivacy by remember { mutableStateOf(false) }
+    var showAnalyticsConsent by remember { mutableStateOf(false) }
+    if (showAnalyticsConsent) {
+        AlertDialog(
+            onDismissRequest = { showAnalyticsConsent = false },
+            title = { Text(stringResource(R.string.sys_analytics_title)) },
+            text = {
+                Column(Modifier.heightIn(max = 400.dp).verticalScroll(rememberScrollState())) {
+                    Text(stringResource(R.string.legal_p_analytics_body))
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = {
+                    showAnalyticsConsent = false
+                    viewModel.onAnalyticsToggled(true)
+                }) { Text(stringResource(R.string.sys_analytics_title)) }
+            },
+            dismissButton = {
+                TextButton(onClick = { showAnalyticsConsent = false }) {
+                    Text(stringResource(R.string.sys_cancel))
+                }
+            }
+        )
+    }
+    if (showGamingPrivacy) {
+        com.catsmoker.app.system.config.GamingPrivacyChoices(onDone = {
+            showGamingPrivacy = false
+            // Recompose the host; readers and retained VMs independently observe revocation.
+            (context as? android.app.Activity)?.recreate()
+        })
+    }
 
     LaunchedEffect(Unit) {
         viewModel.toasts.collect { message ->
@@ -87,17 +114,12 @@ fun SettingsRoute(
         }
     }
 
-    // Returning from the Play purchase sheet resumes this screen, which re-checks the
-    // remove_ads entitlement (restores after reinstall, picks up purchases made elsewhere).
+    // Common permission state is refreshed independently of distribution controls.
     DisposableEffect(context) {
         val owner = context as? LifecycleOwner
         val observer = LifecycleEventObserver { _, event ->
             if (event == Lifecycle.Event.ON_RESUME) {
-                viewModel.refreshPurchases()
-                viewModel.refreshUpdateStatus()
-                viewModel.refreshUpdates()
-                viewModel.onResume()
-                viewModel.checkForUpdatesIfNeeded()
+                viewModel.refreshNotifications()
             }
         }
         if (owner != null) owner.lifecycle.addObserver(observer)
@@ -106,26 +128,11 @@ fun SettingsRoute(
         }
     }
 
-    val activity = context as? Activity
-
     SettingsScreen(
-        adsEnabled = uiState.adsEnabled,
-        isAdFree = uiState.isAdFree,
-        removeAdsPrice = uiState.removeAdsPrice,
-        isBillingWorking = uiState.isBillingWorking,
-        autoCheck = uiState.autoCheck,
-        isPreRelease = uiState.isPreRelease,
-        isUpdating = uiState.isUpdating,
-        updateProgress = uiState.updateProgress,
-        availableUpdateName = uiState.availableUpdateName,
         isSharingApk = uiState.isSharingApk,
         themeMode = uiState.themeMode,
         languageTag = uiState.languageTag,
         notificationsEnabled = uiState.notificationsEnabled,
-        onAdsToggled = viewModel::onAdsToggled,
-        onRemoveAdsClicked = { activity?.let(viewModel::onRemoveAdsClicked) },
-        onAutoCheckToggled = viewModel::onAutoCheckToggled,
-        onPreReleaseToggled = viewModel::onPreReleaseToggled,
         onThemeModeChanged = viewModel::onThemeModeChanged,
         onLanguageChanged = viewModel::onLanguageChanged,
         onOpenPermissions = onOpenPermissions,
@@ -133,75 +140,22 @@ fun SettingsRoute(
         onOpenAbout = onOpenAbout,
         onShareApp = viewModel::onShareApp,
         onBack = onBack,
-        onCheckUpdates = viewModel::onCheckUpdates,
-        onCancelDownload = viewModel::cancelUpdateDownload,
         analyticsEnabled = uiState.analyticsEnabled,
-        onAnalyticsToggled = viewModel::onAnalyticsToggled
+        onAnalyticsToggled = { enabled ->
+            if (enabled) showAnalyticsConsent = true else viewModel.onAnalyticsToggled(false)
+        },
+        updateControls = { DistributionUpdateSettings() },
+        adsControls = {
+            SettingsRowCard(
+                icon = Icons.Default.Security,
+                title = stringResource(R.string.policy_access_title),
+                summary = stringResource(R.string.policy_review_access),
+                onClick = { showGamingPrivacy = true }
+            )
+            DistributionAdsSettings(onOpenDonate)
+        },
+        storeControls = { DistributionStoreSettings() }
     )
-
-    if (uiState.showAdsDonationDialog) {
-        AdsDonationDialog(
-            onDonate = {
-                // Ads stay ON: donating must never double as a hidden turn-off shortcut.
-                viewModel.onAdsDonationDismissed()
-                onOpenDonate()
-            },
-            onKeepAds = viewModel::onAdsDonationDismissed,
-            onTurnOffAnyway = viewModel::onAdsTurnOffAnyway
-        )
-    }
-
-    uiState.updateDialog?.let { dialog ->
-        AlertDialog(
-            onDismissRequest = viewModel::dismissUpdateDialog,
-            title = {
-                Text(
-                    text = stringResource(R.string.sys_update_available, dialog.tagName),
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold
-                )
-            },
-            text = {
-                Column(modifier = Modifier.fillMaxWidth()) {
-                    Text(
-                        text = stringResource(R.string.sys_update_prompt),
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurface
-                    )
-                    dialog.notes?.takeIf { it.isNotBlank() }?.let { notes ->
-                        Spacer(modifier = Modifier.height(10.dp))
-                        Surface(
-                            color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.35f),
-                            shape = RoundedCornerShape(12.dp),
-                            border = androidx.compose.foundation.BorderStroke(
-                                1.dp,
-                                MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f)
-                            ),
-                            modifier = Modifier.fillMaxWidth()
-                        ) {
-                            UpdateNotesPreview(
-                                notes = notes,
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .heightIn(max = 340.dp)
-                                    .padding(horizontal = 12.dp, vertical = 10.dp)
-                            )
-                        }
-                    }
-                }
-            },
-            confirmButton = {
-                TextButton(onClick = viewModel::startUpdateDownload) {
-                    Text(stringResource(R.string.sys_download))
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = viewModel::dismissUpdateDialog) {
-                    Text(stringResource(R.string.sys_later))
-                }
-            }
-        )
-    }
 }
 
 /**
@@ -215,28 +169,15 @@ fun SettingsRoute(
  * The screen stays a plain scroll column: at this length a search field would be more chrome
  * than help, and collapsible sections would hide the values the cards exist to show.
  *
- * All state and callbacks still come from [SettingsViewModel]; this composable owns only the
- * theme/language pickers and the update dialog it opens.
+ * Common state comes from [SettingsViewModel]. Flavor-selected slots own distribution controls;
+ * previews can omit them without constructing billing or updater state.
  */
 @Composable
 fun SettingsScreen(
-    adsEnabled: Boolean,
-    isAdFree: Boolean,
-    removeAdsPrice: String?,
-    isBillingWorking: Boolean,
-    autoCheck: Boolean,
-    isPreRelease: Boolean,
-    isUpdating: Boolean,
-    updateProgress: Float,
-    availableUpdateName: String?,
     isSharingApk: Boolean,
     themeMode: AppearanceStore.ThemeMode,
     languageTag: String,
     notificationsEnabled: Boolean,
-    onAdsToggled: (Boolean) -> Unit,
-    onRemoveAdsClicked: () -> Unit,
-    onAutoCheckToggled: (Boolean) -> Unit,
-    onPreReleaseToggled: (Boolean) -> Unit,
     onThemeModeChanged: (AppearanceStore.ThemeMode) -> Unit,
     onLanguageChanged: (String) -> Unit,
     onOpenPermissions: () -> Unit,
@@ -244,10 +185,11 @@ fun SettingsScreen(
     onOpenAbout: () -> Unit,
     onShareApp: () -> Unit,
     onBack: () -> Unit,
-    onCheckUpdates: () -> Unit,
-    onCancelDownload: () -> Unit,
     analyticsEnabled: Boolean,
-    onAnalyticsToggled: (Boolean) -> Unit
+    onAnalyticsToggled: (Boolean) -> Unit,
+    updateControls: @Composable () -> Unit = {},
+    adsControls: @Composable () -> Unit = {},
+    storeControls: @Composable () -> Unit = {}
 ) {
     var themeDialog by remember { mutableStateOf(false) }
     var languageDialog by remember { mutableStateOf(false) }
@@ -304,24 +246,7 @@ fun SettingsScreen(
                     )
                 }
 
-                // ---------------------------------------------------------------------------
-                // Updates — GitHub self-updater only. Play updates come from the store itself.
-                // ---------------------------------------------------------------------------
-                if (VariantCapabilities.HAS_SELF_UPDATE) {
-                    Spacer(modifier = Modifier.height(CatsmokerSpacing.SectionGap))
-                    SectionLabel(stringResource(R.string.sys_section_updates), accent = true)
-                    UpdatesCard(
-                        autoCheck = autoCheck,
-                        isPreRelease = isPreRelease,
-                        isUpdating = isUpdating,
-                        updateProgress = updateProgress,
-                        availableUpdateName = availableUpdateName,
-                        onAutoCheckToggled = onAutoCheckToggled,
-                        onPreReleaseToggled = onPreReleaseToggled,
-                        onCheckUpdates = onCheckUpdates,
-                        onCancelDownload = onCancelDownload
-                    )
-                }
+                updateControls()
 
                 // ---------------------------------------------------------------------------
                 // Privacy & Data — both switches that send something off the device.
@@ -341,28 +266,7 @@ fun SettingsScreen(
                         onCheckedChange = onAnalyticsToggled,
                         info = SettingsInfoTopics.analytics
                     )
-                    // Full keeps the free toggle; Play sells removal via Google Play
-                    // Billing instead, so the free switch must not appear there.
-                    if (VariantCapabilities.HAS_FREE_ADS_TOGGLE) {
-                        SettingsToggleCard(
-                            icon = Icons.Default.AdsClick,
-                            title = stringResource(R.string.sys_ads_title),
-                            summary = stringResource(
-                                if (adsEnabled) R.string.sys_state_on else R.string.sys_state_off
-                            ),
-                            checked = adsEnabled,
-                            onCheckedChange = onAdsToggled,
-                            info = SettingsInfoTopics.ads
-                        )
-                    } else if (isAdFree) {
-                        AdFreeCard()
-                    } else {
-                        RemoveAdsCard(
-                            price = removeAdsPrice,
-                            isWorking = isBillingWorking,
-                            onRemoveAdsClicked = onRemoveAdsClicked
-                        )
-                    }
+                    adsControls()
                 }
 
                 // ---------------------------------------------------------------------------
@@ -406,15 +310,7 @@ fun SettingsScreen(
                             }
                         }
                     )
-                    // Play Store variant: rate the app on Google Play.
-                    if (VariantCapabilities.HAS_PLAY_STORE) {
-                        SettingsRowCard(
-                            icon = Icons.Default.Star,
-                            title = stringResource(R.string.sys_rate_app_title),
-                            summary = stringResource(R.string.sys_rate_app_summary),
-                            onClick = { openRateApp(context) }
-                        )
-                    }
+                    storeControls()
                     SettingsRowCard(
                         icon = Icons.Default.Share,
                         title = stringResource(R.string.sys_share_app_title),
@@ -494,7 +390,7 @@ fun SettingsScreen(
  */
 @SuppressLint("ModifierParameter")
 @Composable
-private fun SettingsRowCard(
+internal fun SettingsRowCard(
     icon: ImageVector,
     title: String,
     summary: String = "",
@@ -561,7 +457,7 @@ private fun SettingsRowCard(
  * instead of two. The switch is drawn non-interactive to avoid a second focus target.
  */
 @Composable
-private fun SettingsToggleCard(
+internal fun SettingsToggleCard(
     icon: ImageVector,
     title: String,
     summary: String,
@@ -613,209 +509,9 @@ private fun SettingsToggleCard(
     }
 }
 
-/** The Updates card: one action, two opt-in switches, and the badge for a found release. */
-@Composable
-private fun UpdatesCard(
-    autoCheck: Boolean,
-    isPreRelease: Boolean,
-    isUpdating: Boolean,
-    updateProgress: Float,
-    availableUpdateName: String?,
-    onAutoCheckToggled: (Boolean) -> Unit,
-    onPreReleaseToggled: (Boolean) -> Unit,
-    onCheckUpdates: () -> Unit,
-    onCancelDownload: () -> Unit
-) {
-    SectionCard(contentPadding = 0.dp) {
-        // animateContentSize keeps the progress/cancel swap from jumping the sections below.
-        Column(modifier = Modifier.fillMaxWidth().animateContentSize()) {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 12.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                SettingsIconBadge(
-                    icon = Icons.Default.SystemUpdate,
-                    tint = MaterialTheme.colorScheme.onSurface
-                )
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(
-                        text = stringResource(R.string.sys_section_updates),
-                        style = MaterialTheme.typography.titleMedium,
-                        color = MaterialTheme.colorScheme.onSurface
-                    )
-                    Spacer(modifier = Modifier.height(2.dp))
-                    Text(
-                        text = if (availableUpdateName != null) {
-                            stringResource(R.string.sys_updates_available, availableUpdateName)
-                        } else {
-                            stringResource(R.string.sys_updates_summary, BuildConfig.VERSION_NAME)
-                        },
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        maxLines = 2,
-                        overflow = TextOverflow.Ellipsis
-                    )
-                }
-                if (availableUpdateName != null) {
-                    SettingsBadge(stringResource(R.string.sys_updates_badge))
-                }
-            }
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(start = 16.dp, end = 16.dp, bottom = 12.dp)
-            ) {
-                if (isUpdating) {
-                    Text(
-                        text = stringResource(R.string.sys_updating),
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurface
-                    )
-                    Spacer(modifier = Modifier.height(8.dp))
-                    LinearProgressIndicator(
-                        progress = { updateProgress },
-                        modifier = Modifier.fillMaxWidth()
-                    )
-                    Spacer(modifier = Modifier.height(4.dp))
-                    TextButton(
-                        onClick = onCancelDownload,
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        Text(stringResource(R.string.sys_cancel))
-                    }
-                } else {
-                    CatsmokerButton(
-                        onClick = onCheckUpdates,
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        Text(stringResource(R.string.sys_check_updates))
-                    }
-                }
-                HorizontalDivider(
-                    modifier = Modifier.padding(vertical = 8.dp),
-                    thickness = 0.5.dp,
-                    color = MaterialTheme.colorScheme.outlineVariant
-                )
-                InlineToggleRow(
-                    title = stringResource(R.string.sys_auto_check),
-                    checked = autoCheck,
-                    onCheckedChange = onAutoCheckToggled
-                )
-                InlineToggleRow(
-                    title = stringResource(R.string.sys_prerelease),
-                    checked = isPreRelease,
-                    onCheckedChange = onPreReleaseToggled
-                )
-            }
-        }
-    }
-}
-
-/** A switch row inside a larger card, with the same whole-row target as the standalone cards. */
-@Composable
-private fun InlineToggleRow(
-    title: String,
-    checked: Boolean,
-    onCheckedChange: (Boolean) -> Unit
-) {
-    val haptics = LocalHapticFeedback.current
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(12.dp))
-            .toggleable(
-                value = checked,
-                role = Role.Switch,
-                onValueChange = {
-                    haptics.performHapticFeedback(HapticFeedbackType.TextHandleMove)
-                    onCheckedChange(it)
-                }
-            )
-            .heightIn(min = 48.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Text(
-            text = title,
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurface,
-            modifier = Modifier.weight(1f)
-        )
-        Switch(checked = checked, onCheckedChange = null)
-    }
-}
-
-/** Play variant: the one-time purchase row, with Play's localized price as the value. */
-@Composable
-private fun RemoveAdsCard(
-    price: String?,
-    isWorking: Boolean,
-    onRemoveAdsClicked: () -> Unit
-) {
-    SettingsRowCard(
-        icon = Icons.Default.WorkspacePremium,
-        title = stringResource(R.string.sys_remove_ads_title),
-        summary = price ?: stringResource(R.string.sys_remove_ads_summary),
-        onClick = onRemoveAdsClicked,
-        trailing = if (isWorking && price == null) {
-            {
-                CircularProgressIndicator(
-                    modifier = Modifier.size(20.dp),
-                    strokeWidth = 2.dp
-                )
-            }
-        } else {
-            null
-        }
-    )
-}
-
-/** Play variant: the verified purchase is on record — this card confirms it, no control needed. */
-@Composable
-private fun AdFreeCard() {
-    SectionCard(contentPadding = 0.dp) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .heightIn(min = 56.dp)
-                .padding(horizontal = 16.dp, vertical = 12.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            SettingsIconBadge(
-                icon = Icons.Default.Check,
-                tint = MaterialTheme.colorScheme.onSurface
-            )
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = stringResource(R.string.sys_ads_removed_title),
-                    style = MaterialTheme.typography.titleMedium,
-                    color = MaterialTheme.colorScheme.onSurface
-                )
-                Spacer(modifier = Modifier.height(2.dp))
-                Text(
-                    text = stringResource(R.string.sys_ads_removed_sub),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    maxLines = 2,
-                    overflow = TextOverflow.Ellipsis
-                )
-            }
-            Icon(
-                imageVector = Icons.Default.Check,
-                contentDescription = null,
-                tint = MaterialTheme.colorScheme.onSurface,
-                modifier = Modifier.size(20.dp)
-            )
-        }
-    }
-}
-
 /** The rounded icon tile shared by every settings row. The icon itself is decorative. */
 @Composable
-private fun SettingsIconBadge(icon: ImageVector, tint: Color) {
+internal fun SettingsIconBadge(icon: ImageVector, tint: Color) {
     Box(
         modifier = Modifier
             .size(40.dp)
@@ -828,23 +524,6 @@ private fun SettingsIconBadge(icon: ImageVector, tint: Color) {
             contentDescription = null,
             tint = tint,
             modifier = Modifier.size(22.dp)
-        )
-    }
-}
-
-/** Small state chip ("New"), read by TalkBack as its own text. */
-@Composable
-private fun SettingsBadge(text: String) {
-    Surface(
-        color = MaterialTheme.colorScheme.primaryContainer,
-        contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
-        shape = RoundedCornerShape(8.dp)
-    ) {
-        Text(
-            text = text,
-            style = MaterialTheme.typography.labelSmall,
-            fontWeight = FontWeight.Bold,
-            modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)
         )
     }
 }
@@ -882,23 +561,10 @@ private fun openAppSystemSettings(context: Context) {
 fun SettingsPreview() {
     CatsmokerTheme {
         SettingsScreen(
-            adsEnabled = true,
-            isAdFree = false,
-            removeAdsPrice = null,
-            isBillingWorking = false,
-            autoCheck = false,
-            isPreRelease = false,
-            isUpdating = false,
-            updateProgress = 0f,
-            availableUpdateName = "2.1.0",
             isSharingApk = false,
             themeMode = AppearanceStore.ThemeMode.SYSTEM,
             languageTag = AppearanceStore.LANGUAGE_SYSTEM,
             notificationsEnabled = true,
-            onAdsToggled = {},
-            onRemoveAdsClicked = {},
-            onAutoCheckToggled = {},
-            onPreReleaseToggled = {},
             onThemeModeChanged = {},
             onLanguageChanged = {},
             onOpenPermissions = {},
@@ -906,8 +572,6 @@ fun SettingsPreview() {
             onOpenAbout = {},
             onShareApp = {},
             onBack = {},
-            onCheckUpdates = {},
-            onCancelDownload = {},
             analyticsEnabled = true,
             onAnalyticsToggled = {}
         )

@@ -1,0 +1,4 @@
+<resources>
+    <string name="policy_ad_privacy">広告のプライバシー設定</string>
+    <string name="policy_ad_privacy_summary">お住まいの地域で提供される広告の選択を確認または撤回します。</string>
+</resources>

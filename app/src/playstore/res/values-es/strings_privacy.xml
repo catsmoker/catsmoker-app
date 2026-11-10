@@ -1,0 +1,4 @@
+<resources>
+    <string name="policy_ad_privacy">Privacidad de la publicidad</string>
+    <string name="policy_ad_privacy_summary">Revisa o retira las opciones de publicidad disponibles para tu región.</string>
+</resources>

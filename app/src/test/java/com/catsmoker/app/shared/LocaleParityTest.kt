@@ -643,10 +643,9 @@ class LocaleParityTest {
     private fun keysIn(dir: String): Set<String> {
         val names = mutableSetOf<String>()
         val pattern = Regex("""<string name="([^"]+)"""")
-        // Flavor-merged view: shared res plus the full variant's res (spoof strings
-        // live in src/full now). Both variants assert the same parity — the Play
-        // build hides those screens but the strings still ship translated.
-        listOf("src/main/res/$dir", "src/full/res/$dir").forEach { resDir ->
+        // Inventory across both distributions, not a claim that their resources ship together.
+        // Flavor ownership is checked separately by the packaged-artifact boundary guard.
+        listOf("src/main/res/$dir", "src/full/res/$dir", "src/playstore/res/$dir").forEach { resDir ->
             File(resDir).listFiles { f -> f.extension == "xml" }.orEmpty().forEach { file ->
                 pattern.findAll(file.readText()).forEach { names += it.groupValues[1] }
             }
