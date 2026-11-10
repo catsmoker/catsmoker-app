@@ -233,14 +233,14 @@
     <string name="gt_net_vpn_how_3">أمران يجب معرفتهما: التطبيق المحظور سيبدو وكأنه يحمّل للأبد بدل قول \"لا إنترنت\"، وهاتفك يسمح بـ VPN واحد فقط في المرة الواحدة، لذا فهذا يوقف أي تطبيق VPN آخر تستخدمه.</string>
     <string name="gt_net_vpn_how_4">سيطلب منك أندرويد مرة واحدة السماح به. إذا قلت لا، لن يُحظر شيء.</string>
     <string name="gt_net_ds_title">توفير البيانات</string>
-    <string name="gt_net_ds_sub">إعداد أندرويد نفسه. يتطلب روت أو Shizuku. لبيانات الهاتف فقط.</string>
+    <string name="gt_net_ds_sub">إعداد أندرويد نفسه. يتطلب روت أو Shizuku. ينطبق على الشبكات المحدودة، بما فيها Wi-Fi المحدودة.</string>
     <string name="gt_net_ds_need">توفير البيانات يحتاج روت أو Shizuku. لا يسمح أندرويد لتطبيق عادي بتغييره.</string>
     <string name="gt_net_checking">جارٍ التحقق…</string>
     <string name="gt_net_unknown">لم يخبرنا هاتفك إن كان هذا مشغلاً أم متوقفاً</string>
     <string name="gt_net_ds_on_count">مشغّل — يوقف %1$d من التطبيقات</string>
     <string name="gt_net_ds_off_stopped">متوقف — لكن %1$d من التطبيقات ما زالت متوقفة</string>
     <string name="gt_net_engaged">شغّله Catsmoker — إيقافه يعيد هاتفك كما كان.</string>
-    <string name="gt_net_metered">هذه الشبكة تُحسب كبيانات هاتف، لذا يعمل توفير البيانات الآن.</string>
+    <string name="gt_net_metered">هذه الشبكة محدودة. يمكن تطبيق قيود بيانات الخلفية هنا؛ راجع حالة التشغيل أو الإيقاف أعلاه.</string>
     <string name="gt_net_unmetered">أنت على Wi-Fi عادي، لذا لا يفعل توفير البيانات شيئاً هنا. استخدم مفتاح VPN بدلاً منه.</string>
     <string name="gt_net_unknown_net">تعذر معرفة نوع الشبكة التي أنت عليها.</string>
     <string name="gt_net_no_perapp">نسخة هاتفك لا تستطيع إيقاف التطبيقات واحداً واحداً، لذا يتوفر هنا إعداد توفير البيانات للهاتف كله فقط.</string>

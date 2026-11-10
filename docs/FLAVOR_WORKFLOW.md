@@ -25,6 +25,25 @@ Play policy omissions (2026-10-31): the `playstore` manifest declares neither
 corresponding controls; Play uses SAF/MediaStore for files and Data Saver
 (`cmd netpolicy`, root/Shizuku) for network blocking.
 
+Play-specific resource overrides in `src/playstore/res/values*/strings_legal.xml`
+describe Data Saver rather than an available VPN filter, including in onboarding,
+and omit unavailable spoofing/Magisk features from storage and risk disclosures.
+The Play `strings_gaming.xml` describes metered background-data restrictions,
+not a blanket internet block or an exclusive connection for the game, and omits
+advice to use the hidden VPN switch on unmetered networks. Its card uses a data
+usage icon; the full build retains its VPN icon, disclosure and switch guidance.
+Shared Data Saver captions distinguish metered network type from enabled state
+and include metered Wi-Fi. Mirror Play overrides in every supported locale: a
+default-only override would still let translated shared wording appear.
+
+The app's external legal link points to `https://catsmoker.vercel.app/legal`.
+The website is maintained in a separate project. Its legal page is intentionally
+general to all offerings, not specific to any app or service. Website inquiries
+use the contact form; do not publish email addresses or add app-specific policy
+sections there. The in-app privacy policy remains specific to the installed
+flavor. Website changes do not update the Play Console declaration or replace
+active app releases.
+
 ## Source sets
 
 ```text

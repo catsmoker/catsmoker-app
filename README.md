@@ -182,7 +182,7 @@ See [Flavor Workflow](docs/FLAVOR_WORKFLOW.md).
 
 - Local-first: settings, profiles, backups, and logs stay on your device.
 - No account system or project-operated backend.
-- Logs and recordings leave your device only when explicitly shared.
+- Diagnostic logs leave your device only when explicitly shared; the app does not record audio, video, or the screen.
 - Update checks use the public GitHub Releases API.
 - Full version: Start.io ads. Google Play version: AdMob ads.
 

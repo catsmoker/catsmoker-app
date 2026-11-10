@@ -1,0 +1,10 @@
+<resources>
+    <!-- Play-only wording; the full build retains its local VPN disclosure. -->
+    <string name="legal_privacy_updated">最后更新：2026-11-10</string>
+    <string name="legal_p_vpn_title">7. 后台网络控制</string>
+    <string name="legal_p_vpn_body">可选的后台流量控制使用 Android 的流量节省设置，限制按流量计费网络上的后台通信。它不会创建 VPN 连接，也不会向项目服务器发送流量。</string>
+    <string name="legal_p_consent_body">可选功能——浮窗、root 或 Shizuku 操作以及分享——仅在你开启时运行。你可以通过关闭功能或卸载应用来撤回同意；这不影响撤回前已进行的处理。卸载会停止应用在你的设备上收集数据，但不会删除已发送给 Google 的数据。如需请求删除开发者持有的数据，请发送邮件至 catsmoker.lab@gmail.com。</string>
+    <string name="legal_p_local_body">设置与应用状态仅保存在设备存储中：主题、语言、初始选项、启动计数、广告偏好、游戏库、游戏模式选项（DNS 选择、刷新率、清理规则、冻结列表）、性能浮窗与准星位置、游戏配置文件备份、诊断日志与崩溃记录。以上内容均不会上传给开发者——因为根本没有可上传的后端服务器。卸载应用或清除数据即可将其删除。</string>
+    <string name="legal_t_games_body">修改游戏文件可能违反各游戏的服务条款，并导致功能受限或封号等处罚。开发者不对第三方游戏中的封号或任何损失负责。使用这些功能风险自负。</string>
+    <string name="legal_t_risk_body">本应用的许多功能无需 root 即可使用。部分可选的系统调整和文件编辑需要 Shizuku 或 root。对设备进行 root 或越狱会移除安全限制，可能使其暴露于恶意软件、失去保修、导致银行或支付应用无法使用，或使本应用无法运行。仅在你理解并接受这些风险时才启用相关功能。更改系统设置（分辨率、刷新率、动画缩放、DNS、音频、dexopt 编译）的功能均按你的指令执行。应用会在可行时先备份游戏配置，但你需自行承担不稳定、启动问题或数据丢失的风险。你可以随时还原更改或卸载应用。</string>
+</resources>

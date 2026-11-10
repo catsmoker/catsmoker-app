@@ -791,7 +791,7 @@ fun GamingToolsScreen(
                 ExpandableToolCard(
                     title = stringResource(R.string.gt_tool_net_title),
                     subtitle = stringResource(R.string.gt_tool_net_sub),
-                    icon = Icons.Default.VpnLock,
+                    icon = if (VariantCapabilities.HAS_VPN_FIREWALL) Icons.Default.VpnLock else Icons.Default.DataUsage,
                     info = InfoTopics.backgroundData(VariantCapabilities.HAS_VPN_FIREWALL)
                 ) {
                     BackgroundDataContent(

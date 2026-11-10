@@ -234,14 +234,14 @@
     <string name="gt_net_vpn_how_3">知っておくべき2点: 遮断されたアプリは「インターネットなし」ではなく永遠に読み込み中に見えます。また端末は同時に1つのVPNしか許可しないため、他のVPNアプリを使っているとこれがそれをオフにします。</string>
     <string name="gt_net_vpn_how_4">Androidが一度だけ許可を尋ねます。拒否すれば何も遮断されません。</string>
     <string name="gt_net_ds_title">データセーバー</string>
-    <string name="gt_net_ds_sub">Android標準の設定。RootまたはShizukuが必要。モバイルデータのみ。</string>
+    <string name="gt_net_ds_sub">Android標準の設定。RootまたはShizukuが必要。従量制Wi-Fiを含む従量制ネットワークに適用されます。</string>
     <string name="gt_net_ds_need">データセーバーにはRootまたはShizukuが必要です。Androidは通常アプリによる変更を許可しません。</string>
     <string name="gt_net_checking">確認中…</string>
     <string name="gt_net_unknown">端末がオン/オフを教えてくれません</string>
     <string name="gt_net_ds_on_count">オン — %1$d アプリを遮断</string>
     <string name="gt_net_ds_off_stopped">オフ — だが %1$d アプリはまだ停止中</string>
     <string name="gt_net_engaged">CatSmokerがオンにしました — オフにすると端末を元の状態に戻します。</string>
-    <string name="gt_net_metered">このネットワークはモバイルデータ扱いなので、データセーバーが今働いています。</string>
+    <string name="gt_net_metered">このネットワークは従量制です。バックグラウンド通信の制限を適用できます。オン・オフの状態は上の表示で確認してください。</string>
     <string name="gt_net_unmetered">通常のWi-Fiなのでデータセーバーは何もしません。VPNスイッチを使ってください。</string>
     <string name="gt_net_unknown_net">どの種類のネットワークか判別できませんでした。</string>
     <string name="gt_net_no_perapp">この端末のバージョンではアプリごとの停止ができないため、端末全体のデータセーバー設定のみ利用可能です。</string>

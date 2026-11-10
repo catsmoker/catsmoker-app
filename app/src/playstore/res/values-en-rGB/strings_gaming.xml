@@ -1,0 +1,5 @@
+<resources>
+    <string name="gt_tool_net_sub">Restrict other apps\' background data on metered networks.</string>
+    <string name="gt_net_what_1">This control restricts other apps\' background data on metered networks, including metered Wi-Fi. Apps in the foreground and apps exempt from Data Saver can still use the connection. It does not reserve the whole connection for your game.</string>
+    <string name="gt_net_unmetered">This network is unmetered, so Data Saver does not restrict background traffic here.</string>
+</resources>

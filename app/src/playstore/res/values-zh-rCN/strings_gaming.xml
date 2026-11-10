@@ -1,0 +1,5 @@
+<resources>
+    <string name="gt_tool_net_sub">限制其他应用在按流量计费网络上的后台流量。</string>
+    <string name="gt_net_what_1">此功能限制其他应用在按流量计费网络上的后台流量，包括按流量计费的 Wi-Fi。前台应用和不受流量节省限制的应用仍可使用网络连接。它不会为游戏独占整个连接。</string>
+    <string name="gt_net_unmetered">此网络不按流量计费，因此流量节省程序不会限制此网络上的后台通信。</string>
+</resources>

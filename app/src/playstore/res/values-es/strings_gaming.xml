@@ -1,0 +1,5 @@
+<resources>
+    <string name="gt_tool_net_sub">Restringe los datos en segundo plano de otras apps en redes de uso medido.</string>
+    <string name="gt_net_what_1">Este control restringe los datos en segundo plano de otras apps en redes de uso medido, incluido Wi-Fi de uso medido. Las apps en primer plano y las exentas de Ahorro de datos pueden seguir usando la conexión. No reserva toda la conexión para tu juego.</string>
+    <string name="gt_net_unmetered">Esta red no es de uso medido, así que Ahorro de datos no restringe el tráfico en segundo plano aquí.</string>
+</resources>

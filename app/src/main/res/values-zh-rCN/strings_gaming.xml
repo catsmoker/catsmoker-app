@@ -233,14 +233,14 @@
     <string name="gt_net_vpn_how_3">两点须知：被阻止的应用看起来像一直在加载，而不会提示“无网络”；且手机一次只允许一个 VPN，因此这会关闭你用的其他 VPN 应用。</string>
     <string name="gt_net_vpn_how_4">Android 会请求一次授权。若你拒绝，则不会阻止任何内容。</string>
     <string name="gt_net_ds_title">流量节省程序</string>
-    <string name="gt_net_ds_sub">Android 自带设置。需要 Root 或 Shizuku。仅移动数据。</string>
+    <string name="gt_net_ds_sub">Android 自带设置。需要 Root 或 Shizuku。适用于按流量计费的网络，包括按流量计费的 Wi-Fi。</string>
     <string name="gt_net_ds_need">流量节省程序需要 Root 或 Shizuku。Android 不允许普通应用更改它。</string>
     <string name="gt_net_checking">检查中…</string>
     <string name="gt_net_unknown">手机不愿告知此项处于开启还是关闭</string>
     <string name="gt_net_ds_on_count">已开启 — 正在阻止 %1$d 个应用</string>
     <string name="gt_net_ds_off_stopped">已关闭 — 但仍有 %1$d 个应用被阻止</string>
     <string name="gt_net_engaged">由 Catsmoker 开启 — 关闭将恢复手机原状。</string>
-    <string name="gt_net_metered">当前网络按移动数据计费，因此流量节省程序正在生效。</string>
+    <string name="gt_net_metered">当前网络按流量计费，可以应用后台流量限制；是否开启请查看上方状态。</string>
     <string name="gt_net_unmetered">你在使用普通 Wi-Fi，流量节省程序在此无效，请改用 VPN 开关。</string>
     <string name="gt_net_unknown_net">无法判断当前网络类型。</string>
     <string name="gt_net_no_perapp">你的手机版本无法逐个阻止应用，此处仅提供整机流量节省程序设置。</string>

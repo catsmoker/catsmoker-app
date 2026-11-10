@@ -7,6 +7,6 @@
     <cache-path name="shared_logs" path="shared/" />
     <!-- The installed base APK copied by the Settings "Share App" card; one file, replaced per share. -->
     <cache-path name="shared_apk" path="shared_apk/" />
-    <!-- Session CSV exports (Logs screen recording); pruned to the newest few on export. -->
+    <!-- Legacy session-export directory; the current Logs screen shares diagnostic text only. -->
     <files-path name="session_logs" path="session_logs/" />
 </paths>

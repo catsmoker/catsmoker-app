@@ -216,14 +216,14 @@
     <string name="gt_net_vpn_how_3">Two things to know: a blocked app will look like it is loading forever instead of saying \"no internet\", and your phone only allows one VPN at a time, so this turns off any other VPN app you use.</string>
     <string name="gt_net_vpn_how_4">Android will ask you once to allow it. If you say no, nothing is blocked.</string>
     <string name="gt_net_ds_title">Data Saver</string>
-    <string name="gt_net_ds_sub">Android\'s own setting. Needs root or Shizuku. Mobile data only.</string>
+    <string name="gt_net_ds_sub">Android\'s own setting. Needs root or Shizuku. Applies to metered networks, including metered Wi-Fi.</string>
     <string name="gt_net_ds_need">Data Saver needs root or Shizuku. Android does not let a normal app change it.</string>
     <string name="gt_net_checking">Checking…</string>
     <string name="gt_net_unknown">Your phone would not tell us if this is on or off</string>
     <string name="gt_net_ds_on_count">On — stopping %1$d apps</string>
     <string name="gt_net_ds_off_stopped">Off — but %1$d apps are still stopped</string>
     <string name="gt_net_engaged">Turned on by Catsmoker — turning it off puts your phone back how it was.</string>
-    <string name="gt_net_metered">This network counts as mobile data, so Data Saver is working right now.</string>
+    <string name="gt_net_metered">This network is metered. Background restrictions can apply here; see the on/off status above.</string>
     <string name="gt_net_unmetered">You are on normal Wi-Fi, so Data Saver does nothing here. Use the VPN switch instead.</string>
     <string name="gt_net_unknown_net">We could not tell what kind of network you are on.</string>
     <string name="gt_net_no_perapp">Your phone\'s version cannot stop apps one by one, so only the whole-phone Data Saver setting is available here.</string>

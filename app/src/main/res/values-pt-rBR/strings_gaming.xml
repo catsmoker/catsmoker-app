@@ -234,14 +234,14 @@
     <string name="gt_net_vpn_how_3">Duas coisas para saber: um app bloqueado vai parecer que está carregando para sempre em vez de dizer \"sem internet\", e seu celular só permite uma VPN por vez, então isto desativa qualquer outro app de VPN que você use.</string>
     <string name="gt_net_vpn_how_4">O Android vai pedir sua permissão uma vez. Se você recusar, nada é bloqueado.</string>
     <string name="gt_net_ds_title">Economia de dados</string>
-    <string name="gt_net_ds_sub">Configuração própria do Android. Precisa de root ou Shizuku. Só dados móveis.</string>
+    <string name="gt_net_ds_sub">Configuração própria do Android. Precisa de root ou Shizuku. Aplica-se a redes limitadas, incluindo Wi-Fi limitado.</string>
     <string name="gt_net_ds_need">A Economia de dados precisa de root ou Shizuku. O Android não permite que um app normal mude isso.</string>
     <string name="gt_net_checking">Verificando…</string>
     <string name="gt_net_unknown">Seu celular não quis dizer se isto está ativo ou desativado</string>
     <string name="gt_net_ds_on_count">Ativo — parando %1$d apps</string>
     <string name="gt_net_ds_off_stopped">Desativado — mas %1$d apps continuam parados</string>
     <string name="gt_net_engaged">Ativado pelo Catsmoker — desativar devolve seu celular ao estado anterior.</string>
-    <string name="gt_net_metered">Esta rede conta como dados móveis, então a Economia de dados está funcionando agora.</string>
+    <string name="gt_net_metered">Esta rede é limitada. Restrições em segundo plano podem ser aplicadas aqui; veja acima se estão ativadas ou desativadas.</string>
     <string name="gt_net_unmetered">Você está em um Wi-Fi normal, então a Economia de dados não faz nada aqui. Use a chave de VPN.</string>
     <string name="gt_net_unknown_net">Não foi possível saber que tipo de rede você está usando.</string>
     <string name="gt_net_no_perapp">A versão do seu celular não consegue parar apps um por um, então aqui só está disponível a configuração de Economia de dados para o celular inteiro.</string>

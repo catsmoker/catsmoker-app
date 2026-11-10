@@ -1,0 +1,5 @@
+<resources>
+    <string name="gt_tool_net_sub">Restrinja os dados em segundo plano de outros apps em redes limitadas.</string>
+    <string name="gt_net_what_1">Este controle restringe os dados em segundo plano de outros apps em redes limitadas, incluindo Wi-Fi limitado. Apps em primeiro plano e apps isentos da Economia de dados ainda podem usar a conexão. Ele não reserva toda a conexão para o seu jogo.</string>
+    <string name="gt_net_unmetered">Esta rede não é limitada, então a Economia de dados não restringe o tráfego em segundo plano aqui.</string>
+</resources>

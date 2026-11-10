@@ -8,7 +8,7 @@
     <string name="legal_terms_title">条款与条件</string>
     <string name="legal_website_title">法律网站</string>
     <string name="legal_terms_subtitle">使用本应用的规则。</string>
-    <string name="legal_terms_updated">最后更新：2026-10-25</string>
+    <string name="legal_terms_updated">最后更新：2026-11-10</string>
 
     <string name="legal_p_intro">CatSmoker 是一款开源 Android 应用，无账号、无登录，也没有项目方运营的服务器。应用所知的一切几乎都保留在你的设备上。本政策说明哪些数据保存在本地、应用的第三方 SDK 会发送哪些数据，以及你拥有哪些权利。下文所称“服务提供方”即 CatSmoker。</string>
 
@@ -84,7 +84,7 @@
     <string name="legal_t_risk_body">本应用的许多功能无需 root 即可使用。高级功能（设备伪装、部分系统调整和文件编辑）需要 Shizuku、root 或生成的 Magisk 模块，且均为可选。对设备进行 root 或越狱会移除安全限制，可能使其暴露于恶意软件、失去保修、导致银行或支付应用无法使用，或使本应用无法运行。仅在你理解并接受这些风险时才启用相关功能。更改系统设置（分辨率、刷新率、动画缩放、DNS、音频、dexopt 编译）的功能均按你的指令执行。应用会在可行时先备份游戏配置，但你需自行承担不稳定、启动问题或数据丢失的风险。你可以随时还原更改或卸载应用。</string>
 
     <string name="legal_t_content_title">7. 你选择分享的内容</string>
-    <string name="legal_t_content_body">本应用没有账号、没有公开内容流，也没有存储用户内容的服务器。你可以导出配置、游戏配置、日志或记录，并通过 Android 分享菜单或其他应用发送。你对自己的分享内容、你是否拥有相关权利，以及内容中的个人数据负责（包括他人的数据，须经其同意）。不得分享违法内容、恶意软件或侵犯他人权利的内容。若你向开发者发送内容（例如错误报告），即授予开发者使用该内容进行调查和改进本应用的许可；该内容不会被出售，并按隐私政策处理。如需举报违法内容或滥用行为，请联系 catsmoker.lab@gmail.com。</string>
+    <string name="legal_t_content_body">本应用没有账号、没有公开内容流，也没有存储用户内容的服务器。你可以通过 Android 分享菜单或其他应用发送导出的文件和诊断日志。你对自己的分享内容、你是否拥有相关权利，以及内容中的个人数据负责（包括他人的数据，须经其同意）。不得分享违法内容、恶意软件或侵犯他人权利的内容。若你向开发者发送内容（例如错误报告），即授予开发者使用该内容进行调查和改进本应用的许可；该内容不会被出售，并按隐私政策处理。如需举报违法内容或滥用行为，请联系 catsmoker.lab@gmail.com。</string>
 
     <string name="legal_t_thirdparty_title">8. 第三方服务</string>
     <string name="legal_t_thirdparty_body">根据你安装的版本，本应用使用以下第三方服务：\n\u2022 两个版本：Google Play Services（Firebase 所需的基础库）和 Google Analytics for Firebase。\n\u2022 Play 商店版：AdMob（广告）和 Google Play Billing（可选的去广告购买）。\n\u2022 完整版（GitHub）：Start.io（原 StartApp，广告）。\n各提供商按其自身条款和隐私政策处理数据。隐私政策说明本应用自身存储的内容。部分功能需要联网。你的移动运营商条款仍然适用；数据费用（包括漫游费）由你承担；若你不是账单持有人，请确认已获授权。游戏预设及其他第三方信息仅为方便而提供——使用前请自行核实。开发者不对第三方服务、其可用性、其内容或其决定（包括广告内容或计费决定）负责。</string>

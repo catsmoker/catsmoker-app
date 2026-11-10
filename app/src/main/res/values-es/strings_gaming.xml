@@ -233,14 +233,14 @@
     <string name="gt_net_vpn_how_3">Dos cosas que debes saber: una app bloqueada parecerá que carga para siempre en vez de decir \"sin internet\", y tu teléfono solo permite un VPN a la vez, así que esto apaga cualquier otra app de VPN que uses.</string>
     <string name="gt_net_vpn_how_4">Android te pedirá permiso una vez. Si dices que no, no se bloquea nada.</string>
     <string name="gt_net_ds_title">Ahorro de datos</string>
-    <string name="gt_net_ds_sub">Ajuste propio de Android. Necesita root o Shizuku. Solo datos móviles.</string>
+    <string name="gt_net_ds_sub">Ajuste propio de Android. Necesita root o Shizuku. Se aplica a redes de uso medido, incluido Wi-Fi de uso medido.</string>
     <string name="gt_net_ds_need">Ahorro de datos necesita root o Shizuku. Android no permite que una app normal lo cambie.</string>
     <string name="gt_net_checking">Comprobando…</string>
     <string name="gt_net_unknown">Tu teléfono no quiso decir si esto está activado o no</string>
     <string name="gt_net_ds_on_count">Activado — deteniendo %1$d apps</string>
     <string name="gt_net_ds_off_stopped">Desactivado — pero %1$d apps siguen detenidas</string>
     <string name="gt_net_engaged">Activado por Catsmoker — desactivarlo devuelve tu teléfono a como estaba.</string>
-    <string name="gt_net_metered">Esta red cuenta como datos móviles, así que Ahorro de datos está funcionando ahora.</string>
+    <string name="gt_net_metered">Esta red es de uso medido. Aquí pueden aplicarse restricciones en segundo plano; consulta arriba si están activadas o desactivadas.</string>
     <string name="gt_net_unmetered">Estás en un Wi-Fi normal, así que Ahorro de datos no hace nada aquí. Usa el interruptor de VPN.</string>
     <string name="gt_net_unknown_net">No pudimos saber qué tipo de red estás usando.</string>
     <string name="gt_net_no_perapp">La versión de tu teléfono no puede detener apps una por una, así que aquí solo está el ajuste de Ahorro de datos de todo el teléfono.</string>
