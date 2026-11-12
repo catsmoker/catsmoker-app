@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="onb_analytics_explanation">Estadísticas de uso de Firebase opcionales. Se aplican al continuar; desactívalas en Ajustes.</string>
+    <string name="onb_analytics_details">Google Firebase Analytics recibe eventos automáticos de uso, detalles del dispositivo y la app, un identificador de instalación y ubicación aproximada por IP para comprender el uso de la app. No se añaden eventos propios. La recopilación empieza solo si activas este interruptor y continúas. Puedes desactivarla en Ajustes. La publicidad se gestiona por separado.</string>
+    <string name="onb_access_summary">Uso opcional y local. Guardar aplica las selecciones; Permitir aplica un uso. Puedes omitir todos.</string>
+    <string name="onb_inventory_status">Sin permiso de Android</string>
+    <string name="onb_enable_analytics_continue">Activar estadísticas y continuar</string>
+    <string name="onb_without_analytics_continue">Continuar sin estadísticas</string>
+    <string name="onb_inventory_title">Apps instaladas</string>
+    <string name="onb_usage_title">App en primer plano</string>
+    <string name="onb_notifications_title">Descartar notificaciones</string>
+    <string name="onb_inventory_visibility">Limitado a las apps visibles para Android; no requiere un permiso en tiempo de ejecución.</string>
+    <string name="onb_android_granted">Acceso de Android: concedido</string>
+    <string name="onb_android_not_granted">Acceso de Android: no concedido</string>
+    <string name="onb_allow_open_settings">Permitir y abrir ajustes</string>
+    <string name="onb_save_access_finish">Guardar accesos seleccionados y finalizar</string>
+    <string name="onb_settings_unavailable">Estos ajustes no están disponibles en tu dispositivo. Puedes continuar sin este acceso.</string>
+</resources>

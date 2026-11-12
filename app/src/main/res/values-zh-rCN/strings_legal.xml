@@ -14,7 +14,7 @@
     <string name="legal_p_local_title">1. 保存在设备上的数据</string>
 
     <string name="legal_p_analytics_title">2. 分析、Cookie 与跟踪技术</string>
-    <string name="legal_p_analytics_body">两种版本都包含 Firebase Analytics，但在您于设置中明确开启前保持关闭。以前默认开启的偏好不视为同意。启用后，Google 会按照其政策接收自动使用事件、设备和应用信息、安装标识符及根据 IP 推算的概略位置。应用不添加自定义事件。可在设置中撤回；分析同意不授权广告存储或个性化，广告选项单独管理。</string>
+    <string name="legal_p_analytics_body">两种版本都包含 Firebase Analytics。只有在首次设置中明确确认分析或在设置中启用后才开始收集。待确认的选择和以前默认开启的偏好均不视为同意。启用后，Google 会按照其政策接收自动使用事件、设备和应用信息、安装标识符及根据 IP 推算的概略位置。应用不添加自定义事件。可在设置中撤回；分析同意不授权广告存储或个性化，广告选项单独管理。</string>
 
     <string name="legal_p_ads_title">3. 广告（Start.io 或 AdMob）</string>
     <string name="legal_p_ads_body">Full 使用可免费关闭的 Start.io 横幅；Play 使用 AdMob，可通过 Google Play 一次性购买去广告。Play 在初始设置后检查广告同意，仅在允许时初始化或请求广告；需要的隐私选项可在设置中管理。Full 的广告集成独立。提供商可能按其政策处理标识符、设备信息、IP 推算的位置、互动及诊断数据。关闭横幅不会移除 SDK 或删除提供商的数据。分析同意单独管理。</string>

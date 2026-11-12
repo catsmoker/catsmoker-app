@@ -104,18 +104,18 @@ is not routed through `resolvePackageName`.
 Each distribution flavor integrates exactly one ad SDK, isolated in its own
 source set — neither SDK is packaged into the other flavor:
 
-- **Full** uses the Start.io SDK (`src/full/…/system/ads/AdManager.kt`,
+- **Full** uses the Start.io SDK (`src/full/…/integrations/ads/AdManager.kt`,
   `com.startapp:inapp-sdk` via `fullImplementation`). SDK auto-initialization
   is **explicitly disabled** in the manifest (`tools:node="remove"` on
   `StartAppInitProvider`); integration is manual. The SDK id can be
   overridden via `STARTIO_APP_ID` in `local.properties`.
-- **Play Store** uses AdMob (`src/playstore/…/system/ads/AdManager.kt`,
+- **Play Store** uses AdMob (`src/playstore/…/integrations/ads/AdManager.kt`,
   `com.google.android.gms:play-services-ads` via `playstoreImplementation`).
   IDs come from `ADMOB_APP_ID` / `ADMOB_BANNER_ID` /
   `ADMOB_INTERSTITIAL_ID` in `local.properties`, defaulting to Google's
   sample test ids. The App ID enters the manifest via placeholder. Ads follow
   only the verified `remove_ads` one-time product
-  (`src/playstore/…/system/ads/RemoveAdsRepository.kt`,
+  (`src/playstore/…/integrations/ads/RemoveAdsRepository.kt`,
   `com.android.billingclient:billing-ktx` via `playstoreImplementation`,
   acknowledged non-consumable, never consumed); the `ads_enabled` preference
   is ignored there, so no local toggle can disable ads on that variant.
@@ -132,6 +132,13 @@ shared by both variants (same project, explicit opt-in initialization — see
 `PLAY_POLICY_REMEDIATION.md`). Play advertising now uses a separate UMP gate;
 SDK integration is not a substitute for published account privacy messages or
 regional runtime verification.
+
+Onboarding analytics starts unchecked (unless a current explicit consent already
+exists). Selecting the switch and continuing applies that choice without a second
+popup. Legacy default-on drafts are not migrated as opt-ins. The short card keeps
+the full Firebase data disclosure in its info sheet. Optional gaming access also
+keeps full purpose/risk disclosures in info sheets; its checkboxes remain distinct
+from Android usage-access and notification-listener grants.
 
 ## Permissions requested (AndroidManifest)
 

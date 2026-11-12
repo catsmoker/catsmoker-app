@@ -45,7 +45,6 @@
     <string name="gf_version_label">バージョン</string>
     <string name="gf_choose_game_title">ゲームを選択</string>
     <string name="gf_selected_desc">選択中</string>
-    <string name="gf_choose_version_desc">バージョンを選択</string>
     <string name="gf_profile_section">プロファイル</string>
     <string name="gf_apply_profile">プロファイル適用</string>
     <string name="gf_reset_file">%1$s をリセット</string>

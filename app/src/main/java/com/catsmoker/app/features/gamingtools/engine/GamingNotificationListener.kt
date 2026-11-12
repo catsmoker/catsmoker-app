@@ -2,14 +2,15 @@ package com.catsmoker.app.features.gamingtools.engine
 
 import android.service.notification.NotificationListenerService
 import android.service.notification.StatusBarNotification
+import com.catsmoker.app.screens.gaming.mode.GamingEngine
 import dagger.hilt.android.AndroidEntryPoint
+import javax.inject.Inject
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
-import javax.inject.Inject
 
 /**
  * Second-layer notification suppression while Gaming Mode is on.
@@ -95,7 +96,7 @@ class GamingNotificationListener : NotificationListenerService() {
         }
     }
 
-    private fun hasConsent() = com.catsmoker.app.system.config.GamingAccessConsent.allows(
-        this, com.catsmoker.app.system.config.GamingAccessConsent.NOTIFICATIONS
+    private fun hasConsent() = com.catsmoker.app.application.privacy.GamingAccessConsent.allows(
+        this, com.catsmoker.app.application.privacy.GamingAccessConsent.NOTIFICATIONS
     )
 }

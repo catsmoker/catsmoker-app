@@ -42,7 +42,7 @@ class BoundaryGuardTest(unittest.TestCase):
     def test_shared_root_and_vpn_detection_are_not_class_bans(self):
         for name in ("com.topjohnwu.superuser.Shell", "rikka.shizuku.Shizuku",
                      "android.net.NetworkCapabilities",
-                     "com.catsmoker.app.features.gamingtools.tools.firewall.BackgroundDataRestrictor"):
+                     "com.catsmoker.app.screens.gaming.network.BackgroundDataRestrictor"):
             self.assertFalse(check.denied_class(name), name)
 
     def test_full_vpn_resource_is_rejected(self):
@@ -102,10 +102,26 @@ class BoundaryGuardTest(unittest.TestCase):
                 check.manifest(file)
 
     def test_top_level_full_only_functions_have_a_facade_boundary(self):
-        self.assertIn("com.catsmoker.app.features.settings.UpdateNotesPreviewKt", check.EXCLUSIVE_CLASSES)
+        self.assertIn("com.catsmoker.app.screens.settings.UpdateNotesPreviewKt", check.EXCLUSIVE_CLASSES)
 
     def test_same_path_adapter_does_not_exempt_play_only_classes(self):
-        self.assertIn("com.catsmoker.app.features.settings.PlayAdsSettingsViewModel", check.PLAY_CLASSES)
+        self.assertIn("com.catsmoker.app.screens.settings.PlayAdsSettingsViewModel", check.PLAY_CLASSES)
+
+    def test_relocated_spoof_data_keeps_new_and_historical_boundaries(self):
+        for name in (
+            "com.catsmoker.app.screens.spoofing.data.repository.SpoofRepository",
+            "com.catsmoker.app.screens.spoofing.hooks.LSPosedConfig",
+            "com.catsmoker.app.screens.spoofing.data.model.DeviceProfile",
+            "com.catsmoker.app.screens.spoofing.data.model.DevicePreset",
+            "com.catsmoker.app.shared.data.repository.SpoofRepository",
+            "com.catsmoker.app.shared.data.model.LSPosedConfig",
+            "com.catsmoker.app.shared.data.model.DeviceProfile",
+            "com.catsmoker.app.shared.data.model.DevicePreset",
+        ):
+            self.assertTrue(check.denied_class(name), name)
+            self.assertTrue(check.denied_class(name + "$Nested"), name)
+        for name in check.REQUIRED_FULL_CLASSES:
+            self.assertIn(name, check.EXCLUSIVE_CLASSES)
 
     def test_full_rejects_play_billing_original_names(self):
         with tempfile.TemporaryDirectory() as directory:

@@ -65,7 +65,7 @@
             policy's eligible-use exceptions are not a blanket approval.
         -->
         <service
-            android:name=".features.gamingtools.tools.firewall.VpnFirewallService"
+            android:name=".screens.gaming.network.VpnFirewallService"
             android:enabled="true"
             android:exported="false"
             android:permission="android.permission.BIND_VPN_SERVICE"

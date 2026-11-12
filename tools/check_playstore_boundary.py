@@ -18,15 +18,21 @@ from zipfile import ZipFile
 ROOT = Path(__file__).resolve().parents[1]
 ANDROID = "{http://schemas.android.com/apk/res/android}"
 DENIED_PACKAGES = (
+    "com.catsmoker.app.screens.spoofing.",
     "com.catsmoker.app.features.spoofdevice.",
     "com.startapp.", "com.truenet.", "de.robv.android.xposed.",
 )
 DENIED_CLASSES = (
-    "com.catsmoker.app.features.gamingtools.tools.firewall.VpnFirewall",
-    "com.catsmoker.app.features.gamingtools.tools.firewall.VpnFirewallService",
+    "com.catsmoker.app.screens.gaming.network.VpnFirewall",
+    "com.catsmoker.app.screens.gaming.network.VpnFirewallService",
     "com.catsmoker.app.system.shell.NativeBridge",
     "com.catsmoker.app.system.config.SpoofConfigProvider",
-    "com.catsmoker.app.features.gamingtools.VpnControlsViewModel",
+    "com.catsmoker.app.screens.gaming.network.VpnControlsViewModel",
+    "com.catsmoker.app.screens.spoofing.data.repository.SpoofRepository",
+    "com.catsmoker.app.screens.spoofing.hooks.LSPosedConfig",
+    "com.catsmoker.app.screens.spoofing.data.model.DeviceProfile",
+    "com.catsmoker.app.screens.spoofing.data.model.DevicePreset",
+    # Also reject pre-reorganization names when inspecting older artifacts.
     "com.catsmoker.app.shared.data.repository.SpoofRepository",
     "com.catsmoker.app.shared.data.model.LSPosedConfig",
     "com.catsmoker.app.shared.data.model.DeviceProfile",
@@ -51,12 +57,12 @@ FULL_INIT = {
 REQUIRED_FULL_CLASSES = (
     "com.catsmoker.app.features.spoofdevice.root.LSPosedModule",
     "com.catsmoker.app.system.shell.NativeBridge",
-    "com.catsmoker.app.features.gamingtools.tools.firewall.VpnFirewallService",
-    "com.catsmoker.app.features.settings.FullSettingsViewModel",
-    "com.catsmoker.app.features.settings.SelfUpdater",
-    "com.catsmoker.app.features.spoofdevice.tools.MagiskModuleBuilder",
-    "com.catsmoker.app.shared.data.repository.SpoofRepository",
-    "com.catsmoker.app.features.gamingtools.engine.GraphicsApiDetector",
+    "com.catsmoker.app.screens.gaming.network.VpnFirewallService",
+    "com.catsmoker.app.screens.settings.FullSettingsViewModel",
+    "com.catsmoker.app.screens.settings.SelfUpdater",
+    "com.catsmoker.app.screens.spoofing.tools.MagiskModuleBuilder",
+    "com.catsmoker.app.screens.spoofing.data.repository.SpoofRepository",
+    "com.catsmoker.app.screens.spoofing.data.device.GraphicsApiDetector",
 )
 
 
@@ -132,6 +138,7 @@ def prohibited_class(name, variant):
 
 def sources():
     banned = (
+        "import com.catsmoker.app.screens.spoofing.",
         "import android.net.VpnService", "import com.startapp.",
         "import de.robv.android.xposed.", "import com.catsmoker.app.features.spoofdevice.",
         "Environment.isExternalStorageManager(", "ACTION_MANAGE_ALL_FILES_ACCESS_PERMISSION",

@@ -4,21 +4,22 @@ import android.app.Application
 import android.content.Context
 import androidx.hilt.work.HiltWorkerFactory
 import androidx.work.Configuration
-import com.catsmoker.app.features.logs.CrashLogStore
-import com.catsmoker.app.features.main.engine.MetricsEngine
-import com.catsmoker.app.system.config.AnalyticsConsent
-import com.catsmoker.app.system.config.AppearanceStore
-import com.catsmoker.app.system.config.LocaleHelper
-import com.catsmoker.app.system.shell.ShellRunner
+import com.catsmoker.app.application.appearance.AppearanceStore
+import com.catsmoker.app.application.appearance.LocaleHelper
+import com.catsmoker.app.application.privacy.AnalyticsConsent
+import com.catsmoker.app.integrations.ads.AdsInit
+import com.catsmoker.app.platform.shell.ShellRunner
+import com.catsmoker.app.screens.logs.CrashLogStore
+import com.catsmoker.app.telemetry.MetricsEngine
 import com.topjohnwu.superuser.Shell
 import dagger.hilt.android.HiltAndroidApp
+import javax.inject.Inject
+import kotlin.time.Duration.Companion.milliseconds
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import javax.inject.Inject
-import kotlin.time.Duration.Companion.milliseconds
 
 /**
  * Also WorkManager's [Configuration.Provider]: the default initializer is removed in the manifest
@@ -46,7 +47,7 @@ class CatsmokerApp : Application(), Configuration.Provider {
      * with the process, which is exactly its required lifetime.
      */
     @Inject
-    lateinit var appLogCollector: com.catsmoker.app.features.logs.AppLogCollector
+    lateinit var appLogCollector: com.catsmoker.app.screens.logs.AppLogCollector
 
     override val workManagerConfiguration: Configuration
         get() = Configuration.Builder()

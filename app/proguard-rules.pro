@@ -31,8 +31,8 @@
 # Gson persists these shared models by field name and generic signature
 # (GamingOptimizationSnapshot the same way SpoofRepository reads StoreData).
 # Narrow per-class keeps: no broad-rule inspection debt.
--keep class com.catsmoker.app.shared.data.model.GamingOptimizationSnapshot { *; }
--keep class com.catsmoker.app.shared.data.model.SettingValue { *; }
+-keep class com.catsmoker.app.screens.gaming.mode.GamingOptimizationSnapshot { *; }
+-keep class com.catsmoker.app.screens.gaming.mode.SettingValue { *; }
 
 # ShellRunner reflects Shizuku's newProcess(String[], String[], String) — the one-shot
 # remote-shell channel (BattleGrounds_GFX's mechanism) that works when the user-service helper

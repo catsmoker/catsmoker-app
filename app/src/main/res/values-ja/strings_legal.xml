@@ -16,7 +16,7 @@
     <string name="legal_p_local_title">1. デバイス上に保存されるデータ</string>
 
     <string name="legal_p_analytics_title">2. 解析、Cookie、追跡技術</string>
-    <string name="legal_p_analytics_body">両版に Firebase Analytics が含まれますが、設定で明示的に有効にするまで無効です。以前の既定オンの設定は同意と見なしません。有効時は Google の方針に従い、自動利用イベント、端末とアプリの情報、インストール識別子、IP に基づく概略位置が送られます。アプリ独自のイベントは追加しません。設定で撤回できます。分析への同意は広告の保存やパーソナライズへの同意ではありません。広告の選択は別です。</string>
+    <string name="legal_p_analytics_body">両版に Firebase Analytics が含まれます。収集は初回設定中に分析を明示的に確認するか、設定で有効にした後にのみ始まります。保留中の選択や以前の既定オンの設定は同意と見なしません。有効時は Google の方針に従い、自動利用イベント、端末とアプリの情報、インストール識別子、IP に基づく概略位置が送られます。アプリ独自のイベントは追加しません。設定で撤回できます。分析への同意は広告の保存やパーソナライズへの同意ではありません。広告の選択は別です。</string>
 
     <string name="legal_p_ads_title">3. 広告 (Start.io または AdMob)</string>
     <string name="legal_p_ads_body">Full は無料で無効にできる Start.io バナーを使い、Play は Google Play の買い切りで削除できる AdMob を使います。Play は初期設定後に広告同意を確認し、許可された場合のみ初期化や要求を行います。必要なプライバシー選択は設定で行えます。Full の広告統合は別です。事業者は独自の方針で識別子、端末情報、IP に基づく概略位置、操作や診断情報を処理する場合があります。バナー停止で SDK や事業者のデータは消えません。分析の同意は別です。</string>

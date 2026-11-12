@@ -1,6 +1,6 @@
 # Metrics Engine
 
-`MetricsEngine` (`features/main/engine/MetricsEngine.kt`) powers the home
+`MetricsEngine` (`telemetry/MetricsEngine.kt`) powers the home
 dashboard telemetry and the performance overlay. This page documents what it
 measures, where each number comes from, and the careful status model that
 keeps the UI honest.
@@ -122,7 +122,7 @@ timestats, stale-FPS counters, the held frame-time percentiles) so a later
 
 ## Parser package
 
-`features/main/engine/parsers/` holds pure-Kotlin, unit-tested parsers:
+`telemetry/parsers/` holds pure-Kotlin, unit-tested parsers:
 
 - `CpuStatParser` — `/proc/stat` totals and per-interval CPU usage.
 - `CpuInfoTopParser` — total and per-process CPU from `top`/`dumpsys cpuinfo`.

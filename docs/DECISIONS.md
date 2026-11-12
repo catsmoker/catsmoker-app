@@ -11,6 +11,81 @@ re-proposed without new evidence.
 When a decision is reversed, add an entry that argues with the old one â€” do
 not silently rewrite history.
 
+## Screen-first package ownership (2026-11-12)
+
+- Navigation destinations own peer areas under `features/`: Home, Permissions,
+  Gaming Tools, Crosshair Library, File Engineering, About, Licenses, Privacy
+  Policy, Terms, Settings, Logs and Donate. A link from About or Gaming Tools
+  does not make the linked screen part of the opener's implementation.
+- Full's six spoof destinations are sibling areas within the spoof feature
+  family, with explicitly shared state/data/helpers. Existing parent-entry
+  ViewModel lifetimes and all route values remain unchanged. Embedded game
+  editors and onboarding steps remain panels/steps, not new destinations.
+- Retired the generic `shared/data` and `shared/util` buckets. Models belong
+  to their consuming feature; reused metrics/assets/rendering remain shared;
+  platform helpers use named `system` responsibilities. The three top-level
+  ownership roots remain `features`, `shared`, and `system`; no new layers or
+  modules are needed. See `ARCHITECTURE.md` for the complete map.
+- Android components, persisted workers, Shizuku AIDL and JNI/Xposed entry names
+  retain their identities. In particular the exported Full provider stays at
+  `system.config.SpoofConfigProvider`; moving it merely to eliminate the last
+  `config` directory would add compatibility risk without improving ownership.
+  Persistence fields/keys, resources, manifests and source-set boundaries are
+  unchanged. Updated imports, source-reading tests, release keep rules and
+  boundary-tool class inventories follow relocated code.
+- Historical release audits describe their original artifacts and retain their
+  old package names. They do not certify reorganized sources or a new artifact.
+- Focused verification compiled both debug variants: 64 existing Full cases
+  passed, followed by the four corrected source-layout guards; Play passed 17
+  selected cases. Three selected Python boundary-tool tests and both variants'
+  source-only boundary checks passed. A mechanical comparison also confirmed
+  unchanged Kotlin executable bodies after accounting for moved names/paths and
+  the legal-screen split. No full suite, device navigation, release packaging
+  or new artifact certification was performed.
+
+## Screen-first roots, capability ownership (2026-11-12, supersedes the entry above)
+
+The entry above settled *what* owns what; this entry replaces its three-root
+(`features`, `shared`, `system`) package answer after living with it. Ownership
+is unchanged — a destination still owns its screen, and a link never nests the
+linked screen in the opener — but the roots now say what the code *is*:
+
+- `screens/` holds every navigation destination and its destination group.
+  The gaming screens' six capabilities moved from one `gamingtools` package
+  into their own folders (`mode`, `compilation`, `cleaning`, `network`,
+  `graphics`, `apps`, `crosshair`, `performanceoverlay`, `audio`, `glyph`),
+  because those capabilities own services, stores and stores' workers that
+  have nothing to do with each other.
+- `ui/`, `telemetry/`, `platform/`, `application/`, `integrations/`, `format/`
+  and `logging/` replace `shared/` and the app-wiring half of `system/`. A
+  generic `shared/data`/`shared/util` bucket stays retired, and a grab-bag
+  `system/` is not reintroduced: each platform responsibility is a named
+  package, and third-party SDK seams (ads) are `integrations/`.
+- `features/` and `system/` now contain only frozen identities — manifest
+  components, the exported spoof provider, JNI/Xposed entry points, the
+  Shizuku AIDL service, persisted WorkManager work names. New code never
+  lands there; the full list is a table in `ARCHITECTURE.md`.
+- Collections hold one kind of entry. `screens/editgamefiles/games/` contains
+  only games, one folder each; shared models, storage, the config factories
+  and the registry sit beside it. PUBG's six variants still share one
+  implementation, and a game without an editor is not listed.
+- One capability has one implementation. Crosshair Library's screen,
+  ViewModel, catalog repository, asset resolution, position store, overlay
+  service and Compose controls share `screens/gaming/crosshair/`; Legal's
+  three screens share their rendering components under `screens/legal/`
+  while remaining separate destinations.
+- Oversized mixed files were split by responsibility (`GamingEngine`'s ART
+  sweep became `screens/gaming/compilation/ArtCompiler.kt` with the engine's
+  public methods delegating, so the manual card and scheduled worker keep one
+  owned implementation). Class and filename casing was normalised
+  (`MainScreen`→`HomeScreen`, `WuWa*`→`Wuwa*`), and lowercase packages now
+  match their directories.
+- UI, behaviour, permissions, persistence, DI, route strings, flavor
+  boundaries, resource ids, preferences keys and the frozen identities are
+  unchanged. Source-reading tests and the boundary tool follow the new paths;
+  they keep the legacy spoof package names as denied tokens so historical
+  artifacts remain rejected.
+
 ## Product direction
 
 - **Maximum performance, never cap FPS** (2026-09-23, non-negotiable). No
@@ -871,3 +946,50 @@ Added `vulkanModel` (Vulkan physical-device name, `VkPhysicalDeviceProperties.de
 
 - **Safe lint findings were fixed, not suppressed.** InflateParams on WindowManager-attached overlay views (null root is correct) got a targeted `@SuppressLint`; UseKtx, UseCompatLoadingForDrawables, UseOfNonLambdaOffsetOverload, ConfigurationScreenWidthHeight and Overdraw were fixed at the call site; 12 strings unused in both flavors were removed from every locale mirror (the 3 unused-in-full / 16 unused-in-play ones stay because the other flavor uses them).
 - **`app/lint.xml` ignores two stylistic rules.** `TypographyDashes` only ever flags ISO-8601 dates (`2026-10-25`), where an en dash is factually wrong; `PluralsCandidate` flags the deliberate `app(s)`/`file(s)` convention, and converting ~70 count strings to real plurals would need plural categories in six languages (Arabic has six) plus every call site. Revisit only if the copy is rewritten to true plurals. This is a suppression with a documented reason, not a claim that the findings are bugs.
+
+## Onboarding direct choices and compact access tiles (2026-11-12)
+
+- **Only Welcome hides its back arrow.** Progress remains visible and the later steps
+  retain back navigation. Choosing a language commits the current draft and locale,
+  then restarts immediately without advancing or marking Welcome answered. Continue
+  only advances; initialization reads the applied locale, not an obsolete staged one.
+- **The analytics switch is the opt-in; Continue applies it without a second popup.**
+  New onboarding starts unchecked. A separate draft key prevents legacy preselected
+  analytics from becoming consent. Collection still goes through `AnalyticsConsent`.
+  Short copy links to the complete Firebase disclosure through the info button.
+- **Optional gaming choices use compact permission-style tiles, not three long cards.**
+  Full purpose/risk text stays in info sheets. Pending choices, immediate individual
+  Allow actions and Android grant status remain separate. Essential, System and
+  Additional stay separate groups; notification dismissal remains listener access,
+  not the unrelated permission to post notifications.
+
+## Onboarding no-op language taps and uninterrupted first run (2026-11-12)
+
+- **Choosing the effective system language is a no-op on Welcome.** When following
+  the system, matching a normalized shipped language does not change the preference,
+  draft or step, and does not restart. Explicit app preferences still take precedence;
+  genuinely different languages retain the commit-before-restart behavior. System
+  language lookup ignores app overrides rather than using `Locale.getDefault()`,
+  which the manual locale wrapper changes.
+- **Support prompts are suppressed for the entire first run.** Welcome, Terms and
+  Permissions cannot show or count a support popup, even after repeated language
+  restarts. After onboarding the existing fifth-launch and never-ask rules remain;
+  subsequent Settings permission visits are not specially excluded.
+
+## Explicit language selection while following system (2026-11-12)
+
+- **Supersedes the effective-language no-op above.** Welcome compares a language tap
+  only with the stored preference. Following system (an empty tag) is distinct from
+  explicitly choosing any shipped language, even when it matches the system language.
+  That selection is saved and restarts immediately using the existing committed draft;
+  tapping the already stored explicit language remains a no-op. The support-prompt
+  suppression throughout first-run onboarding is unchanged.
+
+## Save language preference independently of restart (2026-11-12)
+
+- **Supersedes unconditional restart for explicit selection above.** Welcome saves
+  and highlights a changed preference even when its effective language matches the
+  current one, but restarts only when the normalized effective language changes.
+  Switching between System and its matching explicit language therefore works in
+  either direction without restarting. Actual language changes still commit the
+  draft and preference before restarting; identical stored selections remain no-ops.

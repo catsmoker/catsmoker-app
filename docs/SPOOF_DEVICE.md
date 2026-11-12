@@ -14,7 +14,7 @@ quality presets.
 
 Configuration lives in `SpoofConfigProvider`
 (`src/full/…/system/config/SpoofConfigProvider.kt`) serving `DeviceProfile`
-presets (`src/full/…/shared/data/model/DevicePreset.kt` + `DeviceProfile.kt`).
+presets (`src/full/…/screens/spoofing/data/model/DevicePreset.kt` + `DeviceProfile.kt`).
 Profiles are persisted as JSON (Gson).
 
 ## Three application channels
@@ -59,7 +59,7 @@ action.
 
 - `src/full/…/features/spoofdevice/root/LSPosedModule.kt` — declares the module scope
   and lifecycle.
-- `src/full/…/features/spoofdevice/root/GetPropInterceptor.kt` — the actual runtime
+- `src/full/…/screens/spoofing/hooks/GetPropInterceptor.kt` — the actual runtime
   hook that answers `getprop`/`ro.product.*` for the selected game with the
   active profile's values.
 - `…/root/AndroidIdDerivation.kt`, `…/root/EmulatorArtifacts.kt`,
@@ -110,7 +110,7 @@ the app itself keeps running on a normal Android classpath.
 
 ## Magisk mode builder
 
-`MagiskModuleBuilder` (`src/full/…/features/spoofdevice/tools/MagiskModuleBuilder.kt`)
+`MagiskModuleBuilder` (`src/full/…/screens/spoofing/tools/MagiskModuleBuilder.kt`)
 constructs a flashable Magisk module **entirely in code** as a `ZipOutputStream`.
 Two past bugs explain why:
 
@@ -144,7 +144,7 @@ target there is no Hilt, no `Context`, no `filesDir`.
 - `LSPosedModule` and `LSPosedConfig` are `-keep`ed in `proguard-rules.pro`:
   renaming or moving either silently breaks release builds.
 - The Xposed API is `fullCompileOnly`; never reference
-  `de.robv.android.xposed.*` outside `features/spoofdevice/root/`.
+  `de.robv.android.xposed.*` outside `screens/spoofing/hooks/`.
 - Every hook install is wrapped in `try/catch` — target classes (GMS,
   `MediaDrm`, vendor `SystemProperties`) are often absent, and a miss is
   normal, not an error.
@@ -364,7 +364,7 @@ system-side lever. `SpoofRepository.getPresets()` is author-curated — see
 
 ## Routing & screens
 
-Routes in `system/navigation/Routes.kt`:
+Routes in `application/navigation/Routes.kt`:
 
 - `spoof_device` — main hub
 - `spoof_profiles` / `spoof_editor/{profileId}` — list & edit profiles

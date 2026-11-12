@@ -23,7 +23,7 @@ policy eligibility is not established by these changes.
 
 ## Ownership and state
 
-- Shared: `system/config/PrivacyPolicy`, `AnalyticsConsent`, `GamingAccessConsent`
+- Shared: `system/privacy/PrivacyPolicy`, `AnalyticsConsent`, `GamingAccessConsent`
   and `GamingPrivacyGate`; choice version 1. `app_prefs/analytics_enabled` retains
   its key, but only matching `analytics_choice_version` enables collection.
   Other choices live in their own `gaming_access_consent` preferences file.

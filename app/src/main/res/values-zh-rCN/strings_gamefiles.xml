@@ -44,7 +44,6 @@
     <string name="gf_version_label">版本</string>
     <string name="gf_choose_game_title">选择游戏</string>
     <string name="gf_selected_desc">已选择</string>
-    <string name="gf_choose_version_desc">选择版本</string>
     <string name="gf_profile_section">配置</string>
     <string name="gf_apply_profile">应用配置</string>
     <string name="gf_reset_file">重置 %1$s</string>
@@ -289,8 +288,8 @@
     <string name="gf_smart_recommend">智能推荐</string>
     <string name="gf_wuwa_score">得分 %1$d/100 · %2$s GPU</string>
     <string name="gf_wuwa_already_selected">已选择</string>
-    <string name="gf_wuwa_recommended">Recommended: %1$s</string>
-    <string name="gf_wuwa_current_preset">Your preset: %1$s</string>
+    <string name="gf_wuwa_recommended">推荐: %1$s</string>
+    <string name="gf_wuwa_current_preset">当前预设: %1$s</string>
     <string name="gf_wuwa_rec_body">根据此设备的实测数据推荐</string>
     <string name="gf_wuwa_use_recommended">使用推荐预设</string>
     <string name="gf_wuwa_facts">本机实测数据</string>
@@ -298,7 +297,7 @@
     <string name="gf_wuwa_why_score">得分原因（%1$d 个信号，%2$d 个警告）</string>
     <string name="gf_wuwa_warnings">警告：</string>
     <string name="gf_wuwa_no_log_1">Not weighed - these axes need the game\'s gameplay log, which</string>
-    <string name="gf_wuwa_no_log_2">this screen does not analyze. They stay unscored:</string>
+    <string name="gf_wuwa_no_log_2">此屏幕不分析这些内容。它们保持未评分状态：</string>
     <string name="gf_wuwa_no_evidence_1">由于缺少实玩证据，阶梯不会推荐</string>
     <string name="gf_wuwa_no_evidence_2">影院级（需要零实测过热事件）或竞技级（需要</string>
     <string name="gf_wuwa_no_evidence_3">实测 FPS 与上限差值）。</string>
@@ -365,9 +364,9 @@
     <string name="gf_fx_override_hint">r.BloomQuality=0</string>
     <string name="gf_fx_override_applied">已应用 %1$d 项</string>
     <string name="gf_adv_gsr_c">Snapdragon Game Super Resolution。</string>
-    <string name="gf_adv_cvardb_t">CVar database hygiene</string>
-    <string name="gf_adv_cvardb_c">Comments out unknown cvars and lines matching game defaults. Smaller file, same effect.</string>
-    <string name="gf_wuwa_cvardb_needed">CVar database is still loading</string>
+    <string name="gf_adv_cvardb_t">CVar 数据库清理</string>
+    <string name="gf_adv_cvardb_c">注释掉未知的 cvar 和与游戏默认值匹配的行。文件更小，效果相同。</string>
+    <string name="gf_wuwa_cvardb_needed">CVar 数据库仍在加载中</string>
     <string name="gf_preview_report">文件含 %1$d 个 cvar，完整性列表剔除 %2$d 个</string>
     <string name="gf_preview_report_rejected">已剔除：%1$s</string>
     <string name="gf_preview_report_rt">渲染管线键（请在移动 GPU 上复核）：%1$s</string>

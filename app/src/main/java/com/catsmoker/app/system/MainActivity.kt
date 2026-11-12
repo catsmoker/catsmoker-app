@@ -1,18 +1,28 @@
 package com.catsmoker.app.system
 
+import com.catsmoker.app.R
+
+import android.app.ActivityManager
+import android.content.Context
+import android.content.Intent
+import android.content.SharedPreferences
 import android.os.Bundle
 import android.view.Window
-import android.content.Context
-import android.content.SharedPreferences
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -20,36 +30,27 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.core.content.edit
-import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
-import androidx.activity.enableEdgeToEdge
-import androidx.core.view.WindowCompat
-import androidx.navigation.compose.rememberNavController
-import com.catsmoker.app.shared.ui.theme.CatsmokerTheme
-import com.catsmoker.app.system.config.AppearanceStore
-import com.catsmoker.app.system.config.LocaleHelper
-import com.catsmoker.app.system.navigation.AppNavHost
-import com.catsmoker.app.system.navigation.Routes
-import com.catsmoker.app.system.ui.StartupScreen
-import dagger.hilt.android.AndroidEntryPoint
-import kotlinx.coroutines.delay
-import kotlin.time.Duration.Companion.milliseconds
-
-import android.app.ActivityManager
-import android.content.Intent
 import androidx.core.net.toUri
-import com.catsmoker.app.R
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
-import androidx.compose.foundation.layout.Row
-import androidx.compose.runtime.DisposableEffect
-import androidx.compose.ui.res.stringResource
+import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.navigation.compose.rememberNavController
+import com.catsmoker.app.application.appearance.AppearanceStore
+import com.catsmoker.app.application.appearance.LocaleHelper
+import com.catsmoker.app.application.navigation.AppNavHost
+import com.catsmoker.app.application.navigation.Routes
+import com.catsmoker.app.application.privacy.DistributionPrivacyGate
+import com.catsmoker.app.application.sharing.ProfileShareHandler
+import com.catsmoker.app.application.startup.StartupScreen
+import com.catsmoker.app.ui.theme.CatsmokerTheme
+import dagger.hilt.android.AndroidEntryPoint
+import kotlin.time.Duration.Companion.milliseconds
+import kotlinx.coroutines.delay
 
 /**
  * Support-dialog prompt state, persisted in `app_prefs` next to `app_launch_count`.
@@ -63,8 +64,12 @@ internal data class SupportPromptState(
     val neverAskAgain: Boolean = false
 )
 
-internal fun shouldShowSupportDialog(launchCount: Int, state: SupportPromptState): Boolean =
-    !state.neverAskAgain && launchCount > 0 && launchCount % 5 == 0
+internal fun shouldShowSupportDialog(
+    launchCount: Int,
+    state: SupportPromptState,
+    isFirstRun: Boolean = false,
+): Boolean =
+    !isFirstRun && !state.neverAskAgain && launchCount > 0 && launchCount % 5 == 0
 
 internal fun showNeverAskOption(state: SupportPromptState): Boolean =
     state.timesShown >= 1
@@ -214,10 +219,8 @@ class MainActivity : ComponentActivity() {    override fun attachBaseContext(new
                     if (showStartup) {
                         StartupScreen(onFinished = { showStartup = false })
                     } else {
-                        com.catsmoker.app.system.config.GamingPrivacyGate {
-                            AppNavHost(navController = navController, startDestination = startDestination)
-                            DistributionPrivacyGate()
-                        }
+                        AppNavHost(navController = navController, startDestination = startDestination)
+                        DistributionPrivacyGate()
                     }
                 }
             }
@@ -262,7 +265,7 @@ class MainActivity : ComponentActivity() {    override fun attachBaseContext(new
     private fun shouldShowSupportDialog(): Boolean {
         val prefs = getSharedPreferences("app_prefs", MODE_PRIVATE)
         val count = prefs.getInt("app_launch_count", 0)
-        return shouldShowSupportDialog(count, supportPromptState(prefs))
+        return shouldShowSupportDialog(count, supportPromptState(prefs), isFirstRun = isFirstRun())
     }
 
     private fun supportPromptState(

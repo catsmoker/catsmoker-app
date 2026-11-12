@@ -1,9 +1,9 @@
 package com.catsmoker.app
 
+import java.io.File
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
-import java.io.File
 
 /**
  * Permanent lock on the mechanisms three reference arrivals must never bring into the app.

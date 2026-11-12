@@ -2,23 +2,23 @@ package com.catsmoker.app.system.config
 
 import android.content.ContentProvider
 import android.content.ContentValues
+import android.content.pm.PackageManager
 import android.database.Cursor
 import android.database.MatrixCursor
-import androidx.core.net.toUri
 import android.net.Uri
 import android.os.Binder
 import android.os.Bundle
 import android.os.ParcelFileDescriptor
 import android.os.Process
-import android.content.pm.PackageManager
-import com.catsmoker.app.shared.data.repository.SpoofRepository
+import androidx.core.net.toUri
+import com.catsmoker.app.screens.spoofing.data.repository.SpoofRepository
 import dagger.hilt.EntryPoint
 import dagger.hilt.InstallIn
 import dagger.hilt.android.EntryPointAccessors
 import dagger.hilt.components.SingletonComponent
-import kotlinx.coroutines.runBlocking
 import java.io.FileNotFoundException
 import java.io.IOException
+import kotlinx.coroutines.runBlocking
 
 class SpoofConfigProvider : ContentProvider() {
 

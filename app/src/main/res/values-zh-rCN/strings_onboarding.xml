@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="onb_analytics_explanation">可选的 Firebase 使用分析。继续时应用，可随时在设置中关闭。</string>
+    <string name="onb_analytics_details">Google Firebase Analytics 接收自动使用事件、设备和应用信息、安装标识符以及根据 IP 推算的概略位置，以了解应用使用情况。不添加自定义事件。仅在开启此开关并继续后才开始收集。可在设置中停用分析。广告选项单独管理。</string>
+    <string name="onb_access_summary">可选，仅在本机使用。保存应用所选项，允许仅应用单项用途。可全部跳过。</string>
+    <string name="onb_inventory_status">无需 Android 授权</string>
+    <string name="onb_enable_analytics_continue">启用分析并继续</string>
+    <string name="onb_without_analytics_continue">不启用分析并继续</string>
+    <string name="onb_inventory_title">已安装应用</string>
+    <string name="onb_usage_title">前台应用</string>
+    <string name="onb_notifications_title">移除通知</string>
+    <string name="onb_inventory_visibility">仅限 Android 允许显示的应用；无需请求运行时权限。</string>
+    <string name="onb_android_granted">Android 访问权限：已授予</string>
+    <string name="onb_android_not_granted">Android 访问权限：未授予</string>
+    <string name="onb_allow_open_settings">允许并打开设置</string>
+    <string name="onb_save_access_finish">保存所选访问并完成</string>
+    <string name="onb_settings_unavailable">此设备无法打开这些设置。您可以不授予此访问并继续。</string>
+</resources>

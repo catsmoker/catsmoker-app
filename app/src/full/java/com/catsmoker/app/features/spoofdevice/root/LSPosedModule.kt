@@ -4,7 +4,6 @@ import android.annotation.SuppressLint
 import android.content.BroadcastReceiver
 import android.content.ContentResolver
 import android.content.Context
-import androidx.core.content.edit
 import android.content.Intent
 import android.content.IntentFilter
 import android.os.Build
@@ -12,7 +11,17 @@ import android.os.SystemClock
 import android.provider.Settings
 import android.util.Base64
 import android.view.Display
-import com.catsmoker.app.shared.data.model.LSPosedConfig
+import androidx.core.content.edit
+import com.catsmoker.app.screens.spoofing.games.monsterhunter.hookMonsterHunterGpm
+import com.catsmoker.app.screens.spoofing.hooks.AndroidIdDerivation
+import com.catsmoker.app.screens.spoofing.hooks.EmulatorArtifacts
+import com.catsmoker.app.screens.spoofing.hooks.GetPropInterceptor
+import com.catsmoker.app.screens.spoofing.hooks.LSPosedConfig
+import com.catsmoker.app.screens.spoofing.hooks.PropAliases
+import com.catsmoker.app.screens.spoofing.hooks.SpoofCoherence
+import com.catsmoker.app.screens.spoofing.hooks.SpoofDisplayMetrics
+import com.catsmoker.app.screens.spoofing.hooks.SpoofHardwareFacts
+import com.catsmoker.app.screens.spoofing.hooks.UnityFrameRateDelivery
 import com.catsmoker.app.system.config.SpoofConfigProvider
 import de.robv.android.xposed.IXposedHookLoadPackage
 import de.robv.android.xposed.XC_MethodHook
@@ -45,7 +54,7 @@ private const val RATE_TOLERANCE_HZ = 0.5f
  * Applies the spoof profile the user assigned to *this* app, inside its own process.
  *
  * Profiles are the same `key=value` text
- * [com.catsmoker.app.shared.data.repository.SpoofRepository.renderConfig] writes for Magisk, so
+ * [com.catsmoker.app.screens.spoofing.data.repository.SpoofRepository.renderConfig] writes for Magisk, so
  * system-property names are the only vocabulary: `Build.MODEL` comes from `ro.product.model`.
  *
  * An app with no assigned profile is left completely alone — no hooks are installed at all.
@@ -298,7 +307,7 @@ class LSPosedModule : IXposedHookLoadPackage {
         hookDisplayRefreshRate()
         hookEmulatorArtifacts()
         hookHardwareFacts(classLoader)
-        hookGpmDeviceLevel(classLoader, packageName)
+        hookMonsterHunterGpm(classLoader, packageName, props, TAG)
         GetPropInterceptor(lookup = ::lookupProp, properties = { props }).install()
     }
 
@@ -1151,74 +1160,6 @@ class LSPosedModule : IXposedHookLoadPackage {
         }
     }
 
-    /**
-     * MH Outlanders (com.tencent.mhadv) GPM device level override.
-     *
-     * The game uses Tencent's GPM SDK which determines device tier via QCC (Quality Control Center).
-     * Server config requests send "ForbiddenGetBrand/Model", local QCC asset parse fails,
-     * and the judge never produces a level → game falls back to default (locked tiers).
-     *
-     * This hook intercepts the GPM JNI thunks and forces a high device level/class when the
-     * game queries or sets them. Only active for com.tencent.mhadv with an assigned profile.
-     *
-     * Target methods (from libUnreal.so / classes.dex):
-     * - AndroidThunkJava_getDeviceLevelByQcc / ByString / SyncFromServerByQcc / setDeviceLevel / setQuality (in GameActivity)
-     * - Native: GPMHelper::SetDeviceLevel (not hookable from Java)
-     */
-    private fun hookGpmDeviceLevel(classLoader: ClassLoader, packageName: String) {
-        // Only apply to MH Outlanders
-        if (packageName != "com.tencent.mhadv") return
-        if (props.isEmpty()) return
-
-        // Hook Java thunk methods that the game calls to query/set device level
-        val gpmThunkHook = object : XC_MethodHook() {
-            override fun afterHookedMethod(param: MethodHookParam) {
-                // Force high device level (level 6 = max tier in QCC_75078920)
-                param.result = 6
-            }
-        }
-
-        val gpmQualityHook = object : XC_MethodHook() {
-            override fun beforeHookedMethod(param: MethodHookParam) {
-                // Force high quality tier (arg 0 = quality level)
-                if (param.args.size > 0 && param.args[0] is Int) param.args[0] = 7
-            }
-        }
-
-        // Target: Unreal GameActivity - all GPM thunk methods
-        val clazz = XposedHelpers.findClassIfExists("com.epicgames.unreal.GameActivity", classLoader)
-        if (clazz == null) {
-            XposedBridge.log("$TAG: GameActivity class not found, GPM hook skipped")
-            return
-        }
-
-        // Query methods - return high level (use hookAllMethods to catch all signatures)
-        for (method in listOf(
-            "AndroidThunkJava_getDeviceLevelByQcc",
-            "AndroidThunkJava_getDeviceLevelSyncFromServerByQcc",
-            "AndroidThunkJava_getDeviceLevelByString"
-        )) {
-            try {
-                XposedBridge.hookAllMethods(clazz, method, gpmThunkHook)
-                XposedBridge.log("$TAG: hookedAll GameActivity.$method -> force level 6")
-            } catch (e: Throwable) {
-                XposedBridge.log("$TAG: failed to hook $method: ${e.message}")
-            }
-        }
-
-        // Set methods - force high quality/level
-        for (method in listOf(
-            "AndroidThunkJava_setDeviceLevel",
-            "AndroidThunkJava_setQuality"
-        )) {
-            try {
-                XposedHelpers.findAndHookMethod(clazz, method, Int::class.javaPrimitiveType, gpmQualityHook)
-                XposedBridge.log("$TAG: hooked GameActivity.$method(Int) -> force quality 7")
-            } catch (e: Throwable) {
-                XposedBridge.log("$TAG: failed to hook $method: ${e.message}")
-            }
-        }
-    }
 
     private fun hookWebView(classLoader: ClassLoader) {
         val webSettings = XposedHelpers.findClassIfExists("android.webkit.WebSettings", classLoader) ?: return

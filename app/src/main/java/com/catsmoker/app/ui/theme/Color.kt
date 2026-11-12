@@ -1,0 +1,17 @@
+package com.catsmoker.app.ui.theme
+
+import androidx.compose.ui.graphics.Color
+
+// Nothing OS Color Palette
+val NothingBlack = Color(0xFF000000)
+val NothingWhite = Color(0xFFFFFFFF)
+val NothingRed = Color(0xFFEB0000)
+val NothingGrey = Color(0xFF121212)
+val NothingGreyLight = Color(0xFF1E1E1E)
+
+// Press feedback: every button turns this while the finger is down.
+val PressPink = Color(0xFFFF999C)
+
+// Semantic colors
+val AccentPrimary = NothingRed
+val AccentTertiary = NothingGreyLight

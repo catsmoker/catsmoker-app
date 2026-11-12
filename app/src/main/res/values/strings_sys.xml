@@ -6,7 +6,7 @@
     <!-- Guilt-trip dialog when the free "Enable Ads" switch is turned off. -->
     <!-- Play-variant paid ad removal (Google Play Billing one-time product remove_ads). -->
     <string name="sys_analytics_title">Send Analytics Data</string>
-    <string name="sys_analytics_sub">Off until you enable it. Allow Google Firebase Analytics to receive usage events, device details, an installation identifier and IP-derived approximate location. Turn off to withdraw future analytics collection. Advertising choices are separate.</string>
+    <string name="sys_analytics_sub">Allow Google Firebase Analytics to receive usage events, device details, an installation identifier and IP-derived approximate location. Turn off to withdraw future analytics collection. Advertising choices are separate.</string>
     <!-- Nothing Glyph Interface mirror (Settings > General, shown only where the GDK works). -->
     <string name="sys_later">LATER</string>
     <string name="sys_permissions_title">App Permissions</string>
@@ -40,7 +40,7 @@
     <string name="sys_first_run_title">Welcome to CatSmoker</string>
     <string name="sys_first_run_subtitle">Choose how the app looks and which language it speaks. You can change this later in Settings.</string>
     <string name="onb_theme_hint">Tap a preview — the app changes instantly.</string>
-    <string name="onb_language_hint">The app restarts in the new language after Continue.</string>
+    <string name="onb_language_hint">Choosing a language immediately restarts the app.</string>
     <string name="sys_continue">CONTINUE</string>
 
     <!-- Redesigned Settings: section headers, one-line values, info sheets. -->

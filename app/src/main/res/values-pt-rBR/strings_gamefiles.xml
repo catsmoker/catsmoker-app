@@ -44,7 +44,6 @@
     <string name="gf_version_label">VERSÃO</string>
     <string name="gf_choose_game_title">Escolha um jogo</string>
     <string name="gf_selected_desc">Selecionado</string>
-    <string name="gf_choose_version_desc">Escolher versão</string>
     <string name="gf_profile_section">PERFIL</string>
     <string name="gf_apply_profile">APLICAR PERFIL</string>
     <string name="gf_reset_file">Redefinir %1$s</string>

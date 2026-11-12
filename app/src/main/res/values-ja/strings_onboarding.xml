@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="onb_analytics_explanation">Firebase の利用分析は任意です。続行時に適用され、設定で無効にできます。</string>
+    <string name="onb_analytics_details">アプリの利用状況を把握するため、Google Firebase Analytics に自動利用イベント、端末とアプリの情報、インストール識別子、IP に基づく概略位置が送信されます。独自イベントは追加しません。このスイッチをオンにして続行した場合のみ収集を開始します。設定で無効にできます。広告の選択は別です。</string>
+    <string name="onb_access_summary">任意の端末内利用です。保存で選択を適用、許可で個別に適用します。すべてスキップできます。</string>
+    <string name="onb_inventory_status">Android の権限は不要</string>
+    <string name="onb_enable_analytics_continue">分析を有効にして続行</string>
+    <string name="onb_without_analytics_continue">分析なしで続行</string>
+    <string name="onb_inventory_title">インストール済みアプリ</string>
+    <string name="onb_usage_title">前面のアプリ</string>
+    <string name="onb_notifications_title">通知を消去</string>
+    <string name="onb_inventory_visibility">Android が表示を許可するアプリに限ります。実行時権限の要求はありません。</string>
+    <string name="onb_android_granted">Android のアクセス：許可済み</string>
+    <string name="onb_android_not_granted">Android のアクセス：未許可</string>
+    <string name="onb_allow_open_settings">許可して設定を開く</string>
+    <string name="onb_save_access_finish">選択したアクセスを保存して完了</string>
+    <string name="onb_settings_unavailable">この端末では設定を開けません。このアクセスなしで続行できます。</string>
+</resources>

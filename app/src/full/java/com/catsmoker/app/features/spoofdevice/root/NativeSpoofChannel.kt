@@ -1,7 +1,8 @@
 package com.catsmoker.app.features.spoofdevice.root
 
 import android.util.Log
-import com.catsmoker.app.shared.data.model.LSPosedConfig
+import com.catsmoker.app.screens.spoofing.hooks.LSPosedConfig
+import com.catsmoker.app.screens.spoofing.hooks.PropAliases
 import com.catsmoker.app.system.shell.NativeBridge
 import de.robv.android.xposed.XposedBridge
 import java.util.concurrent.TimeUnit

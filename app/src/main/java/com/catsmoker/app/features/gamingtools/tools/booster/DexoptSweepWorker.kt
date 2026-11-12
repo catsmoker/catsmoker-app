@@ -1,5 +1,7 @@
 package com.catsmoker.app.features.gamingtools.tools.booster
 
+import com.catsmoker.app.R
+
 import android.app.Notification
 import android.app.NotificationManager
 import android.app.PendingIntent
@@ -9,16 +11,18 @@ import androidx.core.app.NotificationCompat
 import androidx.hilt.work.HiltWorker
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
-import com.catsmoker.app.R
-import com.catsmoker.app.features.gamingtools.engine.BoosterOutcome
-import com.catsmoker.app.features.gamingtools.engine.BoosterState
-import com.catsmoker.app.features.gamingtools.engine.GamingEngine
-import com.catsmoker.app.shared.util.CatsmokerNotifications
+import com.catsmoker.app.platform.notifications.CatsmokerNotifications
+import com.catsmoker.app.screens.gaming.compilation.AppBoosterService
+import com.catsmoker.app.screens.gaming.compilation.BoosterOutcome
+import com.catsmoker.app.screens.gaming.compilation.BoosterState
+import com.catsmoker.app.screens.gaming.compilation.DexoptScheduleStore
+import com.catsmoker.app.screens.gaming.compilation.DexoptSweepStopReceiver
+import com.catsmoker.app.screens.gaming.mode.GamingEngine
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
+import kotlin.math.roundToInt
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
-import kotlin.math.roundToInt
 
 /**
  * The recurring ART dexopt sweep: the same engine run the App Booster button starts

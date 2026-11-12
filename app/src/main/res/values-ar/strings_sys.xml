@@ -6,7 +6,7 @@
     <!-- Guilt-trip dialog when the free "Enable Ads" switch is turned off. -->
     <!-- Play-variant paid ad removal (Google Play Billing one-time product remove_ads). -->
     <string name="sys_analytics_title">إرسال بيانات التحليلات</string>
-    <string name="sys_analytics_sub">معطلة حتى تفعّلها. اسمح لـ Google Firebase Analytics بتلقي أحداث الاستخدام وتفاصيل الجهاز ومعرّف التثبيت وموقع تقريبي من IP. عطّلها لسحب جمع التحليلات اللاحق. خيارات الإعلانات منفصلة.</string>
+    <string name="sys_analytics_sub">اسمح لـ Google Firebase Analytics بتلقي أحداث الاستخدام وتفاصيل الجهاز ومعرّف التثبيت وموقع تقريبي من IP. عطّلها لسحب جمع التحليلات اللاحق. خيارات الإعلانات منفصلة.</string>
     <!-- Nothing Glyph Interface mirror (Settings > General, shown only where the GDK works). -->
     <string name="sys_later">لاحقًا</string>
     <string name="sys_permissions_title">أذونات التطبيق</string>
@@ -40,7 +40,7 @@
     <string name="sys_first_run_title">مرحبًا بك في CatSmoker</string>
     <string name="sys_first_run_subtitle">اختر مظهر التطبيق ولغته. يمكنك تغيير هذا لاحقًا من الإعدادات.</string>
     <string name="onb_theme_hint">اضغط على معاينة — يتغير التطبيق فورًا.</string>
-    <string name="onb_language_hint">يعيد التطبيق التشغيل باللغة الجديدة بعد المتابعة.</string>
+    <string name="onb_language_hint">اختيار لغة يعيد تشغيل التطبيق فورًا.</string>
     <string name="sys_continue">متابعة</string>
 
     <!-- Redesigned Settings: section headers, one-line values, info sheets. -->

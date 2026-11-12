@@ -75,18 +75,19 @@ the Play compile. Variant boundaries use same-FQN shims — one file per variant
 with the same package/name and shared-call contract, different bodies. Additional
 owner-only methods need not be reproduced as unused stubs:
 
-- `system.VariantCapabilities` (`HAS_SPOOF`, `HAS_SELF_UPDATE`)
-- `system.AdsInit` (SDK bootstrap, called by `CatsmokerApp`)
+- `system.distribution.VariantCapabilities` (`HAS_SPOOF`, `HAS_SELF_UPDATE`)
+- `system.ads.AdsInit` (SDK bootstrap, called by `CatsmokerApp`)
 - `system.ads.AdManager` (shared ad/observer contract; Start.io vs AdMob)
-- `shared.ui.components.AdBanner` (same signature; Start.io vs AdMob banner)
+- `system.ads.AdBanner` (same signature; Start.io vs AdMob banner)
 - `system.navigation.spoofGraph()` (real destinations vs empty block)
-- `system.ProfileShareHandler` (profile intake vs no-op)
+- `system.sharing.ProfileShareHandler` (profile intake vs no-op)
+- `system.privacy.DistributionPrivacyGate` (Play consent UI vs Full no-op)
 - `features.settings.Distribution*Settings` and `rememberAvailableUpdateName`
   (full updater/free-ad controls versus Play purchase/store controls)
-- `features.main.DistributionQuickAction` (spoof entry versus empty extension)
+- `features.home.DistributionQuickAction` (spoof entry versus empty extension)
 - `features.gamingtools.BackgroundNetworkControls` (full VPN panel vs empty
   Play extension), plus flavor network icon/help builders
-- `system.StorageAccess` (real modern all-files queries/intents vs unavailable)
+- `system.storage.StorageAccess` (real modern all-files queries/intents vs unavailable)
 
 `src/main/jni/Android.mk` is only a selection script: `CATSMOKER_FULL=1`
 selects both C sources from `src/full/jni`; Play builds no app native module.

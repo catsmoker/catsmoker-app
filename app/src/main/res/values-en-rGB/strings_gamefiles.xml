@@ -41,7 +41,6 @@
     <string name="gf_version_label">VERSION</string>
     <string name="gf_choose_game_title">Choose a game</string>
     <string name="gf_selected_desc">Selected</string>
-    <string name="gf_choose_version_desc">Choose version</string>
     <string name="gf_profile_section">PROFILE</string>
     <string name="gf_apply_profile">APPLY PROFILE</string>
     <string name="gf_reset_file">Reset %1$s</string>

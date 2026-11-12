@@ -6,7 +6,7 @@
     <!-- Guilt-trip dialog when the free "Enable Ads" switch is turned off. -->
     <!-- Play-variant paid ad removal (Google Play Billing one-time product remove_ads). -->
     <string name="sys_analytics_title">解析データを送信</string>
-    <string name="sys_analytics_sub">有効にするまでオフです。Google Firebase Analytics に利用イベント、端末情報、インストール識別子、IP に基づく概略位置を送信することを許可します。オフにすると以後の分析収集を撤回します。広告の選択は別です。</string>
+    <string name="sys_analytics_sub">Google Firebase Analytics に利用イベント、端末情報、インストール識別子、IP に基づく概略位置を送信することを許可します。オフにすると以後の分析収集を撤回します。広告の選択は別です。</string>
     <!-- Nothing Glyph Interface mirror (Settings > General, shown only where the GDK works). -->
     <string name="sys_later">後で</string>
     <string name="sys_permissions_title">アプリ権限</string>
@@ -40,7 +40,7 @@
     <string name="sys_first_run_title">CatSmokerへようこそ</string>
     <string name="sys_first_run_subtitle">アプリの外観と言語を選んでください。後から設定で変更できます。</string>
     <string name="onb_theme_hint">プレビューをタップ — 即座に反映されます。</string>
-    <string name="onb_language_hint">Continueでアプリが新しい言語で再起動します。</string>
+    <string name="onb_language_hint">言語を選ぶとアプリがすぐに再起動します。</string>
     <string name="sys_continue">続行</string>
 
     <!-- Redesigned Settings: section headers, one-line values, info sheets. -->

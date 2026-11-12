@@ -33,8 +33,8 @@ See [BUILD.md](BUILD.md) for prerequisites and commands.
 
 - Pure logic (parsers, builders, templates) goes in a class that has **no
   Android imports** and gets a **unit test** under `app/src/test`. There are
-  existing patterns to copy in `features/main/engine/parsers/` and
-  `features/spoofdevice/tools/`.
+  existing patterns to copy in `telemetry/parsers/` and
+  `screens/spoofing/tools/`.
 - Follow the conventions in [CODING_STYLE.md](CODING_STYLE.md): document
   *why* non-obvious code exists, verify settings by reading them back, and
   never report a manufactured `0` as a measurement.

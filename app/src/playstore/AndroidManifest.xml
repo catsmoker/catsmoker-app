@@ -18,7 +18,7 @@
     <application>
         <!-- Keep the VPN service out of every Play artifact, including lower-priority manifests. -->
         <service
-            android:name="com.catsmoker.app.features.gamingtools.tools.firewall.VpnFirewallService"
+            android:name="com.catsmoker.app.screens.gaming.network.VpnFirewallService"
             tools:node="remove" />
 
         <meta-data

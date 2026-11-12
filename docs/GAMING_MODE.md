@@ -1,7 +1,7 @@
 # Gaming Mode & the Gaming Engine
 
 This document explains what **Gaming Mode** in CatSmoker actually does and
-how `GamingEngine` (`features/gamingtools/engine/GamingEngine.kt`) makes it
+how `GamingEngine` (`screens/gaming/mode/GamingEngine.kt`) makes it
 happen.
 
 ## What Gaming Mode applies

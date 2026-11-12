@@ -5,9 +5,17 @@ contributing so new code reads like the code around it.
 
 ## Package & file organization
 
-- One feature per package under `features/` (e.g. `gamingtools`, `spoofdevice`).
-- Shared cross-feature code lives in `shared/` (`data`, `ui`).
-- App-wide wiring lives in `system/` (navigation, DI, shell, ads).
+- One navigation destination (or destination group) per package under `screens/`
+  (e.g. `gaming`, `spoofing`, `editgamefiles`).
+- A capability owns its whole vertical slice inside that package: screen,
+  ViewModel, state, service, catalog, assets and controls (precedent:
+  `screens/gaming/crosshair/`).
+- Reusable presentation lives in `ui/` (`components`, `theme`); app-wide wiring
+  in `application/` (navigation, DI, privacy, startup); Android/OS access in
+  named `platform/` responsibilities; third-party seams in `integrations/`.
+- `features/` and `system/` survive only as frozen identities (manifest
+  components, JNI/Xposed entry points, persisted work names). Do not add code
+  there.
 - Each screen typically has a `*Screen.kt` (Compose UI) + `*ViewModel.kt`,
   with engine/service classes kept separate from UI.
 
@@ -25,7 +33,7 @@ contributing so new code reads like the code around it.
 ## Shell & privileges
 
 - All command execution is funneled through `ShellRunner`
-  (`system/shell/ShellRunner.kt`), never spawned ad hoc — except when a
+  (`platform/shell/ShellRunner.kt`), never spawned ad hoc — except when a
   blocker (like cancelling an in-flight dexopt) genuinely needs the raw
   `Process`, which is documented at the call site.
 - `ShellRunner` decides the best channel (root / Shizuku / plain shell) and
@@ -85,7 +93,7 @@ These recur across the codebase — a reviewer will expect them:
    every fold.
 5. **Feature questions live in an info sheet, never in the card body.** Every
    "What is this?" / "Is it safe?" / "Should I turn it on?" answer belongs to
-   the feature's `InfoTopic` in `features/gamingtools/ui/InfoTopics.kt` and
+   the feature's `InfoTopic` in `screens/gaming/components/InfoTopics.kt` and
    opens from the small `InfoButton` beside that feature's title (20 dp glyph,
    48 dp touch target, neutral info icon, amber warning triangle when the
    topic carries a risk/cost answer). Several questions for one feature stay in
@@ -105,7 +113,7 @@ These recur across the codebase — a reviewer will expect them:
   `GlassBorder`, top-highlight gradient, soft shadow; `accentGlow = true`
   when selected or active). Never hand-roll a card surface; disabled cards
   stay flat grey.
-- Card rhythm comes from `CatsmokerSpacing` (`shared/ui/theme/Spacing.kt`):
+- Card rhythm comes from `CatsmokerSpacing` (`ui/theme/Spacing.kt`):
   `CardGap` 12dp between sibling cards (stacked or side by side),
   `SectionGap` 24dp between labelled sections, `LabelGap` 8dp from a section
   label to its first card. Pass siblings through `CardGroup` or

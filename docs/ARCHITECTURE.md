@@ -20,37 +20,110 @@ A high-level map of the CatSmoker Android codebase and how the layers fit togeth
 | Analytics            | Firebase Analytics (shared, same project)      |
 | Min / target SDK     | API 27 / API 37                                |
 
+## Naming and grouping rules
+
+Packages name what the code is, not which pass introduced it:
+
+- **`screens/`** — a navigation destination (or a group of sibling destinations)
+  owns the screen, its ViewModel, its state and the logic only that screen uses.
+  Opening one destination from another never moves its code under the opener.
+- **A capability owns its whole vertical slice.** A feature's UI, state, service,
+  catalog, assets, controls and stores live in one folder when they exist only for
+  that capability. Crosshair Library is the reference case: screen, ViewModel,
+  catalog repository, asset resolution, position store, overlay service and its
+  Compose controls share `screens/gaming/crosshair/`.
+- **Collections hold one kind of entry.** `screens/editgamefiles/games/` contains
+  only games — one folder per supported game. Shared storage, models, the registry
+  and the delivery pipeline live beside it, never inside it.
+- **Reusable presentation, telemetry, platform access and app wiring have separate
+  named homes** (`ui/`, `telemetry/`, `platform/`, `application/`, `integrations/`)
+  instead of a mixed `shared/` or `system/` bucket.
+- Kotlin packages and filenames are lowercase; files are named after their primary
+  responsibility, and oversized mixed files are split by responsibility.
+
 ## Module layout
 
 Single application module under `app/` with `distribution` product flavors
 (`full`, `playstore`) — see [`FLAVOR_WORKFLOW.md`](FLAVOR_WORKFLOW.md). There
 is no separate `core`/`feature` Gradle split and no separate Git branch;
-features are separated by Kotlin packages, variants by source set:
+areas are separated by Kotlin packages, variants by source set:
 
 ```
 app/src/
 ├── main/                   # shared code — ships in BOTH variants
 │   └── java/com/catsmoker/app/
-│       ├── system/         # entry, DI, shell, navigation, ads call points
+│       ├── screens/        # one area per destination or destination group
+│       │   ├── home/       # HomeRoute/HomeScreen + HomeViewModel
+│       │   ├── permissions/# first-run steps + permissions, one destination
+│       │   ├── gaming/     # Gaming Tools screen + one folder per capability
+│       │   │   ├── GamingToolsScreen.kt, GamingToolsViewModel.kt,
+│       │   │   │   GameInfo.kt, GameLibrarySelection.kt, GameLibraryTile.kt
+│       │   │   ├── mode/          # Gaming Mode engine, session, snapshots, device levers, its UI
+│       │   │   ├── compilation/   # ART dexopt: ArtCompiler, decision, history, schedule, UI
+│       │   │   ├── cleaning/      # junk scan, rules, schedules, UI
+│       │   │   ├── network/       # DNS + background data controls
+│       │   │   ├── graphics/      # resolution, ANGLE, interventions, developer options
+│       │   │   ├── apps/          # game library, auto force-stop, suspend/appops state
+│       │   │   ├── crosshair/     # library screen, catalog, assets, overlay, controls
+│       │   │   ├── performanceoverlay/ # readout service, position store, controls
+│       │   │   ├── audio/ + glyph/ # audio boost, Nothing glyph mirror
+│       │   │   └── components/    # card shells, info topics, picker, schedule labels
+│       │   ├── editgamefiles/     # File Engineering screen + delivery pipeline
+│       │   │   ├── games/         # games only: pubg, genshin, newstate, starrail,
+│       │   │   │                  # wutheringwaves, grid
+│       │   │   ├── model/         # GameType, GameConfig/GameProfile
+│       │   │   └── storage/       # backups, history, install probes, push plan
+│       │   ├── legal/      # Licenses, Privacy Policy, Terms + shared LegalComponents
+│       │   ├── about/      # About only; linked destinations are peers
+│       │   ├── donate/ ├── settings/ ├── logs/
+│       ├── ui/             # reusable presentation, no screen ownership
+│       │   ├── components/ # ScreenScaffold, cards, chips, dialogs, info button
+│       │   └── theme/      # colours, typography, spacing, log-line palette
+│       ├── telemetry/      # MetricsEngine, GPU reader, model/, parsers/
+│       ├── platform/       # Android/OS access with one named responsibility each
+│       │   ├── shell/      # ShellRunner
+│       │   ├── display/    # the two display-fact readers
+│       │   ├── device/ ├── apps/ ├── memory/ ├── thermal/ ├── notifications/
+│       ├── application/    # app composition, not screens
 │       │   ├── navigation/ # Routes + AppNavHost (+ variant spoofGraph())
-│       │   ├── shell/ShellRunner.kt  # root + Shizuku command execution
-│       │   └── ads/        # ( Implementations live per-flavor; see below)
-│       ├── shared/         # data/models, ui/theme, components
-│       └── features/       # main, gamingtools, editgamefiles, permissions,
-│                           # logs, settings, about (+ legal + licenses screens)
-├── full/                   # Full/GitHub-only: spoofdevice/ (+ root/ Xposed module,
-│                           # Magisk builder, native spoof channel: native_init +
-│                           # NativeSpoofChannel), SpoofRepository et al, Start.io
-│                           # AdManager/AdBanner/AdsInit, SelfUpdater, scope
-│                           # array, xposed_init, spoof manifest entries,
-│                           # VPN controls/service/help, native bridge + jni/,
+│       │   ├── di/ ├── appearance/ ├── privacy/ ├── startup/
+│       ├── integrations/   # third-party SDK seams (ads)
+│       ├── format/         # byte-size formatting
+│       └── logging/        # log-line parsing, reused by log UI/theme
+├── full/                   # Full/GitHub-only: screens/spoofing/ (hub, profiles,
+│                           # profileeditor, appassignment, safemode, diagnostics,
+│                           # state/, data/, components/, hooks/ target-process
+│                           # hooks, tools/ Magisk builder, games/monsterhunter/),
+│                           # Start.io ad adapters, SelfUpdater, scope array,
+│                           # xposed_init, spoof manifest entries, VPN
+│                           # controls/service/help, native bridge + jni/,
 │                           # FullSettingsViewModel + updater/free-ad UI, SpoofRoutes
-├── playstore/              # Play-only: AdMob AdManager/AdBanner/AdsInit,
-│                           # Billing policy/repository/purchase UI + Rate App,
-│                           # empty extensions, AdMob App ID manifest entry
+├── playstore/              # Play-only: AdMob ad adapters, Billing
+│                           # policy/repository/purchase UI + Rate App, empty
+│                           # extensions, AdMob App ID manifest entry
 ├── testFull/               # full-only unit tests
 └── testPlaystore/          # Play-only unit tests (src/test/ runs on both)
 ```
+
+`system/` and `features/` survive only as frozen identities, never as homes for
+new code:
+
+| Frozen name | Why it cannot move |
+| --- | --- |
+| `system.CatsmokerApp`, `system.MainActivity` | AndroidManifest application/launcher entries |
+| `system.config.SpoofConfigProvider` | exported provider authority and component name used by hooks |
+| `system.shell.NativeBridge`, `features.spoofdevice.root.NativeSpoofChannel` | JNI symbol names compiled into the C bridges |
+| `features.spoofdevice.root.LSPosedModule` | `xposed_init` entry point and release keep rule |
+| `system.ads.BillingAcknowledgementWorker` | persisted WorkManager work name |
+| `features.gamingtools.engine.GamingNotificationListener` | platform-granted notification-listener component |
+| `features.gamingtools.engine.BootRecoveryWorker`, `features/gamingtools.tools.booster.DexoptSweepWorker`, `features/gamingtools.tools.cleaner.CleanerSweepWorker` | persisted WorkManager work names |
+| `features.editgamefiles.service.FileService` | Shizuku user-service class name resolved by reflection, AIDL `IFileService` |
+
+Everything else inside those two packages is gone. Ordinary services and
+receivers moved with their manifest entries and call sites; no forwarding
+classes or duplicate implementations were introduced.
+
+## Variant seams
 
 Variant seams are same-FQN pairs (`VariantCapabilities`, `AdsInit`,
 `AdManager`, `AdBanner`, `spoofGraph()`, `ProfileShareHandler`,
@@ -66,24 +139,85 @@ APIs versus an unavailable Play implementation; legacy storage stays shared.
 
 Common settings retain appearance, analytics, notification status and APK sharing.
 Full owns the entire updater state/UI/notes parser, free-ad donation gate/artwork,
-graphics probe used by spoof diagnostics and the reference-only Unity target-list
+graphics probe used by spoof profile generation and the reference-only Unity target-list
 parser. Play owns purchase state, billing policy/repository and store actions.
 There is no Play SelfUpdater or Full RemoveAdsRepository stub. Selected resource
 files own their corresponding labels/disclosures; the common license screen uses
 one flavor-provided ads-component label. Spoof route constants and the dashboard
 entry are Full-only; the shared navigation extension is intentionally empty on Play.
 
-## Dependency direction
+## Screen ownership and deliberate exceptions
 
-Higher-level feature screens depend on the `system` and `shared` layers,
-not the other way around:
+The navigation graph, not the screen that opens a destination, determines its
+area. `application/navigation/AppNavHost.kt` wires the 12 shared destinations.
+Full's `spoofGraph` wires six sibling areas under `screens/spoofing/`: `hub/`,
+`profiles/`, `profileeditor/`, `appassignment/`, `safemode/`, and `diagnostics/`.
+This is a feature-family grouping, not nesting screens under the hub implementation.
+Its `state/` owns the existing shared `SpoofDeviceViewModel` and status probes;
+`components/` owns the preset picker and profile import/sharing helpers;
+`data/model/`, `data/repository/`, and `data/device/` own profiles, persistence,
+rendering and the graphics probe. `hooks/` owns target-process hooks plus
+`LSPosedConfig`; `tools/` owns Magisk generation and `UnityTargetList`.
+The one game-specific hook (`hookMonsterHunterGpm`, MH Outlanders'
+`com.tencent.mhadv` GPM tier override) lives in `games/monsterhunter/`; every
+other hook in `hooks/` is generic.
 
-```
-features/*  ──►  system/*  ──►  shared/*
-            └──────────┬──────────┘
-                       ▼
-              Android framework + 3rd-party SDKs
-```
+Crosshair Library still selects through the Gaming Tools parent ViewModel.
+The spoof profile list, editor, app assignment and safe-mode destinations still
+use the hub's back-stack entry for their shared ViewModel. Package separation
+does not change these lifetimes, route values, callbacks or back behavior.
+
+Star Rail, Wuthering Waves and GRID are embedded File Engineering panels, not
+destinations; their screens/ViewModels stay in `editgamefiles/games/<game>/`.
+Onboarding steps remain within the Permissions destination. Gaming cards,
+overlays, dialogs and startup UI are not invented as new routes. Log collection
+stays with Logs despite its application-wide lifetime. Legal section lists remain
+owned by Privacy Policy/Terms and are reused by onboarding; `screens/legal/`
+also owns the rendering components those three screens share.
+
+The retired `shared/data` and `shared/util` buckets stay retired: game-file
+models live with File Engineering, gaming models/snapshots with their gaming
+capability, telemetry in `telemetry/`, and platform helpers under named
+`platform/` responsibilities. Gson field names, preferences/files, provider
+authority and resource IDs are unchanged; release keep rules follow relocated
+model/config classes.
+
+## Supported games and where their code lives
+
+File Engineering is the only place with a fixed game list (`GameType`). The
+Gaming Tools "Your Games" grid is a launcher-style library of installed or
+user-added apps — it is capability-based and has no fixed game list, so it
+appears here as no per-game entry.
+
+| Game | Selector entry | Code |
+| --- | --- | --- |
+| PUBG Mobile — Global (`com.tencent.ig`) | `PUBG_GLOBAL` | `games/pubg/` (shared save/profile pipeline) |
+| PUBG Mobile — KR/JP (`com.pubg.krmobile`) | `PUBG_KRJP` | `games/pubg/` |
+| PUBG Mobile — VN (`com.vng.pubgmobile`) | `PUBG_VN` | `games/pubg/` |
+| BGMI (`com.pubg.imobile`) | `BGMI` | `games/pubg/` |
+| PUBG Mobile — Rekoo (`com.rekoo.pubgm`) | `PUBG_REKOO` | `games/pubg/` |
+| PUBG Mobile — Flash (`com.tencent.igfit`) | `PUBG_FLASH` | `games/pubg/` |
+| Genshin Impact | `GENSHIN_IMPACT` | `games/genshin/` |
+| PUBG: New State | `PUBG_NEW_STATE` | `games/newstate/` (root-only in-place INI) |
+| Honkai: Star Rail | `HSR` | `games/starrail/` (embedded editor) |
+| Wuthering Waves | `WUWA` | `games/wutheringwaves/` (embedded editor) |
+| GRID Autosport | `GRID` | `games/grid/` (embedded editor) |
+
+The six PUBG variants deliberately share one implementation and one
+`ShadowTrackerExtra` save layout. `GameConfigRegistry.populateGameConfigs`
+registers the profile-based entries; the three embedded editors register no
+profile config because they never push a bundled template. `spoof_scope.xml`
+lists many more packages: that is the LSPosed load scope, not editor support.
+
+## Dependency responsibilities
+
+Screens depend on their owned logic, `platform/` helpers and genuinely reused
+`ui/`, `format/` and `logging/` code. These are ownership boundaries, not new
+Gradle layers: `application/navigation` imports screen entry points,
+`application/di` binds engines, and app startup starts existing
+logging/telemetry. Shared UI may use platform appearance helpers. No interface
+layer, module split or duplicate implementation is introduced to force an
+artificial one-way package dependency.
 
 Pure-Kotlin logic (parsers, template builders, models) has no Android
 imports and is unit-tested under `app/src/test` (both variants) plus
@@ -91,7 +225,7 @@ imports and is unit-tested under `app/src/test` (both variants) plus
 
 ## Key components
 
-### `ShellRunner` (`system/shell/ShellRunner.kt`)
+### `ShellRunner` (`platform/shell/ShellRunner.kt`)
 The single choke point for privileged work. It routes a command through
 whatever channel is available — `su` (libsu), the Shizuku binder, or a
 plain `/system/bin/sh` — and caches which channel works. Everything else
@@ -102,17 +236,21 @@ Application entry point and Compose host. A Hilt module provides
 `ShellRunner`, the engines and repositories used across screens.
 
 ### Engines
-- `MetricsEngine` — telemetry/overlay data (see `METRICS_ENGINE.md`).
-- `GamingEngine` — Gaming Mode + booster services (see `GAMING_MODE.md`).
+- `MetricsEngine` (`telemetry/`) — home/overlay data (see `METRICS_ENGINE.md`).
+- `GamingEngine` (`screens/gaming/mode/`) — Gaming Mode + session + device levers
+  (see `GAMING_MODE.md`).
+- `ArtCompiler` (`screens/gaming/compilation/`) — the ART dexopt sweep. It shares
+  the engine's scope, prefs, shell and consent check, and `GamingEngine`'s
+  `runArtOptimization`/`cancelArtOptimization` delegate to it, so the manual card
+  and the scheduled worker keep one owned implementation.
 - `GamingModeJobRunner` — the app-scoped job that activates/reverts Gaming Mode. A screen never
   launches that toggle itself: the write takes ~90 s and must survive the activity closing
   (see `GAMING_MODE.md`, "Who runs a toggle").
 
 ### Overlay & background services
-Several long-running `Service` implementations live under
-`gamingtools/tools/` (crosshair, performance overlay, auto force-stop,
-app booster). The local `VpnFirewallService` is full-only following this app's
-Play rejection (the general policy has eligible categories/exceptions). Each reads/writes shared prefs and StateFlows
+Long-running services live with the capability they serve: `crosshair/`,
+`performanceoverlay/`, `apps/` (auto force-stop), `compilation/` (app booster),
+and `network/` (full-only VPN firewall). Each reads/writes shared prefs and StateFlows
 so the Compose UI and the overlay stay in sync. Both visible overlays
 reposition through a move mode — the window is `FLAG_NOT_TOUCHABLE` until the
 user asks to drag it, so taps otherwise reach the game; the crosshair stores an
@@ -121,14 +259,14 @@ offset from screen centre, the performance readout absolute top-left pixels
 read. Services broadcast their own start/stop/mode changes and the ViewModel
 follows those reports rather than the request that caused them.
 
-The crosshair picker bundles only `scope7.png`; its library reads a numeric PNG catalog from
+The crosshair picker bundles only `scope7.png`; `screens/gaming/crosshair` reads a numeric PNG catalog from
 `catsmoker/catsmoker-app` on GitHub and stores validated downloads under the app's private
 `files/crosshairs/` directory. The library needs an internet connection to browse/download, but
 using an already downloaded or bundled crosshair needs only the overlay permission. Catalog and
 image files must be published to the repository's `main` branch before the online library is
 available to users.
 
-`gamingtools/tools/glyph/` is the one exception to that pattern: `GlyphController`
+`screens/gaming/glyph/` is the one exception to that pattern: `GlyphController`
 binds Nothing's GDK proxy only to *display* something, mirrors
 `GamingEngine.state` onto the LEDs, writes nothing, and no-ops on every other
 phone (see `GAMING_MODE.md`).
@@ -152,7 +290,8 @@ phone (see `GAMING_MODE.md`).
 - **Game files**: back up the device's bytes → push → read-back verify
   (`md5sum`, never `cat` for bytes; see `FILE_ENGINEERING.md`).
 - **Scheduled dexopt**: `DexoptSweepScheduler` unique periodic work (`UPDATE`)
-  → ordinary `DexoptSweepWorker` → `GamingEngine.runArtOptimization`. Cleaner
+  → ordinary `DexoptSweepWorker` → `GamingEngine.runArtOptimization` (delegating
+  to `ArtCompiler`). Cleaner
   scheduling is ordinary work too; progress/Stop notifications do not elevate
   either worker to a foreground service. System time limits and deferral apply.
 - **Privacy choices**: `GamingPrivacyGate` records separate, versioned, optional

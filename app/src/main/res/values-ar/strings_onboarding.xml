@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="onb_analytics_explanation">تحليلات استخدام Firebase اختيارية. تُطبّق عند المتابعة؛ يمكن تعطيلها من الإعدادات.</string>
+    <string name="onb_analytics_details">تتلقى Google Firebase Analytics أحداث الاستخدام التلقائية وتفاصيل الجهاز والتطبيق ومعرّف التثبيت وموقعًا تقريبيًا مستنتجًا من IP لفهم استخدام التطبيق. لا تُضاف أحداث مخصصة. يبدأ الجمع فقط إذا فعّلت هذا المفتاح وتابعت. يمكنك تعطيل التحليلات في الإعدادات. خيارات الإعلانات منفصلة.</string>
+    <string name="onb_access_summary">اختياري ومحلي. الحفظ يطبّق الاختيارات؛ السماح يطبّق استخدامًا واحدًا. يمكنك تخطي الجميع.</string>
+    <string name="onb_inventory_status">لا يلزم إذن Android</string>
+    <string name="onb_enable_analytics_continue">تفعيل التحليلات والمتابعة</string>
+    <string name="onb_without_analytics_continue">المتابعة دون تحليلات</string>
+    <string name="onb_inventory_title">التطبيقات المثبتة</string>
+    <string name="onb_usage_title">تطبيق المقدمة</string>
+    <string name="onb_notifications_title">إزالة الإشعارات</string>
+    <string name="onb_inventory_visibility">يقتصر على التطبيقات التي يُظهرها Android؛ لا يوجد إذن وقت تشغيل لطلبه.</string>
+    <string name="onb_android_granted">وصول Android: ممنوح</string>
+    <string name="onb_android_not_granted">وصول Android: غير ممنوح</string>
+    <string name="onb_allow_open_settings">السماح وفتح الإعدادات</string>
+    <string name="onb_save_access_finish">حفظ الوصول المحدد والإنهاء</string>
+    <string name="onb_settings_unavailable">هذه الإعدادات غير متاحة على جهازك. يمكنك المتابعة دون هذا الوصول.</string>
+</resources>

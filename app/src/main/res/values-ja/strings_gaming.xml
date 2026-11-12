@@ -562,4 +562,136 @@
 
     <!-- Gaming engine -->
     <string name="gt_eng_no_priv">RootまたはShizukuの許可が必要です</string>
+
+    <!-- Gaming engine: activation/revert outcomes -->
+    <string name="gt_eng_un_suspend">%1$dつのアプリを一時停止できませんでした</string>
+    <string name="gt_eng_un_dnd_off">通知をサイレントにできませんでした — 端末が有効にしませんでした</string>
+    <string name="gt_eng_un_dnd_perm">通知をサイレントにできませんでした — このアプリにはまだ許可されていません</string>
+    <string name="gt_eng_un_refresh">画面を最速で固定しています — 端末はその設定を無視しています</string>
+    <string name="gt_eng_un_touch">タッチ速度を上げられません — 端末にその設定がありません</string>
+    <string name="gt_eng_un_fixed">定速モード — 端末が拒否しました</string>
+    <string name="gt_eng_un_gpu">Qualcomm GPUパフォーマンスモード — 端末がスイッチを拒否しました</string>
+    <string name="gt_eng_un_qti">Qualcomm ゲームFPSヒント — 端末がスイッチを拒否しました</string>
+    <string name="gt_eng_un_snap">Snapdragon CPUモード — 端末がスイッチを拒否しました</string>
+    <string name="gt_eng_un_input_boost">入力ブースト — 端末がスイッチを拒否しました</string>
+    <string name="gt_eng_un_governor">パフォーマンスガバナー — 端末がスイッチを拒否しました</string>
+    <string name="gt_eng_un_spectrum">Spectrumプロファイル — 端末がプロファイルを拒否しました</string>
+    <string name="gt_eng_un_storage">ストレージ先読み — 端末が変更を拒否しました</string>
+    <string name="gt_eng_un_memory">メモリリザーブ — 端末が変更を拒否しました</string>
+    <string name="gt_eng_un_vivo">vivoディスプレイモード — 端末がスイッチを拒否しました</string>
+    <string name="gt_eng_un_discard">アプリを離れた直後に閉じています — 設定を維持できませんでした</string>
+    <string name="gt_eng_un_limit">バックグラウンドアプリを制限しています — 設定を維持できませんでした</string>
+    <string name="gt_eng_un_data_on">他アプリのデータ通信を停止中 — すでにオンになっていたため、そのまま維持しました</string>
+    <string name="gt_eng_un_data_silent">他アプリのデータ通信を停止中 — 端末が応答しませんでした</string>
+    <string name="gt_eng_un_data_fail">他アプリのデータ通信を停止中: %1$s</string>
+    <string name="gt_eng_un_data_revert">バックグラウンドデータ制限を解除できませんでした — 端末が応答しませんでした</string>
+    <string name="gt_eng_un_framecap">ゲームのフレームキャップを引き上げています — 端末が%1$s</string>
+    <string name="gt_eng_un_framecap_no">拒否しました: %1$s</string>
+    <string name="gt_eng_un_framecap_kept">設定を維持しませんでした</string>
+    <string name="gt_eng_un_pointer">タッチ速度 %1$s — 端末が拒否しました</string>
+    <string name="gt_eng_un_appops">%1$dつのアプリをバックグラウンド制限できませんでした</string>
+    <string name="gt_eng_still_suspended">%1$dつのアプリを復帰させられませんでした — まだ一時停止中、次回に再試行します</string>
+    <string name="gt_eng_still_restricted">%1$dつのアプリがまだバックグラウンド制限中 — 次回に再試行します</string>
+    <string name="gt_eng_thermal">熱制御オーバーライドを解除しています — 端末が拒否しました</string>
+    <string name="gt_eng_revert_fail">元に戻す処理を完了できませんでした: %1$s</string>
+    <string name="gt_eng_restore_refused">%1$sを復元できませんでした — 端末がゲーミング値を維持しています</string>
+
+    <!-- Graphics driver (ANGLE) -->
+    <string name="gt_angle_title">グラフィックドライバー</string>
+    <string name="gt_angle_1">ゲームが使うグラフィックドライバーを選択します: ANGLE（GoogleのVulkanベースGLESレイヤー）または端末固有のドライバー。ゲームによっていずれかで動作がスムーズになります。</string>
+    <string name="gt_angle_2">即座に適用され、再起動後も維持されます。デフォルトにするとリストからゲームが削除されます。</string>
+    <string name="gt_angle_need">変更にはRootまたはShizukuが必要です。現在の選択は表示されます。</string>
+    <string name="gt_angle_pick">ゲームを選択</string>
+    <string name="gt_angle_angle">ANGLE</string>
+    <string name="gt_angle_native">ネイティブ</string>
+    <string name="gt_angle_default">デフォルト</string>
+    <string name="gt_angle_now">現在: %1$s</string>
+    <string name="gt_angle_none">選択なし</string>
+    <string name="gt_angle_set">%1$sのグラフィックドライバー: %2$s</string>
+    <string name="gt_angle_no">ドライバーを設定できませんでした: %1$s</string>
+    <string name="gt_angle_no_reason">端末が拒否しました</string>
+
+    <!-- Filesystem trim -->
+    <string name="gt_trim_title">ファイルシステムトリム</string>
+    <string name="gt_trim_need">RootまたはShizukuが必要です</string>
+    <string name="gt_trim_done">トリム完了: %1$s 解放</string>
+    <string name="gt_trim_some">部分的に完了: %1$s 解放</string>
+    <string name="gt_trim_no">トリムできませんでした: %1$s</string>
+    <string name="gt_trim_no_reason">端末が拒否しました</string>
+    <string name="gt_trim_done_unmeasured">トリム完了 — サイズ測定不可</string>
+
+    <!-- Extra suspend list -->
+    <string name="gt_suspend_title">追加フリーズリスト</string>
+    <string name="gt_suspend_sub">ゲーミングモード起動時に一時停止するアプリ</string>
+    <string name="gt_suspend_what_1">選択したアプリはゲーミングモード起動時に一時停止されます。</string>
+    <string name="gt_suspend_what_2">停止していても通知は届きます。</string>
+    <string name="gt_suspend_none">追加フリーズなし</string>
+    <string name="gt_suspend_some">%1$dつのアプリ</string>
+    <string name="gt_suspend_add">アプリを追加</string>
+    <string name="gt_suspend_remove">削除</string>
+    <string name="gt_suspend_count">選択中: %1$d / 実際に停止中: %2$d</string>
+    <string name="gt_suspend_show">フリーズリストを表示</string>
+    <string name="gt_suspend_hide">フリーズリストを隠す</string>
+    <string name="gt_suspend_badge_frozen">停止中</string>
+    <string name="gt_suspend_badge_selected">選択中</string>
+
+    <!-- Keep-running list -->
+    <string name="gt_keep_title">実行維持リスト</string>
+    <string name="gt_keep_sub">ゲーミングモードのスイープから除外するアプリ</string>
+    <string name="gt_keep_what_1">選択したアプリはゲーミングモードによる停止から除外されます。</string>
+    <string name="gt_keep_what_2">バックグラウンドで動き続けます。</string>
+    <string name="gt_keep_none">除外なし</string>
+    <string name="gt_keep_some">%1$dつのアプリ</string>
+    <string name="gt_keep_summary_more">他 %1$dつ</string>
+    <string name="gt_keep_show_list">リストを表示</string>
+    <string name="gt_keep_hide_list">リストを隠す</string>
+    <string name="gt_keep_add">アプリを追加</string>
+    <string name="gt_keep_remove">削除</string>
+
+    <!-- Advanced fold -->
+    <string name="gt_advanced_title">詳細設定</string>
+    <string name="gt_advanced_sub">フリーズスイープのアプリリスト</string>
+    <string name="gt_advanced_expand">詳細設定を開く</string>
+    <string name="gt_advanced_collapse">詳細設定を閉じる</string>
+
+    <!-- Cleaner card disclosure -->
+    <string name="gt_cleaner_review">確認 &amp; 削除</string>
+    <string name="gt_cleaner_review_hide">項目を隠す</string>
+    <string name="gt_cleaner_advanced">スケジュール &amp; ルール</string>
+    <string name="gt_cleaner_advanced_hide">スケジュール &amp; ルールを隠す</string>
+
+    <!-- Gaming Mode session monitor -->
+    <string name="gt_session_title">自動ゲーミングモード</string>
+    <string name="gt_session_sub">ライブラリのゲームが起動するとゲーミングモードを開始します。</string>
+    <string name="gt_session_need_games">自動モードを有効にするにはゲームを追加してください。</string>
+
+    <!-- Auto game session service notifications -->
+    <string name="gt_svc_session_title">自動ゲームセッション</string>
+    <string name="gt_svc_session_channel">自動ゲームセッション</string>
+    <string name="gt_svc_session_off">監視停止 — 何も監視していません</string>
+    <string name="gt_svc_session_watching">ライブラリのゲームを監視中</string>
+    <string name="gt_svc_session_active">ゲーミングモードを自動起動: %1$s</string>
+    <string name="gt_svc_session_manual">手動ゲーミングモード有効 — 監視解除</string>
+    <string name="gt_svc_session_no_usage">使用履歴アクセスが必要 — タップして許可、現在は監視なし</string>
+    <string name="gt_svc_session_no_priv">RootまたはShizukuが必要 — Androidがゲーム変更を拒否、監視なし</string>
+
+    <!-- Performance overlay service notifications -->
+    <string name="gt_svc_perf_moving">パフォーマンスモニター — 移動中</string>
+    <string name="gt_svc_perf_taking">移動中はタップ操作を受け付けています。</string>
+    <string name="gt_svc_perf_done">移動完了</string>
+
+    <!-- Gaming Mode interrupted-session recovery -->
+    <string name="gt_gm_checking">前回のセッションを確認中…</string>
+    <string name="gt_gm_interrupted">前回のセッションが中断されました</string>
+    <string name="gt_gm_recovery_title">前回セッションのアプリ</string>
+    <string name="gt_gm_recovery_body">%1$d個のアプリがまだ停止中またはバックグラウンド制限中の可能性があります。</string>
+    <string name="gt_gm_recovery_unverified">端末がどれかを確認できなかったため、アプリが記録したものを表示しています。</string>
+    <string name="gt_gm_recovery_first">最初に前回のゲーミングモードセッションを元に戻してください。</string>
+    <string name="gt_gm_restore">アプリを復元</string>
+    <string name="gt_gm_restore_done">%1$d個のアプリと%2$d個のバックグラウンド制限を復元しました。</string>
+    <string name="gt_gm_restore_partial">%1$d個のアプリと%2$d個の制限を復元しました。%3$d個はまだ対応が必要です。</string>
+    <string name="gt_gm_restore_unverified">結果を確認できませんでした。%1$d個のアプリがまだ記録に残っています — 再試行してください。</string>
+    <string name="gt_gm_restore_active">ゲーミングモードが実行中です。アプリを復元する前にオフにしてください。</string>
+    <string name="gt_gm_revert_needed">前回セッションの設定がまだ適用中の可能性があります。ゲーミングモードをオフにして復元してください。</string>
+    <string name="gt_gm_error_session_open">このセッションの一部がまだ適用中の可能性があります。電源ボタンで元に戻してください。</string>
 </resources>

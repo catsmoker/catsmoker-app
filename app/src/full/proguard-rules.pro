@@ -16,7 +16,7 @@
 
 # Keep LSPosed entrypoints and config names stable in release builds.
 -keep class com.catsmoker.app.features.spoofdevice.root.LSPosedModule { *; }
--keep class com.catsmoker.app.shared.data.model.LSPosedConfig { *; }
+-keep class com.catsmoker.app.screens.spoofing.hooks.LSPosedConfig { *; }
 # NativeSpoofChannel's JNI entry points are resolved by their exact Kotlin names
 # (Java_com_catsmoker_app_features_spoofdevice_root_NativeSpoofChannel_*), so a
 # renamed class would make every native setter an UnsatisfiedLinkError in release.
@@ -27,9 +27,9 @@
 # otherwise carries neither, so ladder rungs deserialize as LinkedTreeMap —
 # the first ladder touch then crashes with ClassCastException — while profile
 # fields silently load empty. Narrow per-class keeps.
--keep class com.catsmoker.app.shared.data.repository.SpoofRepository$StoreData { *; }
--keep class com.catsmoker.app.shared.data.repository.SpoofRepository$ProfileEntry { *; }
--keep class com.catsmoker.app.shared.data.repository.SpoofRepository$RateCandidate { *; }
--keep class com.catsmoker.app.shared.data.model.DeviceProfile { *; }
+-keep class com.catsmoker.app.screens.spoofing.data.repository.SpoofRepository$StoreData { *; }
+-keep class com.catsmoker.app.screens.spoofing.data.repository.SpoofRepository$ProfileEntry { *; }
+-keep class com.catsmoker.app.screens.spoofing.data.repository.SpoofRepository$RateCandidate { *; }
+-keep class com.catsmoker.app.screens.spoofing.data.model.DeviceProfile { *; }
 
 -dontwarn de.robv.android.xposed.**

@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="policy_access_title">可选游戏访问权限</string>
-    <string name="policy_access_intro">请分别选择。这些选项不会授予 Android 权限。拒绝后仍可使用不受影响的功能。访问的信息仅供本地使用，不会发送到我们的服务器。分析功能默认关闭，需在设置中主动开启；广告选项单独管理。可随时在设置中查看和撤回。</string>
+    <string name="policy_access_intro">请分别选择。在保存所选访问或在下方明确允许某项用途之前，选择均为待确认状态。这不会授予 Android 权限。可取消全部选项并完成。信息仅供本地使用，不会发送到我们的服务器。可在设置 → 权限中查看或撤回选择。</string>
     <string name="policy_inventory">发现 CatSmoker 可见的已安装应用，用于游戏库、应用选择、优化、后台限制和清理检查。</string>
     <string name="policy_usage">启用会话检测或 Silent Hunter 时，观察哪个应用处于前台。会话检测会为游戏启用游戏模式。Silent Hunter 会强行停止上一个应用，包括非游戏应用，可能中断任务或消息。可从各自的通知中停止。</string>
     <string name="policy_notifications">游戏模式的通知抑制开启时，移除其他应用现有及新收到的通知。这不只是静音：CatSmoker 无法恢复已移除的通知，可能导致错过重要消息。此功能不读取消息正文。关闭后允许后续通知出现。</string>

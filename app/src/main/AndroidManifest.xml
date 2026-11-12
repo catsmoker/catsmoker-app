@@ -178,7 +178,7 @@
         <service android:name="androidx.work.impl.foreground.SystemForegroundService" tools:node="remove" />
 
         <service
-            android:name=".features.gamingtools.tools.crosshair.CrosshairOverlayService"
+            android:name=".screens.gaming.crosshair.CrosshairOverlayService"
             android:exported="false"
             android:enabled="true"
             android:foregroundServiceType="specialUse">
@@ -186,7 +186,7 @@
         </service>
 
         <service
-            android:name=".features.gamingtools.tools.overlay.PerformanceOverlayService"
+            android:name=".screens.gaming.performanceoverlay.PerformanceOverlayService"
             android:enabled="true"
             android:exported="false"
             android:foregroundServiceType="specialUse">
@@ -199,7 +199,7 @@
             writes, not from in-process state that resets on every boot.
         -->
         <receiver
-            android:name=".features.gamingtools.tools.overlay.OverlayBootReceiver"
+            android:name=".screens.gaming.performanceoverlay.OverlayBootReceiver"
             android:enabled="true"
             android:exported="false">
             <intent-filter>
@@ -216,7 +216,7 @@
             apps are woken even if the user never launches CatSmoker.
         -->
         <receiver
-            android:name=".features.gamingtools.engine.BootRecoveryReceiver"
+            android:name=".screens.gaming.mode.BootRecoveryReceiver"
             android:enabled="true"
             android:exported="false">
             <intent-filter>
@@ -225,7 +225,7 @@
         </receiver>
 
         <service
-            android:name=".features.gamingtools.tools.booster.AppBoosterService"
+            android:name=".screens.gaming.compilation.AppBoosterService"
             android:enabled="true"
             android:exported="false"
             android:foregroundServiceType="specialUse">
@@ -238,16 +238,16 @@
             the recurring schedule down with the run, which is not what a Stop button promises.
         -->
         <receiver
-            android:name=".features.gamingtools.tools.booster.DexoptSweepStopReceiver"
+            android:name=".screens.gaming.compilation.DexoptSweepStopReceiver"
             android:enabled="true"
             android:exported="false" />
         <receiver
-            android:name=".features.gamingtools.tools.cleaner.CleanerSweepStopReceiver"
+            android:name=".screens.gaming.cleaning.CleanerSweepStopReceiver"
             android:enabled="true"
             android:exported="false" />
 
         <service
-            android:name=".features.gamingtools.tools.forcestop.AutoForceStopService"
+            android:name=".screens.gaming.apps.AutoForceStopService"
             android:enabled="true"
             android:exported="false"
             android:foregroundServiceType="specialUse">
@@ -255,7 +255,7 @@
         </service>
 
         <service
-            android:name=".features.gamingtools.engine.GamingModeService"
+            android:name=".screens.gaming.mode.GamingModeService"
             android:enabled="true"
             android:exported="false"
             android:foregroundServiceType="specialUse">
@@ -263,7 +263,7 @@
         </service>
 
         <service
-            android:name=".features.gamingtools.engine.GameSessionService"
+            android:name=".screens.gaming.mode.GameSessionService"
             android:enabled="true"
             android:exported="false"
             android:foregroundServiceType="specialUse">

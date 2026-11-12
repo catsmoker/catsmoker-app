@@ -1,7 +1,7 @@
 # File Engineering (game config editors)
 
 How CatSmoker edits game-side files, and the rules each editor follows.
-Owned by `features/editgamefiles/`: `EditGameFilesScreen` +
+Owned by `screens/editgamefiles/`: `EditGameFilesScreen` +
 `EditGameFilesViewModel` (game registry, `GameProfile.labelRes`) plus one
 package per game — `genshin/`, `grid/`, `hsr/`, `pubg/`, `wuwa/`, `service/`
 (shared backup/SAF plumbing).
@@ -72,7 +72,7 @@ The rules now:
   `Android/data/<package>` starting point (`PubgSafAccess`) where the platform
   accepts one — selection and grant stay the user's.
   - **Custom import is typed, not a free-form file push** (2026-10-25).
-    `GameUploadTarget` (`shared/data/model`) names the only two supported
+    `GameUploadTarget` (`screens/editgamefiles/model`) names the only two supported
     files — `Active.sav` (`GameUploadFormat.GVAS_SAVE`) and
     `UserCustom.ini` (`USER_CUSTOM_INI`) — and `PubgUploadPlan` resolves each
     destination from the selected package. The old untyped picker always wrote
@@ -140,11 +140,11 @@ surface. Do not re-add either surface in any form.
 ## Tests
 
 Every codec and patcher has a JVM test class under
-`app/src/test/java/com/catsmoker/app/features/editgamefiles/`. The behavioural
+`app/src/test/java/com/catsmoker/app/screens/editgamefiles/`. The behavioural
 locks worth naming: `PubgSavePatcherTest` (GVAS + the bundled real saves), `PubgUserCustomTest` (merge shape against both pinned corpora), `NewStateIniTransformTest` (tuple + raise-only), `PubgSafAccessTest` (URI shapes),
 `GenshinConfigTemplateTest`, `GridPreferencesTest`,
 `HsrGraphicsSettingsTest`/`HsrGraphicsPresetTest`, `WuWaConfigGeneratorTest`,
 `WuwaPresetSelectionTest` (selection semantics), `WuWaSmartBrainTest`,
 `WuwaRemovedFeaturesTest` (the WuWa exclusion), `EditHistoryTest`,
-`InstallProbesTest`. `LocaleParityTest` (in `src/test/.../shared/`) guards
+`InstallProbesTest`. `LocaleParityTest` (in `src/test/.../conventions/`) guards
 resource parity across the five locale folders.

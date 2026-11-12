@@ -44,7 +44,6 @@
     <string name="gf_version_label">الإصدار</string>
     <string name="gf_choose_game_title">اختر لعبة</string>
     <string name="gf_selected_desc">محدد</string>
-    <string name="gf_choose_version_desc">اختيار النسخة</string>
     <string name="gf_profile_section">الملف</string>
     <string name="gf_apply_profile">تطبيق الملف</string>
     <string name="gf_reset_file">إعادة تعيين %1$s</string>

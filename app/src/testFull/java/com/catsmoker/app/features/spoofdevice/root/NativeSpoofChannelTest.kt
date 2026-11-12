@@ -1,5 +1,6 @@
 package com.catsmoker.app.features.spoofdevice.root
 
+import com.catsmoker.app.screens.spoofing.hooks.PropAliases
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
