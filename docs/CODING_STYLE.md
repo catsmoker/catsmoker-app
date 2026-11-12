@@ -104,6 +104,25 @@ These recur across the codebase — a reviewer will expect them:
    produced (e.g. booster run history, a pack README, skipped-scene lists,
    a deploy report), which have no single feature to attach an icon to.
 
+## Edge-to-edge and display cutouts
+
+- Keep `MainActivity.enableEdgeToEdge()` for AndroidX backward compatibility.
+  Play Console may still flag deprecated calls inside that compatibility code;
+  do not remove it just to silence a static warning.
+- Screen frames apply `systemBarsPadding()` followed by `displayCutoutPadding()`
+  after the full-window background. Compose consumes overlapping insets, so a
+  portrait status bar is not padded twice and landscape cutouts remain safe.
+  Keep IME padding at its existing content owner rather than padding every root
+  for the keyboard. Intentional game overlays are not Activity screen frames.
+- `Base.Theme.Catsmoker` inherits the version-qualified
+  `Platform.Theme.Catsmoker` in every locale/night configuration. That parent
+  keeps transparent bar attributes below API 35, uses `shortEdges` only on
+  API 28-29, and uses `always` on API 30+. API 35+ has no app-defined bar colors.
+- After changing this contract, visually check Android 15+ in portrait and both
+  landscape directions, light/dark themes, and gesture/three-button navigation.
+  Include onboarding, Home, a `ScreenScaffold` destination, Crosshair Library,
+  and an editor with the keyboard open. Source guards are not visual evidence.
+
 ## Visual system (charcoal + crimson + glass)
 
 - Dark canvas `CharcoalBlack`, surfaces `CharcoalSurface/Variant`; one brand

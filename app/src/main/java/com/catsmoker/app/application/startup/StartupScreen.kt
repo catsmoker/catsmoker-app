@@ -40,7 +40,9 @@ fun StartupScreen(onFinished: () -> Unit) {
         modifier = Modifier
             .fillMaxSize()
             // Theme background, not fixed black: the red logo and dots read on both.
-            .background(MaterialTheme.colorScheme.background),
+            .background(MaterialTheme.colorScheme.background)
+            .systemBarsPadding()
+            .displayCutoutPadding(),
         contentAlignment = Alignment.Center
     ) {
         Column(
@@ -61,7 +63,6 @@ fun StartupScreen(onFinished: () -> Unit) {
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .systemBarsPadding()
                 .padding(bottom = 48.dp),
             contentAlignment = Alignment.BottomCenter
         ) {

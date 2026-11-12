@@ -34,6 +34,7 @@ fun ScreenScaffold(
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
             .systemBarsPadding()
+            .displayCutoutPadding()
     ) {
         // Shared Header
         Row(

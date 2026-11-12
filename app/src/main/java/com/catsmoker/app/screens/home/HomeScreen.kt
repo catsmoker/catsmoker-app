@@ -147,6 +147,7 @@ fun HomeScreen(
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
             .systemBarsPadding()
+            .displayCutoutPadding()
             .padding(horizontal = 24.dp)
     ) {
         val landscape = maxWidth > maxHeight

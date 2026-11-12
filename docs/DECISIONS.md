@@ -993,3 +993,21 @@ Added `vulkanModel` (Vulkan physical-device name, `VkPhysicalDeviceProperties.de
   Switching between System and its matching explicit language therefore works in
   either direction without restarting. Actual language changes still commit the
   draft and preference before restarting; identical stored selections remain no-ops.
+
+## Edge-to-edge compatibility without a UI rewrite (2026-11-12)
+
+- Keep AndroidX `enableEdgeToEdge()` and theme-controlled system-bar icon contrast.
+  Deprecated calls inside AndroidX are compatibility implementation details, not
+  a reason to downgrade the target SDK or disable edge-to-edge.
+- Activity screen frames consume system-bar and display-cutout insets together;
+  backgrounds still fill the window. Keyboard padding stays with its existing
+  content owner. Intentional game-overlay positioning is unchanged.
+- A version-qualified `Platform.Theme.Catsmoker` parent isolates legacy transparent
+  bar attributes below API 35 and `shortEdges` to API 28-29. API 30+ uses `always`.
+  Locale/night base themes inherit that parent instead of overriding its window
+  settings. This does not promise that Play's dependency-level warnings disappear.
+- Source/resource guards check wiring, not rendering. The device matrix in
+  `CODING_STYLE.md` remains necessary before claiming visual compatibility.
+  References: [Android 15 edge-to-edge changes](https://developer.android.com/about/versions/15/behavior-changes-15#edge-to-edge),
+  [display cutouts](https://developer.android.com/develop/ui/views/layout/display-cutout),
+  [Compose cutout padding consumption](https://developer.android.com/reference/kotlin/androidx/compose/foundation/layout/displayCutoutPadding.modifier).

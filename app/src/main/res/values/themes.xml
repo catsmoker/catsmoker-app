@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <style name="Base.Theme.Catsmoker" parent="Theme.Material3.DayNight.NoActionBar">
+    <style name="Base.Theme.Catsmoker" parent="Platform.Theme.Catsmoker">
         <item name="windowActionBar">false</item>
         <item name="windowNoTitle">true</item>
         <item name="android:icon">@mipmap/ic_launcher</item>
@@ -8,13 +8,8 @@
 
         <!-- Paper background for the light theme (values-night/ stays black). -->
         <item name="android:windowBackground">@color/white</item>
-        <item name="android:statusBarColor">@android:color/transparent</item>
-        <item name="android:navigationBarColor">@android:color/transparent</item>
         <item name="android:windowLightStatusBar">true</item>
         <item name="android:windowLightNavigationBar">true</item>
-
-        <!-- Cutout Mode -->
-        <item name="android:windowLayoutInDisplayCutoutMode">shortEdges</item>
     </style>
 
     <style name="Theme.Catsmoker" parent="Base.Theme.Catsmoker" />
