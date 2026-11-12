@@ -127,7 +127,7 @@ classes or duplicate implementations were introduced.
 
 Variant seams are same-FQN pairs (`VariantCapabilities`, `AdsInit`,
 `AdManager`, `AdBanner`, `spoofGraph()`, `ProfileShareHandler`,
-`Distribution*Settings`, `rememberAvailableUpdateName`, `DistributionQuickAction`,
+`Distribution*Settings`, `DistributionSupportAction`, `rememberAvailableUpdateName`, `DistributionQuickAction`,
 `StorageAccess`, background network controls/help): `src/main` never imports `src/full`, so the Play compile
 cannot see the restricted implementations at all.
 
@@ -145,6 +145,15 @@ There is no Play SelfUpdater or Full RemoveAdsRepository stub. Selected resource
 files own their corresponding labels/disclosures; the common license screen uses
 one flavor-provided ads-component label. Spoof route constants and the dashboard
 entry are Full-only; the shared navigation extension is intentionally empty on Play.
+
+The shared support popup delegates its external action to
+`application/distribution/DistributionSupportAction`: Full opens the existing GitHub
+repository, Play opens its `BuildConfig.APPLICATION_ID` listing in the Play app with
+an HTTPS fallback. Play Settings reuses that action. Shared `SupportLink` handles
+launch failures; launch success never means a star or rating was submitted. Play
+resource overlays replace both the popup body and label in every shipped language.
+There is no support-ad placement: AdMob disallows the requested support appeal,
+and Start.io permission for the exact no-reward placement remains unconfirmed.
 
 ## Screen ownership and deliberate exceptions
 

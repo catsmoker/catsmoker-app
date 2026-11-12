@@ -22,8 +22,9 @@
     <string name="sys_lang_system">跟随系统</string>
     <string name="sys_cancel">取消</string>
     <string name="sys_support_title">支持开发者</string>
-    <string name="sys_support_text">请在 GitHub 上为项目点星，或捐赠以支持开发。</string>
-    <string name="sys_support_star">点星</string>
+    <string name="sys_support_text">您可以在 GitHub 上为项目点星，或捐赠以支持开发。两者均为自愿。</string>
+    <string name="sys_support_star">在 GitHub 上点星</string>
+    <string name="sys_support_link_failed">无法打开链接，请重试。</string>
     <string name="sys_support_donate">捐赠</string>
     <string name="sys_support_never">不再显示</string>
     <string name="donate_title">捐赠</string>

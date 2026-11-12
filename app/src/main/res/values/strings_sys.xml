@@ -22,8 +22,9 @@
     <string name="sys_lang_system">System default</string>
     <string name="sys_cancel">CANCEL</string>
     <string name="sys_support_title">Support the Developer</string>
-    <string name="sys_support_text">Please star the project on GitHub and donate to support development.</string>
-    <string name="sys_support_star">Star</string>
+    <string name="sys_support_text">Star the project on GitHub or donate to support development. Both are optional.</string>
+    <string name="sys_support_star">Star on GitHub</string>
+    <string name="sys_support_link_failed">Couldn\'t open the link. Please try again.</string>
     <string name="sys_support_donate">Donate</string>
     <string name="sys_support_never">Do not show again</string>
     <string name="donate_title">Donate</string>

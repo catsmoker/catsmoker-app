@@ -22,8 +22,9 @@
     <string name="sys_lang_system">افتراضي النظام</string>
     <string name="sys_cancel">إلغاء</string>
     <string name="sys_support_title">ادعم المطوّر</string>
-    <string name="sys_support_text">يرجى منح المشروع نجمة على GitHub والتبرع لدعم التطوير.</string>
-    <string name="sys_support_star">نجمة</string>
+    <string name="sys_support_text">امنح المشروع نجمة على GitHub أو تبرع لدعم التطوير. كلا الخيارين اختياري.</string>
+    <string name="sys_support_star">منح نجمة على GitHub</string>
+    <string name="sys_support_link_failed">تعذر فتح الرابط. يرجى المحاولة مرة أخرى.</string>
     <string name="sys_support_donate">تبرع</string>
     <string name="sys_support_never">عدم الإظهار مرة أخرى</string>
     <string name="donate_title">تبرع</string>

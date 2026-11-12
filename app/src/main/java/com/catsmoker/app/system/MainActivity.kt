@@ -16,12 +16,14 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.selection.toggleable
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.minimumInteractiveComponentSize
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -31,9 +33,9 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
 import androidx.core.content.edit
-import androidx.core.net.toUri
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
@@ -42,6 +44,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.compose.rememberNavController
 import com.catsmoker.app.application.appearance.AppearanceStore
 import com.catsmoker.app.application.appearance.LocaleHelper
+import com.catsmoker.app.application.distribution.DistributionSupportAction
 import com.catsmoker.app.application.navigation.AppNavHost
 import com.catsmoker.app.application.navigation.Routes
 import com.catsmoker.app.application.privacy.DistributionPrivacyGate
@@ -150,7 +153,6 @@ class MainActivity : ComponentActivity() {    override fun attachBaseContext(new
 
                 if (!showStartup && showSupportDialog && !isFinishing) {
                     LaunchedEffect(Unit) { markSupportDialogShown() }
-                    val githubUrl = stringResource(R.string.url_github)
                     AlertDialog(
                         onDismissRequest = { closeSupportDialog() },
                         title = { Text(stringResource(R.string.sys_support_title), color = MaterialTheme.colorScheme.onSurface) },
@@ -163,11 +165,19 @@ class MainActivity : ComponentActivity() {    override fun attachBaseContext(new
                                 if (showNeverAskOption(supportState)) {
                                     Row(
                                         verticalAlignment = Alignment.CenterVertically,
-                                        modifier = Modifier.padding(top = 8.dp)
+                                        modifier = Modifier
+                                            .padding(top = 8.dp)
+                                            .minimumInteractiveComponentSize()
+                                            .toggleable(
+                                                value = neverAskChecked,
+                                                role = Role.Checkbox,
+                                                onValueChange = { neverAskChecked = it }
+                                            )
                                     ) {
                                         Checkbox(
                                             checked = neverAskChecked,
-                                            onCheckedChange = { neverAskChecked = it }
+                                            onCheckedChange = null,
+                                            modifier = Modifier.padding(horizontal = 12.dp)
                                         )
                                         Text(
                                             stringResource(R.string.sys_support_never),
@@ -178,13 +188,11 @@ class MainActivity : ComponentActivity() {    override fun attachBaseContext(new
                             }
                         },
                         confirmButton = {
-                            Row {
+                            Column(horizontalAlignment = Alignment.End) {
                                 TextButton(onClick = {
-                                    try {
-                                        val intent = Intent(Intent.ACTION_VIEW, githubUrl.toUri())
-                                        startActivity(intent)
-                                    } catch (_: Exception) {}
-                                    closeSupportDialog()
+                                    if (DistributionSupportAction.open(this@MainActivity)) {
+                                        closeSupportDialog()
+                                    }
                                 }) { Text(stringResource(R.string.sys_support_star), color = MaterialTheme.colorScheme.onSurface) }
                                 TextButton(onClick = {
                                     closeSupportDialog()

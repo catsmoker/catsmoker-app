@@ -1011,3 +1011,39 @@ Added `vulkanModel` (Vulkan physical-device name, `VkPhysicalDeviceProperties.de
   References: [Android 15 edge-to-edge changes](https://developer.android.com/about/versions/15/behavior-changes-15#edge-to-edge),
   [display cutouts](https://developer.android.com/develop/ui/views/layout/display-cutout),
   [Compose cutout padding consumption](https://developer.android.com/reference/kotlin/androidx/compose/foundation/layout/displayCutoutPadding.modifier).
+
+## Distribution-specific support actions and ad-policy gate (2026-11-12)
+
+- **The existing support dialog keeps its frequency, opt-out and Donate route.**
+  Full keeps Star on GitHub using the existing repository resource. Play replaces
+  that action and body through a same-FQN distribution seam and translated resource
+  overlays, with neutral Rate on Google Play copy. Neither action requires five
+  stars, offers an incentive, or reports a submitted rating/star.
+- **Play targets the project's real application ID.** `defaultConfig.applicationId`
+  is `com.catsmoker.app`; neither flavor nor debug adds a suffix. The URL derives
+  from `BuildConfig.APPLICATION_ID`, first targets `com.android.vending`, then
+  falls back to the same HTTPS listing without a package restriction. Settings
+  reuses this path. Missing/security-blocked handlers show a translated error;
+  the popup stays open on failure. The checkbox is one accessible toggleable row,
+  and stacked actions accommodate longer translations. See
+  [Android's Play linking guidance](https://developer.android.com/distribute/marketing-tools/linking-to-google-play).
+- **No watch-to-support ad button is implemented in either flavor.** AdMob's
+  [rewarded-ad policy, implementation requirement 2](https://support.google.com/admob/answer/7313578?hl=en)
+  explicitly rejects appeals such as "watch this ad to support our business";
+  its reward requirements also do not establish a no-reward format. Changing the
+  wording or using an ordinary interstitial is not a workaround.
+- **Start.io remains blocked pending written approval for this exact placement,**
+  not described as a confirmed blanket prohibition. Its
+  [ad-type guide](https://support.start.io/hc/en-us/articles/360010475814-A-Guide-to-Our-Ad-Types-Placements)
+  and [integration guide](https://support.start.io/hc/en-us/articles/360014774799-Integration-via-Maven)
+  describe rewarded video in exchange for an in-app reward, and ordinary fullscreen
+  ads at natural transitions. The
+  [Publisher Agreement](https://www.start.io/policy/publisher-terms/) sections 5.2
+  and 6.2(g) restrict noncompliant/incentivized traffic; none of these sources
+  affirmatively permits the requested no-reward support placement.
+- **No reward is invented and no ad configuration or gate is changed.** Existing
+  donation and Play remove-ads purchasing remain alternatives. A genuine,
+  non-transferable in-app benefit at a relevant feature could be considered only
+  with a separate product decision and policy review, without a support appeal.
+  Consent, disabled ads, verified purchased removal and SDK ownership are untouched;
+  there are no new ad requests, test placements or ad lifecycle states to validate.

@@ -22,8 +22,9 @@
     <string name="sys_lang_system">Predeterminado del sistema</string>
     <string name="sys_cancel">CANCELAR</string>
     <string name="sys_support_title">Apoya al desarrollador</string>
-    <string name="sys_support_text">Dale una estrella al proyecto en GitHub y dona para apoyar el desarrollo.</string>
-    <string name="sys_support_star">Estrella</string>
+    <string name="sys_support_text">Dale una estrella al proyecto en GitHub o dona para apoyar el desarrollo. Ambas opciones son voluntarias.</string>
+    <string name="sys_support_star">Dar estrella en GitHub</string>
+    <string name="sys_support_link_failed">No se pudo abrir el enlace. Inténtalo de nuevo.</string>
     <string name="sys_support_donate">Donar</string>
     <string name="sys_support_never">No volver a mostrar</string>
     <string name="donate_title">Donar</string>

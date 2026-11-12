@@ -62,6 +62,21 @@ class SupportPromptTest {
     }
 
     @Test
+    fun sharedDialogUsesTheDistributionSeamAndKeepsTheCheckboxRowAccessible() {
+        val activity = File("src/main/java/com/catsmoker/app/system/MainActivity.kt").readText()
+        assertTrue(activity.contains("if (DistributionSupportAction.open(this@MainActivity))"))
+        assertFalse(activity.contains("R.string.url_github"))
+        assertTrue(activity.contains("role = Role.Checkbox"))
+        assertTrue(activity.contains("onCheckedChange = null"))
+    }
+
+    @Test
+    fun fullSupportKeepsTheExistingRepositoryResource() {
+        val action = File("src/full/java/com/catsmoker/app/application/distribution/DistributionSupportAction.kt").readText()
+        assertTrue(action.contains("SupportLink(context.getString(R.string.url_github))"))
+    }
+
+    @Test
     fun neverAskOptionHiddenOnFirstShowing() {
         assertFalse(showNeverAskOption(SupportPromptState()))
     }

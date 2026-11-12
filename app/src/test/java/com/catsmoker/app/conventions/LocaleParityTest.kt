@@ -89,6 +89,9 @@ class LocaleParityTest {
         "sys_theme_dynamic",
         // Support dialog "Do not show again" checkbox (shown from the 2nd appearance).
         "sys_support_never",
+        "sys_support_text",
+        "sys_support_star",
+        "sys_support_link_failed",
         // Donate screen chrome (coin/network names and addresses are data, kept verbatim).
         "donate_title",
         "donate_subtitle",
@@ -658,6 +661,22 @@ class LocaleParityTest {
         localeDirs.forEach { dir ->
             val missing = requiredKeys - keysIn(dir)
             assertTrue("missing from $dir: ${missing.sorted()}", missing.isEmpty())
+        }
+    }
+
+    @Test
+    fun supportActionsAreExplicitAndPlayOverridesBothCopyAndLabelInEveryLocale() {
+        localeDirs.forEach { dir ->
+            val shared = File("src/main/res/$dir/strings_sys.xml").readText()
+            val play = File("src/playstore/res/$dir/strings_support.xml").readText()
+            val sharedLabel = Regex("""<string name="sys_support_star">(.*?)</string>""")
+                .find(shared)?.groupValues?.get(1).orEmpty()
+            assertTrue("Full support label in $dir", sharedLabel.contains("GitHub"))
+            listOf("sys_support_text", "sys_support_star").forEach { key ->
+                val text = Regex("""<string name="$key">(.*?)</string>""")
+                    .find(play)?.groupValues?.get(1).orEmpty()
+                assertTrue("Play $key in $dir", text.contains("Google Play") && !text.contains("GitHub"))
+            }
         }
     }
 }

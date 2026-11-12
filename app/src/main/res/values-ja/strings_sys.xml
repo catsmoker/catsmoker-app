@@ -22,8 +22,9 @@
     <string name="sys_lang_system">システム設定に従う</string>
     <string name="sys_cancel">キャンセル</string>
     <string name="sys_support_title">開発者を支援</string>
-    <string name="sys_support_text">GitHubでスターを付け、寄付で開発を支援してください。</string>
-    <string name="sys_support_star">スター</string>
+    <string name="sys_support_text">GitHubでスターを付けるか、寄付で開発を支援できます。どちらも任意です。</string>
+    <string name="sys_support_star">GitHubでスターを付ける</string>
+    <string name="sys_support_link_failed">リンクを開けませんでした。もう一度お試しください。</string>
     <string name="sys_support_donate">寄付</string>
     <string name="sys_support_never">二度と表示しない</string>
     <string name="donate_title">寄付</string>
