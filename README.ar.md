@@ -33,7 +33,7 @@
   <img src="https://img.shields.io/badge/Google%20Play-4285F4?style=for-the-badge&logo=googleplay&logoColor=white" alt="متجر Google Play"/>
 </a>
 
-[الإبلاغ عن مشكلة](https://github.com/catsmoker/catsmoker-app/issues) · [الموقع الإلكتروني](https://catsmoker.vercel.app)
+[الإبلاغ عن مشكلة](https://github.com/catsmoker/catsmoker-app/issues) · [الموقع الإلكتروني](https://catsmoker.is-a.dev)
 
 [English](README.md) · **العربية** · [Español](README.es.md) · [中文](README.zh-CN.md) · [日本語](README.ja.md) · [Português](README.pt-BR.md)
 
