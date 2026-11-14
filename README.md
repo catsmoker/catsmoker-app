@@ -111,7 +111,7 @@ Some file operations may require additional access through SAF or a file manager
 
 **Designed for users who prefer installing through Google Play without root.**
 
-<a href="https://play.google.com/apps/testing/com.catsmoker.app">
+<a href="https://play.google.com/store/apps/details?id=com.catsmoker.app">
   <img src="https://img.shields.io/badge/GET%20IT%20ON%20GOOGLE%20PLAY-4285F4?style=for-the-badge&logo=googleplay&logoColor=white" alt="Google Play Testing"/>
 </a>
 
