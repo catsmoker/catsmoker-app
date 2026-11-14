@@ -27,10 +27,10 @@
 [![Typing SVG](https://readme-typing-svg.demolab.com?font=Fira+Code&size=20&duration=2800&pause=900&color=0EA5E9&center=true&vCenter=true&width=620&lines=Optimiza+tu+juego.+Mide+tu+dispositivo.;Herramientas+Android+para+sesiones+de+juego+exigentes.)](https://github.com/catsmoker/catsmoker-app)
 
 <a href="https://github.com/catsmoker/catsmoker-app/releases">
-  <img src="https://img.shields.io/badge/⬇%20DESCARGAR%20VERSIÓN%20COMPLETA-ef233c?style=for-the-badge&logo=android&logoColor=white" alt="Descargar versión completa"/>
+  <img src="docs/assets/download-on-github.svg" height="64" alt="Descargar versión completa"/>
 </a>
-<a href="https://play.google.com/apps/testing/com.catsmoker.app">
-  <img src="https://img.shields.io/badge/GOOGLE%20PLAY-4285F4?style=for-the-badge&logo=googleplay&logoColor=white" alt="Google Play"/>
+<a href="https://play.google.com/store/apps/details?id=com.catsmoker.app">
+  <img src="docs/assets/get-it-on-google-play.png" height="64" alt="Google Play"/>
 </a>
 
 [Informar de un problema](https://github.com/catsmoker/catsmoker-app/issues) · [Sitio web](https://catsmoker.is-a.dev)
@@ -63,7 +63,7 @@ Elige **una sola versión** según tus necesidades. Ambas versiones pertenecen a
 **Recomendada para quienes desean todas las funciones disponibles.**
 
 <a href="https://github.com/catsmoker/catsmoker-app/releases">
-  <img src="https://img.shields.io/badge/⬇%20DESCARGAR%20VERSIÓN%20COMPLETA-ef233c?style=for-the-badge&logo=github&logoColor=white" alt="Descargar versión completa"/>
+  <img src="docs/assets/download-on-github.svg" height="64" alt="Descargar versión completa"/>
 </a>
 
 **Incluye:**
@@ -109,8 +109,8 @@ Algunas operaciones con archivos pueden requerir permisos adicionales mediante e
 
 **Diseñada para quienes prefieren instalar la aplicación desde Google Play sin acceso root.**
 
-<a href="https://play.google.com/apps/testing/com.catsmoker.app">
-  <img src="https://img.shields.io/badge/OBTENER%20EN%20GOOGLE%20PLAY-4285F4?style=for-the-badge&logo=googleplay&logoColor=white" alt="Prueba de Google Play"/>
+<a href="https://play.google.com/store/apps/details?id=com.catsmoker.app">
+  <img src="docs/assets/get-it-on-google-play.png" height="64" alt="Google Play"/>
 </a>
 
 **Diferencias:**
@@ -119,14 +119,12 @@ Algunas operaciones con archivos pueden requerir permisos adicionales mediante e
 - Utiliza AdMob en lugar de Start.io.
 - Algunas funciones avanzadas siguen necesitando permisos específicos o requisitos de compatibilidad.
 
-### Unirse a la prueba cerrada
+### Instalar desde Google Play
 
-La versión de Google Play está disponible actualmente mediante una prueba cerrada.
+La versión de Google Play ya está disponible.
 
-1. Únete al grupo de Google: **catsmoker-apps@googlegroups.com**
-2. Espera hasta cinco minutos para que se actualice el acceso.
-3. Abre la [página de pruebas de Google Play](https://play.google.com/apps/testing/com.catsmoker.app).
-4. Regístrate en la prueba e instala CatSmoker desde Google Play.
+1. Abre [Google Play](https://play.google.com/store/apps/details?id=com.catsmoker.app).
+2. Instala CatSmoker.
 
 </details>
 

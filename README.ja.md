@@ -27,10 +27,10 @@
 [![Typing SVG](https://readme-typing-svg.demolab.com?font=Fira+Code&size=20&duration=2800&pause=900&color=0EA5E9&center=true&vCenter=true&width=620&lines=ゲームを最適化。デバイスを計測。;本気のセッションのためのAndroidゲーミングツール。)](https://github.com/catsmoker/catsmoker-app)
 
 <a href="https://github.com/catsmoker/catsmoker-app/releases">
-  <img src="https://img.shields.io/badge/⬇%20完全版をダウンロード-ef233c?style=for-the-badge&logo=android&logoColor=white" alt="完全版をダウンロード"/>
+  <img src="docs/assets/download-on-github.svg" height="64" alt="完全版をダウンロード"/>
 </a>
-<a href="https://play.google.com/apps/testing/com.catsmoker.app">
-  <img src="https://img.shields.io/badge/GOOGLE%20PLAY-4285F4?style=for-the-badge&logo=googleplay&logoColor=white" alt="Google Play"/>
+<a href="https://play.google.com/store/apps/details?id=com.catsmoker.app">
+  <img src="docs/assets/get-it-on-google-play.png" height="64" alt="Google Play"/>
 </a>
 
 [不具合を報告](https://github.com/catsmoker/catsmoker-app/issues) · [ウェブサイト](https://catsmoker.is-a.dev)
@@ -65,7 +65,7 @@
 **利用可能なすべての機能を求めるユーザー向け。**
 
 <a href="https://github.com/catsmoker/catsmoker-app/releases">
-  <img src="https://img.shields.io/badge/⬇%20完全版をダウンロード-ef233c?style=for-the-badge&logo=github&logoColor=white" alt="完全版をダウンロード"/>
+  <img src="docs/assets/download-on-github.svg" height="64" alt="完全版をダウンロード"/>
 </a>
 
 **含まれるもの:**
@@ -111,8 +111,8 @@
 
 **Root 不要で Google Play からインストールしたいユーザー向け。**
 
-<a href="https://play.google.com/apps/testing/com.catsmoker.app">
-  <img src="https://img.shields.io/badge/Google%20Playで入手-4285F4?style=for-the-badge&logo=googleplay&logoColor=white" alt="Google Play テスト"/>
+<a href="https://play.google.com/store/apps/details?id=com.catsmoker.app">
+  <img src="docs/assets/get-it-on-google-play.png" height="64" alt="Google Play"/>
 </a>
 
 **違い:**
@@ -121,14 +121,12 @@
 - Start.io ではなく AdMob 広告を使用。
 - 一部の高度な機能は個別の権限や互換性要件を保持。
 
-### クローズドテストへの参加
+### Google Play からインストール
 
-Google Play 版は現在クローズドテストで提供されています。
+Google Play 版は現在一般公開されています。
 
-1. Google グループに参加: **catsmoker-apps@googlegroups.com**
-2. 最大 5 分間、アクセス更新を待機。
-3. [Google Play テストページ](https://play.google.com/apps/testing/com.catsmoker.app) を開く。
-4. テストに登録し、Google Play から CatSmoker をインストール。
+1. [Google Play](https://play.google.com/store/apps/details?id=com.catsmoker.app) を開く。
+2. CatSmoker をインストール。
 
 </details>
 

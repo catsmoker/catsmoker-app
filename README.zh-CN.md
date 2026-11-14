@@ -27,10 +27,10 @@
 [![Typing SVG](https://readme-typing-svg.demolab.com?font=Fira+Code&size=20&duration=2800&pause=900&color=0EA5E9&center=true&vCenter=true&width=620&lines=优化你的游戏。掌控你的设备。;为认真玩游戏的你而生的 Android 工具。)](https://github.com/catsmoker/catsmoker-app)
 
 <a href="https://github.com/catsmoker/catsmoker-app/releases">
-  <img src="https://img.shields.io/badge/⬇%20下载完整版-ef233c?style=for-the-badge&logo=android&logoColor=white" alt="下载完整版"/>
+  <img src="docs/assets/download-on-github.svg" height="64" alt="下载完整版"/>
 </a>
-<a href="https://play.google.com/apps/testing/com.catsmoker.app">
-  <img src="https://img.shields.io/badge/GOOGLE%20PLAY-4285F4?style=for-the-badge&logo=googleplay&logoColor=white" alt="Google Play"/>
+<a href="https://play.google.com/store/apps/details?id=com.catsmoker.app">
+  <img src="docs/assets/get-it-on-google-play.png" height="64" alt="Google Play"/>
 </a>
 
 [报告问题](https://github.com/catsmoker/catsmoker-app/issues) · [官网](https://catsmoker.is-a.dev)
@@ -65,7 +65,7 @@
 **适合想要所有可用功能的用户。**
 
 <a href="https://github.com/catsmoker/catsmoker-app/releases">
-  <img src="https://img.shields.io/badge/⬇%20下载完整版-ef233c?style=for-the-badge&logo=github&logoColor=white" alt="下载完整版"/>
+  <img src="docs/assets/download-on-github.svg" height="64" alt="下载完整版"/>
 </a>
 
 **包含内容:**
@@ -111,8 +111,8 @@
 
 **适合偏好从 Google Play 安装且无需 Root 的用户。**
 
-<a href="https://play.google.com/apps/testing/com.catsmoker.app">
-  <img src="https://img.shields.io/badge/在%20Google%20Play%20获取-4285F4?style=for-the-badge&logo=googleplay&logoColor=white" alt="Google Play 测试版"/>
+<a href="https://play.google.com/store/apps/details?id=com.catsmoker.app">
+  <img src="docs/assets/get-it-on-google-play.png" height="64" alt="Google Play"/>
 </a>
 
 **差异:**
@@ -121,14 +121,12 @@
 - 使用 AdMob 而非 Start.io 广告。
 - 部分高级功能保留各自的权限或兼容性要求。
 
-### 加入封闭测试
+### 从 Google Play 安装
 
-Google Play 版目前通过封闭测试分发。
+Google Play 版现已正式上线。
 
-1. 加入 Google Group: **catsmoker-apps@googlegroups.com**
-2. 等待最多 5 分钟以更新访问权限。
-3. 打开 [Google Play 测试页面](https://play.google.com/apps/testing/com.catsmoker.app)。
-4. 注册测试并从 Google Play 安装 CatSmoker。
+1. 打开 [Google Play](https://play.google.com/store/apps/details?id=com.catsmoker.app)。
+2. 安装 CatSmoker。
 
 </details>
 

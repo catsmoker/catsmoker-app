@@ -27,10 +27,10 @@
 [![Typing SVG](https://readme-typing-svg.demolab.com?font=Fira+Code&size=20&duration=2800&pause=900&color=0EA5E9&center=true&vCenter=true&width=620&lines=%D8%A7%D8%B6%D8%A8%D8%B7+%D9%84%D8%B9%D8%A8%D8%AA%D9%83.+%D9%88%D9%82%D9%90%D8%B3+%D8%A3%D8%AF%D8%A7%D8%A1+%D8%AC%D9%87%D8%A7%D8%B2%D9%83.;%D8%A3%D8%AF%D9%88%D8%A7%D8%AA+%D8%A3%D9%86%D8%AF%D8%B1%D9%88%D9%8A%D8%AF+%D9%84%D8%AC%D9%84%D8%B3%D8%A7%D8%AA+%D8%A7%D9%84%D9%84%D8%B9%D8%A8+%D8%A7%D9%84%D8%AC%D8%A7%D8%AF%D8%A9.)](https://github.com/catsmoker/catsmoker-app)
 
 <a href="https://github.com/catsmoker/catsmoker-app/releases">
-  <img src="https://img.shields.io/badge/⬇%20%D8%AA%D8%AD%D9%85%D9%8A%D9%84%20%D8%A7%D9%84%D9%86%D8%B3%D8%AE%D8%A9%20%D8%A7%D9%84%D9%83%D8%A7%D9%85%D9%84%D8%A9-ef233c?style=for-the-badge&logo=android&logoColor=white" alt="تحميل النسخة الكاملة"/>
+  <img src="docs/assets/download-on-github.svg" height="64" alt="تحميل النسخة الكاملة"/>
 </a>
-<a href="https://play.google.com/apps/testing/com.catsmoker.app">
-  <img src="https://img.shields.io/badge/Google%20Play-4285F4?style=for-the-badge&logo=googleplay&logoColor=white" alt="متجر Google Play"/>
+<a href="https://play.google.com/store/apps/details?id=com.catsmoker.app">
+  <img src="docs/assets/get-it-on-google-play.png" height="64" alt="متجر Google Play"/>
 </a>
 
 [الإبلاغ عن مشكلة](https://github.com/catsmoker/catsmoker-app/issues) · [الموقع الإلكتروني](https://catsmoker.is-a.dev)
@@ -63,7 +63,7 @@
 **موصى بها لمن يريد استخدام جميع المزايا المتاحة.**
 
 <a href="https://github.com/catsmoker/catsmoker-app/releases">
-  <img src="https://img.shields.io/badge/⬇%20%D8%AA%D8%AD%D9%85%D9%8A%D9%84%20%D8%A7%D9%84%D9%86%D8%B3%D8%AE%D8%A9%20%D8%A7%D9%84%D9%83%D8%A7%D9%85%D9%84%D8%A9-ef233c?style=for-the-badge&logo=github&logoColor=white" alt="تحميل النسخة الكاملة"/>
+  <img src="docs/assets/download-on-github.svg" height="64" alt="تحميل النسخة الكاملة"/>
 </a>
 
 **تتضمن:**
@@ -109,8 +109,8 @@
 
 **مخصصة لمن يفضل التثبيت من متجر Google Play دون الحاجة إلى صلاحيات الجذر.**
 
-<a href="https://play.google.com/apps/testing/com.catsmoker.app">
-  <img src="https://img.shields.io/badge/%D8%A7%D9%84%D8%AD%D8%B5%D9%88%D9%84%20%D8%B9%D9%84%D9%8A%D9%87%20%D9%85%D9%86%20Google%20Play-4285F4?style=for-the-badge&logo=googleplay&logoColor=white" alt="نسخة الاختبار على Google Play"/>
+<a href="https://play.google.com/store/apps/details?id=com.catsmoker.app">
+  <img src="docs/assets/get-it-on-google-play.png" height="64" alt="Google Play"/>
 </a>
 
 **الاختلافات:**
@@ -119,14 +119,12 @@
 - تستخدم إعلانات AdMob بدلاً من Start.io.
 - تتطلب بعض المزايا المتقدمة أذونات خاصة أو توافقاً معيناً.
 
-### الانضمام إلى الاختبار المغلق
+### التثبيت من Google Play
 
-نسخة Google Play متاحة حالياً عبر الاختبار المغلق.
+نسخة Google Play متاحة الآن.
 
-1. انضم إلى مجموعة Google: **catsmoker-apps@googlegroups.com**
-2. انتظر حتى خمس دقائق لتحديث صلاحية الوصول.
-3. افتح [صفحة الاختبار على Google Play](https://play.google.com/apps/testing/com.catsmoker.app).
-4. سجّل في الاختبار وثبّت مُدخّن القطط من المتجر.
+1. افتح [Google Play](https://play.google.com/store/apps/details?id=com.catsmoker.app).
+2. ثبّت مُدخّن القطط.
 
 </details>
 
