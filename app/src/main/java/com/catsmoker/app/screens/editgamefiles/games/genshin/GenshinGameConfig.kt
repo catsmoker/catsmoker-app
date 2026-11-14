@@ -5,6 +5,8 @@ import com.catsmoker.app.R
 import com.catsmoker.app.screens.editgamefiles.model.GameConfig
 import com.catsmoker.app.screens.editgamefiles.model.GameProfile
 
+internal const val GENSHIN_PACKAGE = "com.miHoYo.GenshinImpact"
+
 /**
  * Genshin Impact, from the reference project `GenshinConfig-main`.
  *
@@ -14,13 +16,13 @@ import com.catsmoker.app.screens.editgamefiles.model.GameProfile
  * README's manual instruction ("`Your Device Model` must match the model of the device you are
  * using"), automated. The asset is the reference's file byte-for-byte; it is deliberately not
  * valid JSON (unquoted `ASTC`, `01`, `00000001h`, trailing commas), and the game's lenient
- * parser accepts it exactly as shipped — so it is never parsed or re-serialised on the way
- * through, for the same reason the PUBG `Active.sav` blobs are shipped opaque.
+ * parser is claimed by the reference to accept it. Current Android consumption is unverified;
+ * this legacy template is never parsed or re-serialised as if it were standard JSON.
  */
 internal fun buildGenshinConfig(): GameConfig {
     return GameConfig(
-        packageName = "com.miHoYo.GenshinImpact",
-        saveDir = "/Android/data/com.miHoYo.GenshinImpact/files/",
+        packageName = GENSHIN_PACKAGE,
+        saveDir = "/Android/data/$GENSHIN_PACKAGE/files/",
         saveFile = "hardware_model_config.json",
         profiles = listOf(
             GameProfile(R.string.gf_profile_genshin, "Genshin/hardware_model_config.json")

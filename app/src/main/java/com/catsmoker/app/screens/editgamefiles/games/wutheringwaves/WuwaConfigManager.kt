@@ -434,7 +434,7 @@ class WuwaConfigManager @Inject constructor(
     private suspend fun deployOver(
         channel: DeviceChannel,
         configs: Map<String, String>
-    ): DeployResult = deployBytesOver(channel, configs.mapValues { it.value.toByteArray() })
+    ): DeployResult = deployBytesOver(channel, configs.mapValues { it.value.toByteArray() }, preserveExisting = true)
 
     /**
      * The byte-exact deploy. A restore carries the backup's own bytes, which must never round-trip
@@ -443,16 +443,19 @@ class WuwaConfigManager @Inject constructor(
      */
     private suspend fun deployBytesOver(
         channel: DeviceChannel,
-        configs: Map<String, ByteArray>
+        configs: Map<String, ByteArray>,
+        preserveExisting: Boolean = false
     ): DeployResult {
+        // Browsing/generating needs no install; deployment must never create a fictitious app tree.
+        if (!channel.run("test", "-d", "/storage/emulated/0/Android/data/$PACKAGE").isSuccess) {
+            return DeployResult.Failure("target", "The installed game's data directory is missing or inaccessible.")
+        }
+        val stop = channel.run("am", "force-stop", PACKAGE)
+        if (!stop.isSuccess) return DeployResult.Failure("stop", "Could not stop the game; no files were changed.")
         val mkdir = channel.run("mkdir", "-p", CONFIG_DIR)
         if (!mkdir.isSuccess) {
             return DeployResult.Failure("mkdir", mkdir.text.ifBlank { "mkdir exited ${mkdir.exitCode}" })
         }
-
-        // A running game rewrites its configs from memory on exit — stop it first, and report
-        // the refusal if the stop is refused (the deploy continues; the report names it).
-        val stop = channel.run("am", "force-stop", PACKAGE)
 
         // Snapshot the game's own hash monitor before touching anything: after the deploy,
         // a changed snapshot means the game wrote concurrently and ModifyCount must NOT be
@@ -464,9 +467,10 @@ class WuwaConfigManager @Inject constructor(
             val destPath = "$CONFIG_DIR/$name"
             // Backup the bytes the device actually holds — only when there is a file to
             // read; an empty pull means no prior file, not a failed backup.
+            val exists = channel.run("test", "-f", destPath).isSuccess
             val priorBytes = channel.readBytes(destPath)
             var backup: ConfigBackupStore.Entry? = null
-            var backupFailed = false
+            var backupFailed = exists && (priorBytes == null || priorBytes.isEmpty())
             if (priorBytes != null && priorBytes.isNotEmpty()) {
                 backup = backupStore.save(PACKAGE, name, priorBytes)
                 backupFailed = backup == null
@@ -482,7 +486,19 @@ class WuwaConfigManager @Inject constructor(
                 )
                 continue
             }
-            val outcome = channel.writeBytes(destPath, content)
+            val payload = try {
+                if (preserveExisting) WuwaIniMerge.merge(priorBytes, content) else content
+            } catch (error: Exception) {
+                results.add(FileDeployResult(name, backup, false, pushed = false, verified = false,
+                    detail = "INI merge refused: ${error.message}"))
+                continue
+            }
+            if (exists && channel.readBytes(destPath)?.contentEquals(priorBytes) != true) {
+                results.add(FileDeployResult(name, backup, false, pushed = false, verified = false,
+                    detail = "the file changed during backup; reload before deploying"))
+                continue
+            }
+            val outcome = channel.writeBytes(destPath, payload)
             val digest = if (outcome.pushed) md5OfFile(channel, destPath) else ""
             results.add(
                 FileDeployResult(
@@ -510,10 +526,10 @@ class WuwaConfigManager @Inject constructor(
     }
 
     suspend fun deployViaSaf(configs: Map<String, String>): DeployResult =
-        deployBytesViaSaf(configs.mapValues { it.value.toByteArray() })
+        deployBytesViaSaf(configs.mapValues { it.value.toByteArray() }, preserveExisting = true)
 
     /** [deployViaSaf]'s byte-exact form, shared with the restore path. */
-    private suspend fun deployBytesViaSaf(configs: Map<String, ByteArray>): DeployResult = withContext(Dispatchers.IO) {
+    private suspend fun deployBytesViaSaf(configs: Map<String, ByteArray>, preserveExisting: Boolean = false): DeployResult = withContext(Dispatchers.IO) {
         val dir = safConfigDir()
             ?: return@withContext DeployResult.Failure(
                 "saf-folder",
@@ -560,7 +576,11 @@ class WuwaConfigManager @Inject constructor(
                             detail = "the provider refused to create the file"))
                         continue
                     }
-                val bytes = content
+                val bytes = if (preserveExisting) WuwaIniMerge.merge(priorBytes, content) else content
+                if (existing != null) {
+                    val latest = context.contentResolver.openInputStream(existing.uri)?.use { it.readBytes() }
+                    check(latest?.contentEquals(priorBytes) == true) { "The file changed during backup; reload before deploying." }
+                }
                 val stream = runCatching { context.contentResolver.openOutputStream(target.uri, "wt") }
                     .getOrNull()
                     ?: runCatching { context.contentResolver.openOutputStream(target.uri, "w") }.getOrNull()

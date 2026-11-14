@@ -93,7 +93,7 @@ class GridViewModel @Inject constructor(
      */
     fun onShowEditorAnyway() {
         val state = _uiState.value
-        if (state.gameMissing && state.read == null) {
+        if (state.read == null) {
             val seed = emptyShowAnywayRead()
             _uiState.update {
                 it.copy(
@@ -163,7 +163,7 @@ class GridViewModel @Inject constructor(
                     val missing = result.stage == GridPreferencesManager.ReadResult.Stage.GAME_NOT_INSTALLED ||
                         (result.stage == GridPreferencesManager.ReadResult.Stage.NO_CHANNEL &&
                             !manager.isInstalled())
-                    val seed = if (missing && state.showEditorAnyway) {
+                    val seed = if (state.showEditorAnyway) {
                         state.read ?: emptyShowAnywayRead()
                     } else {
                         null

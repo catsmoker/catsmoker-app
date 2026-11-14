@@ -33,6 +33,8 @@
 # Narrow per-class keeps: no broad-rule inspection debt.
 -keep class com.catsmoker.app.screens.gaming.mode.GamingOptimizationSnapshot { *; }
 -keep class com.catsmoker.app.screens.gaming.mode.SettingValue { *; }
+-keep class com.catsmoker.app.screens.editgamefiles.games.roblox.RobloxFile { *; }
+-keep class com.catsmoker.app.screens.editgamefiles.games.roblox.RobloxBackup { *; }
 
 # ShellRunner reflects Shizuku's newProcess(String[], String[], String) — the one-shot
 # remote-shell channel (BattleGrounds_GFX's mechanism) that works when the user-service helper
@@ -46,4 +48,3 @@
 }
 
 -keep class androidx.core.app.CoreComponentFactory { *; }
-

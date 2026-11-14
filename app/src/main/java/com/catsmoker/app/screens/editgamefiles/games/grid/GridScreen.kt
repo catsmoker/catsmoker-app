@@ -45,6 +45,10 @@ fun GridRoute(onBack: (() -> Unit)? = null) {
     val viewModel: GridViewModel = hiltViewModel()
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val context = LocalContext.current
+    LaunchedEffect(viewModel, onBack == null) {
+        if (onBack == null) viewModel.onShowEditorAnyway()
+        if (!viewModel.uiState.value.loading) viewModel.refresh()
+    }
 
     LaunchedEffect(Unit) {
         viewModel.events.collectLatest { event ->
@@ -133,7 +137,7 @@ fun GridScreen(
                     CircularProgressIndicator()
                 }
 
-                uiState.loadFailure != null && (!missingInstall || !uiState.showEditorAnyway) ->
+                uiState.loadFailure != null && onBack != null && (!missingInstall || !uiState.showEditorAnyway) ->
                     GridLoadFailureCard(
                         uiState.loadFailure,
                         onPickFolder,
@@ -144,7 +148,7 @@ fun GridScreen(
                 uiState.read != null -> {
                     val read = uiState.read
 
-                    if (missingInstall && uiState.loadFailure != null) {
+                    if (uiState.loadFailure != null && (!missingInstall || onBack != null)) {
                         GridLoadFailureCard(uiState.loadFailure, onPickFolder, onRefresh, onShowAnyway = null)
                         Spacer(modifier = Modifier.height(12.dp))
                     }

@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="rb_title">Roblox · محرر ملفات للاختبار فقط</string>
+    <string name="rb_warning">ليست أداة لفتح معدل الإطارات. هذا المسار غير موثّق والخيار ليس ضمن قائمة Roblox المنشورة للخيارات المحلية المسموحة. قد يتجاهله Roblox. لا ضمان لزيادة الإطارات أو سلامة الحساب.</string>
+    <string name="rb_target">معدل الإطارات المستهدف التجريبي (ليس قياسًا فعليًا)</string>
+    <string name="rb_unread">حالة الملف غير معروفة. يلزم الروت أو Shizuku المصرّح له؛ حدّث لقراءة الملف.</string>
+    <string name="rb_absent">الملف غير موجود. سيُنشأ عند التطبيق.</string>
+    <string name="rb_invalid">الملف ليس كائن JSON واضحًا بترميز UTF-8. التطبيق محظور ولن يُستبدل شيء.</string>
+    <string name="rb_no_target">لا توجد قيمة رقمية لمعدل الإطارات المستهدف في الملف.</string>
+    <string name="rb_current">القيمة في الملف: %1$d (ليست قياسًا فعليًا)</string>
+    <string name="rb_not_installed">Roblox غير مثبت. التطبيق والإغلاق معطلان؛ تظل الاستعادة متاحة.</string>
+    <string name="rb_conflict">تغيّر الملف خارج هذا المحرر. التطبيق والاستعادة محظوران لحماية التغييرات الخارجية. حدّث للتحقق مجددًا.</string>
+    <string name="rb_recovery">الاستعادة وإعادة التشغيل</string>
+    <string name="rb_backup_note">قبل أول كتابة تُحفظ البايتات الأصلية أو حالة الغياب المؤكدة محليًا. تُحفظ مفاتيح JSON الأخرى. احتفظ ببيانات CatSmoker حتى تكتمل الاستعادة.</string>
+    <string name="rb_backup_present">يُحتفظ بسجل الاستعادة الأصلي عند التطبيق والاستعادة. تتعطل الاستعادة إذا كان الملف في حالته الأصلية بالفعل.</string>
+    <string name="rb_close_note">التطبيق لا يغلق Roblox. أغلقه بشكل منفصل ثم استخدم تشغيل اللعبة أعلاه لفتحه.</string>
+    <string name="rb_close">إغلاق ROBLOX</string>
+    <string name="rb_apply_title">كتابة الملف التجريبي؟</string>
+    <string name="rb_apply_confirm">هذا يكتب الملف ويتحقق منه فقط. قد يتجاهله Roblox؛ ولا يثبت زيادة الإطارات. تُحفظ الحالة الأصلية أولًا. لن يُغلق Roblox.</string>
+    <string name="rb_restore_confirm">استعادة البايتات والصلاحيات الأصلية، أو حذف الملف إذا لم يكن موجودًا أصلًا؟ ستُلغى تغييرات القيمة غير المحفوظة. سيُحتفظ بالسجل الأصلي. لن يُغلق Roblox.</string>
+    <string name="rb_close_confirm">فرض إيقاف Roblox الآن؟ ستنتهي جلسة اللعب وقد تفقد التقدم غير المحفوظ. لن يتغيّر الملف.</string>
+    <string name="rb_continue">متابعة</string>
+    <string name="rb_file_written">كُتب الملف وتم التحقق منه. لم يُتحقق من استخدام Roblox له.</string>
+    <string name="rb_restored">استُعيدت حالة الملف الأصلية وتم التحقق منها.</string>
+    <string name="rb_closed">اكتمل أمر الإغلاق. أعد فتح Roblox عبر تشغيل اللعبة.</string>
+    <string name="rb_privilege">يلزم الروت أو Shizuku المصرّح له. امنح الوصول في الأذونات ثم حدّث.</string>
+    <string name="rb_unsafe">لا يمكن قراءة الملف بأمان. يُقبل فقط ملف عادي مقروء لا يتجاوز 16 KiB دون روابط إضافية. عالج المشكلة ثم حدّث.</string>
+    <string name="rb_backup_error">تعذّرت قراءة سجل الاستعادة أو حفظه. لا يُسمح بكتابة أخرى. احتفظ ببيانات CatSmoker وعالج مشكلة التخزين قبل المحاولة مجددًا.</string>
+    <string name="rb_io_error">فشل الوصول إلى الملف أو الأمر. قد تكون الكتابة غير مكتملة. سجل الاستعادة محفوظ؛ حدّث قبل المحاولة مجددًا.</string>
+    <string name="rb_verify_error">لم تطابق القراءة الملف المطلوب. سجل الاستعادة محفوظ؛ حدّث لفحص الحالة قبل المحاولة مجددًا.</string>
+</resources>

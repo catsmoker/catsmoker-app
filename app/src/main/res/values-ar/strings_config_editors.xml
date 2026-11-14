@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="ce_experimental">محرّر إعدادات تجريبي — لم يُتحقَّق منه على الأجهزة</string>
+    <string name="ce_warning">يمكن تعديل الحقول الموجودة والمعروفة فقط. هذه قيم داخلية للعبة، وليست مستويات جودة أو نطاقات آمنة تم التحقق منها. قد تتجاهلها اللعبة أو تعيد ضبطها؛ لا نضمن زيادة الإطارات أو فتح حدّها أو الأمان مع نظام مكافحة الغش. أبقِ اللعبة مغلقة أثناء التعديل.</string>
+    <string name="ce_evidence">مصادر الإعدادات والبحث</string>
+    <string name="ce_root_only">يتطلب الوصول المباشر إلى البيانات الخاصة صلاحية الروت. لا يكفي Shizuku بهوية مستخدم shell.</string>
+    <string name="ce_document_only">اختر مستند الإعدادات الموجود. لا يُفترض وجود مسار تخزين موحّد.</string>
+    <string name="ce_privileged">يتطلب الوصول المباشر صلاحية الروت أو وصول Shizuku إلى الملف الموجود.</string>
+    <string name="ce_read_direct">قراءة إعدادات اللعبة مباشرةً</string>
+    <string name="ce_choose">اختيار ملف %1$s الموجود</string>
+    <string name="ce_document_note">يكتب وضع المستند في المستند المحدد فقط. إذا كان نسخة مُصدَّرة، فعليك نسخها إلى مكانها يدويًا. قد يمنع Android اختيار Android/data؛ لا يتجاوز هذا المنتقي ذلك القيد.</string>
+    <string name="ce_working">جارٍ التنفيذ…</string>
+    <string name="ce_verified">تم التحقق من البايتات المكتوبة. لم يُتحقَّق من استخدام اللعبة لها أو من الأداء.</string>
+    <string name="ce_raw_values">القيم الداخلية الموجودة</string>
+    <string name="ce_unavailable">غير موجود، أو مكرر في النطاق نفسه، أو من نوع غير متوقع — لا يمكن تعديله</string>
+    <string name="ce_closed">أغلقت اللعبة وسأبقيها مغلقة.</string>
+    <string name="ce_apply">نسخ احتياطي وتطبيق التغييرات</string>
+    <string name="ce_restore">استعادة أحدث نسخة احتياطية لهذا الملف</string>
+    <string name="ce_confirm">هل تريد كتابة %2$s للعبة %1$s؟ ستُحفظ نسخة احتياطية من الملف الحالي أولًا، ثم تُقرأ البايتات المكتوبة مجددًا. يفرض الوضع المباشر أيضًا إيقاف اللعبة. يغيّر وضع المستند المستند المحدد فقط.</string>
+    <string name="ce_continue">متابعة</string>
+    <string name="ce_discard">سيؤدي ذلك إلى تجاهل تعديلاتك المعلّقة.</string>
+    <string name="fe_checking_installation">جارٍ التحقق من التثبيت…</string>
+    <string name="fe_store_unavailable">تعذر فتح صفحة اللعبة بمتجر أو متصفح. قد لا تتوفر لمنطقتك أو جهازك.</string>
+    <string name="fe_unverified">عناصر خاصة باللعبة — لم تُختبر على تثبيت فعلي</string>
+    <string name="fe_controls">الإعدادات</string>
+    <string name="fe_alien_limit">قد تعيد Alien: Isolation ضبط الإعدادات أو تقيّدها عبر ملفات المواصفات. تعديل التفضيلات وحده لا يضمن فتح معدل الإطارات.</string>
+    <string name="fe_civ_limit">قد تتجاوز إعدادات التأثير المسبقة في Civilization VI إعدادات الرسومات الفردية. يُطبّق كل ملف على حدة مع الحفاظ على ترويسة Version.</string>
+    <string name="fe_control_limit">يمكن تعديل الإعدادات ذات القيم المعروفة فقط. تبقى مستويات الجودة وآليات فتح الإطارات غير المعروفة غير متاحة؛ لا تُنشأ إعدادات مسبقة مختلقة.</string>
+    <string name="fe_load_first">حمّل ملف الإعدادات الموجود لتعديل هذا الخيار. لم تُقرأ قيم اللعبة بعد.</string>
+    <string name="fe_unlock_unsupported">لا توجد آلية مثبتة لإزالة الحد أو رفعه فقط لهذا الحقل. لا نوفر محددات لمعدل الإطارات.</string>
+    <string name="fe_mapping_unconfirmed">لم تُثبت معاني قيم هذا الخيار لإصدار Android هذا؛ التعديل غير متاح.</string>
+    <string name="fe_pixels">بكسل. صحة الصياغة لا تضمن قبول اللعبة لكل دقة.</string>
+    <string name="fe_blocks">كتل وليست قطعًا. المسافات الكبيرة قد تستنفد ذاكرة اللعبة.</string>
+    <string name="fe_count">عدد غير سالب. قد تفرض اللعبة حدودها الخاصة.</string>
+    <string name="fe_unlock">فتح معدل الإطارات (بلا حد)</string>
+    <string name="fe_genshin_limit">قالب قديم لطراز الجهاز فقط. لم يثبت أن إصدارات Genshin الحالية تقرؤه؛ وليس فتحًا موثّقًا لمعدل الإطارات. يستبدل النشر ملف الإعداد هذا وحده بعد نسخه احتياطيًا.</string>
+</resources>

@@ -356,14 +356,16 @@ class ShellRunner @Inject constructor(
 
     /**
      * Runs [command] through the best available channel and reports stdout, stderr and the
-     * exit code. Prefer this over [exec] whenever success matters: many `settings put` and
+     * exit code. [redactCommand] keeps file payloads out of failure logs. Prefer this over [exec]
+     * whenever success matters: many `settings put` and
      * `cmd` invocations succeed with completely empty stdout.
      */
-    suspend fun execResult(command: String): ExecResult = withContext(Dispatchers.IO) {
+    suspend fun execResult(command: String, redactCommand: Boolean = false): ExecResult = withContext(Dispatchers.IO) {
+        val diagnosticCommand = if (redactCommand) "<redacted>" else command
         if (isRootAvailable()) {
             val result = runCatching { Shell.cmd(command).exec() }.getOrNull()
             if (result != null) {
-                if (!result.isSuccess) Log.w(TAG, "Root exec failed (exit ${result.code}): $command")
+                if (!result.isSuccess) Log.w(TAG, "Root exec failed (exit ${result.code}): $diagnosticCommand")
                 // Root is the highest privilege we have; retrying with less cannot help.
                 return@withContext ExecResult(
                     result.code,
@@ -396,7 +398,7 @@ class ShellRunner @Inject constructor(
         val result = runCatching { Shell.cmd(command).exec() }.getOrNull()
             ?: return@withContext ExecResult.FAILED
         if (!result.isSuccess) {
-            Log.w(TAG, "Unprivileged shell failed (exit ${result.code}): $command")
+            Log.w(TAG, "Unprivileged shell failed (exit ${result.code}): $diagnosticCommand")
         }
         ExecResult(result.code, result.out.joinToString("\n"), result.err.joinToString("\n"))
     }

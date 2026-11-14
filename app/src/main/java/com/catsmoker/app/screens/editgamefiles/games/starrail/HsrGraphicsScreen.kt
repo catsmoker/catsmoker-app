@@ -56,6 +56,10 @@ fun HsrGraphicsRoute(onBack: (() -> Unit)? = null) {
     val viewModel: HsrGraphicsViewModel = hiltViewModel()
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val context = LocalContext.current
+    LaunchedEffect(viewModel, onBack == null) {
+        if (onBack == null) viewModel.onShowEditorAnyway()
+        if (!viewModel.uiState.value.loading) viewModel.refresh()
+    }
 
     LaunchedEffect(Unit) {
         viewModel.events.collectLatest { event ->
@@ -132,7 +136,7 @@ fun HsrGraphicsScreen(
                     CircularProgressIndicator()
                 }
 
-                uiState.loadFailure != null && (!missingInstall || !uiState.showEditorAnyway) ->
+                uiState.loadFailure != null && onBack != null && (!missingInstall || !uiState.showEditorAnyway) ->
                     HsrLoadFailureCard(
                         uiState.loadFailure,
                         onRefresh,
@@ -147,7 +151,7 @@ fun HsrGraphicsScreen(
                     // the game never had.
                     val flat = uiState.flatFormat
 
-                    if (missingInstall && uiState.loadFailure != null) {
+                    if (uiState.loadFailure != null && (!missingInstall || onBack != null)) {
                         HsrLoadFailureCard(uiState.loadFailure, onRefresh, onShowAnyway = null)
                         // Flat format hides the frame-rate card below, so its leading spacer
                         // cannot be the only gap — add this one only when that card follows.
@@ -444,7 +448,7 @@ fun HsrGraphicsScreen(
                         modifier = Modifier.fillMaxWidth(),
                         // Nothing pending means the only effect of Apply would be force-stopping
                         // the game to rewrite identical bytes. Say that instead of doing it.
-                        enabled = !uiState.applying && uiState.settingsDirty,
+                        enabled = uiState.loadFailure == null && !uiState.applying && uiState.settingsDirty,
                         isLoading = uiState.applying,
                         loadingLabel = stringResource(R.string.gf_applying)
                     ) {
@@ -594,7 +598,7 @@ fun HsrGraphicsScreen(
                         CatsmokerButton(
                             onClick = onApplyPrefs,
                             modifier = Modifier.fillMaxWidth(),
-                            enabled = !uiState.applyingPrefs && uiState.prefsDirty
+                            enabled = uiState.loadFailure == null && !uiState.applyingPrefs && uiState.prefsDirty
                         ) {
                             if (uiState.applyingPrefs) {
                                 CircularProgressIndicator(modifier = Modifier.size(18.dp), strokeWidth = 2.dp, color = Color.Black)

@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="rb_title">Roblox · editor solo para pruebas</string>
+    <string name="rb_warning">No desbloquea los FPS. Esta ruta no está verificada y la opción no figura en la lista pública de opciones locales permitidas de Roblox. Roblox puede ignorarla. No se garantizan más FPS ni la seguridad de la cuenta.</string>
+    <string name="rb_target">Objetivo de FPS experimental (no son FPS medidos)</string>
+    <string name="rb_unread">Estado del archivo desconocido. Se requiere root o Shizuku autorizado; actualiza para leerlo.</string>
+    <string name="rb_absent">El archivo no existe. Aplicar lo creará.</string>
+    <string name="rb_invalid">El archivo no es un objeto JSON UTF-8 sin ambigüedades. Aplicar está bloqueado; no se reemplaza nada.</string>
+    <string name="rb_no_target">El archivo no contiene un objetivo numérico de FPS.</string>
+    <string name="rb_current">Objetivo del archivo: %1$d (no son FPS medidos)</string>
+    <string name="rb_not_installed">Roblox no está instalado. Aplicar y Cerrar están desactivados; la recuperación sigue disponible.</string>
+    <string name="rb_conflict">El archivo cambió fuera de este editor. Aplicar y Restaurar están bloqueados para no sobrescribir cambios ajenos. Actualiza para comprobarlo.</string>
+    <string name="rb_recovery">Recuperación y reinicio</string>
+    <string name="rb_backup_note">Antes de la primera escritura se guardan localmente los bytes originales o la ausencia confirmada. Se conservan las demás claves JSON. Conserva los datos de CatSmoker hasta completar la recuperación.</string>
+    <string name="rb_backup_present">El registro original se conserva al aplicar y restaurar. Restaurar se desactiva si ya está en el estado original.</string>
+    <string name="rb_close_note">Aplicar no cierra Roblox. Ciérralo por separado y vuelve a abrirlo con Iniciar juego arriba.</string>
+    <string name="rb_close">CERRAR ROBLOX</string>
+    <string name="rb_apply_title">¿Escribir archivo experimental?</string>
+    <string name="rb_apply_confirm">Solo escribe y verifica el archivo. Roblox puede ignorarlo; no demuestra una mejora de FPS. Primero se guarda el estado original. Roblox no se cerrará.</string>
+    <string name="rb_restore_confirm">¿Restaurar los bytes y permisos originales, o eliminar el archivo si antes no existía? Se descartará el objetivo sin guardar. Se conserva el registro original. Roblox no se cerrará.</string>
+    <string name="rb_close_confirm">¿Forzar la detención de Roblox? Terminará la sesión y podrías perder el progreso sin guardar. Esto no cambia el archivo.</string>
+    <string name="rb_continue">Continuar</string>
+    <string name="rb_file_written">Archivo escrito y verificado. No está verificado que Roblox lo use.</string>
+    <string name="rb_restored">Estado original del archivo restaurado y verificado.</string>
+    <string name="rb_closed">Comando de cierre completado. Abre Roblox con Iniciar juego.</string>
+    <string name="rb_privilege">Se requiere root o Shizuku autorizado. Concede acceso en Permisos y actualiza.</string>
+    <string name="rb_unsafe">No se puede leer de forma segura. Solo se acepta un archivo normal legible de hasta 16 KiB sin enlaces adicionales. Resuelve el problema y actualiza.</string>
+    <string name="rb_backup_error">No se pudo leer o guardar el registro de recuperación. No se permite otra escritura. Conserva los datos de CatSmoker y resuelve el problema de almacenamiento antes de reintentar.</string>
+    <string name="rb_io_error">Falló el acceso al archivo o el comando. La escritura podría estar incompleta. Se conserva la recuperación; actualiza antes de reintentar.</string>
+    <string name="rb_verify_error">La lectura no coincide con el archivo solicitado. Se conserva la recuperación; actualiza para revisar el estado antes de reintentar.</string>
+</resources>

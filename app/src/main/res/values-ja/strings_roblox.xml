@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="rb_title">Roblox · テスト専用ファイルエディター</string>
+    <string name="rb_warning">FPS制限解除ツールではありません。このパスは未検証で、対象フラグはRobloxが公開するローカルフラグ許可リストに含まれていません。無視される可能性があり、FPS向上やアカウントの安全性は保証されません。</string>
+    <string name="rb_target">実験的な目標FPS（実測値ではありません）</string>
+    <string name="rb_unread">ファイルの状態は不明です。rootまたは許可済みのShizukuが必要です。更新して読み取ってください。</string>
+    <string name="rb_absent">ファイルは存在しません。適用すると作成されます。</string>
+    <string name="rb_invalid">ファイルは曖昧さのないUTF-8のJSONオブジェクトではありません。適用は無効で、何も置き換えません。</string>
+    <string name="rb_no_target">ファイルに数値の目標FPSがありません。</string>
+    <string name="rb_current">ファイル内の目標値：%1$d（実測FPSではありません）</string>
+    <string name="rb_not_installed">Robloxがインストールされていません。適用と終了は無効ですが、復元は利用できます。</string>
+    <string name="rb_conflict">ファイルがエディター外で変更されました。外部の変更を保護するため適用と復元を無効にしました。更新して再確認してください。</string>
+    <string name="rb_recovery">復元と再起動</string>
+    <string name="rb_backup_note">初回書き込み前に、元のバイト列または存在しないことを端末内に保存します。他のJSONキーは保持されます。復元が完了するまでCatSmokerのアプリデータを削除しないでください。</string>
+    <string name="rb_backup_present">適用や復元後も元の復元記録を保持します。元の状態に戻っている場合、復元は無効です。</string>
+    <string name="rb_close_note">適用してもRobloxは終了しません。別途終了し、上のゲーム起動から開き直してください。</string>
+    <string name="rb_close">ROBLOXを終了</string>
+    <string name="rb_apply_title">実験用ファイルを書き込みますか？</string>
+    <string name="rb_apply_confirm">ファイルの書き込みと検証のみを行います。Robloxが無視する可能性があり、FPS向上の証明にはなりません。先に元の状態を保存します。Robloxは終了しません。</string>
+    <string name="rb_restore_confirm">元のバイト列と権限を復元しますか？元々存在しなかった場合は削除します。未保存の目標値は破棄されます。元の復元記録は保持されます。Robloxは終了しません。</string>
+    <string name="rb_close_confirm">Robloxを強制停止しますか？プレイ中のセッションは終了し、未保存の進行状況が失われる可能性があります。ファイルは変更しません。</string>
+    <string name="rb_continue">続行</string>
+    <string name="rb_file_written">書き込みと検証が完了しました。Robloxによる使用は未検証です。</string>
+    <string name="rb_restored">元のファイル状態を復元し、検証しました。</string>
+    <string name="rb_closed">終了コマンドが完了しました。ゲーム起動からRobloxを開き直してください。</string>
+    <string name="rb_privilege">rootまたは許可済みのShizukuが必要です。権限画面でアクセスを許可し、更新してください。</string>
+    <string name="rb_unsafe">安全に読み取れません。追加のリンクがない、読み取り可能な16 KiB以下の通常ファイルのみ対応します。問題を解決して更新してください。</string>
+    <string name="rb_backup_error">復元記録を読み取りまたは保存できません。これ以上の書き込みは禁止されます。CatSmokerのアプリデータを保持し、ストレージの問題を解決してから再試行してください。</string>
+    <string name="rb_io_error">ファイルアクセスまたはコマンドが失敗しました。書き込みが不完全な可能性があります。復元記録は保持されています。更新してから再試行してください。</string>
+    <string name="rb_verify_error">読み取り結果が要求したファイルと一致しません。復元記録は保持されています。更新して現在の状態を確認してから再試行してください。</string>
+</resources>

@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="ce_experimental">Editor de configuración experimental — sin validar en dispositivos</string>
+    <string name="ce_warning">Solo se pueden editar los campos existentes reconocidos. Son valores internos del juego, no niveles de calidad ni rangos seguros verificados. El juego puede ignorarlos o restablecerlos; no se garantiza una mejora de FPS, un desbloqueo ni seguridad frente al sistema antitrampas. Mantén el juego cerrado mientras editas.</string>
+    <string name="ce_evidence">Fuentes e investigación de los ajustes</string>
+    <string name="ce_root_only">El acceso directo a datos privados requiere root. Shizuku con UID de shell no es suficiente.</string>
+    <string name="ce_document_only">Selecciona el documento de configuración existente. No se presupone una ruta de almacenamiento universal.</string>
+    <string name="ce_privileged">El acceso directo requiere acceso root o Shizuku al archivo existente.</string>
+    <string name="ce_read_direct">Leer directamente la configuración del juego</string>
+    <string name="ce_choose">Seleccionar %1$s existente</string>
+    <string name="ce_document_note">El modo documento solo escribe en el documento seleccionado. Si es una copia exportada, debes copiarla de vuelta. Android puede impedir seleccionar Android/data; este selector no elude esa restricción.</string>
+    <string name="ce_working">Procesando…</string>
+    <string name="ce_verified">Bytes escritos verificados. No se ha verificado que el juego los use ni su rendimiento.</string>
+    <string name="ce_raw_values">Valores internos existentes</string>
+    <string name="ce_unavailable">Ausente, repetido en el mismo ámbito o de tipo inesperado — no editable</string>
+    <string name="ce_closed">He cerrado el juego y lo mantendré cerrado.</string>
+    <string name="ce_apply">Crear copia y aplicar cambios</string>
+    <string name="ce_restore">Restaurar la última copia de este archivo</string>
+    <string name="ce_confirm">¿Escribir %2$s para %1$s? Primero se guardará una copia del archivo actual y después se volverán a leer los bytes escritos. El modo directo también fuerza el cierre del juego. El modo documento solo modifica el documento seleccionado.</string>
+    <string name="ce_continue">Continuar</string>
+    <string name="ce_discard">Se descartarán los cambios pendientes.</string>
+    <string name="fe_checking_installation">Comprobando instalación…</string>
+    <string name="fe_store_unavailable">Ninguna tienda ni navegador pudo abrir la ficha. Puede no estar disponible en tu región o dispositivo.</string>
+    <string name="fe_unverified">Controles específicos del juego — sin validar en una instalación real</string>
+    <string name="fe_controls">CONFIGURACIÓN</string>
+    <string name="fe_alien_limit">Alien: Isolation puede restablecer o limitar ajustes mediante sus archivos de especificaciones. Editar preferencias no garantiza desbloquear los FPS.</string>
+    <string name="fe_civ_limit">Los perfiles de impacto de Civilization VI pueden anular ajustes gráficos individuales. Los archivos se aplican por separado y se conserva la cabecera Version.</string>
+    <string name="fe_control_limit">Solo se editan ajustes con valores documentados. Los niveles de calidad y desbloqueos de FPS desconocidos siguen deshabilitados; no se inventan perfiles.</string>
+    <string name="fe_load_first">Carga la configuración existente para editar este ajuste. Todavía no se han leído valores del juego.</string>
+    <string name="fe_unlock_unsupported">No hay una correspondencia demostrada para eliminar el límite o solo aumentarlo. No se ofrecen limitadores de FPS.</string>
+    <string name="fe_mapping_unconfirmed">No se conoce la correspondencia de valores de este ajuste para esta versión de Android; no se puede editar.</string>
+    <string name="fe_pixels">Píxeles. Una sintaxis válida no garantiza que el juego acepte todas las resoluciones.</string>
+    <string name="fe_blocks">Bloques, no chunks. Las distancias grandes pueden agotar la memoria.</string>
+    <string name="fe_count">Cantidad no negativa. El juego puede imponer sus propios límites.</string>
+    <string name="fe_unlock">Desbloquear FPS (sin límite)</string>
+    <string name="fe_genshin_limit">Solo una plantilla antigua del modelo del dispositivo. No se ha demostrado que las versiones actuales de Genshin la utilicen; no es un desbloqueo de FPS verificado. El despliegue sustituye este único archivo tras crear una copia de seguridad.</string>
+</resources>

@@ -17,6 +17,15 @@ import org.junit.Test
  * Needs a real `org.json` on the test classpath — android.jar's copy is a stub.
  */
 class HsrGraphicsSettingsTest {
+    @Test
+    fun unknownNestedJsonFieldsSurviveEditingAndPresetCopies() {
+        val json = """{"FPS":60,"FutureRenderer":{"Mode":"new","Flags":[1,2,3]}}"""
+        val loaded = requireNotNull(HsrGraphicsSettings.fromEncoded(java.net.URLEncoder.encode(json, "UTF-8")))
+        val written = org.json.JSONObject(URLDecoder.decode(loaded.copy(fps = 120).toEncoded(), "UTF-8"))
+        assertEquals(120, written.getInt("FPS"))
+        assertEquals("new", written.getJSONObject("FutureRenderer").getString("Mode"))
+        assertEquals(3, written.getJSONObject("FutureRenderer").getJSONArray("Flags").length())
+    }
 
     @Test
     fun roundTripsEveryField() {

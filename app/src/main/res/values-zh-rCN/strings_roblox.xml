@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="rb_title">Roblox · 仅供测试的文件编辑器</string>
+    <string name="rb_warning">这不是帧率解锁器。此路径未经验证，目标标志不在 Roblox 公布的本地标志允许列表中。Roblox 可能会忽略它。不保证帧率提升或账号安全。</string>
+    <string name="rb_target">实验性目标帧率（并非实测帧率）</string>
+    <string name="rb_unread">文件状态未知。需要 root 或已授权的 Shizuku；请刷新以读取。</string>
+    <string name="rb_absent">文件不存在。应用将创建此文件。</string>
+    <string name="rb_invalid">文件不是无歧义的 UTF-8 JSON 对象。已禁止应用；不会替换任何内容。</string>
+    <string name="rb_no_target">文件中没有数值类型的目标帧率。</string>
+    <string name="rb_current">文件中的目标值：%1$d（并非实测帧率）</string>
+    <string name="rb_not_installed">未安装 Roblox。应用和关闭已禁用；仍可恢复。</string>
+    <string name="rb_conflict">文件已在编辑器外更改。为避免覆盖外部更改，已禁止应用和恢复。请刷新以重新检查。</string>
+    <string name="rb_recovery">恢复与重启</string>
+    <string name="rb_backup_note">首次写入前，会在本地保存原始字节或已确认的不存在状态。其他 JSON 键会保留。恢复完成前，请保留 CatSmoker 的应用数据。</string>
+    <string name="rb_backup_present">应用和恢复后仍保留原始恢复记录。文件已处于原始状态时，恢复按钮将禁用。</string>
+    <string name="rb_close_note">应用不会关闭 Roblox。请单独关闭，然后使用上方的启动游戏重新打开。</string>
+    <string name="rb_close">关闭 ROBLOX</string>
+    <string name="rb_apply_title">写入实验文件？</string>
+    <string name="rb_apply_confirm">这只会写入并验证文件。Roblox 可能会忽略它；这不能证明帧率提升。会先备份原始状态。不会关闭 Roblox。</string>
+    <string name="rb_restore_confirm">恢复原始字节和权限，或在原本不存在时删除文件？未保存的目标值更改将丢弃。原始恢复记录会保留。不会关闭 Roblox。</string>
+    <string name="rb_close_confirm">立即强行停止 Roblox？当前游戏会话将结束，未保存的进度可能丢失。这不会更改文件。</string>
+    <string name="rb_continue">继续</string>
+    <string name="rb_file_written">文件已写入并验证。尚未验证 Roblox 是否使用它。</string>
+    <string name="rb_restored">原始文件状态已恢复并验证。</string>
+    <string name="rb_closed">关闭命令已完成。请使用启动游戏重新打开 Roblox。</string>
+    <string name="rb_privilege">需要 root 或已授权的 Shizuku。请在权限页面授予访问权限，然后刷新。</string>
+    <string name="rb_unsafe">无法安全读取。仅接受不超过 16 KiB、可读取且无额外链接的普通文件。请解决文件问题后刷新。</string>
+    <string name="rb_backup_error">无法读取或保存恢复记录。已禁止进一步写入。请保留 CatSmoker 的应用数据，解决存储问题后重试。</string>
+    <string name="rb_io_error">文件访问或命令失败。写入可能不完整。恢复记录已保留；请刷新后重试。</string>
+    <string name="rb_verify_error">回读结果与请求的文件不符。恢复记录已保留；请刷新检查当前状态后重试。</string>
+</resources>

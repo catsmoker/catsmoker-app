@@ -70,7 +70,8 @@ app/src/
 │       │   │   └── components/    # card shells, info topics, picker, schedule labels
 │       │   ├── editgamefiles/     # File Engineering screen + delivery pipeline
 │       │   │   ├── games/         # games only: pubg, genshin, newstate, starrail,
-│       │   │   │                  # wutheringwaves, grid
+│       │   │   │                  # wutheringwaves, grid, roblox + 21 raw-editor game owners
+│       │   │   ├── editor/        # shared experimental raw-editor UI/state (not a destination)
 │       │   │   ├── model/         # GameType, GameConfig/GameProfile
 │       │   │   └── storage/       # backups, history, install probes, push plan
 │       │   ├── legal/      # Licenses, Privacy Policy, Terms + shared LegalComponents
@@ -176,8 +177,10 @@ The spoof profile list, editor, app assignment and safe-mode destinations still
 use the hub's back-stack entry for their shared ViewModel. Package separation
 does not change these lifetimes, route values, callbacks or back behavior.
 
-Star Rail, Wuthering Waves and GRID are embedded File Engineering panels, not
-destinations; their screens/ViewModels stay in `editgamefiles/games/<game>/`.
+Star Rail, Wuthering Waves, GRID and the Roblox test-only editor are embedded File Engineering panels, not
+destinations; their screens/ViewModels stay in `editgamefiles/games/<game>/`. The additional
+21 experimental editors keep their schemas in those game owners and reuse `editor/`
+presentation/state and `storage/` codecs/transactions, without creating navigation routes.
 Onboarding steps remain within the Permissions destination. Gaming cards,
 overlays, dialogs and startup UI are not invented as new routes. Log collection
 stays with Logs despite its application-wide lifetime. Legal section lists remain
@@ -211,12 +214,61 @@ appears here as no per-game entry.
 | Honkai: Star Rail | `HSR` | `games/starrail/` (embedded editor) |
 | Wuthering Waves | `WUWA` | `games/wutheringwaves/` (embedded editor) |
 | GRID Autosport | `GRID` | `games/grid/` (embedded editor) |
+| Roblox (test-only; no verified FPS effect) | `ROBLOX` | `games/roblox/` (embedded experimental file editor) |
+| GRID Legends: Deluxe Edition | `GRID_LEGENDS` | `games/gridlegends/` |
+| Alien: Isolation | `ALIEN_ISOLATION` | `games/alienisolation/` |
+| Saints Row: The Third Remastered | `SAINTS_ROW` | `games/saintsrow/` |
+| Total War: NAPOLEON | `TOTAL_WAR_NAPOLEON` | `games/napoleon/` |
+| Hitman: Blood Money — Reprisal | `HITMAN_BLOOD_MONEY` | `games/hitmanbloodmoney/` |
+| Lara Croft and the Guardian of Light | `LARA_CROFT_GOL` | `games/laracroftgol/` |
+| Lara Croft and the Temple of Osiris | `LARA_CROFT_TOO` | `games/laracrofttoo/` |
+| Sid Meier's Railroads! | `RAILROADS` | `games/railroads/` |
+| Tomb Raider | `TOMB_RAIDER` | `games/tombraider/` |
+| Hitman: Absolution | `HITMAN_ABSOLUTION` | `games/hitmanabsolution/` |
+| Company of Heroes | `COMPANY_OF_HEROES` | `games/companyofheroes/` |
+| Total War: EMPIRE | `TOTAL_WAR_EMPIRE` | `games/empire/` |
+| Tropico | `TROPICO` | `games/tropico/` |
+| ROME: Total War | `ROME_TOTAL_WAR` | `games/rome/` |
+| Total War: MEDIEVAL II | `MEDIEVAL_II` | `games/medieval/` |
+| ROME: Total War — Barbarian Invasion | `ROME_BARBARIAN` | `games/romebarbarian/` |
+| ROME: Total War — Alexander | `ROME_ALEXANDER` | `games/romealexander/` |
+| XCOM 2 Collection | `XCOM_2` | `games/xcom/` |
+| Minecraft Bedrock | `MINECRAFT` | `games/minecraft/` (existing document only) |
+| Terraria | `TERRARIA` | `games/terraria/` (existing document only) |
+| Civilization VI | `CIVILIZATION_VI` | `games/civilization/` (root-only direct / document copy) |
+
+`GameDefinitions.kt` owns every listed game's identity, package candidates/store
+destination, implementation, capabilities, access and readiness/limitations.
+All implementations go through the same parent installed/missing/Show Anyway
+gate before routing. An enum entry without a definition fails the registry guard.
+This is a File Engineering registry, not a cross-app capability service.
+
+The 21 additions above have game-specific scoped controls, not device-validated FPS
+support. `AdditionalGameEditors` wires concrete specs; `ConfigEditorSpec` describes exact
+scopes/types and explicit toggle/number/choice/unlock contracts. Unresolved mappings
+are unavailable; no generic raw-editor fallback constitutes game support.
+`EditableConfigDocument` preserves unedited bytes, and
+`AdditionalConfigStorage` pins the channel, backs up, checks concurrent changes and
+verifies write-back. `WuwaIniMerge` preserves unrelated settings during generated
+deployment, while restoration remains byte-exact. See `FILE_ENGINEERING.md` and
+`FILE_ENGINEERING_AUDIT.md` for evidence, per-game limitations and access limits.
 
 The six PUBG variants deliberately share one implementation and one
 `ShadowTrackerExtra` save layout. `GameConfigRegistry.populateGameConfigs`
-registers the profile-based entries; the three embedded editors register no
+registers the profile-based entries; the embedded editors register no
 profile config because they never push a bundled template. `spoof_scope.xml`
 lists many more packages: that is the LSPosed load scope, not editor support.
+
+`GameSelector` owns the compact logo-first picker and its unchanged install dots.
+`GamePickerIcons` loads only known game-package icons locally, off the main thread,
+with a neutral fallback. PUBG package identities are shared with the profile
+registry, and HSR icon candidates reuse its manager's regional detection list;
+artwork availability never becomes an install-state or support signal.
+
+Roblox is an explicitly unverified file experiment, not a supported FPS unlock.
+Its UI, state, bounded JSON codec, privileged file adapter and durable recovery
+journal all belong to `games/roblox/`; it neither adds an LSPosed hook nor reads
+Roblox's private data. See `FILE_ENGINEERING.md` for its recovery contract.
 
 ## Dependency responsibilities
 

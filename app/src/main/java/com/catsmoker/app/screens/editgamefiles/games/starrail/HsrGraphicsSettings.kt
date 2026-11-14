@@ -57,7 +57,8 @@ data class HsrGraphicsSettings(
     var graphicsQuality: Int = 3,
     var enablePsoShaderWarmup: Boolean = true,
     var isUserSave: Int = 1,
-    var version: Int = 10
+    var version: Int = 10,
+    val originalJson: String? = null
 ) {
 
     companion object {
@@ -96,7 +97,8 @@ data class HsrGraphicsSettings(
                 enableHalfResTransparent = json.optBoolean("EnableHalfResTransparent", false),
                 enableSelfShadow = json.optInt("EnableSelfShadow", 1),
                 dlssQuality = json.optInt("DlssQuality", 0),
-                particleTrailSmoothness = json.optInt("ParticleTrailSmoothness", 0)
+                particleTrailSmoothness = json.optInt("ParticleTrailSmoothness", 0),
+                originalJson = json.toString()
             )
         } catch (_: Exception) {
             null
@@ -178,7 +180,7 @@ data class HsrGraphicsSettings(
     }
 
     fun toEncoded(): String {
-        val json = JSONObject()
+        val json = JSONObject(originalJson ?: "{}")
         json.put("FPS", fps)
         json.put("EnableVSync", enableVSync)
         json.put("RenderScale", renderScale)

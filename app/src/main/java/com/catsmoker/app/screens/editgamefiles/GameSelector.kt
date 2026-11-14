@@ -7,6 +7,8 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.selection.selectable
+import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
@@ -20,6 +22,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -143,7 +146,7 @@ internal fun GamePickerDialog(
     onDismiss: () -> Unit,
     onPick: (GameType) -> Unit
 ) {
-    val otherGroup = listOf(GameType.GENSHIN_IMPACT, GameType.PUBG_NEW_STATE, GameType.HSR, GameType.WUWA, GameType.GRID)
+    val otherGroup = GameType.entries.filter { it != GameType.NONE && it !in PUBG_VARIANTS }
     val pubgSelected = selectedGame in PUBG_VARIANTS
     // The group dot's three-state rule (any yes → green; all probed and all no → red; a
     // missing probe → unknown) is pure logic, tested in InstallProbesTest.
@@ -152,14 +155,21 @@ internal fun GamePickerDialog(
         onDismissRequest = onDismiss,
         title = { Text(stringResource(R.string.gf_choose_game_title)) },
         text = {
-            // Six rows do not fit a landscape dialog; without this the last game is
-            // clipped and unreachable because the dialog body itself does not scroll.
-            Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
+            // Bounded like the Gaming Tools app picker, and scrollable on short/landscape screens.
+            Column(
+                modifier = Modifier.fillMaxWidth().heightIn(max = 440.dp)
+                    .verticalScroll(rememberScrollState()).selectableGroup(),
+                verticalArrangement = Arrangement.spacedBy(4.dp)
+            ) {
                 PickerRow(
                     game = GameType.PUBG_GLOBAL,
                     label = "PUBG Mobile",
                     installed = pubgDot,
                     selected = pubgSelected,
+                    iconPackages = pickerIconPackages(
+                        if (pubgSelected) selectedGame else GameType.PUBG_GLOBAL,
+                        installedGames
+                    ),
                     onPick = { onPick(GameType.PUBG_GLOBAL) } // opens the VERSION chips, not a silent Global pick
                 )
                 otherGroup.forEach { game -> PickerRow(game, installedGames[game], selectedGame == game, onPick) }
@@ -177,18 +187,20 @@ internal fun PickerRow(
     installed: Boolean?,
     selected: Boolean,
     onPick: (GameType) -> Unit,
-    label: String = game.displayName
+    label: String = game.displayName,
+    iconPackages: List<String> = pickerIconPackages(game)
 ) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(10.dp))
-            .clickable { onPick(game) }
-            .padding(horizontal = 4.dp, vertical = 9.dp),
-        verticalAlignment = Alignment.CenterVertically
+            .clip(RoundedCornerShape(14.dp))
+            .background(if (selected) MaterialTheme.colorScheme.surfaceContainerHighest else Color.Transparent)
+            .selectable(selected = selected, role = Role.RadioButton, onClick = { onPick(game) })
+            .padding(horizontal = 12.dp, vertical = 10.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        InstallDot(installed = installed)
-        Spacer(modifier = Modifier.width(12.dp))
+        GamePickerIcon(packages = iconPackages)
         Text(
             label,
             style = MaterialTheme.typography.bodyMedium,
@@ -196,13 +208,17 @@ internal fun PickerRow(
             fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal,
             modifier = Modifier.weight(1f)
         )
-        if (selected) {
-            Icon(
-                Icons.Default.Check,
-                contentDescription = stringResource(R.string.gf_selected_desc),
-                tint = MaterialTheme.colorScheme.primary,
-                modifier = Modifier.size(18.dp)
-            )
+        InstallDot(installed = installed)
+        // A fixed trailing slot keeps every status dot aligned, selected or not.
+        Box(modifier = Modifier.size(20.dp), contentAlignment = Alignment.Center) {
+            if (selected) {
+                Icon(
+                    Icons.Default.Check,
+                    contentDescription = stringResource(R.string.gf_selected_desc),
+                    tint = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.size(18.dp)
+                )
+            }
         }
     }
 }

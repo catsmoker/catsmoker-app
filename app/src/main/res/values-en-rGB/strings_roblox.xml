@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="rb_title">Roblox · test-only file editor</string>
+    <string name="rb_warning">Not an FPS unlocker. This path is unverified and the target flag is not on Roblox’s published local-flag allowlist. Roblox may ignore it. No FPS gain or account safety is guaranteed.</string>
+    <string name="rb_target">Experimental FPS target (not measured FPS)</string>
+    <string name="rb_unread">File state unknown. Root or authorised Shizuku is required; refresh to read.</string>
+    <string name="rb_absent">File is absent. Apply will create it.</string>
+    <string name="rb_invalid">The file is not an unambiguous UTF-8 JSON object. Apply is blocked; nothing is replaced.</string>
+    <string name="rb_no_target">No numeric FPS target in the file.</string>
+    <string name="rb_current">File target: %1$d (not measured FPS)</string>
+    <string name="rb_not_installed">Roblox is not installed. Apply and Close are disabled; recovery remains available.</string>
+    <string name="rb_conflict">The file changed outside this editor. Apply and Restore are blocked to avoid overwriting someone else’s changes. Refresh to check again.</string>
+    <string name="rb_recovery">Recovery and restart</string>
+    <string name="rb_backup_note">Before the first write, the original bytes or confirmed absence are saved locally. Unrelated JSON keys are preserved. Keep CatSmoker’s app data until recovery is complete.</string>
+    <string name="rb_backup_present">The original recovery record is retained across applies and restores. Restore is disabled when already at the original state.</string>
+    <string name="rb_close_note">Apply does not close Roblox. Close it separately, then use Launch game above to reopen it.</string>
+    <string name="rb_close">CLOSE ROBLOX</string>
+    <string name="rb_apply_title">Write experimental file?</string>
+    <string name="rb_apply_confirm">This only writes and verifies the file. Roblox may ignore it; it does not prove an FPS increase. The original state is backed up first. Roblox will not be closed.</string>
+    <string name="rb_restore_confirm">Replace the experimental file with the original bytes and permissions, or remove it if it was originally absent? Unsaved target changes will be discarded. The original recovery record is kept. Roblox will not be closed.</string>
+    <string name="rb_close_confirm">Force-stop Roblox now? Your current game session will end and unsaved progress may be lost. This does not change the file.</string>
+    <string name="rb_continue">Continue</string>
+    <string name="rb_file_written">File written and verified. Whether Roblox uses it is unverified.</string>
+    <string name="rb_restored">Original file state restored and verified.</string>
+    <string name="rb_closed">Close command completed. Reopen Roblox with Launch game.</string>
+    <string name="rb_privilege">Root or authorised Shizuku is required. Grant access in Permissions, then refresh.</string>
+    <string name="rb_unsafe">Cannot safely read this file. Only a readable regular file up to 16 KiB with no extra links is accepted. Refresh after resolving the file issue.</string>
+    <string name="rb_backup_error">Recovery record could not be read or saved. No further write is allowed. Keep CatSmoker’s app data and resolve the storage issue before retrying.</string>
+    <string name="rb_io_error">File access or command failed. A write may be incomplete. The recovery record is retained; refresh before retrying.</string>
+    <string name="rb_verify_error">Read-back did not match the requested file. Recovery is retained; refresh to inspect the current state before retrying.</string>
+</resources>

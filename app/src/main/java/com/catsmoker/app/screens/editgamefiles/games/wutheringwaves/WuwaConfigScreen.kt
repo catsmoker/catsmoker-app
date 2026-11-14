@@ -181,11 +181,11 @@ fun WuwaConfigScreen(
             // on device facts and need no install). Unknown (probe could not answer) still
             // shows the editor; the card stays visible while revealed, so the screen never
             // pretends the game is installed.
-            if (uiState.gameInstalled == false && !uiState.showEditorAnyway) {
+            if (onBack != null && uiState.gameInstalled == false && !uiState.showEditorAnyway) {
                 WuwaNotInstalledCard(onRefresh = onRefresh, onShowAnyway = onShowAnyway)
                 return@Column
             }
-            if (uiState.gameInstalled == false) {
+            if (onBack != null && uiState.gameInstalled == false) {
                 WuwaNotInstalledCard(onRefresh = onRefresh, onShowAnyway = null)
                 Spacer(modifier = Modifier.height(12.dp))
             }

@@ -25,6 +25,7 @@ import com.catsmoker.app.screens.editgamefiles.games.pubg.PubgSavePatcher
 import com.catsmoker.app.screens.editgamefiles.games.pubg.PubgSaveSelection
 import com.catsmoker.app.screens.editgamefiles.games.pubg.PubgSaveVerification
 import com.catsmoker.app.screens.editgamefiles.games.pubg.PubgUploadPlan
+import com.catsmoker.app.screens.editgamefiles.games.roblox.RobloxConfig
 import com.catsmoker.app.screens.editgamefiles.games.starrail.HsrGameManager
 import com.catsmoker.app.screens.editgamefiles.games.wutheringwaves.WuwaConfigManager
 import com.catsmoker.app.screens.editgamefiles.model.GameConfig
@@ -40,6 +41,7 @@ import java.io.IOException
 import java.util.EnumMap
 import javax.inject.Inject
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
@@ -87,6 +89,9 @@ class EditGameFilesViewModel @Inject constructor(
         val isLoading: Boolean = false,
         val busyArea: BusyArea? = null,
         val selectedGame: GameType = GameType.NONE,
+        val checkingInstalls: Boolean = true,
+        val installRevision: Int = 0,
+        val installedPackages: Map<GameType, String> = emptyMap(),
         /**
          * Per-game install state, probed once when the screen opens — `null` = not probed yet,
          * so a chip can show "unknown" instead of guessing. The profile games used to have no
@@ -231,28 +236,22 @@ class EditGameFilesViewModel @Inject constructor(
      * (HSR store variants beyond the known five) stays the editor's load-time probe; a variant
      * found only there shows "unknown" here rather than a false "not installed".
      */
+    private var installProbeJob: Job? = null
+
     fun probeInstallStates() {
-        viewModelScope.launch(Dispatchers.IO) {
-            val states: Map<GameType, Boolean> = gameConfigs.keys.plus(EMBEDDED_EDITOR_GAMES).mapNotNull { type ->
-                val installed: Boolean? = when (type) {
-                    // HSR's variant list has one owner: the editor's manager, which answers
-                    // the probe itself. The root-only dynamic sweep (unknown store variants)
-                    // stays the editor's load-time probe; a variant found only there shows
-                    // "unknown" here, never a false "no".
-                    GameType.HSR -> hsrGameManager.isAnyKnownVariantInstalled()
-                    // WuWa and GRID resolve their single packages at editor load; the package
-                    // constants live in the same features, so the dots can answer here too.
-                    GameType.WUWA -> probePackage(WuwaConfigManager.PACKAGE)
-                    GameType.GRID -> probePackage(GridPreferences.PACKAGE)
-                    // Everything else carries exactly one package in its config; NONE has no
-                    // config and gets no dot.
-                    else -> gameConfigs[type]?.packageName?.let { probePackage(it) }
-                }
-                if (installed == null) return@mapNotNull null
-                type to installed
-            }.toMap()
+        installProbeJob?.cancel()
+        _uiState.update { it.copy(checkingInstalls = true) }
+        installProbeJob = viewModelScope.launch(Dispatchers.IO) {
+            val results = fileEngineeringGames.mapValues { (_, definition) ->
+                definition.probeInstallation(::probePackage)
+            }
             withContext(Dispatchers.Main) {
-                _uiState.update { it.copy(installedGames = states) }
+                _uiState.update { state -> state.copy(
+                    checkingInstalls = false,
+                    installRevision = state.installRevision + 1,
+                    installedGames = results.mapNotNull { (game, result) -> result.installed?.let { game to it } }.toMap(),
+                    installedPackages = results.mapNotNull { (game, result) -> result.installedPackage?.let { game to it } }.toMap()
+                ) }
             }
         }
     }
@@ -272,7 +271,7 @@ class EditGameFilesViewModel @Inject constructor(
     }
 
     /**
-     * Selecting a game. Editor-backed entries (HSR, WuWa, GRID — [GameType.embeddedEditor])
+     * Selecting a game. Editor-backed entries (including Roblox — [GameType.embeddedEditor])
      * select like any other game: the screen swaps its body to that game's inline editor, and
      * every profile-push control below is hidden for them, because their editors own their
      * games' files and pushing a bundled template over them is exactly what those games must
@@ -292,7 +291,7 @@ class EditGameFilesViewModel @Inject constructor(
                 configFileLabel = config?.resetFileLabel,
                 // The exact package the GAME NOT FOUND card should name — the one the probe
                 // actually checked, not a family-level guess.
-                gamePackageName = config?.packageName,
+                gamePackageName = fileEngineeringGames[game]?.storePackage,
                 canReset = config?.resetFilePath != null,
                 canUploadCustom = config?.allowCustomUpload == true,
                 uploadTargets = uploadTargets,
@@ -312,6 +311,7 @@ class EditGameFilesViewModel @Inject constructor(
                 showEditorAnyway = false
             )
         }
+        probeInstallStates()
     }
     fun onProfileSelected(profile: Int) {
         val needsExisting = ProfilePushPlan.needsExistingFile(
@@ -413,6 +413,9 @@ class EditGameFilesViewModel @Inject constructor(
             return
         }
         launchIoWithLoading(BusyArea.SAVE_APPLY) {
+            check(shellRunner.execSafeResult("am", "force-stop", config.packageName).isSuccess) {
+                "Could not stop the game; no write was attempted."
+            }
             val original = pullSaveBytes(config)
                 ?: return@launchIoWithLoading true // the pull already reported its failure
             val patched = when (val result = PubgSavePatcher.patch(original, edits)) {
@@ -450,11 +453,7 @@ class EditGameFilesViewModel @Inject constructor(
             // and overwrite the file with them on exit. Stop it after a verified push; the
             // manual LAUNCH GAME button cold-starts it. Best-effort: a refused stop keeps
             // the applied values (reported below), it just needs a manual restart.
-            val stopped = if (verified) {
-                shellRunner.execSafeResult("am", "force-stop", config.packageName).isSuccess
-            } else {
-                false
-            }
+            val stopped = verified
             withContext(Dispatchers.Main) {
                 _uiState.update {
                     it.copy(
@@ -1080,7 +1079,9 @@ class EditGameFilesViewModel @Inject constructor(
             return
         }
         launchIoWithLoading(BusyArea.PROFILE_PUSH) {
-            shellRunner.execSafeResult("am", "force-stop", config.packageName)
+            check(shellRunner.execSafeResult("am", "force-stop", config.packageName).isSuccess) {
+                "Could not stop the game; no write was attempted."
+            }
             // Existence first, so "the game never wrote it" and "the channel died mid-read"
             // stay distinct messages.
             if (!shellRunner.execSafeResult("test", "-f", path).isSuccess) {
@@ -1116,14 +1117,14 @@ class EditGameFilesViewModel @Inject constructor(
                 // `cp` over the existing file keeps its inode, owner and mode — which is why
                 // the reference's pre-write `chmod 0777` has nothing to do here, and why the
                 // write is a copy rather than a delete-and-recreate.
-                val copy = shellRunner.execSafeResult("cp", "-f", pushFile.absolutePath, path)
+                val copy = rootCommand("cp", "-f", pushFile.absolutePath, path)
                 if (!copy.isSuccess) {
                     withContext(Dispatchers.Main) {
                         showSnackbar(context.getString(R.string.gf_cp_failed, copy.exitCode, copy.stderr.ifBlank { context.getString(R.string.gf_no_output) }))
                     }
                     return@launchIoWithLoading true
                 }
-                val chmod = shellRunner.execSafeResult("chmod", "0440", path)
+                val chmod = rootCommand("chmod", "0440", path)
                 if (!chmod.isSuccess) {
                     withContext(Dispatchers.Main) {
                         showSnackbar(context.getString(
@@ -1166,7 +1167,9 @@ class EditGameFilesViewModel @Inject constructor(
             val tempFile = File.createTempFile("restore_", "_" + config.saveFile, context.externalCacheDir ?: context.cacheDir)
             try {
                 tempFile.writeBytes(bytes)
-                shellRunner.execSafeResult("am", "force-stop", config.packageName)
+                check(shellRunner.execSafeResult("am", "force-stop", config.packageName).isSuccess) {
+                    "Could not stop the game; no write was attempted."
+                }
                 // The backup list promises a reversible restore, so stash the live file's bytes
                 // first. Existence first, so "the game never wrote it" stays distinct from "it
                 // exists but cannot be read" — that one has no backup and must not be replaced.
@@ -1182,7 +1185,7 @@ class EditGameFilesViewModel @Inject constructor(
                         return@launchIoWithLoading false
                     }
                 }
-                val copy = shellRunner.execSafeResult("cp", "-f", tempFile.absolutePath, path)
+                val copy = rootCommand("cp", "-f", tempFile.absolutePath, path)
                 if (!copy.isSuccess) {
                     withContext(Dispatchers.Main) {
                         showSnackbar(context.getString(R.string.gf_cp_failed, copy.exitCode, copy.stderr.ifBlank { context.getString(R.string.gf_no_output) }))
@@ -1197,7 +1200,7 @@ class EditGameFilesViewModel @Inject constructor(
                 if (!exists) {
                     val uid = shellRunner.execSafe("stat", "-c", "%u", NewStateIniTransform.CONFIG_DIR).trim()
                     if (uid.toLongOrNull() != null) {
-                        val chown = shellRunner.execSafeResult("chown", "$uid:$uid", path)
+                        val chown = rootCommand("chown", "$uid:$uid", path)
                         if (!chown.isSuccess) {
                             withContext(Dispatchers.Main) {
                                 showSnackbar(context.getString(
@@ -1209,7 +1212,7 @@ class EditGameFilesViewModel @Inject constructor(
                         }
                     }
                 }
-                val chmod = shellRunner.execSafeResult("chmod", "0440", path)
+                val chmod = rootCommand("chmod", "0440", path)
                 if (!chmod.isSuccess) {
                     withContext(Dispatchers.Main) {
                         showSnackbar(context.getString(
@@ -1235,25 +1238,20 @@ class EditGameFilesViewModel @Inject constructor(
         }
     }
 
-    /**
-     * Reads a root-only file by having the shell copy it into this app's cache — the same
-     * copy-then-read shape the save editor uses. Null when the copy produced no file (the
-     * file is gone, or the channel died between the check and the read).
-     */
+    /** Root-created copies of private 0600 files are not readable by the app UID. */
     private suspend fun readRootFile(path: String): ByteArray? = withContext(Dispatchers.IO) {
-        val tempFile = File.createTempFile("rootread_", ".tmp", context.externalCacheDir ?: context.cacheDir)
-        tempFile.delete()
-        try {
-            val copy = shellRunner.execSafeResult("cp", "-f", path, tempFile.absolutePath)
-            if (copy.isSuccess && tempFile.exists()) tempFile.readBytes() else null
-        } finally {
-            tempFile.delete()
-        }
+        val size = rootCommand("stat", "-c", "%s", path)
+        if (!size.isSuccess || size.stdout.trim().toLongOrNull() !in 0L..16_777_216L) return@withContext null
+        val encoded = rootCommand("base64", path)
+        if (!encoded.isSuccess) null else runCatching { java.util.Base64.getMimeDecoder().decode(encoded.stdout) }.getOrNull()
     }
+
+    private suspend fun rootCommand(vararg args: String): ShellRunner.ExecResult =
+        shellRunner.execSafeResult("sh", "-c", "[ \"\$(id -u)\" = 0 ] || exit 1; exec \"\$@\"", "catsmoker", *args)
 
     /** Keeps a missing root-readable file distinct from an existing file that root could not read. */
     private suspend fun readRootFileIfPresent(path: String): ByteArray? {
-        val probe = shellRunner.execSafeResult("test", "-f", path)
+        val probe = rootCommand("test", "-f", path)
         if (!probe.isSuccess) return if (probe.exitCode == 1) ByteArray(0) else null
         return readRootFile(path)
     }
@@ -1429,11 +1427,17 @@ class EditGameFilesViewModel @Inject constructor(
     }
 
     fun onLaunchGame() {
-        val config = gameConfigs[_uiState.value.selectedGame] ?: return
-        val intent = context.packageManager.getLaunchIntentForPackage(config.packageName)
+        val selected = _uiState.value.selectedGame
+        val definition = fileEngineeringGames[selected] ?: return
+        val packageName = _uiState.value.installedPackages[selected]
+            ?: definition.probeInstallation(::probePackage).installedPackage
+            ?: definition.storePackage
+        val intent = context.packageManager.getLaunchIntentForPackage(packageName)
         if (intent != null) {
             intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-            context.startActivity(intent)
+            runCatching { context.startActivity(intent) }.onFailure {
+                showSnackbar(context.getString(R.string.gf_game_not_installed_toast))
+            }
         } else {
             showSnackbar(context.getString(R.string.gf_game_not_installed_toast))
         }
@@ -1546,9 +1550,13 @@ class EditGameFilesViewModel @Inject constructor(
             "Custom_${target.fileName}"
         )
         return try {
-            // A null answer is "no channel"; an empty answer is "the game has not written this
-            // file yet". Both used to collapse into one refusal, which left a user unable to
-            // seed a file even though the directory existed.
+            check(shellRunner.execSafeResult("test", "-d", "$root/Android/data/${config.packageName}").isSuccess) {
+                "The game's data directory is missing or inaccessible. Run the game first."
+            }
+            check(shellRunner.execSafeResult("am", "force-stop", config.packageName).isSuccess) {
+                "Could not stop the game; no write was attempted."
+            }
+            val exists = shellRunner.execSafeResult("test", "-f", targetPath).isSuccess
             val existingBytes = shellRunner.readFileDirect(targetPath, forceBind = true)
             if (existingBytes == null) {
                 withContext(Dispatchers.Main) {
@@ -1559,12 +1567,13 @@ class EditGameFilesViewModel @Inject constructor(
                 }
                 return false
             }
+            check(!exists || existingBytes.isNotEmpty()) { "The current file is unreadable; no write was attempted." }
             val existing = existingBytes.takeIf { it.isNotEmpty() }
             val payload = PubgUploadPlan.payload(imported, existing, target.format)
-            existing?.let { bytes ->
-                backupStore.save(config.packageName, target.fileName, bytes)
+            check(existing == null || backupStore.save(config.packageName, target.fileName, existing) != null) {
+                "Backup failed; refusing to overwrite the current file."
             }
-            shellRunner.execSafe("mkdir", "-p", destDir)
+            check(shellRunner.execSafeResult("mkdir", "-p", destDir).isSuccess) { "The target directory is not writable." }
             tempFile.writeBytes(payload)
             val copy = shellRunner.execSafeResult("cp", "-f", tempFile.absolutePath, targetPath)
             if (!copy.isSuccess) {
@@ -1589,6 +1598,8 @@ class EditGameFilesViewModel @Inject constructor(
                 return false
             }
             true
+        } catch (cancelled: kotlinx.coroutines.CancellationException) {
+            throw cancelled
         } catch (e: Exception) {
             withContext(Dispatchers.Main) {
                 showSnackbar(
@@ -1616,20 +1627,20 @@ class EditGameFilesViewModel @Inject constructor(
             }
         return try {
             val targetDir = getOrCreateTargetDir(treeUri, config, target.directory) ?: return false
-            val existing = targetDir.findFile(target.fileName)?.takeIf { it.length() > 0L }?.let { file ->
+            val existingFile = targetDir.findFile(target.fileName)
+            val existing = existingFile?.let { file ->
                 runCatching {
                     context.contentResolver.openInputStream(file.uri)?.use { it.readBytes() }
                 }.getOrNull()
             }
+            check(existingFile == null || existing != null) { "The existing file is unreadable; no write was attempted." }
             val payload = PubgUploadPlan.payload(imported, existing, target.format)
-            // Safety backup before the delete-and-recreate below, which would otherwise leave
-            // the old generation unreachable through the provider.
-            existing?.let { bytes ->
-                backupStore.save(config.packageName, target.fileName, bytes)
+            // Preserve the provider's existing document identity and refuse unbacked overwrites.
+            check(existing == null || existing.isEmpty() || backupStore.save(config.packageName, target.fileName, existing) != null) {
+                "Backup failed; refusing to overwrite the current file."
             }
-            targetDir.findFile(target.fileName)?.delete()
-            val file = targetDir.createFile(MIME_BINARY, target.fileName) ?: return false
-            context.contentResolver.openOutputStream(file.uri, "w")?.use { output ->
+            val file = existingFile ?: targetDir.createFile(MIME_BINARY, target.fileName) ?: return false
+            context.contentResolver.openOutputStream(file.uri, "wt")?.use { output ->
                 output.write(payload)
             } ?: return false
             // Verify by reading the provider's own bytes back, not by the write call returning.
@@ -1745,13 +1756,15 @@ class EditGameFilesViewModel @Inject constructor(
                     (profile?.targetDir ?: config.saveDir)
                 val destPath = destDir + targetName
 
-                // The probe keeps "no channel" distinct from "missing": null aborts (nothing can
-                // be reported honestly without a channel), empty means the game has not written
-                // its save yet — and that is a seed, not a refusal. The reference tools push the
-                // same way (BattleGrounds_GFX stages in /data/local/tmp and moves, never checking
-                // first): applying a profile re-adds the file with the bundled profile's bytes
-                // and the game takes over from its next launch. The save editor keeps its own
-                // refusal (pullSaveBytes → Missing) because patching needs the file's real bytes.
+                val gameRoot = "${Environment.getExternalStorageDirectory().path}/Android/data/${config.packageName}"
+                check(shellRunner.execSafeResult("test", "-d", gameRoot).isSuccess) {
+                    "The game's data directory is missing or inaccessible. Run the game first."
+                }
+                check(shellRunner.execSafeResult("am", "force-stop", config.packageName).isSuccess) {
+                    "Could not stop the game; no write was attempted."
+                }
+                val exists = shellRunner.execSafeResult("test", "-f", destPath).isSuccess
+                // Only a proven absent target may be seeded; unreadable is not absent.
                 val existingBytes = if (rootSelected) readRootFileIfPresent(destPath)
                 else shellRunner.readFileDirect(destPath, forceBind = true)
                 if (existingBytes == null) {
@@ -1764,6 +1777,7 @@ class EditGameFilesViewModel @Inject constructor(
                     }
                     return@launchIoWithLoading false
                 }
+                check(!exists || existingBytes.isNotEmpty()) { "The current file is unreadable; no write was attempted." }
                 val existing = existingBytes.takeIf { it.isNotEmpty() }
 
                 // Safety backup before the overwrite — the bytes the device actually held, not
@@ -1926,6 +1940,7 @@ class EditGameFilesViewModel @Inject constructor(
                 context.startActivity(webIntent)
                 true
             } catch (_: Exception) {
+                showSnackbar(context.getString(R.string.fe_store_unavailable))
                 false
             }
         }
@@ -1946,10 +1961,14 @@ class EditGameFilesViewModel @Inject constructor(
         successMessage: String? = null,
         task: suspend () -> Boolean
     ) {
+        if (_uiState.value.isLoading) return
         _uiState.update { it.copy(isLoading = true, busyArea = area) }
         viewModelScope.launch(Dispatchers.IO) {
             val ok = try {
                 task()
+            } catch (e: kotlinx.coroutines.CancellationException) {
+                _uiState.update { it.copy(isLoading = false, busyArea = null) }
+                throw e
             } catch (e: Exception) {
                 withContext(Dispatchers.Main) { showSnackbar(context.getString(R.string.gf_failed, e.message)) }
                 false
@@ -1974,11 +1993,5 @@ class EditGameFilesViewModel @Inject constructor(
             "com.tencent.igfit"
         )
 
-        /**
-         * The embedded editors (HSR/WuWa/GRID) are not in [gameConfigs] — their install probes
-         * used to run only because the old `packages` list happened to name them. Listed here
-         * so the probe loop covers them explicitly: each branch resolves its own packages.
-         */
-        private val EMBEDDED_EDITOR_GAMES = listOf(GameType.HSR, GameType.WUWA, GameType.GRID)
     }
 }

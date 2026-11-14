@@ -1047,3 +1047,81 @@ Added `vulkanModel` (Vulkan physical-device name, `VkPhysicalDeviceProperties.de
   with a separate product decision and policy review, without a support appeal.
   Consent, disabled ads, verified purchased removal and SDK ownership are untouched;
   there are no new ad requests, test placements or ad lifecycle states to validate.
+
+## Roblox file experiment is not an FPS unlock (2026-11-13)
+
+- Explicitly authorized a **test-only** File Engineering editor despite the
+  unverified `/data/local/tmp/ClientAppSettings.json` path and the target flag's
+  absence from Roblox's published local Fast Flag allowlist. This narrowly
+  supersedes the verified-behavior/no-FPS-cap restriction for this experiment
+  only, not for existing game editors or Gaming Mode. No bypass, client patch,
+  private-data access or account-safety guarantee is introduced.
+- Keep the whole vertical slice under `screens/editgamefiles/games/roblox/`,
+  embedded in the existing selector in both flavors. Shared root/Shizuku file
+  access remains shared; this does not establish Google Play eligibility.
+- Preserve unrelated JSON, reject ambiguous/unreadable input, and durably
+  journal the original bytes/absence and pending write before mutation.
+  Repeated writes never replace the first original; conflicts fail closed.
+  Original-state Restore is confirmed and verified, not a general redo/history
+  feature. Retain recovery locally outside cloud/transfer backup.
+- File success means exact read-back only. Closing Roblox requires a separate
+  confirmation and is never a side effect of Apply or Restore. Actual gameplay
+  FPS and current-version support require separate device evidence; see
+  `FILE_ENGINEERING.md` for the contract and primary allowlist reference.
+
+## File Engineering logo-first game picker (2026-11-14)
+
+| Compact logo rows (chosen) | Logo grid | Large game cards |
+| --- | --- | --- |
+| Keeps full names, dots and selection aligned | Names wrap unevenly and obscure version context | Consumes more height for the same seven choices |
+
+- Follow the existing Gaming Tools app-picker row shape, not a new navigation
+  surface. Keep PUBG's grouped row and separate version choice, all three dot
+  states, the selection checkmark, cancellation and bounded scrolling.
+- Use installed-package artwork with an immediate neutral fallback. Do not
+  download logos, enumerate more apps, or make missing artwork mean missing
+  installation. Icon loading/rasterization runs off main and is scoped to the
+  popup's composition; PUBG/HSR reuse their existing package identities.
+
+## Research-backed raw File Engineering additions (2026-11-14)
+
+- Add all 21 requested candidates as embedded experimental editors: 18 Feral
+  titles/expansions plus Minecraft Bedrock, Terraria and Civilization VI. Keep
+  per-game schemas/evidence under each game's owner and share only the codec,
+  transaction and raw-value presentation. Do not derive support from spoof scope.
+- Repository samples establish file/key evidence, not current game consumption,
+  numeric safety, FPS benefits, anti-cheat safety or Play eligibility. Show that
+  limitation in the UI. Edit only existing unique typed fields at exact scopes;
+  do not invent presets, install third-party tools or overwrite donor files.
+- Use document-only access where current Minecraft/Terraria paths are not proven.
+  Civ private files require actual root; ordinary Shizuku is not equivalent.
+  Document copies need manual copy-back and never bypass SAF restrictions.
+- Fail closed on malformed files, changed live bytes, inability to stop a direct
+  target, or backup failure. Pin game/file/channel across reads and writes; restore
+  only that file's latest snapshot, backing up the current bytes first. Finish
+  read-back once writing begins even after cancellation. No atomic multi-file or
+  interruption-recovery promise is introduced. Existing Roblox journal semantics
+  and its separately confirmed Close action remain unchanged.
+
+## 2026-11-14 — File Engineering definitions, shared selection and evidenced controls
+
+- Supersedes treating a picker entry or unrestricted raw-value editor as completed
+  game support. `GameDefinitions` declares every game's packages, store target,
+  implementation, capabilities, channels and readiness/limitations. All games,
+  including legacy embedded panels, inherit the parent missing-game workflow.
+- Package-query failures remain unknown, Recheck refreshes detection, and Show
+  Anyway exposes the same tools without inventing an existing file or destination.
+  The detected supported variant is used for launch; store fallback never changes games.
+- Concrete schemas must declare evidenced control encodings. Unknown ordinal
+  mappings and unproven FPS-unlock semantics stay unavailable with explanations.
+  Minecraft's documented zero/unlimited sentinel is not generalized to other games.
+  Existing FPS tools are raise-only; recovery may restore original values.
+- Preserve unrelated data: HSR keeps unknown encoded JSON fields and fails closed
+  on unsupported PlayerPrefs; GRID rejects duplicate/type-mismatched targets;
+  WuWa merges generated INI settings instead of replacing unrelated content.
+  Failed stopping, unreadable existing files or failed backups refuse destructive
+  writes. A failed GRID shell write must not fall through to a different SAF target.
+- Compilation/unit tests do not establish device validation, current game consumption,
+  account safety or Play eligibility. Record limitations per game in the audit.
+  A future game must define meaningful functional actions and focused tests before
+  it is considered implemented; appearing in the list never means fully supported.

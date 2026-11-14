@@ -29,6 +29,11 @@ class LocaleParityTest {
 
     /** User-visible copy in the areas that must follow an in-app language switch. */
     private val requiredKeys = setOf(
+        // Shared experimental File Engineering editors.
+        "ce_experimental", "ce_warning", "ce_evidence", "ce_root_only", "ce_document_only",
+        "ce_privileged", "ce_read_direct", "ce_choose", "ce_document_note", "ce_working",
+        "ce_verified", "ce_raw_values", "ce_unavailable", "ce_closed", "ce_apply", "ce_restore",
+        "ce_confirm", "ce_continue", "ce_discard",
         // PUBG / Genshin / New State profile labels and outcomes
         // (EditGameFilesViewModel.buildPubgConfig/buildGenshinConfig/buildNewStateConfig).
         "gf_profile_unlock_120",

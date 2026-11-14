@@ -55,6 +55,7 @@ object HsrPlayerPrefsXml {
     fun parse(xml: String): MutableMap<String, Value> {
         val map = linkedMapOf<String, Value>()
         try {
+            require(!Regex("<!\\s*(?:DOCTYPE|ENTITY)", RegexOption.IGNORE_CASE).containsMatchIn(xml))
             val factory = XmlPullParserFactory.newInstance()
             factory.isNamespaceAware = false
             val parser = factory.newPullParser()
@@ -63,19 +64,25 @@ object HsrPlayerPrefsXml {
             var event = parser.eventType
             while (event != XmlPullParser.END_DOCUMENT) {
                 if (event == XmlPullParser.START_TAG) {
+                    if (parser.name == "map") {
+                        require(parser.depth == 1)
+                    } else {
+                        require(parser.depth == 2)
                     val name = parser.getAttributeValue(null, "name")
-                    if (name != null) {
-                        when (parser.name) {
+                    require(name != null && name !in map)
+                        val value = when (parser.name) {
                             "int" -> parser.getAttributeValue(null, "value")?.toIntOrNull()
-                                ?.let { map[name] = Value.IntValue(it) }
+                                ?.let { Value.IntValue(it) }
                             "long" -> parser.getAttributeValue(null, "value")?.toLongOrNull()
-                                ?.let { map[name] = Value.LongValue(it) }
+                                ?.let { Value.LongValue(it) }
                             "float" -> parser.getAttributeValue(null, "value")?.toFloatOrNull()
-                                ?.let { map[name] = Value.FloatValue(it) }
-                            "boolean" -> parser.getAttributeValue(null, "value")?.toBoolean()
-                                ?.let { map[name] = Value.BooleanValue(it) }
-                            "string" -> map[name] = Value.StringValue(parser.nextText())
+                                ?.takeIf { it.isFinite() }?.let { Value.FloatValue(it) }
+                            "boolean" -> parser.getAttributeValue(null, "value")?.toBooleanStrictOrNull()
+                                ?.let { Value.BooleanValue(it) }
+                            "string" -> Value.StringValue(parser.nextText())
+                            else -> error("Unsupported PlayerPrefs entry")
                         }
+                        map[name] = requireNotNull(value)
                     }
                 }
                 event = parser.next()

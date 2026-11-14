@@ -33,6 +33,7 @@ import com.catsmoker.app.R
 import com.catsmoker.app.screens.editgamefiles.EditGameFilesViewModel
 import com.catsmoker.app.screens.editgamefiles.games.grid.GridRoute
 import com.catsmoker.app.screens.editgamefiles.games.pubg.PubgSavePatcher
+import com.catsmoker.app.screens.editgamefiles.games.roblox.RobloxRoute
 import com.catsmoker.app.screens.editgamefiles.games.starrail.HsrGraphicsRoute
 import com.catsmoker.app.screens.editgamefiles.games.wutheringwaves.WuwaConfigRoute
 import com.catsmoker.app.screens.editgamefiles.model.GameType
@@ -198,54 +199,50 @@ fun EditGameFilesScreen(
                     }
                 }
             }
-            // The three read-modify-write editors (HSR / WuWa / GRID) render right here, below
-            // the selector — the screen swaps its body instead of navigating away, so every
-            // game is edited from one place. Each brings its own Route (view model, event
-            // toasts, pickers) and gets no back arrow of its own: this screen's header is the
-            // only header. Their editors own their games' files, so none of the profile-push
-            // UI below is shown for them.
-            if (uiState.selectedGame.embeddedEditor) {
+            // The host owns install gating for every implementation, including future entries.
+            if (uiState.selectedGame != GameType.NONE) {
                 Spacer(modifier = Modifier.height(12.dp))
-                when (uiState.selectedGame) {
-                    GameType.HSR -> HsrGraphicsEmbedded()
-                    GameType.WUWA -> WuwaConfigEmbedded()
-                    GameType.GRID -> GridEmbedded()
-                    else -> {}
-                }
-            } else if (uiState.selectedGame != GameType.NONE) {
-                Spacer(modifier = Modifier.height(12.dp))
-                // The same gate the embedded editors apply at load: when the probe says the
-                // game is absent, a GAME NOT FOUND card replaces every working section — the
-                // "preferences file not found" those editors reported for an uninstalled game
-                // was exactly this fact discovered one step later than it needed to be. Unknown
-                // (unprobed) shows the sections; only a confirmed "no" hides them. The small
-                // secondary "Show anyway" button on the card reveals the same profile editor
-                // the installed path shows ([ProfileGameEditor]) below the card — the card
-                // itself stays visible, so the screen never pretends the game is installed.
-                // EditGameFilesViewModel.UiState.showEditorAnyway is per-selection (reset on
-                // every game pick) and survives re-probes, recomposition, and navigating away
-                // and back with the screen's ViewModel.
+                val definition = fileEngineeringGames.getValue(uiState.selectedGame)
                 val gameMissing = uiState.installedGames[uiState.selectedGame] == false
-                if (gameMissing && !uiState.showEditorAnyway) {
+                if (uiState.checkingInstalls) {
+                    Text(stringResource(R.string.fe_checking_installation))
+                } else if (!showFileEngineeringTools(uiState.selectedGame,
+                        uiState.installedGames[uiState.selectedGame], uiState.showEditorAnyway)) {
                     GameNotFoundCard(
                         gameName = uiState.selectedGame.displayName,
-                        packageName = uiState.gamePackageName,
+                        packageName = definition.storePackage,
                         onRecheck = onRecheckInstalls,
                         onOpenStore = onOpenStore,
                         onShowAnyway = onShowAnyway
                     )
                 } else {
+                    if (definition.implementation != FileEngineeringImplementation.SCOPED_CONFIG &&
+                        definition.implementation != FileEngineeringImplementation.ROBLOX_TEST) {
+                        Text(stringResource(R.string.fe_unverified), style = MaterialTheme.typography.bodySmall)
+                        Spacer(modifier = Modifier.height(8.dp))
+                    }
+                    if (uiState.selectedGame == GameType.GENSHIN_IMPACT) {
+                        Text(stringResource(R.string.fe_genshin_limit), style = MaterialTheme.typography.bodySmall)
+                        Spacer(modifier = Modifier.height(8.dp))
+                    }
                     if (gameMissing) {
                         GameNotFoundCard(
                             gameName = uiState.selectedGame.displayName,
-                            packageName = uiState.gamePackageName,
+                            packageName = definition.storePackage,
                             onRecheck = onRecheckInstalls,
                             onOpenStore = onOpenStore,
-                            onShowAnyway = null
+                            onShowAnyway = onShowAnyway
                         )
                         Spacer(modifier = Modifier.height(12.dp))
                     }
-                    ProfileGameEditor(
+                    when (definition.implementation) {
+                    FileEngineeringImplementation.STAR_RAIL -> HsrGraphicsEmbedded()
+                    FileEngineeringImplementation.WUTHERING_WAVES -> WuwaConfigEmbedded()
+                    FileEngineeringImplementation.GRID_AUTOSPORT -> GridEmbedded()
+                    FileEngineeringImplementation.ROBLOX_TEST -> RobloxRoute()
+                    FileEngineeringImplementation.SCOPED_CONFIG ->
+                        com.catsmoker.app.screens.editgamefiles.editor.AdditionalConfigRoute(uiState.selectedGame)
+                    FileEngineeringImplementation.PROFILE -> ProfileGameEditor(
                         uiState = uiState,
                         onProfileSelected = onProfileSelected,
                         onApplyProfile = onApplyProfile,
@@ -259,6 +256,7 @@ fun EditGameFilesScreen(
                         onSaveEditSelected = onSaveEditSelected,
                         onApplySaveEdits = onApplySaveEdits
                     )
+                    }
                 }
             }
         }

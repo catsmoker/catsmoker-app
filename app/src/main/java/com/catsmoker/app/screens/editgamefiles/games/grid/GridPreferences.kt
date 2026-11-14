@@ -204,8 +204,8 @@ object GridPreferences {
         fun substituteInt(name: String, newValue: Int, label: String) {
             val current = values[name]
             when {
-                current == null -> refused.add("$label: not present in the file — open the game's graphics options once")
-                !current.second.matches(Regex("-?\\d+")) ->
+                current == null -> refused.add("$label: absent or ambiguous in the file — refusing to guess")
+                current.first != "integer" || !current.second.matches(Regex("-?\\d+")) ->
                     refused.add("$label: holds \"${current.second}\", not a number — refusing to guess")
                 else -> {
                     xml = replaceValue(xml, name, newValue.toString())
@@ -217,8 +217,8 @@ object GridPreferences {
         fun substituteString(name: String, newValue: String, label: String) {
             val current = values[name]
             when {
-                current == null -> refused.add("$label: not present in the file — open the game's graphics options once")
-                !current.second.matches(Regex("[a-zA-Z]+")) ->
+                current == null -> refused.add("$label: absent or ambiguous in the file — refusing to guess")
+                current.first != "string" || !current.second.matches(Regex("[a-zA-Z]+")) ->
                     refused.add("$label: holds \"${current.second}\" — refusing to overwrite an unexpected value")
                 else -> {
                     xml = replaceValue(xml, name, newValue)
@@ -239,8 +239,14 @@ object GridPreferences {
         }
 
         if (edits.fps != null) {
-            substituteInt("gfxconfig_max_fps", edits.fps, "gfxconfig_max_fps")
-            substituteInt("gfxconfig_high_max_fps", edits.fps, "gfxconfig_high_max_fps")
+            for (name in listOf("gfxconfig_max_fps", "gfxconfig_high_max_fps")) {
+                val current = values.intValue(name)
+                if (current != null && (current <= 0 || edits.fps < current)) {
+                    refused.add("$name: refusing to lower an existing FPS ceiling")
+                } else {
+                    substituteInt(name, edits.fps, name)
+                }
+            }
         }
 
         // The shipped reference file's extra keys, absent from its README list: FXAA
@@ -289,24 +295,24 @@ object GridPreferences {
     }
 
     /**
-     * First occurrence of each value name, name → (type, body). First wins: a name that
-     * repeats across scopes is exactly the ambiguity the exact-match write path also steers
-     * around, and the keys this editor owns are unique in the verified file.
+     * A repeated exact name is ambiguous and unavailable, not a request to edit every scope.
      */
     private fun readValues(xml: String): Map<String, Pair<String, String>> {
         val map = linkedMapOf<String, Pair<String, String>>()
+        val duplicates = mutableSetOf<String>()
         for (match in VALUE_REGEX.findAll(xml)) {
             val (name, type, body) = match.destructured
-            if (!map.containsKey(name)) map[name] = type to body
+            if (map.put(name, type to body) != null) duplicates.add(name)
         }
+        duplicates.forEach(map::remove)
         return map
     }
 
     private fun Map<String, Pair<String, String>>.intValue(name: String): Int? =
-        this[name]?.second?.toIntOrNull()
+        this[name]?.takeIf { it.first == "integer" }?.second?.toIntOrNull()
 
     private fun Map<String, Pair<String, String>>.stringValue(name: String): String? =
-        this[name]?.second?.takeIf { it.isNotBlank() }
+        this[name]?.takeIf { it.first == "string" }?.second?.takeIf { it.isNotBlank() }
 
     /**
      * Rewrites one value's body, matching on the exact name quote-to-quote so a longer

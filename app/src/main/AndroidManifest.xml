@@ -14,7 +14,8 @@
             visible in practice, but visibility by intent-match is implicit; a stricter
             OEM filter would turn a real installation into a silent NameNotFoundException and
             a false "not installed" dot. Naming the packages makes the probe's world
-            explicit:             Genshin + six PUBG variants + New State, GRID, WuWa, five HSR variants.
+            explicit: Genshin + six PUBG variants + New State, GRID, WuWa, five HSR variants,
+            the Roblox test-only editor, and the researched experimental editors.
         -->
         <package android:name="com.miHoYo.GenshinImpact" />
         <package android:name="com.tencent.ig" />
@@ -25,6 +26,28 @@
         <package android:name="com.pubg.imobile" />
         <package android:name="com.rekoo.pubgm" />
         <package android:name="com.feralinteractive.gridas" />
+        <package android:name="com.roblox.client" />
+        <package android:name="com.feralinteractive.gridlegends_android" />
+        <package android:name="com.feralinteractive.alienisolation_android" />
+        <package android:name="com.feralinteractive.saintsrow3_android" />
+        <package android:name="com.feralinteractive.napoleon_android" />
+        <package android:name="com.feralinteractive.hitmanbloodmoney_android" />
+        <package android:name="com.feralinteractive.laracroftgol_android" />
+        <package android:name="com.feralinteractive.laracrofttoo_android" />
+        <package android:name="com.feralinteractive.railroads_android" />
+        <package android:name="com.feralinteractive.tombraider_android" />
+        <package android:name="com.feralinteractive.hitmanabsolution_android" />
+        <package android:name="com.feralinteractive.companyofheroes_android" />
+        <package android:name="com.feralinteractive.empire_android" />
+        <package android:name="com.feralinteractive.tropico3" />
+        <package android:name="com.feralinteractive.rometw" />
+        <package android:name="com.feralinteractive.medieval2_android" />
+        <package android:name="com.feralinteractive.rometwbi" />
+        <package android:name="com.feralinteractive.rometwalex" />
+        <package android:name="com.feralinteractive.xcom2_android" />
+        <package android:name="com.mojang.minecraftpe" />
+        <package android:name="com.and.games505.TerrariaPaid" />
+        <package android:name="com.aspyr.civvi" />
         <package android:name="com.kurogame.wutheringwaves.global" />
         <package android:name="com.HoYoverse.hkrpgoversea" />
         <package android:name="com.miHoYo.hkrpg" />

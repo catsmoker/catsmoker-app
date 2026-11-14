@@ -9,6 +9,7 @@ import com.catsmoker.app.platform.shell.ShellRunner
 import com.catsmoker.app.screens.editgamefiles.storage.ConfigBackupStore
 import dagger.hilt.android.qualifiers.ApplicationContext
 import java.io.File
+import java.util.Base64
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlinx.coroutines.Dispatchers
@@ -22,7 +23,8 @@ import kotlinx.coroutines.withContext
  * The feature's reason to exist is the reference README's own headline: *no root required*.
  * Unlike the HSR editor — whose settings hide in `/data/data` behind a root-only wall —
  * Feral games keep this file in `Android/data/…/files/feral_app_support/`, which Android 11+
- * exposes to the user through SAF. So the channel set here is deliberate:
+ * restricts even for SAF; a provider grant is usable only where the device actually permits
+ * it. No SAF bypass is assumed. The channel set here is deliberate:
  *
  * - **Root / Shizuku shell** ([ShellRunner]) — the same `cp` staging `HsrGameManager` and
  *   the WuWa deployer use; also the only channel that can `am force-stop` the game first.
@@ -192,6 +194,9 @@ class GridPreferencesManager @Inject constructor(
      * into a generic failure, and the push is verified by reading the written file back.
      */
     suspend fun applyEdits(edits: GridPreferences.Edits): WriteResult = withContext(Dispatchers.IO) {
+        if (canUseShell() && !shellRunner.execSafeResult("am", "force-stop", GridPreferences.PACKAGE).isSuccess) {
+            return@withContext WriteResult.Failure(WriteResult.Stage.WRITE_FAILED, "could not stop the game — no write attempted")
+        }
         // A fresh read, not the screen's cached copy: the game may have rewritten the file
         // since it was loaded, and an edit applied to a stale base would resurrect old values.
         val current = readCurrent()
@@ -211,7 +216,10 @@ class GridPreferencesManager @Inject constructor(
         val newBytes = applied.xml.toByteArray(Charsets.UTF_8)
 
         // Shell channel: backup from the live file, stop the game, stage-and-cp, verify by md5.
-        if (canUseShell()) {
+        if (current.channelUsed != "SAF") {
+            if (pullViaShell()?.contentEquals(sourceXml.toByteArray(Charsets.UTF_8)) != true) {
+                return@withContext WriteResult.Failure(WriteResult.Stage.READ_FAILED, "preferences changed or access was lost — reload before applying")
+            }
             val backup = backupViaShell()
             if (backup === backupFailed) {
                 return@withContext WriteResult.Failure(
@@ -219,7 +227,9 @@ class GridPreferencesManager @Inject constructor(
                     "could not store a backup of the current file — refusing to overwrite"
                 )
             }
-            val stop = shellRunner.execSafeResult("am", "force-stop", GridPreferences.PACKAGE)
+            if (pullViaShell()?.contentEquals(sourceXml.toByteArray(Charsets.UTF_8)) != true) {
+                return@withContext WriteResult.Failure(WriteResult.Stage.READ_FAILED, "preferences changed during backup — no write attempted")
+            }
             val outcome = pushViaShell(newBytes)
                 ?: return@withContext WriteResult.Failure(
                     WriteResult.Stage.WRITE_FAILED,
@@ -230,7 +240,7 @@ class GridPreferencesManager @Inject constructor(
                 refused = applied.refused,
                 verified = outcome,
                 channelUsed = "root / Shizuku shell",
-                gameStopped = stop.isSuccess
+                gameStopped = true
             )
         }
 
@@ -261,6 +271,9 @@ class GridPreferencesManager @Inject constructor(
                 "could not read the current file to back it up — refusing to overwrite"
             )
         }
+        if (!prior.contentEquals(sourceXml.toByteArray(Charsets.UTF_8))) {
+            return@withContext WriteResult.Failure(WriteResult.Stage.READ_FAILED, "preferences changed — reload before applying")
+        }
         val backup = prior.takeIf { it.isNotEmpty() }
             ?.let { backupStore.save(GridPreferences.PACKAGE, GridPreferences.FILE_NAME, it) }
         if (prior.isNotEmpty() && backup == null) {
@@ -270,7 +283,7 @@ class GridPreferencesManager @Inject constructor(
             )
         }
         val written = runCatching {
-            context.contentResolver.openOutputStream(target.uri, "w")?.use { it.write(newBytes) }
+            context.contentResolver.openOutputStream(target.uri, "wt")?.use { it.write(newBytes) }
         }.getOrNull()
         if (written == null) {
             return@withContext WriteResult.Failure(
@@ -330,24 +343,14 @@ class GridPreferencesManager @Inject constructor(
             ?: backupFailed
     }
 
-    /**
-     * The shell pull — `cp` to an app-owned temp and read in-process, byte-exact the way
-     * WuwaConfigManager's ShellChannel pulls, because `cat` over the shell mangles nothing
-     * here but costs nothing to be careful about either.
-     */
+    /** Base64 preserves bytes without inheriting a root-owned, unreadable staging file. */
     private suspend fun pullViaShell(): ByteArray? {
-        val tempDir = context.externalCacheDir ?: context.cacheDir
-        val temp = withContext(Dispatchers.IO) {
-            File.createTempFile("grid_pull_", null, tempDir)
-        }
-        return try {
-            temp.delete()
-            val cp = shellRunner.execSafeResult("cp", "-f", absolutePath, temp.absolutePath)
-            if (!cp.isSuccess || !temp.exists() || temp.length() == 0L) null
-            else runCatching { temp.readBytes() }.getOrNull()
-        } finally {
-            temp.delete()
-        }
+        val size = shellRunner.execSafeResult("stat", "-c", "%s", absolutePath)
+        if (!size.isSuccess || size.stdout.trim().toLongOrNull() !in 1L..1_048_576L) return null
+        val encoded = shellRunner.execSafeResult("base64", absolutePath)
+        if (!encoded.isSuccess) return null
+        return runCatching { Base64.getMimeDecoder().decode(encoded.stdout) }
+            .getOrNull()?.takeIf { it.isNotEmpty() && it.size <= 1_048_576 }
     }
 
     private suspend fun pushViaShell(bytes: ByteArray): Boolean? {
@@ -357,7 +360,7 @@ class GridPreferencesManager @Inject constructor(
         }
         return try {
             temp.writeBytes(bytes)
-            shellRunner.execSafeResult("mkdir", "-p", absoluteDir)
+            if (!shellRunner.execSafeResult("test", "-f", absolutePath).isSuccess) return null
             val cp = shellRunner.execSafeResult("cp", "-f", temp.absolutePath, absolutePath)
             if (!cp.isSuccess) null
             else md5MatchesViaShell(temp)
@@ -405,6 +408,9 @@ class GridPreferencesManager @Inject constructor(
             // exit) and stash what is being replaced first — the same rule as applyEdits.
             if (restoring) {
                 gameStopped = shellRunner.execSafeResult("am", "force-stop", GridPreferences.PACKAGE).isSuccess
+                if (gameStopped != true) {
+                    return WriteResult.Failure(WriteResult.Stage.WRITE_FAILED, "could not stop the game — no restore attempted")
+                }
                 val backup = backupViaShell()
                 if (backup === backupFailed) {
                     return WriteResult.Failure(
@@ -421,6 +427,7 @@ class GridPreferencesManager @Inject constructor(
                     verified = outcome, channelUsed = "root / Shizuku shell", gameStopped = gameStopped
                 )
             }
+            return WriteResult.Failure(WriteResult.Stage.WRITE_FAILED, "shell write failed — refusing to switch destinations")
         }
         val dir = safDataRoot() ?: return WriteResult.Failure(
             WriteResult.Stage.NO_CHANNEL, "no channel can reach the game's folder"
@@ -450,7 +457,9 @@ class GridPreferencesManager @Inject constructor(
             }
         }
         return try {
-            context.contentResolver.openOutputStream(target.uri, "w")?.use { it.write(bytes) }
+            check(context.contentResolver.openOutputStream(target.uri, "wt")?.use { it.write(bytes) } != null) {
+                "the provider refused to open the file for writing"
+            }
             val readBack = context.contentResolver.openInputStream(target.uri)?.use { it.readBytes() }
             WriteResult.Success(
                 backup = backupEntry, refused = emptyList(),

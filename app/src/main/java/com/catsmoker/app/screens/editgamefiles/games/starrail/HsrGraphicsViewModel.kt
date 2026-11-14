@@ -126,7 +126,7 @@ class HsrGraphicsViewModel @Inject constructor(
      */
     fun onShowEditorAnyway() {
         val state = _uiState.value
-        if (state.gameMissing && state.settings == null) {
+        if (state.settings == null) {
             settingsHistory.setBaseline(HsrGraphicsSettings())
             prefsHistory.setBaseline(HsrGamePreferences())
             _uiState.update {
@@ -188,7 +188,7 @@ class HsrGraphicsViewModel @Inject constructor(
                     val missing = result.stage == HsrReadResult.Stage.GAME_NOT_INSTALLED ||
                         (result.stage == HsrReadResult.Stage.NO_ROOT &&
                             !gameManager.isAnyKnownVariantInstalled())
-                    val seed = state.settings == null && missing && state.showEditorAnyway
+                    val seed = state.settings == null && state.showEditorAnyway
                     if (seed) {
                         settingsHistory.setBaseline(HsrGraphicsSettings())
                         prefsHistory.setBaseline(HsrGamePreferences())

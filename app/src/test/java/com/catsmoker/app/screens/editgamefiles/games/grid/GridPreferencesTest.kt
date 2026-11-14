@@ -16,6 +16,28 @@ import org.junit.Test
  */
 class GridPreferencesTest {
 
+    @Test
+    fun duplicateOrWrongTypeFieldsCannotBeEdited() {
+        val source = referenceShapedXml()
+        val duplicate = source.replace("</registry>",
+            """<value name="ScreenH" type="integer">900</value></registry>""")
+        assertNull(GridPreferences.parse(duplicate).screenHeight)
+        assertFalse("ScreenH" in GridPreferences.apply(duplicate, GridPreferences.Edits(screenHeight = 1080)).changed)
+        val wrongType = source.replace("""name="ScreenH" type="integer"""", """name="ScreenH" type="string"""")
+        assertNull(GridPreferences.parse(wrongType).screenHeight)
+        assertFalse("ScreenH" in GridPreferences.apply(wrongType, GridPreferences.Edits(screenHeight = 1080)).changed)
+    }
+
+    @Test
+    fun fpsEditsCannotLowerExistingOrUnlimitedCeilings() {
+        for (fps in listOf(240, 0, -1)) {
+            val source = referenceShapedXml().replace("""type="integer">60</value>""", """type="integer">$fps</value>""")
+            val result = GridPreferences.apply(source, GridPreferences.Edits(fps = 144))
+            assertTrue(result.changed.isEmpty())
+            assertEquals(source, result.xml)
+        }
+    }
+
     /** Mirrors the reference file's structure, abbreviated to the parts that bite. */
     private fun referenceShapedXml(): String = """
         <?xml version="1.0" encoding="UTF-8"?>

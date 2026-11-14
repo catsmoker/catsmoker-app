@@ -82,15 +82,6 @@ class HsrGameManager @Inject constructor(
     private var cachedPackage: String? = null
     private var cachedPrefsPath: String? = null
 
-    /** Known package variants, in the reference's order — the fast path before the root sweep. */
-    private val knownPackages = listOf(
-        "com.HoYoverse.hkrpgoversea" to "Global/SEA",
-        "com.miHoYo.hkrpg" to "CN (China)",
-        "com.HoYoverse.hkrpg" to "TW/HK/MO",
-        "com.cognosphere.hkrpg" to "Alternative Global",
-        "com.HoYoverse.hkrpgsamsung" to "Samsung Galaxy Store"
-    )
-
     /**
      * Unprivileged probe: is *any* known HSR variant installed right now. The File Engineering
      * picker's dot used to re-list the packages by hand, which could drift from this list
@@ -100,7 +91,7 @@ class HsrGameManager @Inject constructor(
      * (package-visibility filtering) counts as absent for that variant, and a variant only the
      * privileged sweep could find still surfaces when the editor itself loads.
      */
-    fun isAnyKnownVariantInstalled(): Boolean = knownPackages.any { (pkg, _) ->
+    fun isAnyKnownVariantInstalled(): Boolean = KNOWN_PACKAGES.any { (pkg, _) ->
         runCatching { context.packageManager.getPackageInfo(pkg, 0) }.isSuccess
     }
 
@@ -117,7 +108,7 @@ class HsrGameManager @Inject constructor(
         if (refresh) cachedPackage = null
         cachedPackage?.let { return it }
 
-        for ((pkg, _) in knownPackages) {
+        for ((pkg, _) in KNOWN_PACKAGES) {
             if (runCatching { context.packageManager.getPackageInfo(pkg, 0) }.isSuccess) {
                 cachedPackage = pkg
                 return pkg
@@ -139,7 +130,7 @@ class HsrGameManager @Inject constructor(
     }
 
     fun packageLabel(pkg: String): String =
-        knownPackages.firstOrNull { it.first == pkg }?.second
+        KNOWN_PACKAGES.firstOrNull { it.first == pkg }?.second
             ?: pkg.substringAfterLast('.').replaceFirstChar { it.uppercase() }
 
     suspend fun findPrefsPath(refresh: Boolean = false): String? {
@@ -209,8 +200,15 @@ class HsrGameManager @Inject constructor(
         val (map, gateFailure) = readMapForWrite()
         if (gateFailure != null) return gateFailure
         val liveMap = map ?: return HsrWriteResult.Failure(HsrWriteResult.Stage.READ_FAILED, "could not read the current file for the pre-write merge")
-
-        liveMap[HsrGraphicsSettings.PREFS_KEY] = HsrPlayerPrefsXml.Value.StringValue(settings.toEncoded())
+        val expectedMap = liveMap.toMap()
+        val liveSettings = (liveMap[HsrGraphicsSettings.PREFS_KEY] as? HsrPlayerPrefsXml.Value.StringValue)
+            ?.value?.let(HsrGraphicsSettings::fromEncoded)
+            ?: return HsrWriteResult.Failure(HsrWriteResult.Stage.READ_FAILED, "graphics settings are missing or corrupt")
+        if (settings.fps != liveSettings.fps && (liveSettings.fps <= 0 || settings.fps < liveSettings.fps)) {
+            return HsrWriteResult.Failure(HsrWriteResult.Stage.READ_FAILED, "refusing to lower an existing FPS ceiling")
+        }
+        val mergedSettings = settings.copy(originalJson = liveSettings.originalJson)
+        liveMap[HsrGraphicsSettings.PREFS_KEY] = HsrPlayerPrefsXml.Value.StringValue(mergedSettings.toEncoded())
         for ((field, key) in HsrGraphicsSettings.SIBLING_INT_KEYS) {
             val value = when (field) {
                 "screenWidth" -> settings.screenWidth
@@ -225,9 +223,9 @@ class HsrGameManager @Inject constructor(
             liveMap[key] = HsrPlayerPrefsXml.Value.IntValue(value)
         }
 
-        val (backup, failure) = backupAndPush(liveMap)
+        val (backup, failure) = backupAndPush(liveMap, expectedMap)
         if (failure != null) return failure
-        val verification = verifyWrite { written -> verifyGraphics(written, settings) }
+        val verification = verifyWrite { written -> verifyGraphics(written, mergedSettings) }
         return HsrWriteResult.Success(backup, verification.first, verification.second)
     }
 
@@ -240,6 +238,7 @@ class HsrGameManager @Inject constructor(
         val (map, gateFailure) = readMapForWrite()
         if (gateFailure != null) return gateFailure
         val liveMap = map ?: return HsrWriteResult.Failure(HsrWriteResult.Stage.READ_FAILED, "could not read the current file for the pre-write merge")
+        val expectedMap = liveMap.toMap()
 
         val updates = HsrGraphicsSettings.flatUpdates(liveMap.keys, settings)
         if (updates.isEmpty()) {
@@ -247,7 +246,7 @@ class HsrGameManager @Inject constructor(
         }
         for ((key, value) in updates) liveMap[key] = value
 
-        val (backup, failure) = backupAndPush(liveMap)
+        val (backup, failure) = backupAndPush(liveMap, expectedMap)
         if (failure != null) return failure
         val verification = verifyWrite { written -> verifyFlat(written, settings) }
         return HsrWriteResult.Success(backup, verification.first, verification.second)
@@ -262,6 +261,7 @@ class HsrGameManager @Inject constructor(
         val (map, gateFailure) = readMapForWrite()
         if (gateFailure != null) return gateFailure
         val liveMap = map ?: return HsrWriteResult.Failure(HsrWriteResult.Stage.READ_FAILED, "could not read the current file for the pre-write merge")
+        val expectedMap = liveMap.toMap()
 
         liveMap[HsrGamePreferences.KEY_TEXT_LANGUAGE] =
             HsrPlayerPrefsXml.Value.StringValue(HsrGamePreferences.textLanguageCode(prefs.textLanguage))
@@ -282,7 +282,7 @@ class HsrGameManager @Inject constructor(
             }
         }
 
-        val (backup, failure) = backupAndPush(liveMap)
+        val (backup, failure) = backupAndPush(liveMap, expectedMap)
         if (failure != null) return failure
         val verification = verifyWrite { written -> verifyPrefs(written, prefs, uid) }
         return HsrWriteResult.Success(backup, verification.first, verification.second)
@@ -313,12 +313,17 @@ class HsrGameManager @Inject constructor(
         // A running game rewrites its settings on exit; stop it before reading the live file so
         // the pre-restore backup is the state the game actually left, and the restored file is
         // not clobbered a moment later.
-        shellRunner.execSafeResult("am", "force-stop", pkg)
+        if (!shellRunner.execSafeResult("am", "force-stop", pkg).isSuccess) {
+            return@withContext HsrWriteResult.Failure(HsrWriteResult.Stage.COPY_FAILED, "could not stop the game — no restore attempted")
+        }
 
         // Keep the state being replaced. Without this, "restore" had no inverse and a mis-tap
         // permanently discarded the live file. A live file that cannot be backed up aborts the
         // restore: replacing it would leave no way back.
         val live = readPrefsBytes(path)
+        if (live == null || live.isEmpty()) {
+            return@withContext HsrWriteResult.Failure(HsrWriteResult.Stage.BACKUP_FAILED, "could not read the live preferences — no restore attempted")
+        }
         if (live != null && live.isNotEmpty()) {
             if (backupStore.save(pkg, File(path).name, live) == null) {
                 return@withContext HsrWriteResult.Failure(
@@ -332,7 +337,7 @@ class HsrGameManager @Inject constructor(
         val copyResult = try {
             tempFile.writeBytes(bytes)
             shellRunner.execResult(
-                "cp '${tempFile.absolutePath}' '$path' && chmod 660 '$path' && chown \$(stat -c '%u:%g' \$(dirname '$path')) '$path'"
+                "[ \"\$(id -u)\" = 0 ] || exit 1; cp '${tempFile.absolutePath}' '$path' && chmod 660 '$path' && chown \$(stat -c '%u:%g' \$(dirname '$path')) '$path'"
             )
         } finally {
             tempFile.delete()
@@ -420,6 +425,9 @@ class HsrGameManager @Inject constructor(
     /** The gate, plus a fresh read of the live file for the pre-write merge. */
     private suspend fun readMapForWrite(): Pair<MutableMap<String, HsrPlayerPrefsXml.Value>?, HsrWriteResult.Failure?> {
         gateForWrite()?.let { return null to it }
+        if (!forceStopGame()) {
+            return null to HsrWriteResult.Failure(HsrWriteResult.Stage.COPY_FAILED, "could not stop the game — no write attempted")
+        }
         val map = readPrefsMap(cachedPrefsPath ?: return null to HsrWriteResult.Failure(HsrWriteResult.Stage.PREFS_NOT_FOUND, "prefs path lost"))
             ?: return null to HsrWriteResult.Failure(HsrWriteResult.Stage.READ_FAILED, "could not read the current file for the pre-write merge")
         return map to null
@@ -430,7 +438,8 @@ class HsrGameManager @Inject constructor(
      * failed backup aborts the write), then push [map] through the copy choreography.
      */
     private suspend fun backupAndPush(
-        map: Map<String, HsrPlayerPrefsXml.Value>
+        map: Map<String, HsrPlayerPrefsXml.Value>,
+        expectedMap: Map<String, HsrPlayerPrefsXml.Value>
     ): Pair<ConfigBackupStore.Entry?, HsrWriteResult.Failure?> = withContext(Dispatchers.IO) {
         val pkg = cachedPackage
             ?: return@withContext null to HsrWriteResult.Failure(HsrWriteResult.Stage.GAME_NOT_INSTALLED, "no HSR package found")
@@ -447,6 +456,9 @@ class HsrGameManager @Inject constructor(
                 "could not read $path to back it up — refusing to overwrite"
             )
         }
+        if (HsrPlayerPrefsXml.parse(currentBytes.toString(Charsets.UTF_8)) != expectedMap) {
+            return@withContext null to HsrWriteResult.Failure(HsrWriteResult.Stage.READ_FAILED, "preferences changed during editing — reload before applying")
+        }
         val backup = if (currentBytes.isNotEmpty()) {
             backupStore.save(pkg, File(path).name, currentBytes)
                 ?: return@withContext null to HsrWriteResult.Failure(
@@ -460,10 +472,13 @@ class HsrGameManager @Inject constructor(
         val tempFile = File.createTempFile("hsr_prefs_", ".xml", context.cacheDir)
         val copyResult = try {
             tempFile.writeText(HsrPlayerPrefsXml.serialize(map))
+            if (readPrefsBytes(path)?.contentEquals(currentBytes) != true) {
+                return@withContext backup to HsrWriteResult.Failure(HsrWriteResult.Stage.READ_FAILED, "preferences changed during backup — no write attempted")
+            }
             // chown takes the owner from the prefs *directory* so the file lands exactly as the
             // game's own writes would leave it. Raw command: the $( ) substitution must survive.
             shellRunner.execResult(
-                "cp '${tempFile.absolutePath}' '$path' && chmod 660 '$path' && chown \$(stat -c '%u:%g' \$(dirname '$path')) '$path'"
+                "[ \"\$(id -u)\" = 0 ] || exit 1; cp '${tempFile.absolutePath}' '$path' && chmod 660 '$path' && chown \$(stat -c '%u:%g' \$(dirname '$path')) '$path'"
             )
         } finally {
             tempFile.delete()
@@ -570,20 +585,29 @@ class HsrGameManager @Inject constructor(
     }
 
     private suspend fun readPrefsBytes(path: String): ByteArray? {
-        val result = shellRunner.execSafeResult("cat", path)
+        val result = shellRunner.execSafeResult("sh", "-c", "[ \"\$(id -u)\" = 0 ] || exit 1; cat \"\$1\"", "catsmoker", path)
         if (!result.isSuccess || result.stdout.isEmpty()) return null
         return result.stdout.toByteArray()
     }
 
     private suspend fun readPrefsMap(path: String): MutableMap<String, HsrPlayerPrefsXml.Value>? {
-        val result = shellRunner.execSafeResult("cat", path)
+        val result = shellRunner.execSafeResult("sh", "-c", "[ \"\$(id -u)\" = 0 ] || exit 1; cat \"\$1\"", "catsmoker", path)
         if (!result.isSuccess || result.stdout.isEmpty()) return null
         val map = HsrPlayerPrefsXml.parse(result.stdout)
         if (map.isEmpty()) return null
         return map
     }
 
-    private companion object {
+    companion object {
+        /** Detection and picker icons share the same variants; neither needs a second catalog. */
+        internal val KNOWN_PACKAGES = listOf(
+            "com.HoYoverse.hkrpgoversea" to "Global/SEA",
+            "com.miHoYo.hkrpg" to "CN (China)",
+            "com.HoYoverse.hkrpg" to "TW/HK/MO",
+            "com.cognosphere.hkrpg" to "Alternative Global",
+            "com.HoYoverse.hkrpgsamsung" to "Samsung Galaxy Store"
+        )
+
         /** Same order as the reference: /data_mirror crosses the mount-namespace boundary first. */
         // Other apps' paths via root shell — getFilesDir() cannot address them, so the
         // paths are necessarily hardcoded.
