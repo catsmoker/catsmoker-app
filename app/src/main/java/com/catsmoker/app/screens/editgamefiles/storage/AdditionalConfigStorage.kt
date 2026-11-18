@@ -29,7 +29,7 @@ class AdditionalConfigStorage @Inject constructor(
 
     data class Loaded(val source: Source, val bytes: ByteArray, val document: EditableConfigDocument)
 
-    private val backups = ConfigBackupStore(context)
+    private val backups = ScopedConfigBackups(context.filesDir)
     private val mutex = Mutex()
 
     suspend fun load(file: EditableConfigFile, uri: Uri? = null): Loaded = withContext(Dispatchers.IO) {
@@ -59,16 +59,21 @@ class AdditionalConfigStorage @Inject constructor(
     ): Loaded = withContext(Dispatchers.IO) {
         mutex.withLock {
             require(gameClosed) { "Close the game and confirm before writing." }
+            val location = when (val source = loaded.source) {
+                is Source.Root -> ScopedConfigBackups.Target.Location.Direct(source.path)
+                is Source.Shizuku -> ScopedConfigBackups.Target.Location.Direct(source.path)
+                is Source.Document -> ScopedConfigBackups.Target.Location.Document(source.uri.toString())
+            }
+            val target = ScopedConfigBackups.Target(spec.packageName, file.name, location)
             val replacement = if (edits != null) {
                 require(edits.all { (id, value) -> file.fields.singleOrNull { it.id == id }?.acceptsEdit(value) == true }) {
                     "This control has no established value mapping or FPS-unlock semantics; no write was attempted."
                 }
                 loaded.document.patch(edits)
             } else {
-                val entry = backups.list(spec.packageName).firstOrNull {
-                    it.file.name.substringAfter('_') == file.name
-                } ?: error("No backup for this file yet.")
-                val bytes = backups.readBytes(entry) ?: error("Could not read the backup.")
+                val entry = backups.latest(target)
+                    ?: error("No backup for this exact source. Older backups without a source cannot be restored here.")
+                val bytes = backups.read(entry) ?: error("Could not read the backup.")
                 EditableConfigDocument.parse(bytes, file)
                 bytes
             }
@@ -82,7 +87,7 @@ class AdditionalConfigStorage @Inject constructor(
                 }
 
                 override suspend fun read() = this@AdditionalConfigStorage.read(loaded.source)
-                override suspend fun backup(bytes: ByteArray) = backups.save(spec.packageName, file.name, bytes) != null
+                override suspend fun backup(bytes: ByteArray) = backups.save(target, bytes)
                 override suspend fun write(bytes: ByteArray) = this@AdditionalConfigStorage.write(loaded.source, bytes)
             }
             check(ConfigWriteTransaction.write(channel, loaded.bytes, replacement)) {

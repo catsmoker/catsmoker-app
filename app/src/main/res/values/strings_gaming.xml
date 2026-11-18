@@ -594,7 +594,7 @@
     <string name="gt_eng_un_data_silent">Stopping other apps using data — your phone would not answer</string>
     <string name="gt_eng_un_data_fail">Stopping other apps using data: %1$s</string>
     <string name="gt_eng_un_data_revert">Background-data block could not be lifted — your phone would not answer</string>
-    <string name="gt_eng_un_framecap">Raising the game\'s own frame cap — your phone %1$s</string>
+    <string name="gt_eng_un_framecap">Applying the game\'s render scale — your phone %1$s</string>
     <string name="gt_eng_un_framecap_no">said no: %1$s</string>
     <string name="gt_eng_un_framecap_kept">did not keep the setting</string>
     <string name="gt_eng_activation_fail">Activation failed</string>

@@ -9,7 +9,7 @@ import org.junit.Test
 class RobloxIntegrationTest {
     @Test fun `experimental editor is embedded and explicitly visible to package queries`() {
         assertTrue(GameType.ROBLOX.embeddedEditor)
-        assertTrue(GameType.ROBLOX.displayName.contains("test-only"))
+        assertEquals("Roblox", GameType.ROBLOX.displayName)
         val root = "src/main/java/com/catsmoker/app/screens/editgamefiles/"
         assertTrue(File(root + "GameSelector.kt").readText().contains("GameType.entries.filter"))
         assertTrue(File(root + "EditGameFilesScreen.kt").readText().contains("FileEngineeringImplementation.ROBLOX_TEST -> RobloxRoute()"))
@@ -28,7 +28,6 @@ class RobloxIntegrationTest {
             }
         }
         val base = tables.getValue("values")
-        assertTrue(base.getValue("rb_warning").contains("Not an FPS unlocker"))
         tables.forEach { (locale, strings) ->
             assertEquals(locale, base.keys, strings.keys)
             strings.forEach { (key, value) ->

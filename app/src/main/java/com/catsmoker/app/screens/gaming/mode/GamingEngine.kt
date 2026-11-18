@@ -1,6 +1,7 @@
 package com.catsmoker.app.screens.gaming.mode
 
 import com.catsmoker.app.R
+import com.catsmoker.app.screens.gaming.GameSettingsStore
 
 import android.app.NotificationManager
 import android.content.ComponentName
@@ -63,7 +64,9 @@ class GamingEngine(
     private val gameInterventions: GameInterventions,
     private val suspendListStore: SuspendListStore,
     private val suspendExemptStore: SuspendExemptStore,
-    private val refreshController: RefreshRateController
+    private val refreshController: RefreshRateController,
+    private val gameSettingsStore: GameSettingsStore,
+    private val modeObservation: GamingModeObservation
 ) {
     private val _state = MutableStateFlow<GamingModeState>(GamingModeState.Idle)
     val state: StateFlow<GamingModeState> = _state.asStateFlow()
@@ -238,6 +241,12 @@ class GamingEngine(
         refreshAnimationScales()
 
         scope.launch { compiler.loadHistory() }
+        modeObservation.observe {
+            GamingModeObservation.Snapshot(
+                state.value.javaClass.simpleName, this.sessionOpen.value,
+                recovery.value.isNeeded, report.value.unavailable.size
+            )
+        }
     }
 
     // Single-purpose reader: every caller reads the always-finish flag, so there is
@@ -379,13 +388,19 @@ class GamingEngine(
         "com.dexposed"                  // Dexposed
     )
 
-    suspend fun toggleGamingMode(active: Boolean, packageName: String? = null) {
+    suspend fun toggleGamingMode(
+        active: Boolean,
+        packageName: String? = null,
+        ownedOnlyRestore: Boolean = false
+    ) {
         toggleMutex.withLock {
             withContext(Dispatchers.IO) {
                 if (active) {
                     enableGamingMode(packageName)
                 } else {
-                    disableGamingMode()
+                    if (!ownedOnlyRestore || _sessionOpen.value || _recovery.value.isNeeded) {
+                        disableGamingMode(ownedOnlyRestore)
+                    }
                 }
             }
         }
@@ -493,13 +508,13 @@ class GamingEngine(
      * refuses to reach this point while a record is still outstanding.
      */
     private fun beginSession() {
-        prefs.edit {
-            putBoolean("is_active", true)
-            putInt("session_boot_count", currentBootCount())
-            putLong("session_started_at", System.currentTimeMillis())
-            remove("affected_pkgs")
-            remove("appops_prior")
-        }
+        check(prefs.edit()
+            .putBoolean("is_active", true)
+            .putInt("session_boot_count", currentBootCount())
+            .putLong("session_started_at", System.currentTimeMillis())
+            .remove("affected_pkgs")
+            .remove("appops_prior")
+            .commit()) { "Session journal could not be persisted" }
         _sessionOpen.value = true
     }
 
@@ -527,6 +542,10 @@ class GamingEngine(
         AppOpsRecord.decode(prefs.getStringSet("appops_prior", emptySet()) ?: emptySet()).keys.sorted()
 
     private suspend fun enableGamingMode(packageName: String?) {
+        // Capture once, before any suspension point. Selecting B while A activates cannot retarget it.
+        val desired = packageName?.let { gameSettingsStore.read(it) }
+        val pointerChoice = if (desired != null) desired.pointerSpeed else _pointerSpeedChoice.value
+        val downscaleChoice = if (desired != null) desired.downscale else _interventionDownscale.value
         _state.value = GamingModeState.Enabling(0f, context.getString(R.string.gt_eng_init))
         shellRunner.refreshShizukuPermission()
         val isRoot = shellRunner.isRootAvailable()
@@ -551,7 +570,7 @@ class GamingEngine(
             // `settings put` below — so deactivation restores their configuration and not ours.
             val restrictedBefore = runCatching { backgroundDataRestrictor.isEngaged() }
                 .getOrDefault(false)
-            if (!captureAndSaveSnapshot(packageName)) {
+            if (!captureAndSaveSnapshot(packageName, downscaleChoice != null, pointerChoice != null)) {
                 _state.value = GamingModeState.Error(context.getString(R.string.gt_eng_snapshot_fail))
                 return
             }
@@ -566,11 +585,9 @@ class GamingEngine(
             // to before the first lever is written. Writing `is_active` only at the end is what
             // let a mid-activation death leave suspended apps with no session record at all.
             beginSession()
+            prefs.edit { putString("active_desired_settings", desired?.encode()) }
 
-            _state.value = GamingModeState.Enabling(0.15f, context.getString(R.string.gt_eng_trim))
-            execute(PrivilegeCommands.TRIM_CACHES)
-            execute(PrivilegeCommands.COMPACT_BACKGROUND)
-            runCatching { execute(PrivilegeCommands.PINNER_REPIN) }
+            // Preparation is not a cache-cleaning/compilation pass. Keep warm assets intact.
 
             _state.value = GamingModeState.Enabling(0.35f, context.getString(R.string.gt_eng_suspend))
             // The automatic sweep plus the user's own extra list, minus the user's keep list.
@@ -583,7 +600,7 @@ class GamingEngine(
             val targets = SuspendSweep.resolveTargets(
                 sweepTargets = getSuspendTargets(packageName),
                 extraPicks = suspendListStore.getSuspendPackages(),
-                exempt = suspendExemptStore.getExemptPackages(),
+                exempt = suspendExemptStore.getExemptPackages() + GamingEnvironment.protectedPackages(context),
                 activeGamePkg = packageName,
                 selfPkg = context.packageName
             )
@@ -695,18 +712,21 @@ class GamingEngine(
             // Refresh lock via the shared RefreshRateController (F3): one writer for
             // min/peak_refresh_rate — Gaming Mode and "Always fastest" can no longer diverge.
             // Target is always the panel's measured maximum: maximum refresh, never a cap.
-            val lock = refreshController.lockToPeak()
+            val externalDisplay = GamingEnvironment.hasExternalDisplay(context)
+            val lock = if (externalDisplay) RefreshRateController.LockResult(false, false, 0)
+                else refreshController.lockToPeak()
             val maxHz = lock.lockedHz
             val peakOk = lock.peakOk
             val minOk = lock.minOk
             val lockedHz = if (peakOk || minOk) maxHz else null
-            if (lockedHz == null) {
+            if (lockedHz == null && !externalDisplay) {
                 unavailable += GamingModeNotice.Res(R.string.gt_eng_un_refresh)
             }
             // vivo's own display-mode switch, written beside the standard rate keys: OriginOS
             // honours it over them on some builds. The mode is the enumerated one at the same
             // measured peak — never the reference's hardcoded id (see [VivoDisplayMode]).
-            val vivoLock = refreshController.lockVendorDisplayMode()
+            val vivoLock = if (externalDisplay) RefreshRateController.VendorDisplayLock(false, true)
+                else refreshController.lockVendorDisplayMode()
             if (vivoLock.applicable && !vivoLock.ok) {
                 unavailable += GamingModeNotice.Res(R.string.gt_eng_un_vivo)
             }
@@ -717,7 +737,7 @@ class GamingEngine(
             // The user's touch-speed choice, if any. Same snapshot/restore contract as the boost
             // above; a refused write is reported rather than counted as done.
             var pointerSpeedApplied: Int? = null
-            PointerSpeed.sanitize(_pointerSpeedChoice.value)?.let { speed ->
+            PointerSpeed.sanitize(pointerChoice)?.let { speed ->
                 if (putSettingVerified("pointer_speed", speed.toString())) {
                     pointerSpeedApplied = speed
                 } else {
@@ -725,9 +745,11 @@ class GamingEngine(
                 }
             }
 
+            prefs.edit().putBoolean("session_fixed_performance_requested", true).commit()
             val fixedPerfOk = shellRunner
                 .execSafeResult(*PrivilegeCommands.fixedPerformanceArgs(true))
                 .isSuccess
+            if (!fixedPerfOk) prefs.edit { putBoolean("session_fixed_performance_requested", false) }
             if (!fixedPerfOk) unavailable += GamingModeNotice.Res(R.string.gt_eng_un_fixed)
 
             // Qualcomm's vendor GPU mode. The payload is the reference daemon's whole job (see
@@ -741,10 +763,7 @@ class GamingEngine(
 
             // Qualcomm's game FPS hint, from the same reference's boot script (see
             // [GamingModeReport.qtiGameFps] for the lineage and the persist-twin decision).
-            val qtiFpsOk = applyQtiGameFpsHint(maxHz)
-            if (qtiFpsOk == false) {
-                unavailable += GamingModeNotice.Res(R.string.gt_eng_un_qti)
-            }
+            val qtiFpsOk: Boolean? = null // Do not impose a vendor FPS target during preparation.
 
             // MediaTek's game-mode knobs (GED boost parameters + PPM policy states). Gated on
             // the nodes existing at all — non-MediaTek silicon is "not applicable" — root-only
@@ -796,14 +815,10 @@ class GamingEngine(
             // The two developer options, applied through the same verified helpers the Developer
             // Options card uses — so the switches there and the state here can never disagree.
             _state.value = GamingModeState.Enabling(0.92f, context.getString(R.string.gt_eng_dev))
-            val discardOk = toggleAlwaysFinishActivities(true)
-            if (!discardOk) {
-                unavailable += GamingModeNotice.Res(R.string.gt_eng_un_discard)
-            }
-            val processLimitOk = toggleBackgroundProcessLimit(true)
-            if (!processLimitOk) {
-                unavailable += GamingModeNotice.Res(R.string.gt_eng_un_limit)
-            }
+            // Destructive global lifecycle limits break automation and input mappers. Leave them
+            // under their explicit Developer Options controls, never enable them on preparation.
+            val discardOk = false
+            val processLimitOk = false
 
             // Metered-background data. Left entirely alone when the user's own switch was already on:
             // engaging it again would make deactivation turn off a restriction we did not own.
@@ -813,7 +828,7 @@ class GamingEngine(
                 unavailable += GamingModeNotice.Res(R.string.gt_eng_un_data_on)
             } else {
                 val outcome = runCatching {
-                    backgroundDataRestrictor.enable(listOfNotNull(packageName))
+                    backgroundDataRestrictor.enable(listOfNotNull(packageName) + GamingEnvironment.protectedPackages(context))
                 }.getOrNull()
                 backgroundDataRestricted = outcome?.success == true
                 if (outcome == null) {
@@ -828,26 +843,20 @@ class GamingEngine(
             var gameInterventionDownscale: Float? = null
             if (packageName != null) {
                 execute("pm unsuspend --user 0 $packageName")
-                execute("cmd activity set-bg-restriction-level --user 0 $packageName unrestricted")
-                execute("am set-standby-bucket --user 0 $packageName active")
-                execute(PrivilegeCommands.deviceIdleWhitelistAdd(packageName))
                 networkWhitelisted = applyPerGameOptimizations(packageName)
 
-                // The game's own frame-cap table, raised to the panel's peak — the maximum,
-                // never a throttle target. Skipped whole on Android 11 and older, where game
-                // interventions do not exist — that is "not applicable", reported as null, not
-                // a refusal. The render scale is the user's opt-in choice (null = FPS-only
-                // reference entry); it is read here, at activation, so a change mid-session
-                // waits for the next run instead of rewriting the table under a running game
-                // that would need a restart to honor it anyway.
-                if (deviceCapabilities.supportsGameInterventions) {
-                    val downscale = _interventionDownscale.value
-                    val outcome = gameInterventions.apply(packageName, maxHz, downscale)
+                // Opt-in render scaling only. Preparation must not install an FPS limiter.
+                if (deviceCapabilities.supportsGameInterventions && downscaleChoice != null) {
+                    val downscale = downscaleChoice
+                    val previous = readLastSnapshot()?.gameOverlay
+                    val outcome = if (previous != null)
+                        gameInterventions.applyScale(packageName, downscale, previous)
+                    else GameInterventions.Outcome(false, "Prior render-scale state could not be captured")
                     gameInterventionApplied = outcome.applied
                     gameInterventionDownscale = if (outcome.applied) downscale else null
                     if (!outcome.applied) {
                         unavailable += GamingModeNotice.Res(
-                            R.string.gt_eng_un_framecap,
+                            R.string.gt_eng_un_render_scale,
                             listOf(
                                 outcome.refusal?.let {
                                     GamingModeNotice.Res(R.string.gt_eng_un_framecap_no, listOf(it))
@@ -858,8 +867,7 @@ class GamingEngine(
                     }
                 }
             }
-            execute(PrivilegeCommands.DEVICE_IDLE_FORCE)
-            execute(PrivilegeCommands.KILL_ALL)
+            // Forced idle and kill-all can terminate the very mapper/automation needed for play.
 
             prefs.edit {
                 // Fixed performance mode and `cmd game set` can leave the thermal service in an
@@ -975,7 +983,7 @@ class GamingEngine(
         return runCatching { nm.currentInterruptionFilter }.getOrNull() == NotificationManager.INTERRUPTION_FILTER_NONE
     }
 
-    private suspend fun disableGamingMode() {
+    private suspend fun disableGamingMode(ownedOnly: Boolean = false) {
         _state.value = GamingModeState.Disabling
         // First, before any lever is reverted: the moment suppression stops, notifications
         // arrive normally again, and a device busy reporting its own restoration would have
@@ -984,6 +992,8 @@ class GamingEngine(
         // Anything gathered here survives into the report even when a later step throws, so a
         // half-finished revert still says what it did not get to.
         val revertProblems = mutableListOf<GamingModeNotice>()
+        // The standalone switch is a separate owner; a session must not turn it off.
+        val manualFixedPerformance = prefs.getBoolean("fixed_perf_manual", false)
         var remainingSuspended: Set<String> = emptySet()
         var verificationAvailable = false
         try {
@@ -1003,7 +1013,8 @@ class GamingEngine(
             // retaining the whole chunk as still suspended.
             val affected = prefs.getStringSet("affected_pkgs", emptySet()) ?: emptySet()
             val stillSuspended = mutableSetOf<String>()
-            for (chunk in (affected + getSuspendTargets(null)).distinct().chunked(UNSUSPEND_BATCH_SIZE)) {
+            val targets = if (ownedOnly) affected else affected + getSuspendTargets(null)
+            for (chunk in targets.distinct().chunked(UNSUSPEND_BATCH_SIZE)) {
                 if (chunk.size == 1) {
                     if (!unsuspendOne(chunk[0])) stillSuspended.add(chunk[0])
                     continue
@@ -1041,8 +1052,16 @@ class GamingEngine(
             // reading the mode back; a package that refuses stays recorded for the next
             // deactivation instead of being silently left restricted.
             revertProblems += restoreAppOpsRecord()
-            execute(PrivilegeCommands.DEVICE_IDLE_UNFORCE)
-            execute(PrivilegeCommands.FIXED_PERF_OFF)
+            if (readLastSnapshot()?.preparationPolicyVersion == null) execute(PrivilegeCommands.DEVICE_IDLE_UNFORCE)
+            if (prefs.getBoolean("session_fixed_performance_requested", false) ||
+                readLastSnapshot()?.preparationPolicyVersion == null) {
+                val fixedRestore = shellRunner.execSafeResult(
+                    *PrivilegeCommands.fixedPerformanceArgs(manualFixedPerformance)
+                )
+                if (!fixedRestore.isSuccess && readLastSnapshot()?.preparationPolicyVersion != null) {
+                    revertProblems += GamingModeNotice.Raw("Fixed performance restoration was refused")
+                }
+            }
             // Do Not Disturb is restored inside revertFromSnapshot, from the filter that was recorded
             // before activation — not to INTERRUPTION_FILTER_ALL, which would cancel a DND the user set.
             revertProblems += revertFromSnapshot()
@@ -1053,7 +1072,8 @@ class GamingEngine(
             }
             // Deactivation normally clears the report, but a refused step is the device's own
             // refusal text and belongs in front of the user rather than in a silent state change.
-            _report.value = GamingModeReport(unavailable = revertProblems + listOfNotNull(thermalRefusal))
+            thermalRefusal?.let { revertProblems += it }
+            _report.value = GamingModeReport(unavailable = revertProblems)
         } catch (e: Exception) {
             // An interrupted revert keeps whatever record activation wrote; the recovery prompt is
             // built from that record rather than from this process's partial local set.
@@ -1071,16 +1091,18 @@ class GamingEngine(
             // claiming a clean stop.
             val clean = remainingSuspended.isEmpty() && appOpsLeft.isEmpty() && revertProblems.isEmpty()
             prefs.edit {
-                putBoolean("fixed_perf_manual", false)
                 if (clean) {
                     putBoolean("is_active", false)
                     remove("affected_pkgs")
                     remove("session_boot_count")
+                    remove("last_snapshot")
+                    remove("active_desired_settings")
+                    remove("session_fixed_performance_requested")
                 } else {
                     putBoolean("is_active", true)
                 }
             }
-            _isFixedPerformanceMode.value = false
+            _isFixedPerformanceMode.value = manualFixedPerformance
             _suspendedPackages.value = remainingSuspended
             _sessionOpen.value = !clean
             _recovery.value = GamingModeRecovery(
@@ -1228,6 +1250,9 @@ class GamingEngine(
      *   as much as any caller — including Android's own CTS — can determine.
      */
     suspend fun toggleFixedPerformanceMode(enabled: Boolean): FixedPerformanceOutcome {
+        if (_sessionOpen.value) {
+            return FixedPerformanceOutcome(false, context.getString(R.string.gt_gm_recovery_first))
+        }
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.R) {
             return FixedPerformanceOutcome(
                 accepted = false,
@@ -1481,7 +1506,7 @@ class GamingEngine(
         // to keep running is never a sweep target, so it never gets the AppOps background
         // restriction that rides this sweep either, and `manualBoostRam`'s force-stop pass
         // spares it. It also needs no wake-up on deactivation — it was never frozen.
-        val exempt = suspendExemptStore.getExemptPackages()
+        val exempt = suspendExemptStore.getExemptPackages() + GamingEnvironment.protectedPackages(context)
         return (userApps + googleApps + oemApps).filterNot { it in exempt }.distinct()
     }
 
@@ -1530,16 +1555,15 @@ class GamingEngine(
      * this app had already changed. A second activation over an active one would otherwise capture
      * the optimized values as if they were the originals, and deactivation would "restore" those.
      */
-    private suspend fun captureAndSaveSnapshot(packageName: String?): Boolean {
+    private suspend fun captureAndSaveSnapshot(packageName: String?, captureOverlay: Boolean, capturePointer: Boolean): Boolean {
         val minRefresh = readSettingOrNull("system", "min_refresh_rate") ?: return false
         val peakRefresh = readSettingOrNull("system", "peak_refresh_rate") ?: return false
         val touchSpeed = readSettingOrNull("system", "touch_response_speed") ?: return false
         // No abort here: pointer_speed is only ever written when the user picked a speed, so
         // an unreadable key means "leave it alone", not "un-restorable, touch nothing".
-        val pointerSpeed = readSettingOrNull("system", "pointer_speed")
+        val pointerSpeed = if (capturePointer) readSettingOrNull("system", "pointer_speed") else null
         val displayMode = readSettingOrNull("secure", "user_preferred_display_mode_id") ?: return false
-        // The two developer options Gaming Mode now also sets. Both usually come back
-        // `existed = false`, which is a real answer and tells the revert to delete rather than write.
+        // Retained for decoding legacy snapshots; new preparation leaves these explicit tools alone.
         val alwaysFinish = readSettingOrNull("global", Settings.Global.ALWAYS_FINISH_ACTIVITIES)
         val amConstants = readSettingOrNull("global", "activity_manager_constants")
         // Whether the user's own Background Data Restriction switch was already on. Recorded before
@@ -1583,7 +1607,7 @@ class GamingEngine(
         // revert can put back what was there or delete ours if nothing was. Game interventions
         // exist from Android 12 only; an unreadable answer is stored as null, which the revert
         // reads as "leave the flag alone" rather than guessing at its prior shape.
-        val gameOverlay = if (packageName != null && deviceCapabilities.supportsGameInterventions) {
+        val gameOverlay = if (packageName != null && captureOverlay && deviceCapabilities.supportsGameInterventions) {
             when (val overlay = gameInterventions.readOverlay(packageName)) {
                 is GameInterventions.OverlayValue.Set -> SettingValue(overlay.value, existed = true)
                 is GameInterventions.OverlayValue.Unset -> SettingValue("", existed = false)
@@ -1624,6 +1648,13 @@ class GamingEngine(
         val memoryTuningNodes = captureMemoryTuningNodes()
 
         val snapshot = GamingOptimizationSnapshot(
+            preparationPolicyVersion = 1,
+            displayOverridesOwned = !GamingEnvironment.hasExternalDisplay(context),
+            previousGameMode = packageName?.takeIf { deviceCapabilities.supportsGameInterventions }?.let {
+                val answer = shellRunner.execSafeResult("cmd", "game", "list-modes", it)
+                GameCommandParser.parseModes(answer.stdout)?.current
+                    ?.takeIf { mode -> mode in setOf("standard", "performance", "battery", "custom", "1", "2", "3", "4") }
+            },
             activeGamePackage = packageName,
             activeGameUid = uid,
             timestamp = System.currentTimeMillis(),
@@ -1659,8 +1690,8 @@ class GamingEngine(
             storageTuningNodes = storageTuningNodes.takeIf { it.isNotEmpty() },
             memoryTuningNodes = memoryTuningNodes.takeIf { it.isNotEmpty() }
         )
-        prefs.edit { putString("last_snapshot", snapshot.toJson()) }
-        return true
+        // Durability precedes the first system write: failed storage must not create an orphan.
+        return prefs.edit().putString("last_snapshot", snapshot.toJson()).commit()
     }
 
     /**
@@ -1726,14 +1757,15 @@ class GamingEngine(
             try { audioManager.setStreamVolume(AudioManager.STREAM_RING, 0, 0) } catch (_: Exception) {}
 
             // Apply Settings overrides if possible
-            if (Settings.System.canWrite(context)) {
+            if (Settings.System.canWrite(context) && snapshot?.displayOverridesOwned != false &&
+                !GamingEnvironment.hasExternalDisplay(context)) {
                 val cr = context.contentResolver
                 Settings.System.putInt(cr, Settings.System.SCREEN_BRIGHTNESS_MODE, Settings.System.SCREEN_BRIGHTNESS_MODE_MANUAL)
                 Settings.System.putInt(cr, Settings.System.ACCELEROMETER_ROTATION, 0)
             }
 
             execute("cmd netpolicy add restrict-background-whitelist $uid")
-            applyPerformanceGameMode(packageName)
+            if (snapshot?.previousGameMode != null) applyPerformanceGameMode(packageName)
             if (isVivoOrIqoo()) {
                 // All four whitelist CSVs the reference writes, not just the first two: the skin's
                 // high-refresh-rate lists decide whether the panel holds its peak for the game, so
@@ -1863,25 +1895,29 @@ class GamingEngine(
         }
 
         // Restore Settings
-        if (Settings.System.canWrite(context)) {
+        if (Settings.System.canWrite(context) && snapshot.displayOverridesOwned != false) {
             val cr = context.contentResolver
             snapshot.originalBrightnessMode?.let { Settings.System.putInt(cr, Settings.System.SCREEN_BRIGHTNESS_MODE, it) }
             snapshot.originalRotation?.let { Settings.System.putInt(cr, Settings.System.ACCELEROMETER_ROTATION, it) }
         }
 
-        restoreSetting("system", "min_refresh_rate", snapshot.minRefreshRate)?.let { problems += it }
-        restoreSetting("system", "peak_refresh_rate", snapshot.peakRefreshRate)?.let { problems += it }
+        if (snapshot.displayOverridesOwned != false) {
+            restoreSetting("system", "min_refresh_rate", snapshot.minRefreshRate)?.let { problems += it }
+            restoreSetting("system", "peak_refresh_rate", snapshot.peakRefreshRate)?.let { problems += it }
+            restoreSetting("secure", "user_preferred_display_mode_id", snapshot.userPreferredDisplayModeId)?.let { problems += it }
+            restoreSetting("global", VivoDisplayMode.KEY_SCREEN_REFRESH_RATE_MODE, snapshot.vivoScreenRefreshRateMode)?.let { problems += it }
+        }
         restoreSetting("system", "touch_response_speed", snapshot.touchResponseSpeed)?.let { problems += it }
         restoreSetting("system", "pointer_speed", snapshot.pointerSpeed)?.let { problems += it }
-        restoreSetting("secure", "user_preferred_display_mode_id", snapshot.userPreferredDisplayModeId)?.let { problems += it }
         // The vivo display-mode lock's vendor switch, back to the recorded value (or deleted
         // when it was not set). Null - every non-vivo device, and old snapshots - writes nothing.
-        restoreSetting("global", VivoDisplayMode.KEY_SCREEN_REFRESH_RATE_MODE, snapshot.vivoScreenRefreshRateMode)?.let { problems += it }
 
         // The two developer options, back to whatever they were - including "was not set at all",
         // which restoreSetting turns into a delete rather than a write of some assumed default.
-        restoreSetting("global", Settings.Global.ALWAYS_FINISH_ACTIVITIES, snapshot.alwaysFinishActivities)?.let { problems += it }
-        restoreSetting("global", "activity_manager_constants", snapshot.activityManagerConstants)?.let { problems += it }
+        if (snapshot.preparationPolicyVersion == null) {
+            restoreSetting("global", Settings.Global.ALWAYS_FINISH_ACTIVITIES, snapshot.alwaysFinishActivities)?.let { problems += it }
+            restoreSetting("global", "activity_manager_constants", snapshot.activityManagerConstants)?.let { problems += it }
+        }
         _alwaysFinishActivities.value =
             getAlwaysFinishActivities() == 1
         _backgroundProcessLimit.value =
@@ -1904,17 +1940,27 @@ class GamingEngine(
 
         if (snapshot.activeGamePackage != null) {
             val pkg = snapshot.activeGamePackage
-            execute("cmd activity set-bg-restriction-level --user 0 $pkg adaptive_bucket")
-            execute("am set-standby-bucket --user 0 $pkg working_set")
-            execute(PrivilegeCommands.deviceIdleWhitelistRemove(pkg))
-            execute("cmd game reset --user 0 $pkg")
+            if (snapshot.preparationPolicyVersion == null) {
+                execute("cmd activity set-bg-restriction-level --user 0 $pkg adaptive_bucket")
+                execute("am set-standby-bucket --user 0 $pkg working_set")
+                execute(PrivilegeCommands.deviceIdleWhitelistRemove(pkg))
+                execute("cmd game reset --user 0 $pkg")
+            } else snapshot.previousGameMode?.let { previous ->
+                shellRunner.execSafeResult("cmd", "game", "mode", previous, pkg)
+                val answer = shellRunner.execSafeResult("cmd", "game", "list-modes", pkg)
+                if (GameCommandParser.parseModes(answer.stdout)?.current != previous) {
+                    problems += GamingModeNotice.Raw(context.getString(R.string.gt_restore_game_mode_failed))
+                }
+            }
             // The intervention table goes back to whatever it held before activation — a value put
             // back verbatim, or ours deleted when there was none. Only attempted when the snapshot
             // actually recorded the prior state (null means "do not touch it at all"). A refused
             // restore is left as-is rather than retried as a blind delete: deleting anyway would
             // destroy a prior entry the device told us existed but would not accept back.
             snapshot.gameOverlay?.let { previous ->
-                gameInterventions.restore(pkg, previous)
+                if (!gameInterventions.restore(pkg, previous)) {
+                    problems += GamingModeNotice.Raw(context.getString(R.string.gt_restore_render_scale_failed))
+                }
             }
         }
         if (snapshot.activeGameUid != null && !snapshot.uidWhitelistedBefore) {
@@ -1935,7 +1981,7 @@ class GamingEngine(
         // so this returns it only when the vendor had one, and the created hint otherwise stays
         // until the next reboot. That bounded leftover is stated in the snapshot field's KDoc and
         // in GamingModeReport.qtiGameFps's, not hidden.
-        restoreProp(DEBUG_VENDOR_QTI_GAME_FPS, snapshot.debugVendorQtiGameFps)
+        if (snapshot.preparationPolicyVersion == null) restoreProp(DEBUG_VENDOR_QTI_GAME_FPS, snapshot.debugVendorQtiGameFps)
         // MediaTek game-mode nodes, back to the snapshot values. Only nodes the snapshot
         // recorded are touched — an empty map means there was never anything to restore.
         restoreMediaTekGameNodes(snapshot.mediatekGameNodes)
@@ -1964,7 +2010,8 @@ class GamingEngine(
         restoreKernelNodeMap(snapshot.memoryTuningNodes.orEmpty()).forEach { node ->
             problems += GamingModeNotice.Res(R.string.gt_eng_restore_refused, listOf(node))
         }
-        prefs.edit { remove("last_snapshot") }
+        // The caller clears this only after every owned restoration step is clean.
+        // A refused setting must retain the original value for the next recovery attempt.
         return problems
     }
 

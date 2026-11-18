@@ -8,6 +8,8 @@ import javax.inject.Inject
 import javax.inject.Singleton
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 
 /**
  * Per-game graphics driver choice (ANGLE vs the native GLES driver).
@@ -28,6 +30,7 @@ class AngleDriverOptions @Inject constructor(
     @ApplicationContext private val context: Context,
     private val shellRunner: ShellRunner
 ) {
+    private val writes = Mutex()
     /** The three driver values the platform accepts. */
     enum class Driver(val value: String) {
         ANGLE("angle"),
@@ -63,12 +66,15 @@ class AngleDriverOptions @Inject constructor(
      * token per reset. Entries this app did not write — including unknown tokens — are carried
      * over untouched.
      */
-    suspend fun setDriver(pkg: String, driver: Driver): Outcome = withContext(Dispatchers.IO) {
-        if (!shellRunner.hasPrivilege()) {
-            return@withContext Outcome(false, NOT_PRIVILEGED)
+    suspend fun setDriver(pkg: String, driver: Driver): Outcome = writes.withLock {
+        withContext(Dispatchers.IO) {
+            require(com.catsmoker.app.screens.gaming.GameSettings.validPackage(pkg))
+            if (!shellRunner.hasPrivilege()) {
+                return@withContext Outcome(false, NOT_PRIVILEGED)
+            }
+            val updated = withDriver(readPairs(), pkg, driver.value)
+            writePairs(updated)
         }
-        val updated = withDriver(readPairs(), pkg, driver.value)
-        writePairs(updated)
     }
 
     private fun readGlobal(key: String): String? = try {

@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="rb_title">Roblox · editor solo para pruebas</string>
-    <string name="rb_warning">No desbloquea los FPS. Esta ruta no está verificada y la opción no figura en la lista pública de opciones locales permitidas de Roblox. Roblox puede ignorarla. No se garantizan más FPS ni la seguridad de la cuenta.</string>
     <string name="rb_target">Objetivo de FPS experimental (no son FPS medidos)</string>
     <string name="rb_unread">Estado del archivo desconocido. Se requiere root o Shizuku autorizado; actualiza para leerlo.</string>
     <string name="rb_absent">El archivo no existe. Aplicar lo creará.</string>

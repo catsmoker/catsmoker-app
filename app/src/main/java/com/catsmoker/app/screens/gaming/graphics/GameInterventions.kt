@@ -86,6 +86,15 @@ class GameInterventions @Inject constructor(
         if (parsed.existed) OverlayValue.Set(parsed.value) else OverlayValue.Unset
     }
 
+    /** Change only scale in the same table the caller recorded for restoration. */
+    suspend fun applyScale(pkg: String, downscale: Float, previous: SettingValue): Outcome = withContext(Dispatchers.IO) {
+        val wanted = scaleOnlyValue(downscale, previous.value.takeIf { previous.existed })
+            ?: return@withContext Outcome(false, "Could not safely merge render scale into the prior game overlay")
+        val write = shellRunner.execSafeResult("device_config", "put", NAMESPACE, pkg, wanted)
+        val confirmed = write.isSuccess && (readOverlay(pkg) as? OverlayValue.Set)?.value == wanted
+        Outcome(confirmed, if (confirmed) null else "Render-scale write was refused or not confirmed")
+    }
+
     /**
      * Writes the intervention for [pkg] at [maxFps] frames a second and confirms it stuck.
      *
@@ -194,6 +203,27 @@ class GameInterventions @Inject constructor(
     }
 
     companion object {
+        /** Keep unknown fields and other modes intact; refuse an ambiguous table rather than replace it. */
+        fun scaleOnlyValue(downscale: Float, previous: String? = null): String? {
+            val factor = downscaleText(sanitizeDownscale(downscale) ?: return null)
+            val scaleField = "downscaleFactor=$factor"
+            val targetModes = listOf(2, 3)
+            val seen = mutableSetOf<Int>()
+            val rows = previous?.split(':').orEmpty().map { row ->
+                val fields = row.split(',')
+                if (fields.any { it.indexOf('=') <= 0 }) return null
+                val keys = fields.map { it.substringBefore('=').trim() }
+                if (keys.any { it.isEmpty() } || keys.size != keys.toSet().size) return null
+                val mode = fields.getOrNull(keys.indexOf("mode"))
+                    ?.substringAfter('=')?.trim()?.toIntOrNull() ?: return null
+                if (!seen.add(mode)) return null
+                if (mode !in targetModes) return@map row
+                val scaleIndex = keys.indexOf("downscaleFactor")
+                if (scaleIndex < 0) "$row,$scaleField"
+                else fields.mapIndexed { i, field -> if (i == scaleIndex) scaleField else field }.joinToString(",")
+            }
+            return (rows + targetModes.filterNot(seen::contains).map { "mode=$it,$scaleField" }).joinToString(":")
+        }
         /** The `device_config` namespace Android's game interventions live in. */
         private const val NAMESPACE = "game_overlay"
 

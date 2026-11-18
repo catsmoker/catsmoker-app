@@ -1,11 +1,11 @@
 package com.catsmoker.app.screens.editgamefiles.games.starrail
 
 import com.catsmoker.app.R
+import com.catsmoker.app.screens.editgamefiles.editor.GameEditorLayout
+import com.catsmoker.app.screens.editgamefiles.editor.GameEditorSection
 
 import android.widget.Toast
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Redo
 import androidx.compose.material.icons.automirrored.filled.Undo
@@ -109,16 +109,8 @@ fun HsrGraphicsScreen(
     // in either working copy. Ask first instead of letting a mis-tap throw them away silently.
     var showRestoreConfirm by remember { mutableStateOf(false) }
 
-    // One body, two hosts: standalone (own ScreenScaffold header + scroll) or embedded in File
-    // Engineering's selector, where the host already scrolled and padded the page — a second
-    // header would double it, and a nested verticalScroll measured under the host's infinite
-    // height constraints crashes, so embedded renders the Column bare. The 12 dp rhythm
-    // matches the host's card spacing (see the class KDoc).
     val content: @Composable () -> Unit = {
-        Column(
-            modifier = if (onBack == null) Modifier
-            else Modifier.fillMaxWidth().verticalScroll(rememberScrollState())
-        ) {
+        GameEditorLayout(standalone = onBack != null) {
             // The install gate, mirroring the File Engineering screen's own pattern: a
             // confirmed-missing install shows the GAME NOT FOUND failure card with a small
             // secondary "Show anyway" button, and tapping it reveals the existing editor
@@ -153,9 +145,6 @@ fun HsrGraphicsScreen(
 
                     if (uiState.loadFailure != null && (!missingInstall || onBack != null)) {
                         HsrLoadFailureCard(uiState.loadFailure, onRefresh, onShowAnyway = null)
-                        // Flat format hides the frame-rate card below, so its leading spacer
-                        // cannot be the only gap — add this one only when that card follows.
-                        if (!flat) Spacer(modifier = Modifier.height(12.dp))
                     }
 
                     if (!flat) {
@@ -184,7 +173,6 @@ fun HsrGraphicsScreen(
                     }
                     }
 
-                    Spacer(modifier = Modifier.height(12.dp))
 
                     SectionCard {
                         CardHeading(stringResource(R.string.gf_render_scale_sync))
@@ -235,7 +223,6 @@ fun HsrGraphicsScreen(
                         }
                     }
 
-                    Spacer(modifier = Modifier.height(12.dp))
 
                     if (!flat) {
                     SectionCard {
@@ -267,11 +254,6 @@ fun HsrGraphicsScreen(
                     }
                     }
 
-                    // Each section below is JSON-only; in flat format its leading spacer
-                    // would stack with the others and leave one oversized gap, so only
-                    // emit the gap when the section actually renders.
-                    if (!flat) Spacer(modifier = Modifier.height(12.dp))
-
                     // One-tap starting points from the community reference (Low…Max): a single
                     // undo step, and every slider below stays adjustable afterwards.
                     // JSON-backed tiers — hidden in flat format, where tiers have no meaning.
@@ -297,7 +279,6 @@ fun HsrGraphicsScreen(
                     }
                     }
 
-                    if (!flat) Spacer(modifier = Modifier.height(12.dp))
 
                     // JSON-backed toggles — hidden in flat format with the rest.
                     if (!flat) {
@@ -378,7 +359,6 @@ fun HsrGraphicsScreen(
                     }
                     }
 
-                    if (!flat) Spacer(modifier = Modifier.height(12.dp))
 
                     if (!flat) {
                     SectionCard {
@@ -396,7 +376,6 @@ fun HsrGraphicsScreen(
                     }
                     }
 
-                    Spacer(modifier = Modifier.height(12.dp))
 
                     SectionCard {
                         CardHeading(stringResource(R.string.gf_res_decoupling))
@@ -431,78 +410,73 @@ fun HsrGraphicsScreen(
                         )
                     }
 
-                    // External-change warning (formerly part of the removed status card):
-                    // the live file changed outside the app, so Apply would overwrite it.
-                    if (uiState.settingsExternalChanged || uiState.prefsExternalChanged) {
-                        Text(
-                            stringResource(R.string.gf_hsr_external_changed),
-                            style = MaterialTheme.typography.bodySmall,
-                            color = Color(0xFFFFB74D)
-                        )
-                        Spacer(modifier = Modifier.height(8.dp))
-                    }
-
-                    Spacer(modifier = Modifier.height(12.dp))
-                    CatsmokerButton(
-                        onClick = onApply,
-                        modifier = Modifier.fillMaxWidth(),
-                        // Nothing pending means the only effect of Apply would be force-stopping
-                        // the game to rewrite identical bytes. Say that instead of doing it.
-                        enabled = uiState.loadFailure == null && !uiState.applying && uiState.settingsDirty,
-                        isLoading = uiState.applying,
-                        loadingLabel = stringResource(R.string.gf_applying)
-                    ) {
-                        Text(stringResource(R.string.gf_apply_to_game))
-                    }
-                    if (!uiState.settingsDirty && !uiState.applying) {
-                        Spacer(modifier = Modifier.height(4.dp))
-                        Text(
-                            stringResource(R.string.gf_no_pending_changes),
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
-                    // Undo/redo for the graphics working copy above. No-ops when empty, so the
-                    // buttons disable instead of running an edit that edits nothing; the dirty
-                    // line says whether Apply would write anything new at all.
-                    Spacer(modifier = Modifier.height(8.dp))
-                    UndoRedoRow(
-                        canUndo = uiState.canUndoSettings,
-                        canRedo = uiState.canRedoSettings,
-                        dirty = uiState.settingsDirty,
-                        pendingCount = uiState.pendingSettingsCount,
-                        applying = uiState.applying,
-                        onUndo = onUndoSettings,
-                        onRedo = onRedoSettings
-                    )
-                    if (uiState.hasBackup) {
-                        Spacer(modifier = Modifier.height(8.dp))
-                        CatsmokerOutlinedButton(
-                            onClick = {
-                                if (uiState.settingsDirty || uiState.prefsDirty) {
-                                    showRestoreConfirm = true
-                                } else {
-                                    onRestoreBackup()
-                                }
-                            },
-                            modifier = Modifier.fillMaxWidth(),
-                            enabled = !uiState.applying
-                        ) {
-                            Text(stringResource(R.string.gf_restore_last_backup))
+                    GameEditorSection(stringResource(R.string.gf_deploy)) {
+                        // External-change warning (formerly part of the removed status card):
+                        // the live file changed outside the app, so Apply would overwrite it.
+                        if (uiState.settingsExternalChanged || uiState.prefsExternalChanged) {
+                            Text(
+                                stringResource(R.string.gf_hsr_external_changed),
+                                style = MaterialTheme.typography.bodySmall,
+                                color = Color(0xFFFFB74D)
+                            )
                         }
-                        Spacer(modifier = Modifier.height(4.dp))
-                        Text(
-                            stringResource(R.string.gf_restore_backup_note),
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
+
+                        CatsmokerButton(
+                            onClick = onApply,
+                            modifier = Modifier.fillMaxWidth(),
+                            // Nothing pending means the only effect of Apply would be force-stopping
+                            // the game to rewrite identical bytes. Say that instead of doing it.
+                            enabled = uiState.loadFailure == null && !uiState.applying && uiState.settingsDirty,
+                            isLoading = uiState.applying,
+                            loadingLabel = stringResource(R.string.gf_applying)
+                        ) {
+                            Text(stringResource(R.string.gf_apply_to_game))
+                        }
+                        if (!uiState.settingsDirty && !uiState.applying) {
+                            Text(
+                                stringResource(R.string.gf_no_pending_changes),
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                        // Undo/redo for the graphics working copy above. No-ops when empty, so the
+                        // buttons disable instead of running an edit that edits nothing; the dirty
+                        // line says whether Apply would write anything new at all.
+                        UndoRedoRow(
+                            canUndo = uiState.canUndoSettings,
+                            canRedo = uiState.canRedoSettings,
+                            dirty = uiState.settingsDirty,
+                            pendingCount = uiState.pendingSettingsCount,
+                            applying = uiState.applying,
+                            onUndo = onUndoSettings,
+                            onRedo = onRedoSettings
                         )
+                        if (uiState.hasBackup) {
+                            CatsmokerOutlinedButton(
+                                onClick = {
+                                    if (uiState.settingsDirty || uiState.prefsDirty) {
+                                        showRestoreConfirm = true
+                                    } else {
+                                        onRestoreBackup()
+                                    }
+                                },
+                                modifier = Modifier.fillMaxWidth(),
+                                enabled = !uiState.applying
+                            ) {
+                                Text(stringResource(R.string.gf_restore_last_backup))
+                            }
+                            Text(
+                                stringResource(R.string.gf_restore_backup_note),
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
                     }
 
                     // QoL preferences live in keys this flat file never had — writing them
                     // would invent entries, so the whole section stays blob-mode-only.
                     if (!flat) {
                     uiState.gamePrefs?.let { prefs ->
-                        Spacer(modifier = Modifier.height(12.dp))
 
                         SectionCard {
                             CardHeading(stringResource(R.string.gf_game_prefs))
@@ -584,7 +558,6 @@ fun HsrGraphicsScreen(
                             }
                         }
 
-                        Spacer(modifier = Modifier.height(8.dp))
                         UndoRedoRow(
                             canUndo = uiState.canUndoPrefs,
                             canRedo = uiState.canRedoPrefs,
@@ -594,7 +567,6 @@ fun HsrGraphicsScreen(
                             onUndo = onUndoPrefs,
                             onRedo = onRedoPrefs
                         )
-                        Spacer(modifier = Modifier.height(8.dp))
                         CatsmokerButton(
                             onClick = onApplyPrefs,
                             modifier = Modifier.fillMaxWidth(),
@@ -609,7 +581,6 @@ fun HsrGraphicsScreen(
                             }
                         }
                         if (!uiState.prefsDirty && !uiState.applyingPrefs) {
-                            Spacer(modifier = Modifier.height(4.dp))
                             Text(
                                 stringResource(R.string.gf_no_pending_changes),
                                 style = MaterialTheme.typography.bodySmall,

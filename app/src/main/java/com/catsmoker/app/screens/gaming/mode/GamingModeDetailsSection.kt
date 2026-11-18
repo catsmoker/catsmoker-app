@@ -185,26 +185,6 @@ private fun gamingModeResultLines(report: GamingModeReport): List<GamingModeResu
             )
         )
     }
-    // Same null rule — grayed out on non-Qualcomm silicon. The value shown is the measured panel
-    // peak the hint carries, read back from the property.
-    if (report.qtiGameFps != null) {
-        add(
-            GamingModeResultLine(
-                label = stringResource(R.string.gt_gm_label_fps_hint),
-                value = if (report.qtiGameFps) stringResource(R.string.gt_gm_qc_peak) else stringResource(R.string.gt_gm_not_applied),
-                applied = report.qtiGameFps
-            )
-        )
-    } else {
-        add(
-            GamingModeResultLine(
-                label = stringResource(R.string.gt_gm_label_fps_hint),
-                value = stringResource(R.string.gt_gm_na_value),
-                applied = false,
-                reason = stringResource(R.string.gt_gm_na_qualcomm)
-            )
-        )
-    }
     // Same null rule — grayed out where the GED/PPM nodes do not exist. The row reports the
     // read-back verdict, never the write request.
     if (report.mediaTekGameMode != null) {
@@ -390,9 +370,9 @@ private fun gamingModeResultLines(report: GamingModeReport): List<GamingModeResu
     if (report.gameInterventionApplied != null) {
         add(
             GamingModeResultLine(
-                label = stringResource(R.string.gt_gm_label_cap),
+                label = stringResource(R.string.gt_gm_label_render_scale),
                 value = if (report.gameInterventionApplied) {
-                    stringResource(R.string.gt_gm_cap_raised) +
+                    stringResource(R.string.gt_gm_scale_applied) +
                         (report.gameInterventionDownscale?.let { " · ${formatDownscale(it)}" } ?: "")
                 } else {
                     stringResource(R.string.gt_gm_cap_no)
@@ -403,10 +383,10 @@ private fun gamingModeResultLines(report: GamingModeReport): List<GamingModeResu
     } else {
         add(
             GamingModeResultLine(
-                label = stringResource(R.string.gt_gm_label_cap),
+                label = stringResource(R.string.gt_gm_label_render_scale),
                 value = stringResource(R.string.gt_gm_na_value),
                 applied = false,
-                reason = stringResource(R.string.gt_gm_na_intervention)
+                reason = stringResource(R.string.gt_gm_scale_na)
             )
         )
     }
@@ -415,14 +395,14 @@ private fun gamingModeResultLines(report: GamingModeReport): List<GamingModeResu
     add(
         GamingModeResultLine(
             label = stringResource(R.string.gt_gm_label_discard),
-            value = if (report.discardActivities) stringResource(R.string.gt_gm_discard_on) else stringResource(R.string.gt_gm_not_applied),
+            value = stringResource(R.string.gt_gm_explicit_only),
             applied = report.discardActivities
         )
     )
     add(
         GamingModeResultLine(
             label = stringResource(R.string.gt_gm_label_limit),
-            value = if (report.processLimit) stringResource(R.string.gt_gm_limit) else stringResource(R.string.gt_gm_not_applied),
+            value = stringResource(R.string.gt_gm_explicit_only),
             applied = report.processLimit
         )
     )

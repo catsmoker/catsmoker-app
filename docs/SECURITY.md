@@ -108,12 +108,12 @@ source set — neither SDK is packaged into the other flavor:
   `com.startapp:inapp-sdk` via `fullImplementation`). SDK auto-initialization
   is **explicitly disabled** in the manifest (`tools:node="remove"` on
   `StartAppInitProvider`); integration is manual. The SDK id can be
-  overridden via `STARTIO_APP_ID` in `local.properties`.
+  overridden via `STARTIO_APP_ID` in `local.properties` for signed releases.
 - **Play Store** uses AdMob (`src/playstore/…/integrations/ads/AdManager.kt`,
   `com.google.android.gms:play-services-ads` via `playstoreImplementation`).
-  IDs come from `ADMOB_APP_ID` / `ADMOB_BANNER_ID` /
-  `ADMOB_INTERSTITIAL_ID` in `local.properties`, defaulting to Google's
-  sample test ids. The App ID enters the manifest via placeholder. Ads follow
+  Production IDs in `local.properties` are used only for releases with
+  non-debug signing. Debug builds and debug-signed releases always use Google's
+  sample test IDs. The App ID enters the manifest via placeholder. Ads follow
   only the verified `remove_ads` one-time product
   (`src/playstore/…/integrations/ads/RemoveAdsRepository.kt`,
   `com.android.billingclient:billing-ktx` via `playstoreImplementation`,
@@ -128,15 +128,17 @@ source set — neither SDK is packaged into the other flavor:
 This is a real supply-chain + data-flow consideration: any `build.gradle.kts`
 change here should be reviewed like any other third-party dependency (pinned
 via the version catalog, not floating). Firebase Analytics is additionally
-shared by both variants (same project, explicit opt-in initialization — see
+shared by both variants (same project, initialization through `AnalyticsConsent` — see
 `PLAY_POLICY_REMEDIATION.md`). Play advertising now uses a separate UMP gate;
 SDK integration is not a substitute for published account privacy messages or
 regional runtime verification.
 
-Onboarding analytics starts unchecked (unless a current explicit consent already
-exists). Selecting the switch and continuing applies that choice without a second
-popup. Legacy default-on drafts are not migrated as opt-ins. The short card keeps
-the full Firebase data disclosure in its info sheet. Optional gaming access also
+The onboarding analytics switch starts checked on a fresh install, but it is only
+a draft. Firebase stays off until the user confirms with **Enable analytics and
+continue** after checking the terms box. **Continue without analytics** stores
+an opt-out, and Settings can change the choice at any time. Legacy default-on
+preferences without an explicit choice record do not start Firebase. The card's
+info sheet contains the full Firebase data disclosure. Optional gaming access also
 keeps full purpose/risk disclosures in info sheets; its checkboxes remain distinct
 from Android usage-access and notification-listener grants.
 
@@ -188,6 +190,10 @@ Discovery queries are limited to launcher/game/explicit interoperability queries
 and inventory readers require the optional choice. This narrows access but does
 not automatically establish Play core-function eligibility.
 
+The Permissions checklist shows **Granted** for installed apps only after the
+app's optional choice is saved. Foreground app access and notification dismissal
+also require their respective Android grants. A checked draft is not a grant.
+
 ## Gaming Mode invariants that matter for safety
 
 The state machine in `GamingEngine` has security-adjacent guarantees:
@@ -234,6 +240,53 @@ The state machine in `GamingEngine` has security-adjacent guarantees:
    features, and the metrics ping must be reviewed and documented.
 
 ## Related documents
+
+### Opt-in game automation boundary
+
+The receiver now attempts the existing non-exported `specialUse` foreground
+service for preparation/restoration; Android must allow its background start.
+It is foreground **before** privileged work. A documented user-granted
+battery-optimization exemption can allow unattended starts; root/Shizuku alone
+does not. Denied starts fall back to the notification continuation. Game launch
+still uses a user-visible Activity, not an FGS-to-Activity loophole.
+Manual/monitor/automation preparation uses one serialized coordinator; one restore
+can wait for preparation, and identical active inputs avoid repeated work.
+
+The optional per-game cache experiment reads only regular files the app can
+already open (including explicitly granted documents), with cumulative byte,
+cooperative time and memory-pressure checks. It executes no helper, uses no
+root/Shizuku to widen access, holds no memory locks and does not evict caches.
+Descriptors/mappings are owned and closed. No PacketSDK or proxy SDK is introduced.
+
+The explicit exported `GameAutomationActivity` and `GameAutomationReceiver` are
+disabled in practice until the user generates a random 256-bit bearer token in
+Gaming Tools. Every entry, including queries, validates the token in constant
+time, current agreement/inventory consent, a closed operation list and strict
+package syntax. Targets must be installed/launchable library members, not this
+app. Unknown extras, URIs, ClipData, selectors, shell strings, arbitrary files,
+settings and components are rejected. The privileged engine is lazily resolved
+after authentication, not during unauthenticated injection.
+
+The token is private, excluded from backup, never logged/rendered, and copied
+only on explicit request with the sensitive-clipboard flag where supported.
+Copying/sharing it delegates all documented operations: recipients and shortcut
+launchers must be trusted. Revocation invalidates future entry and pending
+shortcuts/notification; it does not abandon a running engine transaction.
+Rate-free authenticated callers can still annoy the user with continuation
+notifications; possession of the token is intentionally a trust boundary.
+
+The receiver itself never executes privileged mutations or launches an Activity.
+It handles selection/query, admits a foreground-service request, or posts an
+immutable explicit user-tapped continuation when required. Denied
+notifications produce `foreground_required`. Foreground execution obeys normal
+Android background-launch/FGS restrictions and refuses unsafe snapshot stacking.
+Automation restore is limited to an existing recorded Gaming Mode session and
+its affected packages, not a blanket reset of immediate tools or all apps.
+Neither receiver nor Activity provides a shortcut to Full-only capabilities.
+See [GAME_AUTOMATION.md](GAME_AUTOMATION.md) for the exact caller contract and
+limitations. No reference ULTROID helper or world-writable native executable is
+introduced; see [VMTOUCH_REVIEW.md](VMTOUCH_REVIEW.md).
+
 - [ARCHITECTURE.md](ARCHITECTURE.md) — where these components live.
 - [SPOOF_DEVICE.md](SPOOF_DEVICE.md) — the spoofing channels and safe mode.
 - [CODING_STYLE.md](CODING_STYLE.md) — the "honesty rules" including the

@@ -52,7 +52,9 @@ class OnboardingInteractionTest {
     fun onlyWelcomeSuppressesTheBackArrowAndProgressRemainsIndependent() {
         assertTrue(source("AppearanceStepScreen").contains("showBack = false"))
         assertFalse(source("AgreementStepScreen").contains("showBack = false"))
-        assertFalse(source("PermissionsListScreen").contains("showBack = false"))
+        // Settings re-enters the permission checklist after onboarding; the back arrow only
+        // belongs to the first-run flow that has a previous step.
+        assertTrue(source("PermissionsListScreen").contains("showBack = uiState.isOnboarding"))
         val scaffold = source("OnboardingUi")
         assertTrue(scaffold.contains("showBack: Boolean = true"))
         assertTrue(scaffold.contains("if (showBack)"))
@@ -65,11 +67,16 @@ class OnboardingInteractionTest {
         assertFalse(route.contains("confirmAnalytics"))
         assertFalse(route.contains("AlertDialog("))
         assertTrue(route.contains("onContinue = { viewModel.onAgreementContinue() }"))
-        assertTrue(source("PermissionViewModel").contains("analytics = AnalyticsConsent.isEnabled(context)"))
+        val vm = source("PermissionViewModel")
+        assertTrue(vm.contains("if (accepted) AnalyticsConsent.isEnabled(context)"))
+        assertTrue(vm.contains("AnalyticsConsent.acceptAgreement(context, current.choices.analytics)"))
         val draft = source("OnboardingDraftStore")
         assertTrue(draft.contains("getBoolean(\"analytics_opt_in\", initial.analytics)"))
         assertFalse(draft.contains("getBoolean(\"analytics\","))
-        assertTrue(source("AgreementStepScreen").contains("InfoText.Res(R.string.onb_analytics_details)"))
+        val agreement = source("AgreementStepScreen")
+        assertTrue(agreement.contains("InfoText.Res(R.string.onb_analytics_details)"))
+        assertTrue(agreement.contains("if (analytics) R.string.onb_enable_analytics_continue"))
+        assertTrue(agreement.contains("else R.string.onb_without_analytics_continue"))
     }
 
     @Test
@@ -84,7 +91,7 @@ class OnboardingInteractionTest {
         assertTrue(screen.contains("InfoText.Res(explanationRes)"))
         assertTrue(screen.contains("Settings.ACTION_USAGE_ACCESS_SETTINGS"))
         assertTrue(screen.contains("Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS"))
-        assertTrue(screen.contains("enabled = selected"))
+        assertTrue(screen.contains("status == GamingAccessStatus.ANDROID_REQUIRED && onRequest != null"))
         assertTrue(screen.contains("role = Role.Checkbox"))
     }
 
@@ -92,7 +99,7 @@ class OnboardingInteractionTest {
     fun allLocalesContainTheNewOnboardingCopy() {
         listOf("values", "values-en-rGB", "values-ar", "values-es", "values-ja", "values-pt-rBR", "values-zh-rCN").forEach { locale ->
             val copy = File("src/main/res/$locale/strings_onboarding.xml").readText()
-            listOf("onb_analytics_details", "onb_analytics_explanation", "onb_access_summary", "onb_inventory_status").forEach { key ->
+            listOf("onb_analytics_details", "onb_analytics_explanation", "onb_access_summary", "onb_access_pending_save").forEach { key ->
                 assertTrue("$locale missing $key", copy.contains("name=\"$key\""))
             }
         }

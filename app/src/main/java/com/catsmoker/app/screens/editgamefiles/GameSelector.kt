@@ -35,6 +35,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.catsmoker.app.R
 import com.catsmoker.app.screens.editgamefiles.model.GameType
 import com.catsmoker.app.screens.editgamefiles.storage.PUBG_VARIANTS
+import com.catsmoker.app.screens.editgamefiles.storage.installSortRank
 import com.catsmoker.app.screens.editgamefiles.storage.pubgGroupDot
 import com.catsmoker.app.ui.components.ChipFlowRow
 import kotlinx.coroutines.flow.collectLatest
@@ -151,6 +152,12 @@ internal fun GamePickerDialog(
     // The group dot's three-state rule (any yes → green; all probed and all no → red; a
     // missing probe → unknown) is pure logic, tested in InstallProbesTest.
     val pubgDot = pubgGroupDot(installedGames)
+    // Installed games the user can actually edit come first; unknown probes stay between
+    // yes and no so an unanswered query is never sorted into "absent". `sortedBy` is
+    // stable, so within a band the enum order (and PUBG first) is unchanged.
+    val rows = (listOf(Triple(GameType.PUBG_GLOBAL, pubgDot, true)) +
+        otherGroup.map { Triple(it, installedGames[it], false) })
+        .sortedBy { installSortRank(it.second) }
     AlertDialog(
         onDismissRequest = onDismiss,
         title = { Text(stringResource(R.string.gf_choose_game_title)) },
@@ -161,18 +168,23 @@ internal fun GamePickerDialog(
                     .verticalScroll(rememberScrollState()).selectableGroup(),
                 verticalArrangement = Arrangement.spacedBy(4.dp)
             ) {
-                PickerRow(
-                    game = GameType.PUBG_GLOBAL,
-                    label = "PUBG Mobile",
-                    installed = pubgDot,
-                    selected = pubgSelected,
-                    iconPackages = pickerIconPackages(
-                        if (pubgSelected) selectedGame else GameType.PUBG_GLOBAL,
-                        installedGames
-                    ),
-                    onPick = { onPick(GameType.PUBG_GLOBAL) } // opens the VERSION chips, not a silent Global pick
-                )
-                otherGroup.forEach { game -> PickerRow(game, installedGames[game], selectedGame == game, onPick) }
+                rows.forEach { (game, installed, isPubgGroup) ->
+                    if (isPubgGroup) {
+                        PickerRow(
+                            game = game,
+                            label = "PUBG Mobile",
+                            installed = installed,
+                            selected = pubgSelected,
+                            iconPackages = pickerIconPackages(
+                                if (pubgSelected) selectedGame else GameType.PUBG_GLOBAL,
+                                installedGames
+                            ),
+                            onPick = { onPick(GameType.PUBG_GLOBAL) } // opens the VERSION chips, not a silent Global pick
+                        )
+                    } else {
+                        PickerRow(game, installed, selectedGame == game, onPick)
+                    }
+                }
             }
         },
         confirmButton = {},

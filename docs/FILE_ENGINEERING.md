@@ -12,6 +12,10 @@ below are **embedded editors** (`embeddedEditor = true`): they are
 hosted inline by File Engineering and have no navigation route. Never push a
 bundled template over an embedded editor's screen.
 
+All games use `editor/GameEditorLayout.kt` for full-width sections with the same
+12 dp spacing. The picker identifies the selected game and owns scrolling for
+embedded editors. Section headings describe the file or controls in each card.
+
 ## Game picker
 
 `GameDefinitions.kt` is the authoritative File Engineering registry: supported package
@@ -31,7 +35,8 @@ substituted with another game. Regional availability still belongs to Google Pla
 
 See [the complete 33-entry audit](FILE_ENGINEERING_AUDIT.md) for per-game readiness,
 targets, changes and remaining validation. No current entry has CatSmoker real-device
-validation evidence from this audit.
+validation evidence from this audit. Editor screens and apply dialogs omit the
+introductory validation paragraphs.
 
 The popup uses compact, rounded logo-first rows: installed game icon, game name,
 install-state dot, and a fixed trailing selection-check slot. The selected row
@@ -166,9 +171,14 @@ Shared codec/storage contract:
 - Existing-document mode writes **only that document**, checking its expected basename and
   schema. It never claims an exported copy changed the installed game. Copy-back is manual;
   SAF does not bypass Android/data restrictions. No new storage permission is added.
-- `ConfigBackupStore` retains ten snapshots per package (shared across Civ's two files).
-  Restore backs up the current file first and verifies the restoration. No claim of atomic
-  writes or automatic recovery from interrupted filesystem writes is made.
+- The document picker is owned by File Engineering rather than by a conditional editor.
+  The selected game, its Show anyway choice, and the game/file tab that opened the picker
+  survive activity recreation. A result for a superseded selection is discarded.
+- Scoped editor backups retain ten snapshots per package across all its files and sources.
+  Restore matches the exact document URI or direct path as well as the package and filename.
+  Legacy scoped backups remain on disk but are not eligible for Restore: they do not say
+  which source produced them. Restore backs up the current file first and verifies the
+  restoration. No claim of atomic writes or automatic recovery is made.
 
 ### Existing editors
 

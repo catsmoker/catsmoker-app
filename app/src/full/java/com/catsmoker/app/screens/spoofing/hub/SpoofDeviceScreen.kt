@@ -2,13 +2,14 @@ package com.catsmoker.app.screens.spoofing.hub
 
 import com.catsmoker.app.R
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -20,7 +21,9 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.role
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
@@ -37,6 +40,7 @@ import com.catsmoker.app.ui.components.QuickActionButton
 import com.catsmoker.app.ui.components.ScreenScaffold
 import com.catsmoker.app.ui.components.SectionCard
 import com.catsmoker.app.ui.components.SectionLabel
+import com.catsmoker.app.ui.components.liquidGlassFinish
 import com.catsmoker.app.ui.theme.CatsmokerSpacing
 
 @Composable
@@ -290,7 +294,10 @@ fun SpoofDeviceScreen(
             Spacer(modifier = Modifier.height(CatsmokerSpacing.SectionGap))
 
             SectionLabel(stringResource(R.string.spoof_home_management))
-            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(CatsmokerSpacing.CardGap)) {
+            Row(
+                modifier = Modifier.fillMaxWidth().height(IntrinsicSize.Min),
+                horizontalArrangement = Arrangement.spacedBy(CatsmokerSpacing.CardGap)
+            ) {
                 SpoofMenuCard(
                     title = stringResource(R.string.spoof_menu_profiles),
                     subtitle = stringResource(R.string.spoof_menu_identities, uiState.profiles.size),
@@ -312,7 +319,10 @@ fun SpoofDeviceScreen(
 
             Spacer(modifier = Modifier.height(CatsmokerSpacing.CardGap))
 
-            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(CatsmokerSpacing.CardGap)) {
+            Row(
+                modifier = Modifier.fillMaxWidth().height(IntrinsicSize.Min),
+                horizontalArrangement = Arrangement.spacedBy(CatsmokerSpacing.CardGap)
+            ) {
                 SpoofMenuCard(
                     title = stringResource(R.string.spoof_menu_safe),
                     // The card opens both lists now; the count is their union, so an app in
@@ -406,21 +416,52 @@ fun SpoofDeviceScreen(
 }
 
 @Composable
-fun SpoofMenuCard(
+private fun SpoofMenuCard(
     title: String,
     subtitle: String,
     icon: ImageVector,
     modifier: Modifier = Modifier,
     onClick: () -> Unit
 ) {
-    SectionCard(
-        modifier = modifier.clickable { onClick() }
+    val colors = MaterialTheme.colorScheme
+    val shape = RoundedCornerShape(16.dp)
+    Surface(
+        onClick = onClick,
+        modifier = modifier.fillMaxHeight().semantics { role = Role.Button },
+        shape = shape,
+        color = colors.surface,
+        contentColor = colors.onSurface,
+        border = BorderStroke(1.dp, colors.outlineVariant)
     ) {
-        Column(horizontalAlignment = Alignment.Start) {
-            Icon(icon, null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(28.dp))
-            Spacer(modifier = Modifier.height(12.dp))
-            Text(title, fontWeight = FontWeight.Bold, fontSize = 16.sp, color = MaterialTheme.colorScheme.onSurface)
-            Text(subtitle, fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .liquidGlassFinish(shape, reflectionColor = colors.onSurface)
+                .padding(14.dp),
+            verticalArrangement = Arrangement.spacedBy(10.dp)
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Box(
+                    modifier = Modifier.size(36.dp).background(colors.surfaceVariant, MaterialTheme.shapes.small),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(icon, contentDescription = null, tint = colors.onSurfaceVariant, modifier = Modifier.size(20.dp))
+                }
+                Icon(
+                    Icons.AutoMirrored.Filled.KeyboardArrowRight,
+                    contentDescription = null,
+                    tint = colors.onSurfaceVariant,
+                    modifier = Modifier.size(18.dp)
+                )
+            }
+            Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                Text(title, style = MaterialTheme.typography.titleMedium)
+                Text(subtitle, style = MaterialTheme.typography.bodySmall, color = colors.onSurfaceVariant)
+            }
         }
     }
 }

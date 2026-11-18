@@ -285,7 +285,6 @@ class GamingModeUiPlacementTest {
         assertTrue(details.contains("gamingModeResultLines(report)"))
         listOf(
             "gt_gm_label_gpu",
-            "gt_gm_label_fps_hint",
             "gt_gm_label_mtk",
             "gt_gm_label_snap",
             "gt_gm_label_input_boost",
@@ -299,12 +298,14 @@ class GamingModeUiPlacementTest {
             "gt_gm_label_dnd",
             "gt_gm_label_notif",
             "gt_gm_label_net",
-            "gt_gm_label_cap",
+            "gt_gm_label_render_scale",
             "gt_gm_label_discard",
             "gt_gm_label_limit",
             "gt_gm_label_other_data"
         ).forEach { key ->
             assertTrue("GamingModeDetailsSection.kt lost $key", details.contains(key))
         }
+        assertFalse("Preparation must not advertise an FPS cap", details.contains("R.string.gt_gm_label_cap"))
+        assertFalse("Preparation must not advertise a vendor FPS hint", details.contains("R.string.gt_gm_label_fps_hint"))
     }
 }

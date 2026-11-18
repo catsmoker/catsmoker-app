@@ -27,7 +27,7 @@ enum class GameType(val displayName: String, val shortLabel: String, val variant
     HSR("Honkai: Star Rail", "HSR", embeddedEditor = true),
     WUWA("Wuthering Waves", "WuWa", embeddedEditor = true),
     GRID("GRID Autosport", "GRID", embeddedEditor = true),
-    ROBLOX("Roblox (test-only)", "Roblox", embeddedEditor = true),
+    ROBLOX("Roblox", "Roblox", embeddedEditor = true),
     GRID_LEGENDS("GRID Legends: Deluxe Edition", "GRID Legends", embeddedEditor = true),
     ALIEN_ISOLATION("Alien: Isolation", "Alien", embeddedEditor = true),
     SAINTS_ROW("Saints Row: The Third Remastered", "Saints Row", embeddedEditor = true),

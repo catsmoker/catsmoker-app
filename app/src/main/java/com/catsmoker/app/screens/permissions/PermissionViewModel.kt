@@ -44,6 +44,7 @@ class PermissionViewModel @Inject constructor(
         /** True while the first-run flow is running; false when reopened from Settings. */
         val isOnboarding: Boolean = true,
         val choices: OnboardingState = OnboardingState(),
+        val confirmedGamingAccess: Set<String> = emptySet(),
         val themeMode: AppearanceStore.ThemeMode = AppearanceStore.ThemeMode.SYSTEM,
         /** Applied immediately; the draft preserves the step across a process restart. */
         val languageTag: String = AppearanceStore.LANGUAGE_SYSTEM,
@@ -83,8 +84,9 @@ class PermissionViewModel @Inject constructor(
     init {
         val prefs = context.getSharedPreferences("app_prefs", Context.MODE_PRIVATE)
         val firstRun = prefs.getBoolean("is_first_run", true)
-        val accepted = prefs.getBoolean("terms_accepted", false)
+        val accepted = prefs.getBoolean(AnalyticsConsent.KEY_TERMS_ACCEPTED, false)
         val accessAnswered = GamingAccessConsent.answered(context)
+        val confirmedGamingAccess = readConfirmedGamingAccess()
         val initial = OnboardingState(
             step = when {
                 !firstRun || accepted -> OnboardingState.Step.PERMISSIONS
@@ -92,15 +94,17 @@ class PermissionViewModel @Inject constructor(
                 else -> OnboardingState.Step.WELCOME
             },
             agreed = accepted,
-            analytics = AnalyticsConsent.isEnabled(context),
-            inventory = if (accessAnswered) GamingAccessConsent.allows(context, GamingAccessConsent.INVENTORY) else firstRun,
-            usage = if (accessAnswered) GamingAccessConsent.allows(context, GamingAccessConsent.USAGE) else firstRun,
-            notifications = if (accessAnswered) GamingAccessConsent.allows(context, GamingAccessConsent.NOTIFICATIONS) else firstRun,
+            analytics = if (accepted) AnalyticsConsent.isEnabled(context)
+                else prefs.getBoolean(AnalyticsConsent.KEY_ENABLED, OnboardingState.DEFAULT_ANALYTICS_SELECTION),
+            inventory = if (accessAnswered) GamingAccessConsent.INVENTORY in confirmedGamingAccess else firstRun,
+            usage = if (accessAnswered) GamingAccessConsent.USAGE in confirmedGamingAccess else firstRun,
+            notifications = if (accessAnswered) GamingAccessConsent.NOTIFICATIONS in confirmedGamingAccess else firstRun,
         )
         _uiState.update {
             it.copy(
                 isOnboarding = firstRun,
                 choices = if (firstRun) draftStore.read(initial) else initial,
+                confirmedGamingAccess = confirmedGamingAccess,
                 themeMode = AppearanceStore.themeModeSync(context),
                 languageTag = AppearanceStore.languageTag(context)
             )
@@ -128,7 +132,7 @@ class PermissionViewModel @Inject constructor(
             }
         }
         // Revocation is immediate, including while a previously enabled tool is running.
-        if (!selected) GamingAccessConsent.setAllowed(context, key, false)
+        if (!selected) setAccessAllowed(key, false)
     }
 
     /** A dedicated request button consents only to this capability, not the other defaults. */
@@ -139,8 +143,19 @@ class PermissionViewModel @Inject constructor(
             GamingAccessConsent.NOTIFICATIONS -> choices.notifications
             else -> false
         }
-        if (selected) GamingAccessConsent.setAllowed(context, key, true)
+        if (selected) setAccessAllowed(key, true)
     }
+
+    private fun setAccessAllowed(key: String, allowed: Boolean) {
+        GamingAccessConsent.setAllowed(context, key, allowed)
+        _uiState.update { it.copy(confirmedGamingAccess = readConfirmedGamingAccess()) }
+    }
+
+    private fun readConfirmedGamingAccess(): Set<String> = setOf(
+        GamingAccessConsent.INVENTORY,
+        GamingAccessConsent.USAGE,
+        GamingAccessConsent.NOTIFICATIONS,
+    ).filterTo(mutableSetOf()) { GamingAccessConsent.allows(context, it) }
 
     fun onBack() = updateChoices { back() }
 
@@ -191,10 +206,7 @@ class PermissionViewModel @Inject constructor(
         if (!current.isAgreementStep) return false
         val next = current.choices.continueTerms()
         if (next == current.choices) return false
-        AnalyticsConsent.setEnabled(context, current.choices.analytics)
-        context.getSharedPreferences("app_prefs", Context.MODE_PRIVATE).edit {
-            putBoolean("terms_accepted", true)
-        }
+        AnalyticsConsent.acceptAgreement(context, current.choices.analytics)
         updateChoices { next }
         return true
     }
@@ -207,6 +219,7 @@ class PermissionViewModel @Inject constructor(
         val state = _uiState.value
         if (state.isOnboarding && !state.choices.canFinish()) return
         GamingAccessConsent.save(context, state.choices.inventory, state.choices.usage, state.choices.notifications)
+        _uiState.update { it.copy(confirmedGamingAccess = readConfirmedGamingAccess()) }
         if (state.isOnboarding) {
             context.getSharedPreferences("app_prefs", Context.MODE_PRIVATE).edit(commit = true) {
                 putBoolean("is_first_run", false)

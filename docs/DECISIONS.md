@@ -11,6 +11,26 @@ re-proposed without new evidence.
 When a decision is reversed, add an entry that argues with the old one â€” do
 not silently rewrite history.
 
+## Analytics ships enabled again (2026-11-15)
+
+Supersedes the 2026-11-10 "Explicit privacy choices" decision to reverse
+default-on Analytics. The owner asked for Send Analytics Data to be on by default,
+so `PrivacyPolicy.analyticsAllowed` now follows the stored boolean alone,
+`AnalyticsConsent.DEFAULT_ENABLED` is true, and the onboarding switch starts
+checked. Turning either switch off is the opt-out and is honoured across
+upgrades, including a value written by the opt-in build.
+
+- The automatic `FirebaseInitProvider` stays removed and the manifest metadata
+  defaults stay denied, so collection still begins only after `AnalyticsConsent`
+  applies the stored choice at startup, never before application code runs.
+- Analytics advertising consent types remain denied; this choice still does not
+  authorise advertising storage or personalization.
+- Legal copy in all seven locales states the default, the opt-out, and that
+  disabling stops future collection without erasing data already received.
+- A pre-checked switch is not valid consent in the EU/UK, and Play Data safety must
+  describe default collection from first launch. The owner accepted that risk
+  explicitly; this entry records the behaviour, not a compliance finding.
+
 ## Screen-first package ownership (2026-11-12)
 
 - Navigation destinations own peer areas under `features/`: Home, Permissions,
@@ -1125,3 +1145,128 @@ Added `vulkanModel` (Vulkan physical-device name, `VkPhysicalDeviceProperties.de
   account safety or Play eligibility. Record limitations per game in the audit.
   A future game must define meaningful functional actions and focused tests before
   it is considered implemented; appearing in the list never means fully supported.
+
+## 2026-11-15 - Settings revisit of App Permissions has no back arrow
+
+- **The back arrow belongs to the first-run flow, not the checklist.** Settings >
+  App Permissions re-enters the same `PermissionsListScreen` with
+  `isOnboarding = false`, so the screen now passes `showBack = uiState.isOnboarding`
+  to `OnboardingScaffold`. Onboarding still keeps back navigation between steps;
+  a Settings visit relies on the system back gesture / Settings row instead.
+- Supersedes "Only Welcome hides its back arrow": Welcome still hides it, and the
+  permission checklist now hides it outside onboarding without changing its progress
+  or footer behaviour.
+
+## 2026-11-15 - Automatic package-owned game inputs and authorized automation
+
+- Game icon taps select and restore desired inputs; only the selected name's
+  three-dot button opens the unchanged Launch/Recompile/Remove menu. Preserve the
+  four-column library and existing launch/recompile/removal ownership.
+- Freeze legacy render/pointer defaults once, then persist independent package
+  values and resolution drafts automatically. Selection performs no privileged
+  application. Resolution/File Engineering keep explicit deployment; immediate
+  global tools and ANGLE keep their real device-state ownership. The engine
+  captures package tuning once per activation, including auto sessions.
+- Add a default-off, revocable bearer-token automation boundary for explicit
+  library-package operations. Background broadcasts may select/query, but
+  mutations require a user-tapped continuation; foreground callers must satisfy
+  Android launch restrictions. Keep execution process-owned and session restore
+  bounded to recorded ownership. No arbitrary shell or flavor expansion.
+- Do not integrate the reference vmtouch assets. Static inspection found cache
+  touching/eviction, not a proven bounded RAM-lock benefit. Upstream is separately
+  licensable, but an owned NDK build, safe asset scope, aggregate limits and real
+  Android measurements remain prerequisites. No dummy optimization control.
+- Contracts, setting audit and limitations are recorded in `GAME_AUTOMATION.md`,
+  `GAMING_MODE.md`, and `VMTOUCH_REVIEW.md`.
+
+## 2026-11-15 - Community automation, desktop safety and measurable cache experiment
+
+- Supersedes the notification-only mutation rule above: authenticated broadcasts
+  first attempt Android's permitted foreground-service path. A documented,
+  explicitly user-granted battery exemption can enable unattended preparation/
+  restoration. Android-denied starts retain the notification fallback; launching
+  games still needs a legitimate foreground Activity path. Never impersonate
+  shell/root UID, create an overlay as a loophole, or silently change permissions.
+- One coordinator serves UI, monitor, automation and shortcuts. Same game plus
+  identical active desired inputs is idempotent; other inputs require restore.
+  One restore waits behind preparation instead of losing the exit event.
+  New snapshots are committed before writes, remember prior game mode, and carry
+  policy/desktop ownership fields while legacy recovery remains compatible.
+- Preserve companion apps and input ownership. Preparation no longer trims
+  caches, compacts/pins memory, forces idle/kills all apps, sets developer
+  lifecycle limits or writes FPS caps/hints. External-display presence suppresses
+  phone display overrides; explicit wm size/density changes are refused there.
+- Supersedes rejection of all cache experiments, not rejection of opaque assets:
+  ship independently written bounded Kotlin page-cache reads, off by default per
+  package, with direct-file/SAF validation, pressure checks and owned cleanup.
+  No eviction, locking, daemon, root escalation, unknown executable or FPS promise.
+  Separately built pinned upstream vmtouch on ARM64 demonstrated cache warming;
+  warm-repeat time differences are not game-performance evidence.
+- Actual Samsung DeX/Arena Breakout/Panda/Tasker/MacroDroid testing and comparable
+  loading/FPS/frame-time measurements remain required, not inferred from JVM
+  tests or the available POCO's cache mechanism measurements.
+
+## Explicit Global context and stable game library (2026-11-15)
+
+- **Supersedes discovery choosing the first available game.** Global is an explicit
+  persisted value in the existing package-settings repository, not an uninitialized
+  picker. Icon taps toggle selection; a compact Global control clears it. Missing/
+  removed packages return to Global without deleting their saved inputs. Context
+  changes never execute or restore a session.
+- Keep the four-column/eight-entry preview. An otherwise hidden selected game
+  replaces its final slot; the expanded library has no duplicate packages.
+  Freeze bounded local recency for the ViewModel lifetime, then label/package
+  tie-breaks, rather than moving icons on every tap or collecting usage statistics.
+- Device-wide tools retain their owners. Explain mixed resolution/developer
+  controls; game render/pointer editing and cache options require a selected game.
+  Physical-resolution Apply, ANGLE immediate writes and File Engineering deployment
+  retain their existing boundaries.
+- Replace technical demonstration dialogs with matching scrollable tool sheets.
+  Automation has enabled state, masked key/copy, confirmed revoke/replace, integration
+  instructions and placeholder-only advanced examples. Cache has per-game opt-in,
+  permissions, budget, scoped read/outcome status and cancellation. Shared sheet/
+  entry components own presentation only; authentication, services, notification
+  fallback, resource safety and flavor seams remain with their existing owners.
+- Preparation and launching read their explicit target without moving the editing
+  context; only selection commands change that context. An automatically detected
+  session must not overwrite an intentional Global selection.
+
+## Compact automation entry and inline cache card (2026-11-15)
+
+- Supersedes the two prominent tool entries above: Automation belongs in the
+  existing Gaming Tools header with a 48-dp minimum target; preserve its setup
+  sheet. Cache belongs inline in an existing-style expandable tool card near the
+  bottom, after Cleaning. No other screen/card/grid redesign is needed.
+- Audit fixes keep launch-only reporting from initializing the privileged engine,
+  prevent unrelated cache history from affecting a Global preparation result,
+  and put all preloader setup/status publication under its released-in-finally
+  lock. Authentication, read limits, foreground restrictions and flavor seams stay.
+- Record bounded checks and unresolved findings in
+  `FINAL_APPLICATION_AUDIT_2026-11-15.md`; a historical foreground-service deadline
+  crash is not declared fixed merely because subsequent navigation works.
+
+## 2026-11-15 — Game-library actions through long press and accessibility
+
+Replace the selected tile's visible overflow button with standard Compose
+`combinedClickable`: tap toggles editing context; long press opens the existing
+package-addressed popup on any game, without changing selection. Retain system
+long-press haptics and expose Launch, Pre-compile and Remove as custom accessibility
+actions using the same callbacks/compile-busy guard. Keep the grid dimensions,
+selection persistence and selected-game collapsed-preview behavior unchanged.
+
+## 2026-11-18 — Apply analytics only after explicit confirmation
+
+Supersedes the startup behavior of “Analytics ships enabled again.” A POCO test
+observed Firebase measurement starting before the agreement despite the UI saying
+the decision was applied on Continue. Keep the checked draft, but name the two
+Continue actions explicitly and require accepted terms plus a saved, versioned
+opt-in before initializing Firebase. Keep existing opt-outs and leave advertising
+consent independent.
+
+## 2026-11-18 — Recover scoped document requests and scope restore by source
+
+On the POCO, Android recreated CatSmoker while its document picker was open.
+File Engineering now owns a stable launcher and saves the selected game and
+specific pending file tab, so returning from the picker does not drop or retarget
+the result. Scoped restores use the original URI or direct path in addition to
+game and basename. Keep unscoped backups on disk but do not assume their source.

@@ -44,7 +44,7 @@
 
     <!-- License and library names are proper nouns: kept verbatim in every locale. -->
     <string name="about_license_apache" translatable="false">Apache License 2.0</string>
-    <string name="about_license_apache_libs" translatable="false">AndroidX, Jetpack Compose, Hilt/Dagger, Kotlin Coroutines, Gson, libsu, Shizuku API, Material Icons</string>
+    <string name="about_license_apache_libs" translatable="false">AndroidX, Jetpack Compose, Hilt/Dagger, Kotlin Coroutines, Gson, libsu, Shizuku API, Material Icons, Kyant Backdrop and Shapes</string>
     <string name="about_license_google" translatable="false">Google APIs Terms of Service</string>
     <string name="about_license_google_libs" translatable="false">Firebase Analytics</string>
     <string name="about_license_ads" translatable="false">Ads SDK Terms</string>

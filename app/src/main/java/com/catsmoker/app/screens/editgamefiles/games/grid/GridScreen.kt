@@ -1,13 +1,13 @@
 package com.catsmoker.app.screens.editgamefiles.games.grid
 
 import com.catsmoker.app.R
+import com.catsmoker.app.screens.editgamefiles.editor.GameEditorLayout
+import com.catsmoker.app.screens.editgamefiles.editor.GameEditorSection
 
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -111,16 +111,8 @@ fun GridScreen(
     // Restore replaces the live file and clears the working copy; ask before discarding edits.
     var showRestoreConfirm by remember { mutableStateOf(false) }
 
-    // One body, two hosts: standalone (own ScreenScaffold header + scroll) or embedded in File
-    // Engineering's selector, where the host already scrolled and padded the page — a second
-    // header would double it, and a nested verticalScroll measured under the host's infinite
-    // height constraints crashes, so embedded renders the Column bare. The 12 dp rhythm
-    // matches the host's card spacing (see the class KDoc).
     val content: @Composable () -> Unit = {
-        Column(
-            modifier = if (onBack == null) Modifier
-            else Modifier.fillMaxWidth().verticalScroll(rememberScrollState())
-        ) {
+        GameEditorLayout(standalone = onBack != null) {
             // The install gate, mirroring the File Engineering screen's own pattern: a
             // confirmed-missing install shows the GAME NOT FOUND failure card with a small
             // secondary "Show anyway" button, and tapping it reveals the existing editor
@@ -150,7 +142,6 @@ fun GridScreen(
 
                     if (uiState.loadFailure != null && (!missingInstall || onBack != null)) {
                         GridLoadFailureCard(uiState.loadFailure, onPickFolder, onRefresh, onShowAnyway = null)
-                        Spacer(modifier = Modifier.height(12.dp))
                     }
 
                     SectionCard {
@@ -183,7 +174,6 @@ fun GridScreen(
                         )
                     }
 
-                    Spacer(modifier = Modifier.height(12.dp))
 
                     SectionCard {
                         CardHeading(stringResource(R.string.gf_resolution_section))
@@ -204,7 +194,6 @@ fun GridScreen(
                         )
                     }
 
-                    Spacer(modifier = Modifier.height(12.dp))
 
                     SectionCard {
                         CardHeading(stringResource(R.string.gf_quality))
@@ -235,7 +224,6 @@ fun GridScreen(
                         )
                     }
 
-                    Spacer(modifier = Modifier.height(12.dp))
 
                     SectionCard {
                         CardHeading(stringResource(R.string.gf_perf_switches))
@@ -336,48 +324,44 @@ fun GridScreen(
                         }
                     }
 
-                    Spacer(modifier = Modifier.height(12.dp))
-                    val hasPendingEdits = uiState.edits != GridPreferences.Edits()
-                    CatsmokerButton(
-                        onClick = onApply,
-                        modifier = Modifier.fillMaxWidth(),
-                        enabled = !uiState.applying && hasPendingEdits,
-                        isLoading = uiState.applying,
-                        loadingLabel = stringResource(R.string.gf_applying)
-                    ) {
-                        Text(stringResource(R.string.gf_apply_to_game))
-                    }
-                    if (!hasPendingEdits && !uiState.applying) {
-                        Spacer(modifier = Modifier.height(4.dp))
-                        Text(
-                            stringResource(R.string.gf_no_pending_changes),
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
-                    if (uiState.hasBackup) {
-                        Spacer(modifier = Modifier.height(8.dp))
-                        CatsmokerOutlinedButton(
-                            onClick = {
-                                if (hasPendingEdits) showRestoreConfirm = true else onRestoreBackup()
-                            },
+                    GameEditorSection(stringResource(R.string.gf_deploy)) {
+                        val hasPendingEdits = uiState.edits != GridPreferences.Edits()
+                        CatsmokerButton(
+                            onClick = onApply,
                             modifier = Modifier.fillMaxWidth(),
-                            enabled = !uiState.applying
+                            enabled = !uiState.applying && hasPendingEdits,
+                            isLoading = uiState.applying,
+                            loadingLabel = stringResource(R.string.gf_applying)
                         ) {
-                            Text(stringResource(R.string.gf_restore_last_backup))
+                            Text(stringResource(R.string.gf_apply_to_game))
                         }
-                        Spacer(modifier = Modifier.height(4.dp))
-                        Text(
-                            stringResource(R.string.gf_restore_backup_note),
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
+                        if (!hasPendingEdits && !uiState.applying) {
+                            Text(
+                                stringResource(R.string.gf_no_pending_changes),
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                        if (uiState.hasBackup) {
+                            CatsmokerOutlinedButton(
+                                onClick = {
+                                    if (hasPendingEdits) showRestoreConfirm = true else onRestoreBackup()
+                                },
+                                modifier = Modifier.fillMaxWidth(),
+                                enabled = !uiState.applying
+                            ) {
+                                Text(stringResource(R.string.gf_restore_last_backup))
+                            }
+                            Text(
+                                stringResource(R.string.gf_restore_backup_note),
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                        uiState.lastApply?.let { report ->
+                            Text(stringResource(R.string.gf_last_apply, report), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.primary)
+                        }
                     }
-                    uiState.lastApply?.let { report ->
-                        Spacer(modifier = Modifier.height(8.dp))
-                        Text(stringResource(R.string.gf_last_apply, report), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.primary)
-                    }
-                    Spacer(modifier = Modifier.height(8.dp))
                 }
 
                 // Defensive: override active but no read (seeding is the ViewModel's job and

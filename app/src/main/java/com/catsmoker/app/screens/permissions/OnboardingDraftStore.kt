@@ -11,8 +11,7 @@ internal class OnboardingDraftStore(context: Context) {
         step = OnboardingState.Step.entries.firstOrNull { it.name == prefs.getString("step", null) }
             ?: initial.step,
         agreed = prefs.getBoolean("agreed", initial.agreed),
-        // Legacy drafts preselected analytics and required a second confirmation. Never
-        // interpret that old default as an opt-in now that the switch is the only choice.
+        // The draft remembers the switch across restarts without applying the choice to Firebase.
         analytics = prefs.getBoolean("analytics_opt_in", initial.analytics),
         inventory = prefs.getBoolean("inventory", initial.inventory),
         usage = prefs.getBoolean("usage", initial.usage),

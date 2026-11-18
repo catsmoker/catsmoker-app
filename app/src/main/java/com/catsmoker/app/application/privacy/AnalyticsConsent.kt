@@ -8,17 +8,14 @@ import com.google.firebase.analytics.FirebaseAnalytics
 /**
  * The single owner of the user's analytics choice and of its effect on the SDK.
  *
- * Both distributions bundle Analytics, but its automatic provider is removed. Only
- * an explicit, current-version onboarding selection applied on Continue or a Settings
- * choice may initialize it.
+ * Both distributions bundle Analytics, but its automatic provider is removed. Collection
+ * needs accepted terms and a saved, current choice; the checked onboarding draft alone
+ * must not start Firebase.
  *
  * The choice lives in `app_prefs` (key `analytics_enabled`) rather than a new file
  * because the key already shipped in [com.catsmoker.app.screens.settings.SettingsViewModel];
- * reusing it preserves the preference identity; a separate choice version ensures
- * an old default-on value is never mistaken for a new explicit opt-in.
+ * reusing it preserves the preference identity and any explicit opt-out a user already made.
  *
- * SDK collection and the onboarding switch default to disabled. A pending selection is
- * not consent; neither is a legacy default-on preference.
  * [sync] runs from [com.catsmoker.app.system.CatsmokerApp.onCreate] on every process
  * start, because the SDK persists its own flag and the two can drift if the app data is
  * restored without the SDK's preferences, or if the user changes the choice while a
@@ -28,15 +25,26 @@ object AnalyticsConsent {
 
     const val PREFS = "app_prefs"
     const val KEY_ENABLED = "analytics_enabled"
-
-    /** Collection remains off until an explicit choice is applied. */
+    const val KEY_TERMS_ACCEPTED = "terms_accepted"
+    private const val KEY_CHOICE_VERSION = "analytics_choice_version"
     const val DEFAULT_ENABLED = false
 
-    private const val KEY_CHOICE_VERSION = "analytics_choice_version"
-
     fun isEnabled(context: Context): Boolean = appPrefs(context).let {
-        PrivacyPolicy.analyticsAllowed(it.getBoolean(KEY_ENABLED, DEFAULT_ENABLED),
-            it.getInt(KEY_CHOICE_VERSION, 0))
+        PrivacyPolicy.analyticsAllowed(
+            termsAccepted = it.getBoolean(KEY_TERMS_ACCEPTED, false),
+            enabled = it.getBoolean(KEY_ENABLED, DEFAULT_ENABLED),
+            choiceVersion = it.getInt(KEY_CHOICE_VERSION, 0)
+        )
+    }
+
+    /** Persist terms and the applied choice together, before the SDK sees either. */
+    fun acceptAgreement(context: Context, enabled: Boolean) {
+        appPrefs(context).edit {
+            putBoolean(KEY_TERMS_ACCEPTED, true)
+            putBoolean(KEY_ENABLED, enabled)
+            putInt(KEY_CHOICE_VERSION, PrivacyPolicy.VERSION)
+        }
+        sync(context)
     }
 
     /**
@@ -49,7 +57,7 @@ object AnalyticsConsent {
             putBoolean(KEY_ENABLED, enabled)
             putInt(KEY_CHOICE_VERSION, PrivacyPolicy.VERSION)
         }
-        apply(context, enabled)
+        sync(context)
     }
 
     /** Re-applies the stored choice to the SDK. Idempotent; safe at every startup. */
@@ -72,7 +80,7 @@ object AnalyticsConsent {
                 if (FirebaseApp.initializeApp(context) == null) return@runCatching
             }
             val analytics = FirebaseAnalytics.getInstance(context)
-            // Analytics opt-in is not advertising consent. Keep advertising uses denied here;
+            // Analytics collection is not advertising consent. Keep advertising uses denied here;
             // Play's independent CMP controls its advertising SDK.
             analytics.setConsent(mapOf(
                 FirebaseAnalytics.ConsentType.ANALYTICS_STORAGE to if (enabled)

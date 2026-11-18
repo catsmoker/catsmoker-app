@@ -61,6 +61,13 @@ class AdditionalConfigViewModel @Inject constructor(private val storage: Additio
         }
     }
 
+    fun loadPickedDocument(fileIndex: Int, uri: Uri) {
+        val old = mutableState.value
+        if (old.busy || old.spec?.files?.getOrNull(fileIndex) == null) return
+        if (old.fileIndex != fileIndex) selectFile(fileIndex)
+        load(uri, fileIndex)
+    }
+
     fun save(restore: Boolean = false) = operate(verified = true,
         operation = if (restore) ConfigEditorOperation.RESTORE else ConfigEditorOperation.APPLY) { old ->
         val spec = old.spec!!

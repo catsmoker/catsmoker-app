@@ -113,6 +113,7 @@ fun ResolutionChangerContent(
      * busy, or without root/Shizuku — the same rule they always had.
      */
     tuningEnabled: Boolean,
+    showGameTuning: Boolean = true,
 ) {
     // execResult prefers root and only falls back to Shizuku, so this names the channel that will
     // actually run `wm` rather than offering a choice the app does not honour.
@@ -237,17 +238,22 @@ fun ResolutionChangerContent(
         Spacer(modifier = Modifier.height(8.dp))
         HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
         Spacer(modifier = Modifier.height(16.dp))
-        DownscaleRow(
-            current = downscale,
-            enabled = tuningEnabled,
-            onSelect = onDownscaleChange
-        )
-        Spacer(modifier = Modifier.height(16.dp))
-        PointerSpeedRow(
-            current = pointerSpeed,
-            enabled = tuningEnabled,
-            onSelect = onPointerSpeedChange
-        )
+        if (showGameTuning) {
+            DownscaleRow(
+                current = downscale,
+                enabled = tuningEnabled,
+                onSelect = onDownscaleChange
+            )
+            Spacer(modifier = Modifier.height(16.dp))
+            PointerSpeedRow(
+                current = pointerSpeed,
+                enabled = tuningEnabled,
+                onSelect = onPointerSpeedChange
+            )
+        } else {
+            Text(stringResource(R.string.gt_context_select_tuning), style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant)
+        }
         if (log.isNotEmpty()) {
             Spacer(modifier = Modifier.height(16.dp))
             Box(modifier = Modifier.fillMaxWidth().height(100.dp).clip(RoundedCornerShape(8.dp)).background(LogTerminalBackground).padding(8.dp)) {

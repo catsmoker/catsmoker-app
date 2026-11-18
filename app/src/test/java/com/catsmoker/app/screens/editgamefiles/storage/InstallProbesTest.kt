@@ -47,6 +47,24 @@ class InstallProbesTest {
     }
 
     @Test
+    fun `picker lists installed games first, unknown second, absent last`() {
+        val sample = listOf(
+            GameType.MINECRAFT to false,
+            GameType.TERRARIA to null,
+            GameType.HSR to true,
+            GameType.GRID to true
+        )
+        val ordered = sample.sortedBy { (_, installed) -> installSortRank(installed) }
+        // Installed pair keeps its original relative order — the sort must be stable, not a
+        // reshuffle every time the dialog re-probes.
+        assertEquals(listOf(GameType.HSR, GameType.GRID, GameType.TERRARIA, GameType.MINECRAFT),
+            ordered.map { it.first })
+        assertEquals(0, installSortRank(true))
+        assertEquals(1, installSortRank(null))
+        assertEquals(2, installSortRank(false))
+    }
+
+    @Test
     fun `new state package is visible to the install probe`() {
         val manifest = listOf(
             File("src/main/AndroidManifest.xml"),

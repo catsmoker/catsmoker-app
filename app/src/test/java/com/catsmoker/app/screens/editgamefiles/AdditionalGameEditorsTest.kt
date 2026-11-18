@@ -45,11 +45,31 @@ class AdditionalGameEditorsTest {
             }
         }
         assertTrue(File(root + "GameSelector.kt").readText().contains("GameType.entries.filter"))
-        assertTrue(File(root + "EditGameFilesScreen.kt").readText().contains("AdditionalConfigRoute(uiState.selectedGame)"))
+        val screen = File(root + "EditGameFilesScreen.kt").readText()
+        assertTrue(screen.contains("AdditionalConfigRoute("))
+        assertTrue(screen.contains("document = uiState.scopedDocument"))
         val vm = File(root + "EditGameFilesViewModel.kt").readText()
         assertTrue(vm.contains("fileEngineeringGames.mapValues"))
         assertTrue(vm.contains("definition.probeInstallation"))
         assertTrue(vm.contains("installedPackages[selected]"))
+    }
+
+    @Test fun `document launcher is held above the conditional editor and its target is saved`() {
+        val root = "src/main/java/com/catsmoker/app/screens/editgamefiles/"
+        val route = File(root + "EditGameFilesScreen.kt").readText()
+            .substringAfter("fun EditGameFilesRoute(").substringBefore("fun EditGameFilesScreen(")
+        assertTrue(route.contains("rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument())"))
+        assertTrue(route.contains("viewModel.completeScopedDocumentPick(it)"))
+        assertTrue(route.contains("if (viewModel.beginScopedDocumentPick(game, fileIndex))"))
+        val vm = File(root + "EditGameFilesViewModel.kt").readText()
+        assertTrue(vm.contains("private val savedState: SavedStateHandle"))
+        assertTrue(vm.contains("savedState[SELECTED_GAME] = game.name"))
+        assertTrue(vm.contains("savedState[SHOW_EDITOR_ANYWAY] = true"))
+        assertTrue(vm.contains("savedState[SCOPED_DOCUMENT_REQUEST] = Bundle().apply"))
+        assertTrue(vm.contains("request.getBoolean(\"invalidated\")"))
+        val editor = File(root + "editor/AdditionalConfigScreen.kt").readText()
+        assertFalse(editor.contains("rememberLauncherForActivityResult"))
+        assertTrue(editor.contains("viewModel.loadPickedDocument(document.fileIndex, document.uri)"))
     }
 
     @Test fun `18 Feral editors use exact typed scopes and no global replacement aliases`() {

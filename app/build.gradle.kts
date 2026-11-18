@@ -1,5 +1,6 @@
 import java.util.Properties
 import com.android.build.api.artifact.SingleArtifact
+import com.android.build.api.variant.BuildConfigField
 import org.gradle.api.artifacts.result.ResolvedComponentResult
 import org.gradle.api.artifacts.result.ResolvedDependencyResult
 
@@ -11,6 +12,38 @@ plugins {
     // Firebase (google-services.json, project catsmoker-5b6c6, gitignored).
     // Shared configuration; Analytics startup is explicit and consent-gated.
     alias(libs.plugins.google.services)
+}
+
+// Keep signing and production ad IDs local. An ordinary release build without
+// these credentials uses AGP's debug signing config and must also use test ads.
+val signingProps = Properties()
+val signingPropsFile = rootProject.file("signing.properties")
+if (signingPropsFile.exists()) {
+    signingPropsFile.inputStream().use { signingProps.load(it) }
+}
+val signingKeys = listOf("storeFile", "storePassword", "keyAlias", "keyPassword")
+val hasReleaseSigning = signingKeys.all { !signingProps.getProperty(it).isNullOrBlank() }
+if (!hasReleaseSigning) {
+    logger.warn("signing.properties missing or incomplete — release defaults to debug signing.")
+}
+
+// Android Studio's Generate Signed Bundle/APK wizard can override the DSL signer.
+val injectedSigningKeys = listOf("store.file", "store.password", "key.alias", "key.password")
+    .associateWith { providers.gradleProperty("android.injected.signing.$it") }
+val effectiveReleaseAlias = if (injectedSigningKeys.values.all { !it.orNull.isNullOrBlank() }) {
+    injectedSigningKeys.getValue("key.alias").get()
+} else if (hasReleaseSigning) {
+    signingProps.getProperty("keyAlias")
+} else {
+    null
+}
+val releaseUsesProductionSigning =
+    effectiveReleaseAlias != null && !effectiveReleaseAlias.equals("androiddebugkey", ignoreCase = true)
+
+val adsProperties = Properties()
+val adsPropertiesFile = rootProject.file("local.properties")
+if (adsPropertiesFile.exists()) {
+    adsPropertiesFile.inputStream().use { adsProperties.load(it) }
 }
 
 android {
@@ -52,8 +85,6 @@ android {
         manifestPlaceholders["NOTHING_API_KEY"] =
             nothingProps.getProperty("NOTHING_API_KEY") ?: "test"
 
-        // No per-variant IDs here: full declares STARTIO_APP_ID, playstore declares
-        // ADMOB_* + the ADMOB_APP_ID manifest placeholder in their flavor blocks.
     }
 
     splits {
@@ -85,47 +116,10 @@ android {
                     arguments.add("CATSMOKER_FULL=1")
                 }
             }
-            val localProperties = Properties()
-            val localPropertiesFile = project.rootProject.file("local.properties")
-            if (localPropertiesFile.exists()) {
-                localProperties.load(localPropertiesFile.inputStream())
-            }
-            val startIoId = localProperties.getProperty("STARTIO_APP_ID") ?: "205489527"
-            buildConfigField("String", "STARTIO_APP_ID", "\"$startIoId\"")
         }
         create("playstore") {
             dimension = "distribution"
-            val localProperties = Properties()
-            val localPropertiesFile = project.rootProject.file("local.properties")
-            if (localPropertiesFile.exists()) {
-                localProperties.load(localPropertiesFile.inputStream())
-            }
-            // Real production IDs never enter git; unset keys fall back to Google's
-            // documented sample (test) IDs, which serve test ads and are safe to build with.
-            val admobAppId = localProperties.getProperty("ADMOB_APP_ID") ?: "ca-app-pub-3940256099942544~3347511713"
-            val admobBannerId = localProperties.getProperty("ADMOB_BANNER_ID") ?: "ca-app-pub-3940256099942544/6300978111"
-            val admobInterstitialId = localProperties.getProperty("ADMOB_INTERSTITIAL_ID") ?: "ca-app-pub-3940256099942544/1033173712"
-            manifestPlaceholders["ADMOB_APP_ID"] = admobAppId
-            buildConfigField("String", "ADMOB_BANNER_ID", "\"$admobBannerId\"")
-            buildConfigField("String", "ADMOB_INTERSTITIAL_ID", "\"$admobInterstitialId\"")
         }
-    }
-
-    // Release-signing credentials (git-ignored signing.properties at the repo root;
-    // four keys required: storeFile, storePassword, keyAlias, keyPassword).
-    // Shared by both variants; without the file, releases stay debug-signed so any
-    // clone still builds.
-    val signingProps = Properties()
-    val signingPropsFile = project.rootProject.file("signing.properties")
-    if (signingPropsFile.exists()) {
-        signingProps.load(signingPropsFile.inputStream())
-    }
-    val hasReleaseSigning = signingProps.containsKey("storeFile")
-        && signingProps.containsKey("storePassword")
-        && signingProps.containsKey("keyAlias")
-        && signingProps.containsKey("keyPassword")
-    if (!hasReleaseSigning) {
-        logger.warn("signing.properties missing or incomplete — release will be debug-signed.")
     }
 
     signingConfigs {
@@ -202,6 +196,31 @@ android {
     }
 }
 
+androidComponents.onVariants { variant ->
+    val useProductionAds = variant.buildType == "release" && releaseUsesProductionSigning
+    fun adId(key: String, testId: String) =
+        if (useProductionAds) adsProperties.getProperty(key)?.trim()?.takeIf { it.isNotEmpty() } ?: testId
+        else testId
+    fun adField(key: String, id: String) {
+        requireNotNull(variant.buildConfigFields).put(key, BuildConfigField("String", "\"$id\"", null))
+    }
+
+    when (variant.productFlavors.single { it.first == "distribution" }.second) {
+        "full" -> adField("STARTIO_APP_ID", adId("STARTIO_APP_ID", "205489527"))
+        "playstore" -> {
+            variant.manifestPlaceholders.put(
+                "ADMOB_APP_ID",
+                adId("ADMOB_APP_ID", "ca-app-pub-3940256099942544~3347511713")
+            )
+            val bannerId = adId("ADMOB_BANNER_ID", "ca-app-pub-3940256099942544/6300978111")
+            adField("ADMOB_BANNER_ID", bannerId)
+            adField("ADMOB_GAMING_TOOLS_BANNER_ID", adId("ADMOB_GAMING_TOOLS_BANNER_ID", bannerId))
+            adField("ADMOB_ABOUT_BANNER_ID", adId("ADMOB_ABOUT_BANNER_ID", bannerId))
+            adField("ADMOB_INTERSTITIAL_ID", adId("ADMOB_INTERSTITIAL_ID", "ca-app-pub-3940256099942544/1033173712"))
+        }
+    }
+}
+
 dependencies {
     // --- AndroidX Core & UI ---
     implementation(libs.material) // Theme.Material3.* parents in res/values/themes.xml
@@ -219,6 +238,7 @@ dependencies {
     implementation(libs.compose.ui.tooling)
     debugImplementation(libs.compose.runtime.tracing)
     implementation(libs.compose.material3)
+    implementation(libs.backdrop)
     implementation(libs.compose.material.icons.extended)
     implementation(libs.activity.compose)
     implementation(libs.navigation.compose)
@@ -244,7 +264,7 @@ dependencies {
     implementation(libs.gson)
 
     // --- Firebase Analytics (SHARED: full + playstore, same project) ---
-    // AnalyticsConsent explicitly initializes only after a current opt-in.
+    // AnalyticsConsent initializes it only after a saved opt-in and accepted terms.
     // The automatic Firebase provider is removed in the shared manifest.
     implementation(platform(libs.firebase.bom))
     implementation(libs.firebase.analytics)

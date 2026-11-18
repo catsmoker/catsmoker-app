@@ -1,9 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="onb_analytics_explanation">Análise de uso do Firebase opcional. Aplicada ao continuar; desative nas Configurações.</string>
-    <string name="onb_analytics_details">O Google Firebase Analytics recebe eventos automáticos de uso, detalhes do aparelho e app, um identificador de instalação e localização aproximada por IP para entender o uso do app. Não são adicionados eventos próprios. A coleta só começa se você ativar esta opção e continuar. Você pode desativá-la nas Configurações. As escolhas de anúncios são separadas.</string>
+    <string name="onb_analytics_explanation">Análise de uso do Firebase opcional. A coleta só começa após a confirmação.</string>
+    <string name="onb_analytics_details">O Google Firebase Analytics recebe eventos automáticos de uso, detalhes do aparelho e app, identificador de instalação e localização aproximada por IP para entender o uso do app. Não são adicionados eventos próprios. A coleta só começa se você escolher ativar a análise e continuar. Você pode desativá-la nas Configurações. As escolhas de anúncios são separadas.</string>
     <string name="onb_access_summary">Uso opcional e local. Salvar aplica as seleções; Permitir aplica um uso. Você pode pular todos.</string>
     <string name="onb_inventory_status">Sem permissão do Android</string>
+    <string name="onb_access_pending_save">Selecionado · Salve para conceder acesso</string>
     <string name="onb_enable_analytics_continue">Ativar análise e continuar</string>
     <string name="onb_without_analytics_continue">Continuar sem análise</string>
     <string name="onb_inventory_title">Apps instalados</string>

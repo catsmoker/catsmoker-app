@@ -16,6 +16,13 @@ import com.catsmoker.app.screens.gaming.apps.SuspendListStore
  * so the suspend loop gets one clean, deterministic target list.
  */
 object SuspendSweep {
+    /** Automation must remain alive to request restore; mappers must retain their own input path. */
+    val companions = setOf(
+        "net.dinglisch.android.taskerm",
+        "com.arlosoft.macrodroid",
+        "com.panda.mouse",
+        "com.panda.mouse.pro"
+    )
 
     /** Packages that must never be suspended by Gaming Mode, regardless of user configuration. */
     private val neverSuspend = setOf(
@@ -63,7 +70,7 @@ object SuspendSweep {
         selfPkg: String
     ): List<String> = (sweepTargets + SuspendListStore.filterTargets(extraPicks, activeGamePkg, selfPkg))
         .map { it.trim() }
-        .filter { it.isNotEmpty() && it !in exempt && it !in neverSuspend }
+        .filter { it.isNotEmpty() && it !in exempt && it !in neverSuspend && it !in companions }
         .distinct()
         .sorted()
 }

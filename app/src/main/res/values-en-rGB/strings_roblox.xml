@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="rb_title">Roblox · test-only file editor</string>
-    <string name="rb_warning">Not an FPS unlocker. This path is unverified and the target flag is not on Roblox’s published local-flag allowlist. Roblox may ignore it. No FPS gain or account safety is guaranteed.</string>
     <string name="rb_target">Experimental FPS target (not measured FPS)</string>
     <string name="rb_unread">File state unknown. Root or authorised Shizuku is required; refresh to read.</string>
     <string name="rb_absent">File is absent. Apply will create it.</string>

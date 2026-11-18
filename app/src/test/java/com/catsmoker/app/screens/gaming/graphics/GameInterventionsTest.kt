@@ -68,6 +68,30 @@ class GameInterventionsTest {
     }
 
     @Test
+    fun scaleReplacesOnlyDownscaleAndKeepsExistingFpsAndUnknownFields() {
+        assertEquals(
+            "mode=2,fps=120,downscaleFactor=0.8,opengles=1:mode=3,fps=45,vendorKey=future,downscaleFactor=0.8:mode=4,fps=30,downscaleFactor=0.5",
+            GameInterventions.scaleOnlyValue(
+                0.8f, "mode=2,fps=120,downscaleFactor=0.75,opengles=1:mode=3,fps=45,vendorKey=future:mode=4,fps=30,downscaleFactor=0.5"
+            )
+        )
+    }
+
+    @Test
+    fun scaleAddsMissingModeWithoutInventingAnotherFpsCap() {
+        assertEquals("mode=3,fps=45,downscaleFactor=0.85:mode=2,downscaleFactor=0.85",
+            GameInterventions.scaleOnlyValue(0.85f, "mode=3,fps=45"))
+    }
+
+    @Test
+    fun scaleRefusesAmbiguousOrMalformedExistingTables() {
+        listOf("mode=2,fps=120:mode=2,fps=60", "mode=2,broken", "fps=90",
+            "mode=3,downscaleFactor=0.7,downscaleFactor=0.8").forEach {
+            assertNull(it, GameInterventions.scaleOnlyValue(0.8f, it))
+        }
+    }
+
+    @Test
     fun sanitizeDownscaleAcceptsOnlyTheOfficialRange() {
         // AOSP `cmd game set --downscale` accepts 0.3..0.9; anything else means "no downscale",
         // never a silently substituted scale the user did not pick.

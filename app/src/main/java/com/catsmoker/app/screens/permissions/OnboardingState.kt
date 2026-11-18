@@ -4,7 +4,8 @@ package com.catsmoker.app.screens.permissions
 data class OnboardingState(
     val step: Step = Step.WELCOME,
     val agreed: Boolean = false,
-    val analytics: Boolean = false,
+    /** A checked draft is not an applied analytics choice. */
+    val analytics: Boolean = DEFAULT_ANALYTICS_SELECTION,
     val inventory: Boolean = true,
     val usage: Boolean = true,
     val notifications: Boolean = true,
@@ -23,4 +24,8 @@ data class OnboardingState(
             copy(step = Step.PERMISSIONS)
         } else this
     fun canFinish(): Boolean = step == Step.PERMISSIONS && agreed
+
+    companion object {
+        const val DEFAULT_ANALYTICS_SELECTION = true
+    }
 }

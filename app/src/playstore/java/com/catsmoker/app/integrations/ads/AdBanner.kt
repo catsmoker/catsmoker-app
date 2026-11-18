@@ -42,11 +42,15 @@ import com.google.android.gms.ads.LoadAdError
  */
 @Composable
 fun AdBanner(modifier: Modifier = Modifier) {
+    AdBanner(adUnitId = BuildConfig.ADMOB_BANNER_ID, modifier = modifier)
+}
+
+@Composable
+internal fun AdBanner(adUnitId: String, modifier: Modifier = Modifier, inline: Boolean = false) {
     if (LocalInspectionMode.current) return
     val consentReady by AdConsentManager.canLoad.collectAsStateWithLifecycle()
     if (!consentReady) return
 
-    val adUnitId = BuildConfig.ADMOB_BANNER_ID
     if (adUnitId.isEmpty()) return
 
     var loadFailed by rememberSaveable { mutableStateOf(false) }
@@ -55,10 +59,10 @@ fun AdBanner(modifier: Modifier = Modifier) {
     val context = LocalContext.current
     BoxWithConstraints(modifier = modifier.fillMaxWidth()) {
         val widthDp = maxWidth.value.toInt()
-        // Anchored adaptive size for the current width — the Play-recommended banner sizing.
-        // Null when the SDK itself throws: the slot below collapses like a no-fill.
+        if (widthDp <= 0) return@BoxWithConstraints
         val adSize = try {
-            AdSize.getCurrentOrientationAnchoredAdaptiveBannerAdSize(context, widthDp)
+            if (inline) AdSize.getInlineAdaptiveBannerAdSize(widthDp, INLINE_BANNER_MAX_HEIGHT_DP)
+            else AdSize.getCurrentOrientationAnchoredAdaptiveBannerAdSize(context, widthDp)
         } catch (_: Exception) {
             null
         }
@@ -68,7 +72,7 @@ fun AdBanner(modifier: Modifier = Modifier) {
             AndroidView(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(adSize.height.dp),
+                    .height((if (inline) INLINE_BANNER_MAX_HEIGHT_DP else adSize.height).dp),
                 factory = { ctx ->
                     try {
                         AdView(ctx).apply {
@@ -92,3 +96,5 @@ fun AdBanner(modifier: Modifier = Modifier) {
         }
     }
 }
+
+private const val INLINE_BANNER_MAX_HEIGHT_DP = 90

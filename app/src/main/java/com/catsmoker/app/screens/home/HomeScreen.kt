@@ -19,10 +19,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawWithCache
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.compositeOver
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
@@ -43,6 +43,7 @@ import com.catsmoker.app.telemetry.model.MetricReadStatus
 import com.catsmoker.app.telemetry.model.MetricsState
 import com.catsmoker.app.ui.components.QuickActionButton
 import com.catsmoker.app.ui.components.SectionCard
+import com.catsmoker.app.ui.components.liquidGlassFinish
 import com.catsmoker.app.ui.theme.CatsmokerTheme
 import com.catsmoker.app.ui.theme.NothingRed
 import java.util.Locale
@@ -508,17 +509,19 @@ fun CombinedChart(
     modifier: Modifier = Modifier
 ) {
     val nothingRed = NothingRed
-    val gridColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.05f)
+    val colors = MaterialTheme.colorScheme
+    val gridColor = colors.onSurface.copy(alpha = 0.05f)
+    val chartBackground = colors.surfaceVariant.copy(alpha = 0.5f).compositeOver(colors.surface)
+    val chartShape = RoundedCornerShape(12.dp)
     
     Spacer(
         modifier = modifier
             .fillMaxWidth()
             .height(100.dp)
-            .clip(RoundedCornerShape(12.dp))
-            // Theme panel, not a fixed tint: the old white-3% wash was invisible on a
-            // light card, leaving the lines floating on the card itself.
-            .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
-            .border(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.3f), RoundedCornerShape(12.dp))
+            .clip(chartShape)
+            .border(1.dp, colors.outline.copy(alpha = 0.3f), chartShape)
+            .background(chartBackground)
+            .liquidGlassFinish(chartShape, showRim = false, reflectionColor = colors.onSurface)
             .padding(8.dp)
             .drawWithCache {
                 val stroke = Stroke(width = 2.dp.toPx(), cap = StrokeCap.Round)
@@ -531,32 +534,12 @@ fun CombinedChart(
                 val tempP = createPath(tempHistory, size, 60f)
                 val pingP = createPath(pingHistory.map { it.toFloat() }, size, 200f)
 
-                val fpsFillP = Path().apply {
-                    addPath(fpsP)
-                    if (fpsHistory.size >= 2) {
-                        lineTo(size.width, size.height)
-                        lineTo(0f, size.height)
-                        close()
-                    }
-                }
-
-                val fpsGradient = Brush.verticalGradient(
-                    colors = listOf(nothingRed.copy(alpha = 0.20f), Color.Transparent),
-                    startY = 0f,
-                    endY = size.height
-                )
-
                 onDrawBehind {
                     // Draw horizontal telemetry grid lines
                     val h1 = size.height * 0.33f
                     val h2 = size.height * 0.66f
                     drawLine(gridColor, start = Offset(0f, h1), end = Offset(size.width, h1), strokeWidth = 1.dp.toPx())
                     drawLine(gridColor, start = Offset(0f, h2), end = Offset(size.width, h2), strokeWidth = 1.dp.toPx())
-
-                    // Ambient gradient under live FPS path
-                    if (fpsHistory.size >= 2) {
-                        drawPath(fpsFillP, brush = fpsGradient)
-                    }
 
                     drawPath(fpsP, nothingRed, style = stroke)
                     drawPath(cpuP, Color(0xFF22C55E), style = stroke)

@@ -7,8 +7,9 @@ import org.junit.Test
 
 class OnboardingStateTest {
     @Test
-    fun analyticsRequiresAnExplicitSelection() {
-        assertFalse(OnboardingState().analytics)
+    fun analyticsDefaultsToEnabledAndCanBeTurnedOff() {
+        assertTrue(OnboardingState().analytics)
+        assertFalse(OnboardingState(analytics = false).analytics)
     }
 
     @Test

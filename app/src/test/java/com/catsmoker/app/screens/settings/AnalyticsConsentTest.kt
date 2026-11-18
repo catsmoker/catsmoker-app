@@ -1,7 +1,6 @@
 package com.catsmoker.app.screens.settings
 
 import java.io.File
-import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -10,9 +9,9 @@ import org.junit.Test
  * The analytics switch must be a control, not decoration.
  *
  * Firebase Analytics is bundled in both flavours but automatic provider startup is removed.
- * Collection requires a current explicit choice. This lock ties together the consent
- * owner that calls the SDK, the startup path that re-applies the stored choice, and the Settings
- * toggle that writes through it.
+ * Collection requires a saved opt-in and accepted terms. This
+ * lock ties together the consent owner that calls the SDK, the startup path that re-applies the
+ * stored choice, and the Settings toggle that writes through it.
  *
  * Legal copy is checked in every shipped locale because the previous text ("No analytics SDK is
  * bundled") was translated five times — fixing only the English file would leave four languages
@@ -45,12 +44,13 @@ class AnalyticsConsentTest {
             consent.contains("setAnalyticsCollectionEnabled")
         )
         assertTrue("the key the Settings screen already shipped stays the key", consent.contains("analytics_enabled"))
-        assertEquals(
-            "Settings and the SDK must agree on the default",
-            true,
-            consent.contains("DEFAULT_ENABLED = false")
-        )
+        assertTrue(consent.contains("DEFAULT_ENABLED = false"))
+        assertTrue(consent.contains("getBoolean(KEY_ENABLED, DEFAULT_ENABLED)"))
+        assertTrue(consent.contains("getBoolean(KEY_TERMS_ACCEPTED, false)"))
+        assertTrue(consent.contains("getInt(KEY_CHOICE_VERSION, 0)"))
         assertTrue(consent.contains("PrivacyPolicy.analyticsAllowed"))
+        assertTrue(consent.indexOf("if (!enabled) return@runCatching") in
+            0 until consent.indexOf("FirebaseApp.initializeApp(context)"))
     }
 
     @Test

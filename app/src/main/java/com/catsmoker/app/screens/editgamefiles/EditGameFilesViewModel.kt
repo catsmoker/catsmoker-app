@@ -7,6 +7,7 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Build
+import android.os.Bundle
 import android.os.Environment
 import android.provider.DocumentsContract
 import android.provider.MediaStore
@@ -15,6 +16,7 @@ import androidx.core.content.edit
 import androidx.core.net.toUri
 import androidx.documentfile.provider.DocumentFile
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.viewModelScope
 import com.catsmoker.app.platform.shell.ShellRunner
 import com.catsmoker.app.screens.editgamefiles.games.genshin.GenshinConfigTemplate
@@ -58,7 +60,10 @@ class EditGameFilesViewModel @Inject constructor(
     @ApplicationContext private val context: Context,
     private val shellRunner: ShellRunner,
     private val hsrGameManager: HsrGameManager,
+    private val savedState: SavedStateHandle,
 ) : ViewModel(), Shizuku.OnRequestPermissionResultListener {
+
+    data class ScopedDocument(val game: GameType, val fileIndex: Int, val uri: Uri)
 
     sealed class EditEvent {
         data class Toast(val message: String, val isLong: Boolean = false) : EditEvent()
@@ -174,6 +179,7 @@ class EditGameFilesViewModel @Inject constructor(
          * installed.
          */
         val showEditorAnyway: Boolean = false,
+        val scopedDocument: ScopedDocument? = null,
     )
 
     private val _uiState = MutableStateFlow(UiState())
@@ -195,9 +201,19 @@ class EditGameFilesViewModel @Inject constructor(
 
     init {
         initializeGameConfigs()
+        savedState.get<String>(SELECTED_GAME)?.let(::savedGame)?.let { game ->
+            updateGameSelection(game, savedState.get<Boolean>(SHOW_EDITOR_ANYWAY) == true)
+            val document = savedState.get<Bundle>(SCOPED_DOCUMENT_RESULT)
+            val uri = document?.getString("uri")?.toUri()
+            if (document != null && uri != null && document.getString("game") == game.name) {
+                _uiState.update { it.copy(scopedDocument = ScopedDocument(game, document.getInt("file"), uri)) }
+            }
+        }
         probeInstallStates()
         Shizuku.addRequestPermissionResultListener(this)
     }
+
+    private fun savedGame(name: String): GameType? = GameType.entries.firstOrNull { it.name == name }
 
     override fun onCleared() {
         Shizuku.removeRequestPermissionResultListener(this)
@@ -278,6 +294,17 @@ class EditGameFilesViewModel @Inject constructor(
      * not get.
      */
     fun onGameSelected(game: GameType) {
+        savedState[SELECTED_GAME] = game.name
+        savedState[SHOW_EDITOR_ANYWAY] = false
+        savedState.get<Bundle>(SCOPED_DOCUMENT_REQUEST)?.let { request ->
+            savedState[SCOPED_DOCUMENT_REQUEST] = Bundle(request).apply { putBoolean("invalidated", true) }
+        }
+        savedState.remove<Bundle>(SCOPED_DOCUMENT_RESULT)
+        updateGameSelection(game, showAnyway = false)
+        probeInstallStates()
+    }
+
+    private fun updateGameSelection(game: GameType, showAnyway: Boolean) {
         val config = gameConfigs[game]
         val uploadTargets = config?.uploadTargets.orEmpty()
         selectedFileUri = null
@@ -308,10 +335,10 @@ class EditGameFilesViewModel @Inject constructor(
                 saveEdits = emptyMap(),
                 // Each game needs its own explicit "Show anyway" tap — a carried-over
                 // override would reveal a different game's editor unasked.
-                showEditorAnyway = false
+                showEditorAnyway = showAnyway,
+                scopedDocument = null
             )
         }
-        probeInstallStates()
     }
     fun onProfileSelected(profile: Int) {
         val needsExisting = ProfilePushPlan.needsExistingFile(
@@ -327,7 +354,35 @@ class EditGameFilesViewModel @Inject constructor(
      * ViewModel is cleared. Installed/unknown games never need it; the screen only offers
      * the button when the probe confirmed "no".
      */
-    fun onShowEditorAnyway() = _uiState.update { it.copy(showEditorAnyway = true) }
+    fun onShowEditorAnyway() {
+        savedState[SHOW_EDITOR_ANYWAY] = true
+        _uiState.update { it.copy(showEditorAnyway = true) }
+    }
+
+    fun beginScopedDocumentPick(game: GameType, fileIndex: Int): Boolean {
+        if (game != _uiState.value.selectedGame ||
+            additionalGameEditors[game]?.files?.getOrNull(fileIndex) == null ||
+            savedState.get<Bundle>(SCOPED_DOCUMENT_REQUEST) != null) return false
+        savedState[SCOPED_DOCUMENT_REQUEST] = Bundle().apply {
+            putString("game", game.name)
+            putInt("file", fileIndex)
+        }
+        return true
+    }
+
+    fun completeScopedDocumentPick(uri: Uri?) {
+        val request = savedState.remove<Bundle>(SCOPED_DOCUMENT_REQUEST) ?: return
+        val game = _uiState.value.selectedGame
+        if (uri == null || request.getBoolean("invalidated") || request.getString("game") != game.name) return
+        savedState[SCOPED_DOCUMENT_RESULT] = request.apply { putString("uri", uri.toString()) }
+        _uiState.update { it.copy(scopedDocument = ScopedDocument(game, request.getInt("file"), uri)) }
+    }
+
+    fun onScopedDocumentHandled(document: ScopedDocument) {
+        if (_uiState.value.scopedDocument != document) return
+        savedState.remove<Bundle>(SCOPED_DOCUMENT_RESULT)
+        _uiState.update { it.copy(scopedDocument = null) }
+    }
 
     fun onApplyProfile() {
         val config = gameConfigs[_uiState.value.selectedGame] ?: return
@@ -1981,6 +2036,10 @@ class EditGameFilesViewModel @Inject constructor(
     }
 
     private companion object {
+        const val SELECTED_GAME = "file_engineering_game"
+        const val SHOW_EDITOR_ANYWAY = "file_engineering_show_anyway"
+        const val SCOPED_DOCUMENT_REQUEST = "scoped_document_request"
+        const val SCOPED_DOCUMENT_RESULT = "scoped_document_result"
         private const val MIME_BINARY = "application/octet-stream"
         private const val ZARCHIVER_PACKAGE = "ru.zdevs.zarchiver"
 

@@ -73,17 +73,18 @@ fun QuickActionButton(
     spreadGridContent: Boolean = false
 ) {
     val clickable = enabled && !isLoading
+    val shape = RoundedCornerShape(20.dp)
     Card(
         onClick = onClick,
         enabled = clickable,
         modifier = modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(20.dp),
+        shape = shape,
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surface
         ),
         border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline)
     ) {
-        Box(modifier = Modifier.fillMaxWidth()) {
+        Box(modifier = Modifier.fillMaxWidth().liquidGlassFinish(shape, enabled = clickable)) {
             DotGridBackground(modifier = Modifier.matchParentSize())
 
             if (isFullWidth) {

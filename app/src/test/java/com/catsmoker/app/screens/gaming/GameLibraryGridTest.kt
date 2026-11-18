@@ -13,10 +13,10 @@ import org.junit.Test
  *
  * The previous layout was a vertical list whose row expanded into three buttons. It was compact
  * per row but still one row per game, and the actions were far from the icon that identifies the
- * game. The grid shows the library as icons (the object the user recognises), and the icon opens a
- * popup with the three actions. These tests pin the two decisions that are easy to regress: the
+ * game. The grid shows the library as icons: tap selects; long press opens a popup with the three
+ * actions, also available to accessibility services. These tests pin the decisions easy to regress:
  * layout must stay a plain chunked grid inside the already-scrolling screen, and the popup must
- * remain the only place actions live.
+ * retain its actions without a visible overflow button.
  */
 class GameLibraryGridTest {
 
@@ -49,16 +49,44 @@ class GameLibraryGridTest {
     }
 
     @Test
-    fun theGameIconIsTheButtonAndTheNameIsJustALabel() {
-        assertTrue(tile.contains("IconButton(onClick = onToggleMenu"))
+    fun tapSelectsWhileLongPressOpensActionsRegardlessOfSelection() {
+        assertTrue(tile.contains(".combinedClickable("))
+        assertTrue(tile.contains("onClick = onSelect"))
+        assertTrue(tile.contains("onLongClick = onOpenMenu"))
+        assertTrue(tile.contains("hapticFeedbackEnabled = true"))
+        assertTrue(tile.contains("selected = isSelected"))
+        assertFalse(tile.contains("MoreVert"))
+        assertFalse(tile.contains("IconButton("))
+        val gesture = tile.substringAfter(".combinedClickable(").substringBefore(".semantics(")
+        assertFalse(gesture.contains("if (isSelected) {"))
         assertTrue(tile.contains("Modifier.size(56.dp)"))
         assertTrue(tile.contains("R.string.gt_library_actions"))
-        // No clickable wrapper around the name: the icon is the control.
-        assertFalse(tile.contains(".clickable"))
         assertTrue(tile.contains("text = game.appName"))
         assertTrue(tile.contains("textAlign = TextAlign.Center"))
         assertTrue(tile.contains("minLines = 2"))
         assertTrue(tile.contains("maxLines = 2"))
+    }
+
+    @Test
+    fun accessibilityServicesCanRunTheSameActionsWithoutLongPress() {
+        assertTrue(tile.contains("semantics(mergeDescendants = true)"))
+        assertTrue(tile.contains("role = Role.Button"))
+        assertTrue(tile.contains("customActions = buildList"))
+        listOf("launch", "optimize", "remove").forEach { action ->
+            assertTrue(tile.contains("CustomAccessibilityAction(${action}Label) { ${action}Action(); true }"))
+            assertTrue(tile.contains("onClick = ${action}Action"))
+        }
+        assertTrue(tile.contains("if (!isOptimizing)"))
+    }
+
+    @Test
+    fun openingThePopupDoesNotChangeSelectionAndSelectedRemovalReturnsToGlobal() {
+        assertTrue(screen.contains("onOpenMenu = { openGameMenuPkg = game.packageName }"))
+        assertTrue(screen.contains("onSelectGame(game.packageName)"))
+        val vm = File("src/main/java/com/catsmoker/app/screens/gaming/GamingToolsViewModel.kt").readText()
+        val remove = vm.substringAfter("fun removeGameFromLibrary(").substringBefore("\n    fun ")
+        assertTrue(remove.contains("gameSettingsStore.selection.value.packageName == pkg"))
+        assertTrue(remove.contains("selectGame(null)"))
     }
 
     @Test

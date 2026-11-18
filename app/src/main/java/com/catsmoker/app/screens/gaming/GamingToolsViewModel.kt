@@ -1,5 +1,7 @@
 package com.catsmoker.app.screens.gaming
 
+import com.catsmoker.app.screens.gaming.mode.GamingModeService
+
 import com.catsmoker.app.R
 
 import android.content.BroadcastReceiver
@@ -68,6 +70,11 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.SharingStarted
+import com.catsmoker.app.screens.gaming.graphics.GameInterventions
+import com.catsmoker.app.screens.gaming.mode.PointerSpeed
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
@@ -75,7 +82,7 @@ import kotlinx.coroutines.withContext
 class GamingToolsViewModel @Inject constructor(
     @ApplicationContext private val context: Context,
     private val gamingEngine: GamingEngine,
-    private val gamingModeJobs: GamingModeJobRunner,
+    private val gameAutomation: com.catsmoker.app.screens.gaming.automation.GameAutomation,
     private val gameSessionManager: GameSessionManager,
     private val shellRunner: ShellRunner,
     private val gameDeveloperOptions: GameDeveloperOptions,
@@ -97,7 +104,8 @@ class GamingToolsViewModel @Inject constructor(
     private val glyphController: GlyphController,
     private val glyphSyncStore: GlyphSyncStore,
     /** Remembers whether the Gaming Mode card's Advanced group is open. */
-    private val gamingModeAdvancedStore: GamingModeAdvancedStore
+    private val gamingModeAdvancedStore: GamingModeAdvancedStore,
+    private val gameSettingsStore: GameSettingsStore
 ) : ViewModel() {
 
     data class UiState(
@@ -168,6 +176,7 @@ class GamingToolsViewModel @Inject constructor(
         val boostLevel: Int = 0,
         val audioOutput: String? = null,
         val games: List<GameInfo> = emptyList(),
+        val selectedGamePkg: String? = null,
         val allApps: List<GameInfo> = emptyList(),
         val isPickingGame: Boolean = false,
         /** Package with a pre-launch compile in flight, or null when none is running. */
@@ -376,6 +385,13 @@ class GamingToolsViewModel @Inject constructor(
     }
 
     init {
+        viewModelScope.launch {
+            gameSettingsStore.selection.collect { selection ->
+                if (_uiState.value.selectedGamePkg != selection.packageName) {
+                    restoreGameInputs(selection)
+                }
+            }
+        }
         accessPrefs.registerOnSharedPreferenceChangeListener(accessListener)
         _uiState.update {
             it.copy(
@@ -539,12 +555,17 @@ class GamingToolsViewModel @Inject constructor(
         }
     }
 
+    // Recent picks influence the next visit, never re-order this visit after a tap.
+    private val libraryRecentOrder = gameSettingsStore.recentPackages()
+
     // ---- Game library ----
 
     fun syncGames() {
         if (!com.catsmoker.app.application.privacy.GamingAccessConsent.allows(context,
                 com.catsmoker.app.application.privacy.GamingAccessConsent.INVENTORY)) {
             _uiState.update { it.copy(games = emptyList(), allApps = emptyList(), anglePkg = null) }
+            gameSettingsStore.select(null)
+            restoreGameInputs(gameSettingsStore.selection.value)
             gameSessionManager.setGames(emptySet())
             return
         }
@@ -572,23 +593,61 @@ class GamingToolsViewModel @Inject constructor(
                 ) continue
                 newGames.add(GameInfo(ai.loadLabel(pm).toString(), pkg, ai.loadIcon(pm)))
             }
-            val games = newGames.distinctBy { it.packageName }
+            val games = GameLibraryOrdering.ordered(newGames, libraryRecentOrder,
+                { it.packageName }, { it.appName })
             withContext(Dispatchers.Main) {
                 if (!com.catsmoker.app.application.privacy.GamingAccessConsent.allows(context,
                         com.catsmoker.app.application.privacy.GamingAccessConsent.INVENTORY)) return@withContext
-                _uiState.update {
-                    it.copy(
-                        games = games,
-                        // First load picks the first game so the ANGLE card has something to
-                        // act on; a deliberate pick is never overridden afterwards.
-                        anglePkg = it.anglePkg ?: games.firstOrNull()?.packageName
-                    )
-                }
+                _uiState.update { it.copy(games = games) }
+                gameSettingsStore.reconcile(games.map { it.packageName }.toSet())
+                restoreGameInputs(gameSettingsStore.selection.value)
                 // The session monitor's game set follows the library: uninstalled games stop
                 // triggering sessions without any extra step.
                 gameSessionManager.setGames(games.map { game -> game.packageName }.toSet())
-                refreshAngleDriver()
             }
+        }
+    }
+
+    fun toggleGameSelection(pkg: String) {
+        if (_uiState.value.games.none { it.packageName == pkg }) return
+        gameSettingsStore.toggle(pkg)
+        restoreGameInputs(gameSettingsStore.selection.value)
+    }
+
+    fun selectGame(pkg: String?) {
+        if (pkg != null && _uiState.value.games.none { it.packageName == pkg }) return
+        gameSettingsStore.select(pkg)
+        restoreGameInputs(gameSettingsStore.selection.value)
+    }
+
+    private fun restoreGameInputs(selection: GameSettingsRepository.Selection) {
+        pendingResApply = null
+        val saved = selection.settings
+        val native = _uiState.value.nativeResolution
+        val target = if (saved.resolutionId == null) native else null
+        _uiState.update {
+            it.copy(
+                selectedGamePkg = selection.packageName,
+                anglePkg = selection.packageName,
+                angleDriver = null,
+                isChangingAngleDriver = false,
+                selectedResolutionId = saved.resolutionId ?: if (native != null) "scale_100" else null,
+                widthInput = target?.widthPixels?.toString() ?: saved.width,
+                heightInput = target?.heightPixels?.toString() ?: saved.height,
+                dpiInput = target?.densityDpi?.toString() ?: saved.dpi,
+                resWarning = null
+            )
+        }
+        revalidateResInputs()
+        refreshAngleDriver()
+    }
+
+    private fun rememberResolutionInputs() {
+        val state = _uiState.value
+        val pkg = state.selectedGamePkg ?: return
+        gameSettingsStore.update(pkg) {
+            it.copy(resolutionId = state.selectedResolutionId, width = state.widthInput,
+                height = state.heightInput, dpi = state.dpiInput)
         }
     }
 
@@ -663,6 +722,7 @@ class GamingToolsViewModel @Inject constructor(
         _uiState.update { state ->
             state.copy(games = state.games.filterNot { it.packageName == pkg })
         }
+        if (gameSettingsStore.selection.value.packageName == pkg) selectGame(null)
         syncGames()
     }
 
@@ -1076,11 +1136,14 @@ class GamingToolsViewModel @Inject constructor(
     // flow, so the screen still shows the truth when it reopens.
     fun activateGamingMode() {
         _uiState.update { it.copy(restoreResult = null) }
-        gamingModeJobs.activate()
+        androidx.core.content.ContextCompat.startForegroundService(context,
+            Intent(context, GamingModeService::class.java)
+                .setAction(GamingModeService.ACTION_PREPARE)
+                .putExtra("game", _uiState.value.selectedGamePkg))
     }
 
     fun deactivateGamingMode() {
-        gamingModeJobs.deactivate()
+        gameAutomation.restoreFromUi()
     }
 
     /**
@@ -1268,16 +1331,29 @@ class GamingToolsViewModel @Inject constructor(
     }
 
     /** The render scale the next Gaming Mode activation writes into the game intervention. */
-    val interventionDownscale = gamingEngine.interventionDownscale
+    val interventionDownscale = combine(gameSettingsStore.selection, gamingEngine.interventionDownscale) { pick, legacy ->
+        if (pick.packageName == null) legacy else pick.settings.downscale
+    }.stateIn(viewModelScope, SharingStarted.Eagerly, gameSettingsStore.selection.value.let {
+        if (it.packageName == null) gamingEngine.interventionDownscale.value else it.settings.downscale
+    })
     /** The touch speed for the next activation, or null for stock (untouched). */
-    val pointerSpeedChoice = gamingEngine.pointerSpeedChoice
+    val pointerSpeedChoice = combine(gameSettingsStore.selection, gamingEngine.pointerSpeedChoice) { pick, legacy ->
+        if (pick.packageName == null) legacy else pick.settings.pointerSpeed
+    }.stateIn(viewModelScope, SharingStarted.Eagerly, gameSettingsStore.selection.value.let {
+        if (it.packageName == null) gamingEngine.pointerSpeedChoice.value else it.settings.pointerSpeed
+    })
     /**
      * Chooses the render scale (or null for full resolution). A pure preference write, so the
      * toast confirms the stored choice rather than a device round-trip — the device verdict
      * arrives with the next activation's report row.
      */
     fun setInterventionDownscale(factor: Float?) {
-        val stored = gamingEngine.setInterventionDownscale(factor)
+        val pkg = _uiState.value.selectedGamePkg
+        val stored = if (pkg == null) gamingEngine.setInterventionDownscale(factor) else {
+            val value = GameInterventions.sanitizeDownscale(factor)
+            gameSettingsStore.update(pkg) { it.copy(downscale = value) }
+            value
+        }
         _toasts.tryEmit(
             if (stored == null) context.getString(R.string.gt_downscale_off_set)
             else context.getString(R.string.gt_downscale_set, formatDownscale(stored))
@@ -1293,7 +1369,12 @@ class GamingToolsViewModel @Inject constructor(
      * arrives with the next activation's report row.
      */
     fun setPointerSpeedChoice(speed: Int?) {
-        val stored = gamingEngine.setPointerSpeedChoice(speed)
+        val pkg = _uiState.value.selectedGamePkg
+        val stored = if (pkg == null) gamingEngine.setPointerSpeedChoice(speed) else {
+            val value = PointerSpeed.sanitize(speed)
+            gameSettingsStore.update(pkg) { it.copy(pointerSpeed = value) }
+            value
+        }
         _toasts.tryEmit(
             if (stored == null) context.getString(R.string.gt_pointer_stock_set)
             else context.getString(R.string.gt_pointer_set, formatPointerSpeed(stored))
@@ -1376,14 +1457,14 @@ class GamingToolsViewModel @Inject constructor(
      * answer even before root/Shizuku is granted — unlike the chips, which stay disabled.
      */
     fun selectAnglePackage(pkg: String?) {
-        _uiState.update { it.copy(anglePkg = pkg) }
-        refreshAngleDriver()
+        pkg?.let(::selectGame)
     }
 
     /** Re-reads the driver for the picked package. */
     fun refreshAngleDriver() = viewModelScope.launch {
         val pkg = _uiState.value.anglePkg ?: return@launch
-        _uiState.update { it.copy(angleDriver = angleDriverOptions.driverFor(pkg)) }
+        val driver = angleDriverOptions.driverFor(pkg)
+        _uiState.update { if (it.anglePkg == pkg) it.copy(angleDriver = driver) else it }
     }
 
     /**
@@ -1396,7 +1477,9 @@ class GamingToolsViewModel @Inject constructor(
         _uiState.update { it.copy(isChangingAngleDriver = true) }
         val outcome = angleDriverOptions.setDriver(pkg, driver)
         val current = angleDriverOptions.driverFor(pkg)
-        _uiState.update { it.copy(angleDriver = current, isChangingAngleDriver = false) }
+        _uiState.update {
+            if (it.anglePkg == pkg) it.copy(angleDriver = current, isChangingAngleDriver = false) else it
+        }
         _toasts.tryEmit(
             if (outcome.applied) {
                 context.getString(R.string.gt_angle_set, pkg, driverLabel(driver))
@@ -1658,6 +1741,7 @@ class GamingToolsViewModel @Inject constructor(
         val target = option.target
         if (target == null) {
             _uiState.update { it.copy(selectedResolutionId = id) }
+            rememberResolutionInputs()
             return
         }
         _uiState.update {
@@ -1669,6 +1753,7 @@ class GamingToolsViewModel @Inject constructor(
             )
         }
         revalidateResInputs()
+        rememberResolutionInputs()
     }
 
     /**
@@ -1683,12 +1768,13 @@ class GamingToolsViewModel @Inject constructor(
         if (_uiState.value.selectedResolutionId != CUSTOM_OPTION_ID) return
         _uiState.update {
             it.copy(
-                widthInput = width ?: it.widthInput,
-                heightInput = height ?: it.heightInput,
-                dpiInput = dpi ?: it.dpiInput
+                widthInput = width?.take(16) ?: it.widthInput,
+                heightInput = height?.take(16) ?: it.heightInput,
+                dpiInput = dpi?.take(16) ?: it.dpiInput
             )
         }
         revalidateResInputs()
+        rememberResolutionInputs()
     }
 
     /**
@@ -1711,7 +1797,8 @@ class GamingToolsViewModel @Inject constructor(
 
             _uiState.update { state ->
                 // Keep whatever the user has already typed; only seed the fields on the first read.
-                val seed = state.widthInput.isBlank() && state.heightInput.isBlank()
+                val seed = state.selectedResolutionId == null &&
+                    state.widthInput.isBlank() && state.heightInput.isBlank()
                 val applied = override ?: native
                 state.copy(
                     nativeResolution = native,
@@ -1928,6 +2015,10 @@ class GamingToolsViewModel @Inject constructor(
 
     /** @return true when a privileged channel exists; logs the real reason when it does not. */
     private suspend fun requirePrivilegeForResolution(): Boolean {
+        if (com.catsmoker.app.screens.gaming.mode.GamingEnvironment.hasExternalDisplay(context)) {
+            logRes(context.getString(R.string.gt_res_external_display_blocked))
+            return false
+        }
         val privileged = withContext(Dispatchers.IO) { shellRunner.hasPrivilege() }
         if (!privileged) {
             logRes(context.getString(R.string.gt_vm_res_log_priv))

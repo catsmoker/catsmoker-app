@@ -23,3 +23,16 @@ internal fun pubgGroupDot(installedGames: Map<GameType, Boolean>): Boolean? = wh
     PUBG_VARIANTS.all { installedGames.containsKey(it) } -> false
     else -> null
 }
+
+/**
+ * The picker's band order: installed games first, then unanswered probes, then titles the
+ * probe confirmed absent. Unknown deliberately sits between the two for the same reason the
+ * dot keeps three states — a failed query must never be sorted as "not installed". Callers
+ * use a stable sort, so the enum's own order survives inside each band and a re-probe only
+ * moves a game when its answer actually changed.
+ */
+internal fun installSortRank(installed: Boolean?): Int = when (installed) {
+    true -> 0
+    null -> 1
+    false -> 2
+}

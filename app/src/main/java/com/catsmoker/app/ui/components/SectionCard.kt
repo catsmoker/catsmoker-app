@@ -23,16 +23,17 @@ fun SectionCard(
     contentPadding: Dp = 20.dp,
     content: @Composable ColumnScope.() -> Unit
 ) {
+    val shape = RoundedCornerShape(20.dp)
     Card(
         modifier = modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(20.dp),
+        shape = shape,
         colors = CardDefaults.cardColors(
             containerColor = if (enabled) MaterialTheme.colorScheme.surface else MaterialTheme.colorScheme.surface.copy(alpha = 0.5f)
         ),
         border = BorderStroke(1.dp, if (enabled) MaterialTheme.colorScheme.outline else MaterialTheme.colorScheme.outlineVariant)
     ) {
         Column(
-            modifier = Modifier.padding(contentPadding),
+            modifier = Modifier.liquidGlassFinish(shape, enabled = enabled).padding(contentPadding),
             content = content
         )
     }

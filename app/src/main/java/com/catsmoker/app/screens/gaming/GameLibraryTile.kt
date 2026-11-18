@@ -1,72 +1,44 @@
 package com.catsmoker.app.screens.gaming
 
-import android.content.Intent
-import android.graphics.BitmapFactory
-import android.os.Build
-import android.provider.Settings
-import android.widget.Toast
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
-import androidx.annotation.StringRes
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.core.tween
-import androidx.compose.animation.expandVertically
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.VolumeUp
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
-import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalConfiguration
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.CustomAccessibilityAction
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.customActions
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.core.graphics.drawable.toBitmap
-import androidx.core.net.toUri
-import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
-import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.LifecycleEventObserver
-import androidx.lifecycle.LifecycleOwner
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.catsmoker.app.R
-import com.catsmoker.app.screens.gaming.GameInfo
-import java.io.File
 
 /**
  * One game in "Your Games": a launcher-style icon tile whose popup carries the three actions.
  *
- * The icon itself is the button and the name underneath is a plain label, so the tap target is
- * the familiar launcher icon rather than a hidden chevron. The 56 dp [IconButton] keeps the touch
- * target above the 48 dp rule while the artwork inside stays 48 dp. Only one menu is open at a
- * time — the screen hoists [isMenuOpen] — and every action is addressed by [GameInfo.packageName]
- * so two games sharing a label can never act on each other.
+ * Tap only restores editor inputs; long press opens actions without changing selection.
+ * Accessibility services expose the same actions without requiring the gesture.
+ * Every action is addressed by package, so games sharing a label cannot act on each other.
  */
 @Composable
 fun GameLibraryTile(
     game: GameInfo,
+    isSelected: Boolean,
+    onSelect: () -> Unit,
     isMenuOpen: Boolean,
-    onToggleMenu: () -> Unit,
+    onOpenMenu: () -> Unit,
     onDismissMenu: () -> Unit,
     onLaunch: (String) -> Unit,
     onRemove: (String) -> Unit,
@@ -76,25 +48,72 @@ fun GameLibraryTile(
 ) {
     // Cached per game: toBitmap() allocates on every recomposition otherwise.
     val icon = remember(game.packageName, game.icon) { game.icon.toBitmap().asImageBitmap() }
-    Column(modifier = modifier, horizontalAlignment = Alignment.CenterHorizontally) {
+    val launchLabel = stringResource(R.string.gt_library_launch)
+    val optimizeLabel = stringResource(R.string.gt_library_optimize)
+    val removeLabel = stringResource(R.string.gt_library_remove)
+    // Popup and accessibility actions share callbacks, including dismissal and package targeting.
+    val launchAction = {
+        onDismissMenu()
+        onLaunch(game.packageName)
+    }
+    val optimizeAction = {
+        onDismissMenu()
+        onOptimize(game.packageName)
+    }
+    val removeAction = {
+        onDismissMenu()
+        onRemove(game.packageName)
+    }
+    Column(
+        modifier = modifier
+            .combinedClickable(
+                role = Role.Button,
+                onClickLabel = stringResource(
+                    if (isSelected) R.string.gt_library_deselect else R.string.gt_library_select, game.appName),
+                onClick = onSelect,
+                onLongClickLabel = stringResource(R.string.gt_library_actions, game.appName),
+                onLongClick = onOpenMenu,
+                hapticFeedbackEnabled = true
+            )
+            .semantics(mergeDescendants = true) {
+                selected = isSelected
+                customActions = buildList {
+                    add(CustomAccessibilityAction(launchLabel) { launchAction(); true })
+                    if (!isOptimizing) {
+                        add(CustomAccessibilityAction(optimizeLabel) { optimizeAction(); true })
+                    }
+                    add(CustomAccessibilityAction(removeLabel) { removeAction(); true })
+                }
+            },
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Box(modifier = Modifier.size(56.dp)
+            .border(if (isSelected) 2.dp else 0.dp,
+                if (isSelected) MaterialTheme.colorScheme.primary else Color.Transparent,
+                RoundedCornerShape(16.dp)), contentAlignment = Alignment.Center) {
+            Image(
+                bitmap = icon,
+                contentDescription = null,
+                modifier = Modifier.size(48.dp).clip(RoundedCornerShape(12.dp))
+            )
+        }
         Box {
-            IconButton(onClick = onToggleMenu, modifier = Modifier.size(56.dp)) {
-                Image(
-                    bitmap = icon,
-                    // The icon is the only control on the tile, so it carries the game name: a
-                    // screen reader announces "Actions for <game>", not an unnamed button.
-                    contentDescription = stringResource(R.string.gt_library_actions, game.appName),
-                    modifier = Modifier.size(48.dp).clip(RoundedCornerShape(12.dp))
-                )
-            }
+            Text(
+                text = game.appName,
+                modifier = Modifier.fillMaxWidth().padding(top = 2.dp),
+                style = MaterialTheme.typography.labelSmall,
+                fontWeight = FontWeight.SemiBold,
+                color = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface,
+                textAlign = TextAlign.Center,
+                minLines = 2,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis
+            )
             DropdownMenu(expanded = isMenuOpen, onDismissRequest = onDismissMenu) {
                 DropdownMenuItem(
                     text = { Text(stringResource(R.string.gt_library_launch)) },
                     leadingIcon = { Icon(Icons.Default.PlayArrow, contentDescription = null) },
-                    onClick = {
-                        onDismissMenu()
-                        onLaunch(game.packageName)
-                    }
+                    onClick = launchAction
                 )
                 // Pre-launch speed-profile compile for exactly this game. Runs through the same
                 // sweep lock as the full booster, so it can never race one — the item spins while
@@ -109,10 +128,7 @@ fun GameLibraryTile(
                         }
                     },
                     enabled = !isOptimizing,
-                    onClick = {
-                        onDismissMenu()
-                        onOptimize(game.packageName)
-                    }
+                    onClick = optimizeAction
                 )
                 DropdownMenuItem(
                     text = {
@@ -128,25 +144,9 @@ fun GameLibraryTile(
                             tint = MaterialTheme.colorScheme.error
                         )
                     },
-                    onClick = {
-                        onDismissMenu()
-                        onRemove(game.packageName)
-                    }
+                    onClick = removeAction
                 )
             }
         }
-        Text(
-            text = game.appName,
-            modifier = Modifier.fillMaxWidth().padding(top = 2.dp, start = 2.dp, end = 2.dp),
-            style = MaterialTheme.typography.labelSmall,
-            fontWeight = FontWeight.SemiBold,
-            color = MaterialTheme.colorScheme.onSurface,
-            textAlign = TextAlign.Center,
-            // Two lines always: tiles in the same row stay the same height, and a long name
-            // ellipsizes instead of pushing the row taller than its neighbours.
-            minLines = 2,
-            maxLines = 2,
-            overflow = TextOverflow.Ellipsis
-        )
     }
 }

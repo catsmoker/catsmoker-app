@@ -75,7 +75,8 @@ Play-only tests live in `app/src/testPlaystore/`. Run only the focused classes
 affected by a task, not this entire example suite by default.
 
 Firebase configuration is shared, but its automatic startup provider is removed.
-`AnalyticsConsent` initializes it only after a current explicit Settings opt-in.
+`AnalyticsConsent` initializes it only after terms have been accepted and a current
+opt-in has been saved. It re-applies the saved choice on subsequent launches.
 UMP is a pinned Play-only dependency; the account privacy message and production
 ad identifiers must be configured separately. See `PLAY_POLICY_REMEDIATION.md`
 for focused checks and external gates; a debug test run does not rebuild or
@@ -103,11 +104,13 @@ call site). Everything else still reports.
   build type; without `signing.properties` the release APK stays debug-signed
   (see above).
 - **GitHub Release rule**: GitHub Releases must publish ONLY the `full` variant assets: the universal `app-full-release.apk` along with all per-ABI split APK files (`app-full-arm64-v8a-release.apk`, `app-full-armeabi-v7a-release.apk`, `app-full-x86_64-release.apk`). NEVER attach the `playstore` variant (`app-playstore-release.apk` / `.aab`) to GitHub Releases; the Play variant is built exclusively for Google Play Console upload.
-- The Start.io ad SDK id can be overridden via `STARTIO_APP_ID` in
-  `local.properties` (full variant; defaults to the demo id). AdMob ids for
-  the playstore variant come from `ADMOB_APP_ID` / `ADMOB_BANNER_ID` /
-  `ADMOB_INTERSTITIAL_ID` in `local.properties`, defaulting to Google's
-  sample test ids.
+- Debug builds and debug-signed releases always use demo/test ad IDs,
+  whether building an APK or an AAB. Only release builds with non-debug
+  signing (from `signing.properties` or Android Studio's signed build wizard)
+  use configured production IDs from `local.properties`: `STARTIO_APP_ID` for
+  Full and `ADMOB_APP_ID`, `ADMOB_BANNER_ID`, `ADMOB_GAMING_TOOLS_BANNER_ID`, `ADMOB_ABOUT_BANNER_ID`
+  and `ADMOB_INTERSTITIAL_ID` for Play. Missing IDs fall back to demo/test IDs,
+  except that unset Gaming Tools and About banner IDs reuse the Home banner ID.
 - Nothing's Glyph Developer Kit API key comes from `NOTHING_API_KEY` in
   `local.properties` (both variants; falls back to a dummy that only makes the
   GDK refuse registration). Nothing stopped requiring it from Android 16, so a

@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="rb_title">Roblox · 仅供测试的文件编辑器</string>
-    <string name="rb_warning">这不是帧率解锁器。此路径未经验证，目标标志不在 Roblox 公布的本地标志允许列表中。Roblox 可能会忽略它。不保证帧率提升或账号安全。</string>
     <string name="rb_target">实验性目标帧率（并非实测帧率）</string>
     <string name="rb_unread">文件状态未知。需要 root 或已授权的 Shizuku；请刷新以读取。</string>
     <string name="rb_absent">文件不存在。应用将创建此文件。</string>

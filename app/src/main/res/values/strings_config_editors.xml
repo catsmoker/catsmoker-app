@@ -1,7 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="ce_experimental">Experimental config editor — not device-validated</string>
-    <string name="ce_warning">Only existing, recognized fields are editable. Values are raw game settings, not verified quality tiers or safe ranges. Games may ignore or reset them; no FPS gain, unlock, or anti-cheat safety is guaranteed. Keep the game closed while editing.</string>
     <string name="ce_evidence">Setting sources and research</string>
     <string name="ce_root_only">Direct private-data access requires root. Shell-UID Shizuku is insufficient.</string>
     <string name="ce_document_only">Select your existing config document. No universal storage path is assumed.</string>
@@ -21,11 +19,7 @@
     <string name="ce_discard">This will discard your pending edits.</string>
     <string name="fe_checking_installation">Checking installation…</string>
     <string name="fe_store_unavailable">No store or browser could open this listing. It may be unavailable for your region or device.</string>
-    <string name="fe_unverified">Game-specific controls — not validated on a real installation</string>
     <string name="fe_controls">CONFIGURATION</string>
-    <string name="fe_alien_limit">Alien: Isolation can reset or clamp settings through its specification files. Editing preferences alone cannot guarantee an FPS unlock.</string>
-    <string name="fe_civ_limit">Civilization VI impact presets can override individual graphics settings. Files are applied separately; the Version header is preserved.</string>
-    <string name="fe_control_limit">Only settings with established value meanings are editable. Unknown quality tiers and FPS-unlock mappings remain unavailable; no synthetic presets are generated.</string>
     <string name="fe_load_first">Load the existing configuration to edit this setting. No game values have been read yet.</string>
     <string name="fe_unlock_unsupported">No proven unlimited or raise-only mapping for this field. FPS limiters are not offered.</string>
     <string name="fe_mapping_unconfirmed">This setting’s value mapping is not established for this Android version; editing is unavailable.</string>
@@ -33,5 +27,4 @@
     <string name="fe_blocks">Blocks, not chunks. Large distances can exhaust game memory.</string>
     <string name="fe_count">Non-negative count. The game may enforce its own limits.</string>
     <string name="fe_unlock">Unlock FPS (unlimited)</string>
-    <string name="fe_genshin_limit">Legacy hardware-model template only. Current Genshin versions have not been shown to consume it; this is not a verified FPS unlock. Deployment replaces this one config file after backup.</string>
 </resources>

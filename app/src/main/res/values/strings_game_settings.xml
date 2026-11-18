@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="gt_gm_label_render_scale">Per-game render scale</string>
+    <string name="gt_gm_scale_applied">Configuration verified; restart game if needed</string>
+    <string name="gt_gm_scale_na">Requires an opted-in render scale, selected game, and Android 12+. No FPS cap is installed.</string>
+    <string name="gt_gm_explicit_only">Left to explicit Developer Options controls</string>
+    <string name="gt_eng_un_render_scale">Applying the game\'s render scale — your phone %1$s</string>
+    <string name="gt_restore_game_mode_failed">The game\'s previous mode was not confirmed restored.</string>
+    <string name="gt_restore_render_scale_failed">The game\'s previous render-scale configuration was not confirmed restored.</string>
+    <string name="gt_res_external_display_blocked">External display detected. Default-display size/density changes are blocked because they do not reliably target Samsung DeX and can disrupt input mapping. Use DeX display settings instead; render scaling remains per game.</string>
+    <string name="gt_cache_experiment">Experimental cache preloading</string>
+    <string name="gt_cache_warning">Optional, per game. Reads selected files and accessible APK/OBB data during preparation with a 3-second read budget and the chosen total byte budget. Checks cancellation and memory pressure between reads. No eviction, page locking, thermal changes, or promised FPS benefit. Inaccessible game-private files are skipped. Cached data can be reclaimed immediately.</string>
+    <string name="gt_cache_test_only">Test preload only (no Gaming Mode)</string>
+    <string name="gt_cache_enable">Preload when preparing this game</string>
+    <string name="gt_cache_pick_assets">Choose readable asset files</string>
+    <string name="gt_cache_document_count">Selected asset files: %1$d</string>
+    <string name="gt_cache_clear_assets">Clear selected files</string>
+    <string name="gt_cache_cancel">Cancel current preload</string>
+    <string name="gt_automation_background_explanation">For unattended Prepare/Restore broadcasts, turn off battery optimization for CatSmoker in Android settings. No overlay or input-access grant is needed. Android may still restrict starts; a notification is the fallback.</string>
+    <string name="gt_automation_battery_settings">Battery optimization settings</string>
+    <string name="gt_automation_unattended_ready">Battery-optimization exemption is enabled.</string>
+    <string name="gt_automation_unattended_restricted">Background starts may require a notification tap.</string>
+    <string name="gt_library_select">Select %1$s</string>
+    <string name="gt_automation">Automation</string>
+    <string name="gt_automation_warning">Allow trusted automation apps to select games, launch them, and control Gaming Mode. Anyone holding the access token can do this. Copying exposes it to your clipboard; shortcuts share it with your launcher. Trust both before enabling access. Resolution and File Engineering still require their own Apply actions. Preparation and restoration run unattended when Android allows a foreground-service start; otherwise tap the continuation notification. Broadcast game launching requires foreground interaction.</string>
+    <string name="gt_automation_enable">Enable access</string>
+    <string name="gt_automation_revoke">Revoke access</string>
+    <string name="gt_automation_copy">Copy access token</string>
+    <string name="gt_automation_shortcut">Add selected game shortcut</string>
+    <string name="gt_automation_close">Close</string>
+    <string name="gt_automation_continue">Tap to continue in CatSmoker</string>
+    <string name="gt_automation_shortcut_requested">Shortcut requested. Confirm in your launcher to add it.</string>
+    <string name="gt_automation_shortcut_unavailable">Shortcut request unavailable. Check launcher support and foreground access.</string>
+</resources>

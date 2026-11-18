@@ -59,6 +59,10 @@ fun EditGameFilesRoute(onBack: () -> Unit) {
     val folderPicker = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocumentTree()) { uri ->
         uri?.let { viewModel.onCustomFolderPicked(it) }
     }
+    // Stay registered even when an install probe temporarily hides the selected editor.
+    val scopedPicker = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) {
+        viewModel.completeScopedDocumentPick(it)
+    }
     // Install state is probed when the view model is built, but the user installs and
     // uninstalls games while this screen sits open. Re-probing on every resume keeps the
     // dots honest without a refresh button the user must think about (PermissionScreen's
@@ -116,6 +120,10 @@ fun EditGameFilesRoute(onBack: () -> Unit) {
         onOpenStore = viewModel::openPlayStore,
         onLaunchGame = viewModel::onLaunchGame,
         onShowAnyway = viewModel::onShowEditorAnyway,
+        onPickScopedDocument = { game, fileIndex ->
+            if (viewModel.beginScopedDocumentPick(game, fileIndex)) scopedPicker.launch(arrayOf("*/*"))
+        },
+        onScopedDocumentHandled = viewModel::onScopedDocumentHandled,
         onBack = onBack
     )
 }
@@ -147,6 +155,8 @@ fun EditGameFilesScreen(
     onOpenStore: (String) -> Unit = {},
     onLaunchGame: () -> Unit,
     onShowAnyway: () -> Unit = {},
+    onPickScopedDocument: (GameType, Int) -> Unit = { _, _ -> },
+    onScopedDocumentHandled: (EditGameFilesViewModel.ScopedDocument) -> Unit = {},
     onBack: () -> Unit
 ) {
     ScreenScaffold(
@@ -187,16 +197,6 @@ fun EditGameFilesScreen(
                         onLaunchGame = onLaunchGame,
                         isLoading = uiState.isLoading
                     )
-                    if (uiState.selectedGame != GameType.NONE && !uiState.selectedGame.embeddedEditor &&
-                        uiState.installedGames[uiState.selectedGame] != false
-                    ) {
-                        Spacer(modifier = Modifier.height(10.dp))
-                        Text(
-                            uiState.selectedGame.displayName,
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
                 }
             }
             // The host owns install gating for every implementation, including future entries.
@@ -216,15 +216,6 @@ fun EditGameFilesScreen(
                         onShowAnyway = onShowAnyway
                     )
                 } else {
-                    if (definition.implementation != FileEngineeringImplementation.SCOPED_CONFIG &&
-                        definition.implementation != FileEngineeringImplementation.ROBLOX_TEST) {
-                        Text(stringResource(R.string.fe_unverified), style = MaterialTheme.typography.bodySmall)
-                        Spacer(modifier = Modifier.height(8.dp))
-                    }
-                    if (uiState.selectedGame == GameType.GENSHIN_IMPACT) {
-                        Text(stringResource(R.string.fe_genshin_limit), style = MaterialTheme.typography.bodySmall)
-                        Spacer(modifier = Modifier.height(8.dp))
-                    }
                     if (gameMissing) {
                         GameNotFoundCard(
                             gameName = uiState.selectedGame.displayName,
@@ -241,7 +232,12 @@ fun EditGameFilesScreen(
                     FileEngineeringImplementation.GRID_AUTOSPORT -> GridEmbedded()
                     FileEngineeringImplementation.ROBLOX_TEST -> RobloxRoute()
                     FileEngineeringImplementation.SCOPED_CONFIG ->
-                        com.catsmoker.app.screens.editgamefiles.editor.AdditionalConfigRoute(uiState.selectedGame)
+                        com.catsmoker.app.screens.editgamefiles.editor.AdditionalConfigRoute(
+                            game = uiState.selectedGame,
+                            document = uiState.scopedDocument,
+                            onPickDocument = { onPickScopedDocument(uiState.selectedGame, it) },
+                            onDocumentHandled = onScopedDocumentHandled
+                        )
                     FileEngineeringImplementation.PROFILE -> ProfileGameEditor(
                         uiState = uiState,
                         onProfileSelected = onProfileSelected,

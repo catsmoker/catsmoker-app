@@ -89,7 +89,7 @@ fun DeveloperOptionsContent(
     onToggleBackgroundLimit: (Boolean) -> Unit,
     onSetForcePeakRefreshRate: (Boolean) -> Unit,
     onSetGameDefaultFrameRateDisabled: (Boolean) -> Unit,
-    /** Games the ANGLE picker lists; the card picks the first once loaded. */
+    /** Games the ANGLE picker lists; selecting here changes the shared settings context only. */
     games: List<GameInfo>,
     /** Package the ANGLE card acts on, or null before selection. */
     anglePkg: String?,
@@ -399,4 +399,3 @@ internal fun DevOptionSwitchRow(
         }
     }
 }
-

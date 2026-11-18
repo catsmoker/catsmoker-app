@@ -1,7 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="ce_experimental">実験的な設定エディター — 実機未検証</string>
-    <string name="ce_warning">認識できる既存の項目のみ編集できます。値はゲーム内部の設定値であり、検証済みの画質段階や安全な範囲ではありません。ゲームが値を無視したり元に戻したりする場合があります。FPSの向上、制限解除、アンチチートに対する安全性は保証されません。編集中はゲームを終了したままにしてください。</string>
     <string name="ce_evidence">設定の出典と調査</string>
     <string name="ce_root_only">非公開データへの直接アクセスにはrootが必要です。shell UIDのShizukuでは不十分です。</string>
     <string name="ce_document_only">既存の設定ドキュメントを選択してください。共通の保存先パスは想定していません。</string>
@@ -21,11 +19,7 @@
     <string name="ce_discard">未適用の編集内容は破棄されます。</string>
     <string name="fe_checking_installation">インストールを確認中…</string>
     <string name="fe_store_unavailable">ストアやブラウザでページを開けませんでした。地域や端末では利用できない可能性があります。</string>
-    <string name="fe_unverified">ゲーム固有の設定 — 実際のインストールでは未検証</string>
     <string name="fe_controls">設定</string>
-    <string name="fe_alien_limit">Alien: Isolation は仕様ファイルにより設定を戻したり制限したりする場合があります。preferences の編集だけで FPS 解除は保証できません。</string>
-    <string name="fe_civ_limit">Civilization VI の負荷プリセットが個別の描画設定を上書きする場合があります。ファイルは個別に適用し、Version ヘッダーを保持します。</string>
-    <string name="fe_control_limit">値の意味が確認できた設定だけ編集できます。不明な品質段階と FPS 解除方式は使用できず、架空のプリセットは作成しません。</string>
     <string name="fe_load_first">既存の設定を読み込むと編集できます。ゲームの値はまだ読み込まれていません。</string>
     <string name="fe_unlock_unsupported">無制限または上限引き上げ専用の対応関係が未確認です。FPS リミッターは提供しません。</string>
     <string name="fe_mapping_unconfirmed">この Android 版での値の意味が未確認のため編集できません。</string>
@@ -33,5 +27,4 @@
     <string name="fe_blocks">チャンクではなくブロックです。距離を大きくするとメモリ不足になる場合があります。</string>
     <string name="fe_count">0 以上の個数。ゲーム独自の制限がある場合があります。</string>
     <string name="fe_unlock">FPS を解除（無制限）</string>
-    <string name="fe_genshin_limit">旧式の端末モデル用テンプレートのみです。現在の原神が読み込むことは確認されておらず、FPS制限解除の動作保証はありません。適用時はバックアップ後にこの設定ファイルのみを置き換えます。</string>
 </resources>

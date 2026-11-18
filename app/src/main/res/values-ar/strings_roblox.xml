@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="rb_title">Roblox · محرر ملفات للاختبار فقط</string>
-    <string name="rb_warning">ليست أداة لفتح معدل الإطارات. هذا المسار غير موثّق والخيار ليس ضمن قائمة Roblox المنشورة للخيارات المحلية المسموحة. قد يتجاهله Roblox. لا ضمان لزيادة الإطارات أو سلامة الحساب.</string>
     <string name="rb_target">معدل الإطارات المستهدف التجريبي (ليس قياسًا فعليًا)</string>
     <string name="rb_unread">حالة الملف غير معروفة. يلزم الروت أو Shizuku المصرّح له؛ حدّث لقراءة الملف.</string>
     <string name="rb_absent">الملف غير موجود. سيُنشأ عند التطبيق.</string>

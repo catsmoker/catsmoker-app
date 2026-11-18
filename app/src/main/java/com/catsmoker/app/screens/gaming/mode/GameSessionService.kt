@@ -53,6 +53,7 @@ class GameSessionService : Service() {
 
     @Inject
     lateinit var sessionManager: GameSessionManager
+    @Inject lateinit var automation: com.catsmoker.app.screens.gaming.automation.GameAutomation
 
     private val job = SupervisorJob()
     private val scope = CoroutineScope(Dispatchers.Default + job)
@@ -172,17 +173,21 @@ class GameSessionService : Service() {
 
             when (val action = sessionManager.onForeground(current)) {
                 is GameSessionDecider.Action.Start -> {
-                    gamingEngine.toggleGamingMode(true, action.pkg)
-                    postStatus(getString(R.string.gt_svc_session_active, action.pkg))
+                    automation.prepareFromUi(action.pkg).await()
+                    postStatus(if (gamingEngine.state.value is GamingModeState.Active)
+                        getString(R.string.gt_svc_session_active, action.pkg)
+                    else getString(R.string.gt_svc_session_watching))
                 }
                 is GameSessionDecider.Action.Stop -> {
-                    gamingEngine.toggleGamingMode(false)
+                    automation.restoreFromUi().await()
                     postStatus(getString(R.string.gt_svc_session_watching))
                 }
                 is GameSessionDecider.Action.Switch -> {
-                    gamingEngine.toggleGamingMode(false)
-                    gamingEngine.toggleGamingMode(true, action.to)
-                    postStatus(getString(R.string.gt_svc_session_active, action.to))
+                    automation.restoreFromUi().await()
+                    automation.prepareFromUi(action.to).await()
+                    postStatus(if (gamingEngine.state.value is GamingModeState.Active)
+                        getString(R.string.gt_svc_session_active, action.to)
+                    else getString(R.string.gt_svc_session_watching))
                 }
                 GameSessionDecider.Action.Noop -> {
                     val active = sessionManager.sessionActivePkg.value
@@ -248,7 +253,7 @@ class GameSessionService : Service() {
         // the settings stay held with nothing watching them.
         CoroutineScope(Dispatchers.IO).launch {
             if (sessionManager.sessionActivePkg.value != null) {
-                gamingEngine.toggleGamingMode(false)
+                automation.restoreFromUi().await()
                 sessionManager.release()
             }
         }

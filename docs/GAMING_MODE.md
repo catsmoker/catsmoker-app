@@ -6,6 +6,116 @@ happen.
 
 ## What Gaming Mode applies
 
+### Selected-game inputs and setting ownership
+
+`GameSettingsStore` owns versioned, package-keyed desired render scale,
+pointer speed, optional cache-preloading options and resolution-editor inputs. `GamingToolsViewModel` restores them
+on selection without system writes. `GamingEngine` captures the target package's
+render/pointer settings once before suspension, for manual and auto-detected
+sessions alike. UI selection cannot retarget a running activation. New packages
+inherit frozen legacy defaults; existing global keys are not erased. No saved
+profile concept or new profile screen is involved.
+
+#### Global and selected-game context
+
+Gaming Tools starts in **Global** on a new install. The single authoritative
+`GameSettingsRepository.selection` persists a package or the explicit `@global`
+sentinel (`selection_initialized` distinguishes migration from an intentional
+empty selection). Valid existing selections migrate unchanged. Discovery never
+chooses the first game; only a completed inventory reconciliation can clear a
+missing/removed selected package. Removal clears it immediately.
+
+Tap an icon to select it, tap it again to return to Global, or use the compact
+Global control beside the context heading. Selection only restores editor inputs
+and reads ANGLE state. It does not launch, prepare, restore, preload, compile or
+deploy. The heading describes editing context, not the active session.
+Manual/monitor/automation preparation reads its explicit target without selecting
+it in the editor; external `SELECT_GAME` remains an idempotent context command,
+not the UI's tap-to-toggle gesture.
+
+In Global, physical-resolution and other device controls remain available;
+game render/pointer editing asks for a selection. With a game selected, saved
+resolution fields remain **drafts for device-wide Apply**, not a per-game display
+override. Device-wide controls and the mixed Developer Options/ANGLE section
+carry scope explanations rather than per-game copies of global state.
+
+`recent_packages` keeps at most 24 distinct local selection package names.
+The ViewModel captures that order once for its lifetime; discovery sorts by this
+snapshot, then locale-independent label and package. Taps affect a future visit,
+not current icon positions. No usage collection or new Usage Access permission
+is added. Existing foreground monitors retain their separate explicit access.
+Android [usage statistics](https://developer.android.com/reference/android/app/usage/UsageStatsManager)
+require user-granted access, are interval-aggregated, and are not exact gameplay
+measurements; they are not used for ranking.
+
+The compact library remains four columns/two rows. When the selected game falls
+outside those eight entries, it replaces the final slot without duplication.
+It also remains pinned in a collapsed search preview, appending if a slot is
+free; expanding preserves the search's matching entries without duplicates.
+Global restores the ordinary preview. Show More uses every matching entry once;
+membership still follows automatic discovery plus user additions/exclusions.
+
+Tap a tile to select/deselect it; long press any tile to open the existing
+Launch / Pre-compile / Remove popup without selecting it. The standard Compose
+long-press recognizer supplies haptic feedback and does not also invoke tap.
+The same package-addressed callbacks are exposed as accessibility custom actions;
+Pre-compile is unavailable while that game is already compiling. No visible
+overflow button is needed. Removing the selected game returns the editor to Global,
+without restoring or altering an active session.
+
+Long-press revision verification (2026-11-15): both variants compiled and passed
+36 targeted tests each across game-grid wiring, selection/persistence, library
+membership/order and context UX. Gesture/accessibility wiring checks are source
+guards, not physical long-press, haptic or TalkBack interaction tests. No APK
+installation or destructive game action was performed for this revision.
+
+Automation is a compact action in the existing top header and retains its
+scrollable setup sheet. It masks its key, confirms
+replacement/revocation, explains each integration, and keeps a placeholder-only
+command reference behind Advanced setup. Experimental preloading is an inline
+expandable tool card near the bottom after Cleaning, unavailable in Global;
+the card shows the game, opt-in switch, read permission explanation, budget,
+scoped outcome/data/time, and cancellation while that game's preload runs.
+Another game's last report is never displayed as this game's success.
+
+The later [application audit](FINAL_APPLICATION_AUDIT_2026-11-15.md) records the
+two entry-placement changes, bounded device observations, fixes and unresolved
+historical service-start crash. It does not certify every control.
+
+UX verification (2026-11-15): both Full and Play Store Kotlin compilation passed.
+Nine targeted JVM classes passed in each flavor: **74 tests per flavor**, zero
+failures/errors/skips. Pure tests cover Global/selection migration and recreation,
+toggle/switch/removal, package isolation, recency/order/preview behavior, scoped
+cache reports and command examples. Source guards cover read-only selection,
+session/editor independence, the existing three actions, token confirmation and
+cache safety wiring. The Play source/API/resource boundary check and whitespace
+check passed. No assembly, installation, Compose interaction, theme/font-scale
+or launcher/picker test was performed for this UX revision; those remain physical
+device checks, not implied by the earlier community implementation's device runs.
+
+| Settings/actions audited | Owner and scope |
+| --- | --- |
+| Render-scale intervention, pointer-speed choice | Per-package desired inputs; next Gaming Mode activation, existing snapshot/read-back/restore |
+| Experimental cache touching, byte budget and selected asset documents | Per-package opt-in; shared preparation runner or explicit cache-only test; no eviction/locking |
+| Resolution preset/custom width/height/DPI | Per-package draft; physical display is device-wide and still requires explicit Apply/confirmation |
+| ANGLE driver | Android's persistent per-package driver table; immediate write/read-back, serialized updates; picker follows selected game |
+| Gaming Mode on/off, recovery/report | One device session; original package and snapshot remain owned until restored, never stacked |
+| Auto game monitor and Your Games membership | Global discovery/automation policy; not overwritten by selecting a game |
+| Extra suspended apps, kept-running apps | Global safety/sweep policy; keep-running wins, not copied between games |
+| Fixed performance, refresh/default frame rate, animation, finish-activity/process-limit developer tools | Existing immediate device-wide controls; not silently replayed on game selection |
+| DND policy/access | Device-wide session action/permission, not a desired per-game value exposed by this screen |
+| Audio boost and glyph controls | Global output/hardware controls; boost commits at slider release |
+| Crosshair asset/position and performance overlay/position | Shared overlay/tool configuration, not game-file settings |
+| DNS, data saver/background restriction, Full-only VPN | Global/network or session-owned controls with existing capability/privilege gates; no new Play exposure |
+| Cleaner patterns, cleaner/dexopt schedules | Global maintenance policy |
+| Compilation/recompile, RAM reclaim, clean, fstrim | One-shot actions, not saved per-game choices |
+| File Engineering | Separate per-game file editors and explicit deployment/backup contracts; never applied by selection or automation |
+| Advanced expansion, search, library expansion/menu | Presentation state only; not game tuning |
+
+See [GAME_AUTOMATION.md](GAME_AUTOMATION.md) for opt-in external callers and
+[VMTOUCH_REVIEW.md](VMTOUCH_REVIEW.md) for the independently built cache experiment,
+actual ARM64 mechanism measurements and remaining performance tests.
+
 Activation is a sequence of discrete, independently-failing steps. Each one
 is **verified by reading the value back** — the report you see in the UI is
 a list of measured facts, not a slogan. If a step is refused, it lands in
@@ -17,11 +127,12 @@ In order:
 1. **Capture a snapshot** of the user's real system state *before* anything
    is changed, so turning the mode off restores their configuration — not
    ours.
-2. **Trim system caches**: `pm trim-caches`, `am compact background`,
-   framework pinning.
+2. **Do not churn existing caches**: no automatic `pm trim-caches`, background
+   compaction or framework repinning. Explicit maintenance tools stay separate.
 3. **Suspend background apps** (`pm suspend --user 0 <pkg>`), skipping the
    game in play, the launcher, system-critical packages, and a hard allowlist
-   (Shizuku, Magisk, CatSmoker itself). The user's own **Apps kept running**
+    (Shizuku, Magisk, CatSmoker itself), Tasker/MacroDroid/Panda Mouse, the active
+    IME and enabled accessibility-service packages. The user's own **Apps kept running**
    list is subtracted from every sweep half, so a kept app is never frozen,
    never gets the AppOps restriction below, and is spared by RAM Reclaim's
    force-stop pass. The **extra suspended apps** list adds packages; if a
@@ -40,23 +151,43 @@ In order:
 5. **Hardware locks**: pin `min_refresh_rate`/`peak_refresh_rate` to the
    panel's max, lock the vendor's own display-mode switch where the OEM hides
    the panel behind one (vivo/iQOO — see "vivo/iQOO display-mode lock"), enable
-   the OEM touch-response key, request fixed-performance mode, enable the two
-   developer options (finish activities, limit cached processes), raise the
+    the OEM touch-response key, request fixed-performance mode, leave developer
+    finish-activity/process-limit choices alone, raise the
    kernel-node levers the device declares (see "Kernel node levers"), and
    restrict metered background data.
-6. **Per-game extras** when a game is targeted: whitelist it from device
-   idle, put it in the platform's performance game mode (`cmd game mode
-   performance`, confirmed by `cmd game list-modes`), raise its own frame cap
-   via `device_config`, and — on Android 12+ — apply a `game_overlay`
-   intervention.
+6. **Per-game extras**: whitelist metered background data for the target; request
+    platform performance game mode only if its prior mode was readable, then
+    restore that exact mode. Apply saved render scale only when opted in and the
+    prior overlay entry was captured; this path contains **no FPS field or
+    FPS-setting fallback**. No new standby-bucket, background-level, deviceidle
+    whitelist, forced-Doze or kill-all changes are made.
+7. **Optional bounded cache preload**, after successful activation, through the
+    shared runner. Failures are reported separately, not promoted to FPS gains.
+
+With an active external display, phone-wide refresh, brightness and rotation
+overrides are skipped. Manual physical-resolution Apply/reset is refused; use
+DeX/display settings. Pointer speed defaults Off and remains explicit opt-in.
+No input permission changes or overlay activation accompany preparation.
+
+New snapshots record preparation policy/ownership and are committed before any
+system write, as is the open-session journal. Refused owned restoration retains
+the snapshot for retry; only clean finalization clears it. A session preserves
+the independent manual fixed-performance preference, and its standalone toggle
+is blocked while the session is open. Pointer Off does not acquire pointer
+restoration ownership.
+
+Legacy snapshots retain their legacy cleanup path. A preparation
+of the unchanged active game is idempotent; changed inputs/targets require
+restore, preventing stacked snapshots. One exit restore waits behind preparation.
 
 ## Verified-by-read-back design
 
 `settings put` exits `0` whether or not the key took. The engine therefore
 never trusts exit codes for settings; it reads the value back after writing.
-Rows in `GamingModeReport` such as `lockedRefreshHz`, `discardActivities`,
-and `processLimit` are the *read-back confirmation*, or null/"not applicable"
-rather than "failed".
+Rows in `GamingModeReport` such as `lockedRefreshHz` describe read-back outcomes.
+Legacy `discardActivities`/`processLimit` fields remain for compatibility but
+new preparation leaves those operations unrequested. Automation's `notRequested`
+list makes that distinction explicit.
 
 > A null report field means "this didn't apply to my device" (wrong Android
 > version, feature absent, already enabled by the user). It is deliberately
@@ -85,12 +216,12 @@ NFC, 2026-10-19, found while cross-checking `reference/gamingtools/TMPAD`).
 - `cmd game mode performance <pkg>` — selects the mode; `cmd game list-modes
   <pkg>` must report `current mode: performance`. A ROM that does not list
   performance logs "not offered by this ROM" instead of pretending.
-- `cmd game set --fps <peak> [--downscale <factor>] <pkg>` — the intervention
-  fallback, used only when the `game_overlay` table refuses the write;
+- `cmd game set --fps <peak> [--downscale <factor>] <pkg>` — a retained **legacy
+  helper**, not used by current preparation;
   `cmd game list-configs <pkg>` must show the `Fps`/`Scaling` that was asked
-  for. The FPS value is always the panel's measured peak, never a lower
-  ceiling, and deactivation's existing `cmd game reset` clears the custom
-  entry.
+  for. Current preparation merges only `downscaleFactor` into the captured table,
+  preserving existing FPS settings and other fields. It refuses ambiguous tables
+  and restores the captured entry and prior mode instead of blindly resetting.
 
 ## vivo/iQOO display-mode lock
 

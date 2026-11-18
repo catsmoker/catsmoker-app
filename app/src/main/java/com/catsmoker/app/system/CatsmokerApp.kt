@@ -79,7 +79,7 @@ class CatsmokerApp : Application(), Configuration.Provider {
         // file that stored it, so removed exceptions cannot survive an app update.
         deleteSharedPreferences("AutoForceStopPrefs")
 
-        // The automatic provider is removed. Initialize only after a current explicit opt-in.
+        // The automatic provider is removed. Only a saved choice after terms can enable it.
         AnalyticsConsent.sync(this)
 
         // Live app-log collection starts with the process (own-UID logcat, no

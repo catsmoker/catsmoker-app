@@ -274,6 +274,9 @@ fun PermissionsListScreen(
         title = stringResource(R.string.core_permissions_title),
         subtitle = stringResource(R.string.core_permissions_subtitle),
         showProgress = uiState.isOnboarding,
+        // A Settings revisit reuses this checklist but is entered from the Settings back stack,
+        // so only the first-run flow offers a previous step.
+        showBack = uiState.isOnboarding,
         dense = true,
         hideSubtitleWhenCompact = true,
         trailing = {
@@ -304,40 +307,48 @@ fun PermissionsListScreen(
                 PermissionGroup(label = stringResource(R.string.policy_access_title)) {
                     Text(stringResource(R.string.onb_access_summary), style = MaterialTheme.typography.bodySmall)
                     Spacer(Modifier.height(8.dp))
-                    Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
                         GamingAccessTile(
                             titleRes = R.string.onb_inventory_title,
                             explanationRes = R.string.policy_inventory,
                             selected = uiState.choices.inventory,
                             onChange = { onAccessChange(GamingAccessConsent.INVENTORY, it) },
-                            status = stringResource(R.string.onb_inventory_status),
-                            modifier = Modifier.weight(1f),
+                            status = GamingAccessStatus.of(
+                                selected = uiState.choices.inventory,
+                                confirmed = GamingAccessConsent.INVENTORY in uiState.confirmedGamingAccess,
+                            ),
                         )
                         GamingAccessTile(
                             titleRes = R.string.onb_usage_title,
                             explanationRes = R.string.policy_usage,
                             selected = uiState.choices.usage,
                             onChange = { onAccessChange(GamingAccessConsent.USAGE, it) },
-                            status = stringResource(if (uiState.usageGranted) R.string.onb_android_granted else R.string.onb_android_not_granted),
-                            modifier = Modifier.weight(1f),
+                            status = GamingAccessStatus.of(
+                                selected = uiState.choices.usage,
+                                confirmed = GamingAccessConsent.USAGE in uiState.confirmedGamingAccess,
+                                androidGranted = uiState.usageGranted,
+                            ),
                             onRequest = {
                                 onConfirmAccessRequest(GamingAccessConsent.USAGE)
                                 openSettings(Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS))
                             },
                         )
+                        GamingAccessTile(
+                            titleRes = R.string.onb_notifications_title,
+                            explanationRes = R.string.policy_notifications,
+                            selected = uiState.choices.notifications,
+                            onChange = { onAccessChange(GamingAccessConsent.NOTIFICATIONS, it) },
+                            status = GamingAccessStatus.of(
+                                selected = uiState.choices.notifications,
+                                confirmed = GamingAccessConsent.NOTIFICATIONS in uiState.confirmedGamingAccess,
+                                androidGranted = uiState.notificationAccessGranted,
+                            ),
+                            onRequest = {
+                                onConfirmAccessRequest(GamingAccessConsent.NOTIFICATIONS)
+                                openSettings(Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS))
+                            },
+                        )
                     }
-                    Spacer(Modifier.height(6.dp))
-                    GamingAccessTile(
-                        titleRes = R.string.onb_notifications_title,
-                        explanationRes = R.string.policy_notifications,
-                        selected = uiState.choices.notifications,
-                        onChange = { onAccessChange(GamingAccessConsent.NOTIFICATIONS, it) },
-                        status = stringResource(if (uiState.notificationAccessGranted) R.string.onb_android_granted else R.string.onb_android_not_granted),
-                        onRequest = {
-                            onConfirmAccessRequest(GamingAccessConsent.NOTIFICATIONS)
-                            openSettings(Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS))
-                        },
-                    )
                 }
                 PermissionGroup(label = stringResource(R.string.onb_perm_group_essential)) {
                     PermissionGrid(specs = essential, tileHeight = 86.dp)
@@ -353,21 +364,27 @@ fun PermissionsListScreen(
     }
 }
 
-/** Choice and platform authorization are deliberately separate controls and labels. */
+/** The checkbox edits the choice; the status reflects access in effect now. */
 @Composable
 private fun GamingAccessTile(
     @StringRes titleRes: Int,
     @StringRes explanationRes: Int,
     selected: Boolean,
     onChange: (Boolean) -> Unit,
-    status: String,
-    modifier: Modifier = Modifier,
+    status: GamingAccessStatus,
     onRequest: (() -> Unit)? = null,
 ) {
+    val granted = status == GamingAccessStatus.GRANTED
+    val statusRes = when (status) {
+        GamingAccessStatus.GRANTED -> R.string.onb_perm_granted
+        GamingAccessStatus.NOT_GRANTED -> R.string.onb_perm_not_granted
+        GamingAccessStatus.ANDROID_REQUIRED -> R.string.onb_android_not_granted
+        GamingAccessStatus.PENDING_SAVE -> R.string.onb_access_pending_save
+    }
     Surface(
-        modifier = modifier.fillMaxWidth().heightIn(min = 128.dp),
+        modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(14.dp),
-        border = BorderStroke(1.dp, if (selected) MaterialTheme.colorScheme.primary.copy(alpha = 0.35f)
+        border = BorderStroke(1.dp, if (granted) MaterialTheme.colorScheme.primary.copy(alpha = 0.35f)
             else MaterialTheme.colorScheme.outline),
     ) {
         Column(Modifier.padding(horizontal = 9.dp, vertical = 7.dp)) {
@@ -401,11 +418,28 @@ private fun GamingAccessTile(
                     compact = true,
                 )
             }
-            Text(status, fontSize = 10.sp, lineHeight = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
-            if (onRequest != null) {
+            Row(
+                modifier = Modifier.padding(start = 5.dp, bottom = 4.dp),
+                horizontalArrangement = Arrangement.spacedBy(5.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                if (granted) {
+                    Icon(
+                        imageVector = Icons.Default.Check,
+                        contentDescription = null,
+                        tint = PermissionGrantedGreen,
+                        modifier = Modifier.size(14.dp),
+                    )
+                }
+                Text(
+                    text = stringResource(statusRes),
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+            if (status == GamingAccessStatus.ANDROID_REQUIRED && onRequest != null) {
                 TextButton(
                     onClick = onRequest,
-                    enabled = selected,
                     modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp),
                     contentPadding = PaddingValues(horizontal = 0.dp),
                 ) {

@@ -127,7 +127,7 @@ classes or duplicate implementations were introduced.
 ## Variant seams
 
 Variant seams are same-FQN pairs (`VariantCapabilities`, `AdsInit`,
-`AdManager`, `AdBanner`, `spoofGraph()`, `ProfileShareHandler`,
+`AdManager`, `AdBanner`, `GamingToolsBanner`, `AboutBanner`, `spoofGraph()`, `ProfileShareHandler`,
 `Distribution*Settings`, `DistributionSupportAction`, `rememberAvailableUpdateName`, `DistributionQuickAction`,
 `StorageAccess`, background network controls/help): `src/main` never imports `src/full`, so the Play compile
 cannot see the restricted implementations at all.
@@ -146,6 +146,19 @@ There is no Play SelfUpdater or Full RemoveAdsRepository stub. Selected resource
 files own their corresponding labels/disclosures; the common license screen uses
 one flavor-provided ads-component label. Spoof route constants and the dashboard
 entry are Full-only; the shared navigation extension is intentionally empty on Play.
+
+Home keeps its existing portrait dashboard and landscape two-column layout.
+Shared `SectionCard` and `QuickActionButton` surfaces use Kyant Backdrop for
+a glass accent, as does the Home chart background. The effect samples only a
+static theme reflection on hardware-accelerated Android 13+. Other configurations
+keep the original Material surfaces. Telemetry traces, text, and ads are not sampled.
+Backdrop and its Shapes dependency are listed in About → Legal, with their
+upstream license files packaged under `assets/licenses/`.
+
+Both flavors have a banner at the end of the Gaming Tools scroll content,
+away from the game launcher. It uses the same ad controls as Home (Play
+consent and Remove Ads, or Full's ad setting) and does not appear during
+Gaming Mode, game sessions or overlays.
 
 The shared support popup delegates its external action to
 `application/distribution/DistributionSupportAction`: Full opens the existing GitHub
@@ -248,8 +261,11 @@ support. `AdditionalGameEditors` wires concrete specs; `ConfigEditorSpec` descri
 scopes/types and explicit toggle/number/choice/unlock contracts. Unresolved mappings
 are unavailable; no generic raw-editor fallback constitutes game support.
 `EditableConfigDocument` preserves unedited bytes, and
-`AdditionalConfigStorage` pins the channel, backs up, checks concurrent changes and
-verifies write-back. `WuwaIniMerge` preserves unrelated settings during generated
+`AdditionalConfigStorage` pins the channel, checks concurrent changes, and
+verifies write-back. `ScopedConfigBackups` isolates restores by package, filename,
+and exact document URI or direct path. The parent File Engineering route owns the
+document picker and saves its game/file target through activity recreation.
+`WuwaIniMerge` preserves unrelated settings during generated
 deployment, while restoration remains byte-exact. See `FILE_ENGINEERING.md` and
 `FILE_ENGINEERING_AUDIT.md` for evidence, per-game limitations and access limits.
 
@@ -307,6 +323,14 @@ Application entry point and Compose host. A Hilt module provides
 - `GamingModeJobRunner` — the app-scoped job that activates/reverts Gaming Mode. A screen never
   launches that toggle itself: the write takes ~90 s and must survive the activity closing
   (see `GAMING_MODE.md`, "Who runs a toggle").
+- `screens/gaming/automation/GameAutomation` — one preparation/restore coordinator
+  for manual activation, auto monitoring, authorized broadcasts and Activity/shortcuts.
+  The non-exported mode service posts foreground before work; Android decides
+  whether a background start is allowed. One queued exit restore follows preparation.
+- `screens/gaming/cache/` — per-game, disabled-by-default cache experiment and
+  controls, cumulative read budget, cancellation and memory-pressure checks.
+  Uses app-readable regular descriptors, not a shipped native helper or privileged
+  filesystem gateway. `GamingEnvironment` owns external-display/companion probes.
 
 ### Overlay & background services
 Long-running services live with the capability they serve: `crosshair/`,
@@ -361,9 +385,10 @@ phone (see `GAMING_MODE.md`).
   cleared on withdrawal and watchers stop on their next cycle. Settings can review
   or withdraw choices. Android permissions remain a separate prerequisite.
 - **Analytics**: automatic `FirebaseInitProvider` startup is removed. Both flavors
-  use `AnalyticsConsent` to initialize Firebase only after a current explicit
-  Settings opt-in; a legacy default-on flag is not consent. Advertising consent
-  is independent and Analytics advertising consent types remain denied.
+  use `AnalyticsConsent` to initialize Firebase only after accepted terms and a saved,
+  current opt-in. The onboarding switch's draft does not enable the SDK, and existing
+  opt-outs are honoured. Advertising consent is independent and Analytics advertising
+  consent types remain denied.
 - **Play advertising**: the selected `DistributionPrivacyGate` gathers UMP consent
   after onboarding. `AdConsentManager` gates SDK initialization and banners on a
   successful current update/form result, `canRequestAds`, initialization and
@@ -415,6 +440,25 @@ invent one without a task asking for it.
   exported diagnostics ZIPs live under `cacheDir/shared` and are pruned to three.
 
 ## See also
+- Gaming Tools owns `GameSettings`, `GameSettingsRepository` (pure package-keyed
+  persistence/selection), and `GameSettingsStore` (private Android preferences).
+  Explicit Global and bounded local selection recency live in that same store;
+  `GameLibraryOrdering` provides deterministic ordering and a selected-preserving
+  preview. The ViewModel freezes recency for its lifetime. `GamingContextBar`
+  renders editing scope, not session ownership. No usage-statistics ranker exists.
+  Its existing ViewModel restores editor state; the engine consumes captured
+  package inputs only at activation. ANGLE retains its own per-package Android
+  table and serialized immediate writes.
+- `screens/gaming/automation/` owns explicit authorization, the closed intent
+  protocol, authenticated receiver, visible execution Activity, and shortcut
+  creation. It delegates to existing game discovery and the process-owned
+  `GamingModeJobRunner`; it introduces no general shell gateway or profile UI.
+  These shared capabilities ship in both flavors without expanding variant seams.
+  `GamingToolSheet`/`GamingToolEntry` are presentation shared by automation/cache,
+  not new navigation destinations or settings owners. `CacheUiReport` scopes
+  outcome summaries to the package being edited; raw diagnostics are advanced.
+- [`GAME_AUTOMATION.md`](GAME_AUTOMATION.md)
+- [`VMTOUCH_REVIEW.md`](VMTOUCH_REVIEW.md)
 - [`GAMING_MODE.md`](GAMING_MODE.md)
 - [`METRICS_ENGINE.md`](METRICS_ENGINE.md)
 - [`SPOOF_DEVICE.md`](SPOOF_DEVICE.md)

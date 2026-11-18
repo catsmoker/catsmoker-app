@@ -1,14 +1,13 @@
 package com.catsmoker.app.screens.editgamefiles.games.wutheringwaves
 
 import com.catsmoker.app.R
+import com.catsmoker.app.screens.editgamefiles.editor.GameEditorLayout
 
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -30,7 +29,6 @@ import com.catsmoker.app.ui.components.CatsmokerOutlinedButton
 import com.catsmoker.app.ui.components.ChipFlowRow
 import com.catsmoker.app.ui.components.ScreenScaffold
 import com.catsmoker.app.ui.components.SectionCard
-import com.catsmoker.app.ui.theme.CatsmokerSpacing
 import kotlinx.coroutines.flow.collectLatest
 
 /**
@@ -156,22 +154,14 @@ fun WuwaConfigScreen(
     // Engine/driver levers, generated-file toggles and CVar overrides are advanced; keep them
     // one tap away instead of making the beginner scroll past six cards to reach DEPLOY.
     var showAdvanced by remember { mutableStateOf(false) }
-    // One body, two hosts: standalone (own ScreenScaffold header + scroll) or embedded in File
-    // Engineering's selector, where the host already scrolled and padded the page — a second
-    // header would double it, and a nested verticalScroll measured under the host's infinite
-    // height constraints crashes, so embedded renders the Column bare. The 12 dp rhythm
-    // matches the host's card spacing (see the class KDoc).
     val content: @Composable () -> Unit = {
-        Column(
-            modifier = if (onBack == null) Modifier
-            else Modifier.fillMaxWidth().verticalScroll(rememberScrollState())
-        ) {
+        GameEditorLayout(standalone = onBack != null) {
             if (uiState.loading) {
                 Box(
                     modifier = Modifier.fillMaxWidth().padding(top = 96.dp),
                     contentAlignment = Alignment.Center
                 ) { CircularProgressIndicator() }
-                return@Column
+                return@GameEditorLayout
             }
 
             // The same gate the File Engineering screen applies to the profile games: when
@@ -183,16 +173,14 @@ fun WuwaConfigScreen(
             // pretends the game is installed.
             if (onBack != null && uiState.gameInstalled == false && !uiState.showEditorAnyway) {
                 WuwaNotInstalledCard(onRefresh = onRefresh, onShowAnyway = onShowAnyway)
-                return@Column
+                return@GameEditorLayout
             }
             if (onBack != null && uiState.gameInstalled == false) {
                 WuwaNotInstalledCard(onRefresh = onRefresh, onShowAnyway = null)
-                Spacer(modifier = Modifier.height(12.dp))
             }
 
             uiState.recommendation?.let { rec ->
                 RecommendCard(rec, uiState.preset, uiState.chipset, onApplyRecommendation)
-                Spacer(modifier = Modifier.height(12.dp))
             }
 
             // The recommendation's apply target sits directly below it — the preset chips
@@ -228,7 +216,6 @@ fun WuwaConfigScreen(
                 )
             }
 
-            Spacer(modifier = Modifier.height(12.dp))
 
             SectionCard {
                 CardHeading(stringResource(R.string.gf_frame_rate))
@@ -253,7 +240,6 @@ fun WuwaConfigScreen(
                 ) { v -> onUpdateOptions { it.copy(vsync = v) } }
             }
 
-            Spacer(modifier = Modifier.height(12.dp))
 
             SectionCard {
                 CardHeading(stringResource(R.string.gf_game_mode))
@@ -275,7 +261,6 @@ fun WuwaConfigScreen(
                 )
             }
 
-            Spacer(modifier = Modifier.height(12.dp))
 
             SectionCard {
                 CardHeading(stringResource(R.string.gf_effects))
@@ -305,7 +290,6 @@ fun WuwaConfigScreen(
                 ) { v -> onUpdateOptions { it.copy(fog = !v) } }
             }
 
-            Spacer(modifier = Modifier.height(12.dp))
 
             TextButton(
                 onClick = { showAdvanced = !showAdvanced },
@@ -320,7 +304,6 @@ fun WuwaConfigScreen(
             }
 
             if (showAdvanced) {
-                Spacer(modifier = Modifier.height(4.dp))
 
                 // Engine/driver/thermal levers and the visual-effect toggles answer different
                 // questions ("how does the renderer behave" vs "what is drawn"), so they live in
@@ -346,7 +329,6 @@ fun WuwaConfigScreen(
                     ) { v -> onUpdateOptions { it.copy(disableAutoAdjust = v) } }
                 }
 
-                Spacer(modifier = Modifier.height(12.dp))
 
                 SectionCard {
                     CardHeading(stringResource(R.string.gf_files_section))
@@ -369,7 +351,6 @@ fun WuwaConfigScreen(
                     )
                 }
 
-                Spacer(modifier = Modifier.height(12.dp))
 
                 SectionCard {
                     CardHeading(stringResource(R.string.gf_advanced))
@@ -425,7 +406,6 @@ fun WuwaConfigScreen(
                 }
             }
 
-            Spacer(modifier = Modifier.height(12.dp))
 
             SectionCard {
                 CardHeading(stringResource(R.string.gf_deploy))
@@ -527,7 +507,6 @@ fun WuwaConfigScreen(
 
             // Deploy and community packs are separate cards in the same stack; without this
             // gap the two surfaces rendered flush against each other.
-            Spacer(modifier = Modifier.height(CatsmokerSpacing.CardGap))
             CommunityPacksCard(
                 uiState = uiState,
                 onImportPack = onImportPack,
@@ -537,7 +516,6 @@ fun WuwaConfigScreen(
             )
 
             if (uiState.backups.isNotEmpty()) {
-                Spacer(modifier = Modifier.height(12.dp))
                 SectionCard {
                     CardHeading(stringResource(R.string.gf_backups))
                     Spacer(modifier = Modifier.height(8.dp))
@@ -593,7 +571,6 @@ fun WuwaConfigScreen(
             // permanently excluded from this screen — see WuwaConfigViewModel's KDoc.
             // The installed-profile card above and Auto-Tune below read Client.log
             // internally for their own axes; that is not the removed analysis surface.
-            Spacer(modifier = Modifier.height(12.dp))
             SectionCard {
                 CardHeading(stringResource(R.string.gf_wuwa_profile_title))
                 Spacer(modifier = Modifier.height(8.dp))
@@ -620,7 +597,6 @@ fun WuwaConfigScreen(
             // preset, you play a session, then Measure reads what the game's own log
             // recorded (one Client.log read per round — the tuner's own measurement,
             // not the removed analysis surface).
-            Spacer(modifier = Modifier.height(12.dp))
             AutoTuneCard(
                 uiState = uiState,
                 onStart = onStartAutoTune,

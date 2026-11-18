@@ -4,10 +4,12 @@ import org.junit.Assert.*
 import org.junit.Test
 
 class PrivacyPolicyTest {
-    @Test fun oldDefaultIsNotExplicitAnalyticsConsent() {
-        assertFalse(PrivacyPolicy.analyticsAllowed(true, 0))
-        assertFalse(PrivacyPolicy.analyticsAllowed(false, PrivacyPolicy.VERSION))
-        assertTrue(PrivacyPolicy.analyticsAllowed(true, PrivacyPolicy.VERSION))
+    @Test fun analyticsRequiresAcceptedTermsAndACurrentOptIn() {
+        val current = PrivacyPolicy.VERSION
+        assertFalse(PrivacyPolicy.analyticsAllowed(false, true, current))
+        assertFalse(PrivacyPolicy.analyticsAllowed(true, true, 0))
+        assertFalse(PrivacyPolicy.analyticsAllowed(true, false, current))
+        assertTrue(PrivacyPolicy.analyticsAllowed(true, true, current))
     }
 
     @Test fun sensitiveAccessRequiresTheCurrentExplicitChoice() {

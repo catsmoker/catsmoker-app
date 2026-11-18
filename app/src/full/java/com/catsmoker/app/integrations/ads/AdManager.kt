@@ -6,11 +6,15 @@ import com.startapp.sdk.adsbase.StartAppSDK
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
 import javax.inject.Singleton
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asStateFlow
 
 @Singleton
 class AdManager @Inject constructor(
     @ApplicationContext private val context: Context
 ) {
+    private val _adsEnabled = MutableStateFlow(isEnabled())
+    val adsEnabled = _adsEnabled.asStateFlow()
 
     fun isPreferenceKey(key: String?): Boolean = key == "ads_enabled"
 
@@ -22,6 +26,7 @@ class AdManager @Inject constructor(
     fun setEnabled(enabled: Boolean) {
         val prefs = context.getSharedPreferences("app_prefs", Context.MODE_PRIVATE)
         prefs.edit { putBoolean("ads_enabled", enabled) }
+        _adsEnabled.value = enabled
         StartAppSDK.enableReturnAds(enabled)
     }
 }

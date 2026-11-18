@@ -11,6 +11,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
+import com.catsmoker.app.screens.gaming.cache.GameCachePreloader
 
 /**
  * Runs the Gaming Mode toggle on a job that outlives the screen that asked for it.
@@ -37,7 +38,9 @@ import kotlinx.coroutines.launch
 class GamingModeJobRunner @Inject constructor(
     @ApplicationContext private val context: Context,
     private val gamingEngine: GamingEngine,
-    private val gameDeveloperOptions: GameDeveloperOptions
+    private val gameDeveloperOptions: GameDeveloperOptions,
+    private val cachePreloader: GameCachePreloader,
+    private val sessionManager: GameSessionManager
 ) {
     /**
      * Owned by this singleton, with no parent job: a caller cancelling its own scope (the
@@ -46,27 +49,38 @@ class GamingModeJobRunner @Inject constructor(
      */
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
 
-    fun activate() {
+    fun activate(packageName: String? = null) =
         scope.launch {
-            gamingEngine.toggleGamingMode(true)
+            gamingEngine.toggleGamingMode(true, packageName)
             // Start the holder only when the engine actually reached Active: an activation
             // refused by the recovery guard must not leave an "active" notification over an
             // idle engine. The service is what keeps the process alive while the session holds
             // system settings, and its onTaskRemoved is the revert of last resort.
             if (gamingEngine.state.value is GamingModeState.Active) {
-                ContextCompat.startForegroundService(context, Intent(context, GamingModeService::class.java))
+                try {
+                    if (!GamingModeService.isRunning &&
+                        !(packageName != null && sessionManager.sessionActivePkg.value == packageName)) {
+                        ContextCompat.startForegroundService(context, Intent(context, GamingModeService::class.java))
+                    }
+                } catch (_: IllegalStateException) {
+                    // The caller may have left during a long sweep. Never leave unheld system writes.
+                    gamingEngine.toggleGamingMode(false, ownedOnlyRestore = true)
+                } catch (_: SecurityException) {
+                    gamingEngine.toggleGamingMode(false, ownedOnlyRestore = true)
+                }
+                if (gamingEngine.state.value is GamingModeState.Active && packageName != null) {
+                    cachePreloader.preload(packageName)
+                }
             }
             // Gaming Mode writes the refresh-rate keys itself, so the standalone switch has to
             // follow the device rather than keep showing what it read before activation.
             gameDeveloperOptions.refresh()
         }
-    }
-
-    fun deactivate() {
+    fun deactivate(ownedOnly: Boolean = false) =
         scope.launch {
-            gamingEngine.toggleGamingMode(false)
+            cachePreloader.cancel()
+            gamingEngine.toggleGamingMode(false, ownedOnlyRestore = ownedOnly)
             context.stopService(Intent(context, GamingModeService::class.java))
             gameDeveloperOptions.refresh()
         }
-    }
 }

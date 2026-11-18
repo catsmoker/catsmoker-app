@@ -31,6 +31,7 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.catsmoker.app.R
 import com.catsmoker.app.screens.editgamefiles.EditGameFilesViewModel
+import com.catsmoker.app.screens.editgamefiles.editor.GameEditorLayout
 import com.catsmoker.app.screens.editgamefiles.games.pubg.PubgSaveEditorSection
 import com.catsmoker.app.ui.components.CardHeading
 import com.catsmoker.app.ui.components.CatsmokerButton
@@ -61,7 +62,7 @@ internal fun ProfileGameEditor(
     onSaveEditSelected: (String, Int?) -> Unit,
     onApplySaveEdits: () -> Unit
 ) {
-    Column {
+    GameEditorLayout {
         SectionCard {
             Column {
                 CardHeading(stringResource(R.string.gf_profile_section))
@@ -222,7 +223,6 @@ internal fun ProfileGameEditor(
         // carries — the closed-source references' core mechanism, without replacing
         // the file. Only for the game whose layout is verified ([canPatchSave]).
         if (uiState.canPatchSave) {
-            Spacer(modifier = Modifier.height(12.dp))
             PubgSaveEditorSection(
                 uiState = uiState,
                 onReadSave = onReadSave,
@@ -287,4 +287,3 @@ internal fun GameNotFoundCard(
         }
     }
 }
-

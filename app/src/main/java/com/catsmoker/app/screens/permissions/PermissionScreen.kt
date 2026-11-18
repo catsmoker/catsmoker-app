@@ -82,6 +82,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.catsmoker.app.R
 import com.catsmoker.app.application.appearance.AppearanceStore
 import com.catsmoker.app.application.appearance.LocaleHelper
+import com.catsmoker.app.application.privacy.GamingAccessConsent
 import com.catsmoker.app.screens.permissions.PermissionViewModel
 import com.catsmoker.app.ui.theme.CatsmokerTheme
 
@@ -184,6 +185,8 @@ fun PermissionsPreview() {
         PermissionsListScreen(
             uiState = PermissionViewModel.UiState(
                 choices = OnboardingState(step = OnboardingState.Step.PERMISSIONS),
+                confirmedGamingAccess = setOf(GamingAccessConsent.INVENTORY, GamingAccessConsent.USAGE),
+                usageGranted = true,
                 rootGranted = true,
                 notifGranted = false,
                 overlayGranted = true

@@ -31,8 +31,9 @@ class GamingModeJobOwnershipTest {
             "a toggle still runs on viewModelScope, so closing the screen cancels it",
             toggles.contains("viewModelScope")
         )
-        assertTrue("activation does not go through the app-scoped runner", toggles.contains("gamingModeJobs.activate()"))
-        assertTrue("revert does not go through the app-scoped runner", toggles.contains("gamingModeJobs.deactivate()"))
+        assertTrue("activation must capture the selected package", toggles.contains(".putExtra(\"game\", _uiState.value.selectedGamePkg)"))
+        assertTrue("preparation needs a foreground service before writes", toggles.contains("GamingModeService.ACTION_PREPARE"))
+        assertTrue("revert must share serialized automation ownership", toggles.contains("gameAutomation.restoreFromUi()"))
     }
 
     @Test

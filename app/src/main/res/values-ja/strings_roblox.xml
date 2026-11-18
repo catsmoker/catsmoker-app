@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="rb_title">Roblox · テスト専用ファイルエディター</string>
-    <string name="rb_warning">FPS制限解除ツールではありません。このパスは未検証で、対象フラグはRobloxが公開するローカルフラグ許可リストに含まれていません。無視される可能性があり、FPS向上やアカウントの安全性は保証されません。</string>
     <string name="rb_target">実験的な目標FPS（実測値ではありません）</string>
     <string name="rb_unread">ファイルの状態は不明です。rootまたは許可済みのShizukuが必要です。更新して読み取ってください。</string>
     <string name="rb_absent">ファイルは存在しません。適用すると作成されます。</string>

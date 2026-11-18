@@ -25,7 +25,9 @@ import java.util.Locale
  * backs up nothing rather than backing up the wrong thing — an unread config means the restore
  * path could not have put it back anyway.
  */
-class ConfigBackupStore(context: Context) {
+class ConfigBackupStore internal constructor(private val rootDir: File) {
+
+    constructor(context: Context) : this(File(context.filesDir, "config_backups"))
 
     /** One saved config file. [timestamp] is when the backup was taken, not the file's own mtime. */
     data class Entry(val file: File, val timestamp: Long, val sizeBytes: Long) {
@@ -38,8 +40,6 @@ class ConfigBackupStore(context: Context) {
             else -> "$sizeBytes B"
         }
     }
-
-    private val rootDir = File(context.filesDir, "config_backups")
 
     /**
      * Saves the bytes the game's config file held immediately before an overwrite.

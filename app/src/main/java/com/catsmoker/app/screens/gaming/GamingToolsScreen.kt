@@ -50,6 +50,7 @@ import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.catsmoker.app.R
+import com.catsmoker.app.integrations.ads.GamingToolsBanner
 import com.catsmoker.app.application.distribution.VariantCapabilities
 import com.catsmoker.app.screens.gaming.GamingToolsViewModel
 import com.catsmoker.app.screens.gaming.apps.AutoForceStopUsageNotice
@@ -263,6 +264,8 @@ fun GamingToolsRoute(
         onDisableDns = viewModel::disableDns,
         onMeasureDnsPing = viewModel::measureDnsPing,
         onLaunchGame = viewModel::launchGame,
+        onSelectGame = viewModel::toggleGameSelection,
+        onGlobalSelection = { viewModel.selectGame(null) },
         onOptimizeGame = viewModel::optimizeGame,
         onSelectOptimizeScope = viewModel::selectOptimizeScope,
         onRemoveGame = viewModel::removeGameFromLibrary,
@@ -409,6 +412,8 @@ fun GamingToolsScreen(
     /** Chooses the touch speed (or null for stock) for the next activation. */
     onSetPointerSpeedChoice: (Int?) -> Unit,
     onLaunchGame: (String) -> Unit,
+    onSelectGame: (String) -> Unit = {},
+    onGlobalSelection: () -> Unit = {},
     onRemoveGame: (String) -> Unit,
     onOptimizeGame: (String) -> Unit,
     /** Selects the single-game scope in the unified optimisation card; null = all games. */
@@ -440,25 +445,38 @@ fun GamingToolsScreen(
     val hasPrivilege = uiState.isRooted || uiState.isShizukuActive
     var gameQuery by remember { mutableStateOf("") }
     var showAllGames by remember { mutableStateOf(false) }
-    // One open action popup at a time: the icon that opened it owns the menu, and tapping any
-    // other icon first dismisses this one. Without the hoisted package two tiles could both
-    // present actions for different games.
+    // One popup, owned by the selected game's name button; selecting another game dismisses it.
     var openGameMenuPkg by rememberSaveable { mutableStateOf<String?>(null) }
+    var showAutomation by remember { mutableStateOf(false) }
+    if (showAutomation) {
+        com.catsmoker.app.screens.gaming.automation.AutomationDialog(
+            selectedGame = uiState.games.firstOrNull { it.packageName == uiState.selectedGamePkg },
+            onDismiss = { showAutomation = false }
+        )
+    }
+    LaunchedEffect(uiState.selectedGamePkg) { openGameMenuPkg = null }
     ScreenScaffold(
         title = stringResource(R.string.Gaming_tools_title),
         subtitle = stringResource(R.string.gt_subtitle),
-        onBack = onBack
+        onBack = onBack,
+        trailingContent = {
+            com.catsmoker.app.screens.gaming.automation.AutomationEntry(onClick = { showAutomation = true })
+        }
     ) {
         Column(
             modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(bottom = 32.dp)
         ) {
-            // Library: a launcher-style grid of icons. The icon is the button; tapping it opens
-            // Launch, Pre-compile and Remove for that package only. Stored packages and Android's
-            // own game category both feed the list, while an explicit removal hides an entry
-            // regardless of which path found it.
+            val selectedGame = uiState.games.firstOrNull { it.packageName == uiState.selectedGamePkg }
+            GamingContextBar(
+                gameName = selectedGame?.appName ?: uiState.selectedGamePkg,
+                onGlobal = onGlobalSelection
+            )
+            Spacer(Modifier.height(CatsmokerSpacing.CardGap))
+            // Tap changes context only; long press opens package-addressed actions on any tile.
+            // Explicit removals hide both user-added and category-discovered entries.
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
                 Text(stringResource(R.string.gt_section_your_library), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                IconButton(onClick = onAddGameClicked, modifier = Modifier.size(24.dp)) {
+                IconButton(onClick = onAddGameClicked) {
                     Icon(
                         Icons.Default.Add,
                         contentDescription = stringResource(R.string.core_desc_add),
@@ -487,20 +505,22 @@ fun GamingToolsScreen(
                     Spacer(modifier = Modifier.height(8.dp))
                 }
                 val matchingGames = remember(uiState.games, gameQuery) {
-                    val sorted = uiState.games.sortedBy { it.appName.lowercase() }
+                    val sorted = uiState.games
                     if (gameQuery.isBlank()) sorted
                     else sorted.filter {
                         it.appName.contains(gameQuery, ignoreCase = true) ||
                             it.packageName.contains(gameQuery, ignoreCase = true)
                     }
                 }
-                if (matchingGames.isEmpty()) {
+                val visibleGames =
+                    if (showAllGames) matchingGames else GameLibraryOrdering.preview(
+                        matchingGames, uiState.selectedGamePkg, GAME_LIBRARY_PREVIEW, selectedGame
+                    ) { it.packageName }
+                if (visibleGames.isEmpty()) {
                     Box(modifier = Modifier.fillMaxWidth().height(60.dp), contentAlignment = Alignment.Center) {
                         Text(stringResource(R.string.gt_library_no_match), color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 13.sp)
                     }
                 } else {
-                    val visibleGames =
-                        if (showAllGames) matchingGames else matchingGames.take(GAME_LIBRARY_PREVIEW)
                     // A plain Column of chunked Rows, not LazyVerticalGrid: this section already
                     // lives inside the screen's verticalScroll, and a lazy grid there would be
                     // measured with infinite height. The list is bounded by the library size.
@@ -517,14 +537,13 @@ fun GamingToolsScreen(
                                 rowGames.forEach { game ->
                                     GameLibraryTile(
                                         game = game,
-                                        isMenuOpen = openGameMenuPkg == game.packageName,
-                                        onToggleMenu = {
-                                            openGameMenuPkg = if (openGameMenuPkg == game.packageName) {
-                                                null
-                                            } else {
-                                                game.packageName
-                                            }
+                                        isSelected = uiState.selectedGamePkg == game.packageName,
+                                        onSelect = {
+                                            openGameMenuPkg = null
+                                            onSelectGame(game.packageName)
                                         },
+                                        isMenuOpen = openGameMenuPkg == game.packageName,
+                                        onOpenMenu = { openGameMenuPkg = game.packageName },
                                         onDismissMenu = { openGameMenuPkg = null },
                                         onLaunch = onLaunchGame,
                                         onRemove = onRemoveGame,
@@ -558,6 +577,8 @@ fun GamingToolsScreen(
                 }
             }
             Spacer(modifier = Modifier.height(CatsmokerSpacing.SectionGap))
+            Text(stringResource(R.string.gt_context_device_controls),
+                style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
             SectionLabel(stringResource(R.string.gt_section_gaming_mode))
             GamingModeCard(
                 gamingState = gamingState,
@@ -644,6 +665,8 @@ fun GamingToolsScreen(
                     subtitle = stringResource(R.string.gt_tool_devopts_sub),
                     icon = Icons.Default.DeveloperMode
                 ) {
+                    Text(stringResource(R.string.gt_context_developer),
+                        style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     DeveloperOptionsContent(
                         animationScales = animationScales,
                         canWriteGlobalSettings = uiState.canWriteGlobalSettings,
@@ -673,6 +696,9 @@ fun GamingToolsScreen(
             SectionLabel(stringResource(R.string.gt_section_graphics))
             Column(verticalArrangement = Arrangement.spacedBy(CatsmokerSpacing.CardGap)) {
                 ExpandableToolCard(title = stringResource(R.string.gt_tool_screen_title), subtitle = stringResource(R.string.gt_tool_screen_sub), icon = Icons.Default.AspectRatio, info = InfoTopics.resolution(source = uiState.nativeResolution?.let { uiState.resolutionSource } ?: stringResource(R.string.gt_res_safe_source_phone))) {
+                    Text(stringResource(if (uiState.selectedGamePkg == null) R.string.gt_context_resolution_global
+                        else R.string.gt_context_resolution_game),
+                        style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     ResolutionChangerContent(
                         native = uiState.nativeResolution,
                         activeOverride = uiState.activeOverride,
@@ -692,7 +718,8 @@ fun GamingToolsScreen(
                         onDownscaleChange = onSetInterventionDownscale,
                         pointerSpeed = pointerSpeedChoice,
                         onPointerSpeedChange = onSetPointerSpeedChoice,
-                        tuningEnabled = hasPrivilege && !isBusy && !isActive
+                        tuningEnabled = hasPrivilege && !isBusy && !isActive,
+                        showGameTuning = uiState.selectedGamePkg != null
                     )
                 }
             }
@@ -838,6 +865,16 @@ fun GamingToolsScreen(
                         onTrimStorage = onTrimStorage
                     )
                 }
+            }
+            Spacer(Modifier.height(CatsmokerSpacing.CardGap))
+            com.catsmoker.app.screens.gaming.cache.GameCacheControls(
+                uiState.selectedGamePkg, selectedGame?.appName
+            )
+            if (!isBusy && !isActive && !isGamingSessionOpen &&
+                !uiState.isOverlayRunning && !uiState.isCrosshairRunning &&
+                uiState.optimizingGamePkg == null
+            ) {
+                GamingToolsBanner(modifier = Modifier.padding(top = CatsmokerSpacing.SectionGap))
             }
         }
     }

@@ -10,6 +10,10 @@ import com.google.gson.Gson
  * value would silently overwrite a preference the user had set deliberately.
  */
 data class GamingOptimizationSnapshot(
+    /** Null is a legacy session whose wider writes still require recovery. */
+    val preparationPolicyVersion: Int? = null,
+    val displayOverridesOwned: Boolean? = null,
+    val previousGameMode: String? = null,
     val activeGamePackage: String?,
     val activeGameUid: Int?,
     val timestamp: Long,

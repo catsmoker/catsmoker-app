@@ -4,9 +4,11 @@ import android.content.Context
 import com.catsmoker.app.platform.display.DisplayRefreshRateProvider
 import com.catsmoker.app.platform.shell.ShellRunner
 import com.catsmoker.app.screens.gaming.apps.SuspendExemptStore
+import com.catsmoker.app.screens.gaming.GameSettingsStore
 import com.catsmoker.app.screens.gaming.apps.SuspendListStore
 import com.catsmoker.app.screens.gaming.graphics.GameInterventions
 import com.catsmoker.app.screens.gaming.mode.GamingEngine
+import com.catsmoker.app.screens.gaming.mode.GamingModeObservation
 import com.catsmoker.app.screens.gaming.mode.RefreshRateController
 import com.catsmoker.app.screens.gaming.network.BackgroundDataRestrictor
 import com.catsmoker.app.telemetry.MetricsEngine
@@ -38,9 +40,11 @@ object EngineModule {
         gameInterventions: GameInterventions,
         suspendListStore: SuspendListStore,
         suspendExemptStore: SuspendExemptStore,
-        refreshController: RefreshRateController
+        refreshController: RefreshRateController,
+        gameSettingsStore: GameSettingsStore,
+        modeObservation: GamingModeObservation
     ): GamingEngine = GamingEngine(
         context, shellRunner, backgroundDataRestrictor, gameInterventions,
-        suspendListStore, suspendExemptStore, refreshController
+        suspendListStore, suspendExemptStore, refreshController, gameSettingsStore, modeObservation
     )
 }
