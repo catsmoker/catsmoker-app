@@ -43,6 +43,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.catsmoker.app.integrations.ads.AboutBanner
 import com.catsmoker.app.ui.components.CardGroup
 import com.catsmoker.app.ui.components.ScreenScaffold
 import com.catsmoker.app.ui.components.SectionCard
@@ -317,6 +318,7 @@ fun AboutScreen(
                     textAlign = TextAlign.Center,
                     modifier = Modifier.fillMaxWidth()
                 )
+                AboutBanner(modifier = Modifier.padding(top = CatsmokerSpacing.SectionGap))
             }
         }
     }
