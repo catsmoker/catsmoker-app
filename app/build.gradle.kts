@@ -49,6 +49,7 @@ if (adsPropertiesFile.exists()) {
 android {
     namespace = "com.catsmoker.app"
     compileSdk = 37
+    compileSdkMinor = 2
 
     androidResources {
         // Only locales the app actually ships (see res/xml/locales_config.xml): strips the
@@ -65,8 +66,8 @@ android {
         // versionCode 7: IFileService gained readFile/writeFile — the bump is what forces
         // Shizuku to restart the daemonized helper whose AIDL no longer matches (see the
         // ShellRunner KDoc). Shipped helpers keep serving the old AIDL until this moves.
-        versionCode = 15
-        versionName = "2.0.9"
+        versionCode = 16
+        versionName = "2.0.10-beta.1"
 
         vectorDrawables {
             useSupportLibrary = true

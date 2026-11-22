@@ -11,17 +11,17 @@ Requirements and commands for building CatSmoker locally.
 
 ## Key versions
 
-| Item        | Value            |
-| ----------- | ---------------- |
-| AGP         | 9.4.1            |
-| Kotlin      | 2.4.21           |
-| KSP         | 2.3.10           |
-| Compose BOM | 2026.09.00       |
-| Min SDK     | 27 (Android 8.1) |
-| Target SDK  | 37               |
-| Compile SDK | 37               |
-| Version     | 2.0.5 (code 11)  |
-| NDK         | 28.2.13676358    |
+| Item        | Value                    |
+| ----------- | ------------------------ |
+| AGP         | 9.5.2                    |
+| Kotlin      | 2.4.21                   |
+| KSP         | 2.3.14                   |
+| Compose BOM | 2026.11.01               |
+| Min SDK     | 27 (Android 8.1)         |
+| Target SDK  | 37                       |
+| Compile SDK | 37.2                     |
+| Version     | 2.0.10-beta.1 (code 16)  |
+| NDK         | 28.2.13676358            |
 
 ## Variants
 
