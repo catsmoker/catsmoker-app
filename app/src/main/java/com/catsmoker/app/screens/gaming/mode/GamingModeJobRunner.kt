@@ -10,6 +10,7 @@ import javax.inject.Singleton
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
 import com.catsmoker.app.screens.gaming.cache.GameCachePreloader
 
@@ -64,9 +65,9 @@ class GamingModeJobRunner @Inject constructor(
                     }
                 } catch (_: IllegalStateException) {
                     // The caller may have left during a long sweep. Never leave unheld system writes.
-                    gamingEngine.toggleGamingMode(false, ownedOnlyRestore = true)
+                    gamingEngine.toggleGamingMode(false)
                 } catch (_: SecurityException) {
-                    gamingEngine.toggleGamingMode(false, ownedOnlyRestore = true)
+                    gamingEngine.toggleGamingMode(false)
                 }
                 if (gamingEngine.state.value is GamingModeState.Active && packageName != null) {
                     cachePreloader.preload(packageName)
@@ -76,11 +77,16 @@ class GamingModeJobRunner @Inject constructor(
             // follow the device rather than keep showing what it read before activation.
             gameDeveloperOptions.refresh()
         }
-    fun deactivate(ownedOnly: Boolean = false) =
+    fun deactivate() =
         scope.launch {
             cachePreloader.cancel()
-            gamingEngine.toggleGamingMode(false, ownedOnlyRestore = ownedOnly)
+            gamingEngine.toggleGamingMode(false)
             context.stopService(Intent(context, GamingModeService::class.java))
             gameDeveloperOptions.refresh()
         }
+
+    fun restoreApps() = scope.async { gamingEngine.restoreSuspendedApps() }
+
+    internal fun restoreSelectedSuspensions(selected: Set<String>) =
+        scope.async { gamingEngine.restoreSelectedSuspensions(selected) }
 }

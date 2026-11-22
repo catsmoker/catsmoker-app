@@ -613,6 +613,8 @@
     <string name="gt_eng_booster_start">🚀 Starting…</string>
     <string name="gt_eng_booster_start_force">🚀 Starting — redoing apps that are already done…</string>
     <string name="gt_eng_booster_no_priv">Needs root or Shizuku. Android does not let a normal app do this to other apps, so nothing was run.</string>
+    <string name="gt_eng_booster_access_lost">Could not confirm the compilation result. Check root or Shizuku access and try again.</string>
+    <string name="gt_eng_booster_denied">Android blocked app compilation with the current access. Restart Shizuku and try again, or use root if your device requires it.</string>
     <string name="gt_eng_booster_no_apps">There were no apps to work on — nothing you installed yourself, and no built-in app added to your games.</string>
     <string name="gt_eng_booster_unavail">❌ %1$s</string>
     <string name="gt_eng_booster_failed">❌ Stopped because something went wrong: %1$s</string>
@@ -725,6 +727,16 @@
     <string name="gt_gm_restore_partial">Restored %1$d app(s) and %2$d restriction(s). %3$d still need attention.</string>
     <string name="gt_gm_restore_unverified">Could not confirm the result. %1$d app(s) are still on the record — try again.</string>
     <string name="gt_gm_restore_active">Gaming Mode is running. Turn it off before restoring apps.</string>
+    <string name="gt_gm_rescue_title">Recover suspended apps</string>
+    <string name="gt_gm_rescue_explain">These apps are paused by Shell or root but missing from CatSmoker’s record. Another tool may have paused them. Choose only the apps you want to restore.</string>
+    <string name="gt_gm_rescue_empty">No unrecorded Shell or root suspensions could be identified.</string>
+    <string name="gt_gm_rescue_confirm">Restore selected (%1$d)</string>
+    <string name="gt_gm_rescue_working">Restoring selected apps…</string>
+    <string name="gt_gm_rescue_result">Available: %1$d · Not confirmed: %2$d</string>
+    <string name="gt_gm_rescue_retry">If a Shell-managed app stays paused, try with Shizuku running in shell mode. Android may still keep some apps suspended.</string>
+    <string name="gt_gm_rescue_busy">Wait for the current Gaming Mode action to finish or turn Gaming Mode off, then try again.</string>
+    <string name="gt_gm_rescue_profile">Open CatSmoker in the primary Android profile to recover apps.</string>
+    <string name="gt_gm_rescue_unreadable">Could not read suspended apps. Check root or Shizuku access and try again.</string>
     <string name="gt_gm_revert_needed">Settings from the last session may still be applied. Turn Gaming Mode off to restore them.</string>
     <string name="gt_gm_error_session_open">Part of this session may still be applied. Use the power button to undo it.</string>
     <string name="gt_suspend_count">%1$d selected · %2$d frozen now</string>

@@ -15,6 +15,7 @@ import androidx.core.content.ContextCompat
 import androidx.core.content.edit
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.catsmoker.app.application.privacy.GamingAccessConsent
 import com.catsmoker.app.format.formatBytes
 import com.catsmoker.app.platform.display.DisplayMetricsProvider
 import com.catsmoker.app.platform.shell.ShellRunner
@@ -47,6 +48,8 @@ import com.catsmoker.app.screens.gaming.mode.GamingModeProgress
 import com.catsmoker.app.screens.gaming.mode.GamingModeRestoreResult
 import com.catsmoker.app.screens.gaming.mode.GamingModeState
 import com.catsmoker.app.screens.gaming.mode.StorageTrim
+import com.catsmoker.app.screens.gaming.mode.SuspensionRescueDialogState
+import com.catsmoker.app.screens.gaming.mode.SuspensionRescueResult
 import com.catsmoker.app.screens.gaming.network.BackgroundDataRestrictor
 import com.catsmoker.app.screens.gaming.network.DnsFeature
 import com.catsmoker.app.screens.gaming.network.PingParser
@@ -82,6 +85,7 @@ import kotlinx.coroutines.withContext
 class GamingToolsViewModel @Inject constructor(
     @ApplicationContext private val context: Context,
     private val gamingEngine: GamingEngine,
+    private val gamingModeJobs: GamingModeJobRunner,
     private val gameAutomation: com.catsmoker.app.screens.gaming.automation.GameAutomation,
     private val gameSessionManager: GameSessionManager,
     private val shellRunner: ShellRunner,
@@ -300,6 +304,10 @@ class GamingToolsViewModel @Inject constructor(
     private val _uiState = MutableStateFlow(UiState())
     val uiState: StateFlow<UiState> = _uiState.asStateFlow()
 
+    private val _suspensionRescue = MutableStateFlow<SuspensionRescueDialogState?>(null)
+    internal val suspensionRescue = _suspensionRescue.asStateFlow()
+    private var suspensionRescueScan: Job? = null
+
     private val _toasts = MutableSharedFlow<String>(extraBufferCapacity = 8)
     val toasts: SharedFlow<String> = _toasts.asSharedFlow()
 
@@ -382,6 +390,10 @@ class GamingToolsViewModel @Inject constructor(
     private val accessListener = android.content.SharedPreferences.OnSharedPreferenceChangeListener { _, _ ->
         syncGames()
         loadSuspendExemptCandidates()
+        if (_suspensionRescue.value != null && !GamingAccessConsent.allows(context, GamingAccessConsent.INVENTORY)) {
+            suspensionRescueScan?.cancel()
+            _suspensionRescue.value = SuspensionRescueDialogState.Blocked(R.string.policy_access_needed)
+        }
     }
 
     init {
@@ -1152,11 +1164,52 @@ class GamingToolsViewModel @Inject constructor(
      * instead of a bare "done".
      */
     fun restoreSuspendedApps() = viewModelScope.launch {
+        if (_uiState.value.isRestoringApps) return@launch
         _uiState.update { it.copy(isRestoringApps = true, restoreResult = null) }
-        val result = gamingEngine.restoreSuspendedApps()
-        _uiState.update { it.copy(isRestoringApps = false, restoreResult = result) }
-        if (result.refusedWhileActive) {
-            _toasts.tryEmit(context.getString(R.string.gt_gm_restore_active))
+        try {
+            val result = gamingModeJobs.restoreApps().await()
+            _uiState.update { it.copy(restoreResult = result) }
+            if (result.refusedWhileActive) {
+                _toasts.tryEmit(context.getString(R.string.gt_gm_restore_active))
+            }
+        } finally {
+            _uiState.update { it.copy(isRestoringApps = false) }
+        }
+    }
+
+    internal fun openSuspensionRescue() {
+        if (_suspensionRescue.value != null) return
+        _suspensionRescue.value = SuspensionRescueDialogState.Scanning
+        suspensionRescueScan = viewModelScope.launch {
+            _suspensionRescue.value = when (val result = gamingEngine.listSuspensionRescueApps()) {
+                is SuspensionRescueResult.Success -> SuspensionRescueDialogState.Showing(result.value)
+                is SuspensionRescueResult.Blocked -> SuspensionRescueDialogState.Blocked(result.reason)
+            }
+        }
+    }
+
+    internal fun closeSuspensionRescue() {
+        if (_suspensionRescue.value == SuspensionRescueDialogState.Restoring) return
+        suspensionRescueScan?.cancel()
+        _suspensionRescue.value = null
+    }
+
+    internal fun restoreSelectedSuspensions(requested: Set<String>) {
+        val visible = _suspensionRescue.value as? SuspensionRescueDialogState.Showing ?: return
+        val selected = visible.apps.map { it.packageName }.intersect(requested)
+        if (selected.isEmpty()) return
+        _suspensionRescue.value = SuspensionRescueDialogState.Restoring
+        viewModelScope.launch {
+            val result = gamingModeJobs.restoreSelectedSuspensions(selected).await()
+            if (_suspensionRescue.value != SuspensionRescueDialogState.Restoring) return@launch
+            _suspensionRescue.value = when (result) {
+                is SuspensionRescueResult.Success -> SuspensionRescueDialogState.Showing(
+                    visible.apps.filterNot { it.packageName in result.value },
+                    available = result.value.size,
+                    unconfirmed = selected.size - result.value.size
+                )
+                is SuspensionRescueResult.Blocked -> SuspensionRescueDialogState.Blocked(result.reason)
+            }
         }
     }
 

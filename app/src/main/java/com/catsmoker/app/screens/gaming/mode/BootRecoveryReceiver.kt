@@ -11,22 +11,25 @@ import com.catsmoker.app.features.gamingtools.engine.BootRecoveryWorker
 class BootRecoveryReceiver : BroadcastReceiver() {
 
     override fun onReceive(context: Context, intent: Intent) {
-        if (intent.action != Intent.ACTION_BOOT_COMPLETED) return
+        if (intent.action == Intent.ACTION_BOOT_COMPLETED) enqueueIfNeeded(context)
+    }
 
-        val prefs = context.getSharedPreferences("gaming_engine_prefs", Context.MODE_PRIVATE)
-        if (!BootRecoveryPolicy.hasRecoveryRecords(
-                prefs.getStringSet("affected_pkgs", emptySet()),
-                prefs.getStringSet("appops_prior", emptySet())
+    companion object {
+        /** Android can kill the app without rebooting; the same journal must recover on relaunch. */
+        internal fun enqueueIfNeeded(context: Context) {
+            val prefs = context.getSharedPreferences("gaming_engine_prefs", Context.MODE_PRIVATE)
+            if (!BootRecoveryPolicy.hasRecoveryRecords(
+                    prefs.getStringSet("affected_pkgs", emptySet()),
+                    prefs.getStringSet("appops_prior", emptySet())
+                )
+            ) return
+
+            WorkManager.getInstance(context).enqueueUniqueWork(
+                BootRecoveryWorker.UNIQUE_WORK_NAME,
+                ExistingWorkPolicy.KEEP,
+                OneTimeWorkRequestBuilder<BootRecoveryWorker>().build()
             )
-        ) {
-            return
         }
-
-        WorkManager.getInstance(context).enqueueUniqueWork(
-            BootRecoveryWorker.UNIQUE_WORK_NAME,
-            ExistingWorkPolicy.KEEP,
-            OneTimeWorkRequestBuilder<BootRecoveryWorker>().build()
-        )
     }
 }
 

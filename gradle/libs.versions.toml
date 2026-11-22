@@ -1,5 +1,5 @@
 [versions]
-agp = "9.5.1"
+agp = "9.5.2"
 api = "82"
 core = "1.19.1"
 coreSplashscreen = "1.2.0"
@@ -8,7 +8,7 @@ documentfile = "1.1.0"
 junit = "4.13.2"
 material = "1.14.0"
 activity = "1.13.0"
-startioSdk = "5.4.0"
+startioSdk = "5.5.1"
 # Play distribution variant only (AdMob banner and consent management). Declared here so the
 # version is pinned; the dependency itself is added via playstoreImplementation in
 # app/build.gradle.kts and never enters the full variant.
@@ -19,15 +19,15 @@ ump = "4.0.0"
 billing = "9.1.0"
 # Firebase Analytics is SHARED (both variants, same project catsmoker-5b6c6).
 # google-services.json is gitignored/local-only; the build requires it present.
-googleServices = "4.5.0"
-firebaseBom = "35.1.0"
+googleServices = "4.6.0"
+firebaseBom = "35.2.0"
 provider = "13.1.5"
 coreKtx = "1.19.1"
 kotlin = "2.4.21"
-composeBom = "2026.09.00"
+composeBom = "2026.11.01"
 navigationCompose = "2.10.2"
-lifecycle = "2.11.0"
-ksp = "2.3.10"
+lifecycle = "2.11.1"
+ksp = "2.3.14"
 androidxHilt = "1.4.0"
 hilt = "2.60.1"
 kotlinxCoroutines = "1.11.0"

@@ -158,7 +158,7 @@ class GameAutomation @Inject constructor(
                     if (!engine.sessionOpen.value && !engine.recovery.value.isNeeded) {
                         record("nothing_to_restore")
                     } else {
-                        jobs.deactivate(ownedOnly = true).join()
+                        jobs.deactivate().join()
                         record(if (engine.sessionOpen.value || engine.recovery.value.isNeeded ||
                             engine.report.value.unavailable.isNotEmpty()) "partial" else "restored")
                     }

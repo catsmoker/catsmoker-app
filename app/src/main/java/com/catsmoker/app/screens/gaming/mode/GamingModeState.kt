@@ -33,11 +33,10 @@ sealed class GamingModeState {
  * The recovery evidence shown next to the Gaming Mode switch.
  *
  * @param isChecking true while startup reconciliation is still reading the device.
- * @param pendingPackages packages recorded as suspended whose wake-up is not confirmed. When
- *   [verified] is false this is the record alone, because the device would not answer — it is
- *   then evidence of what *we did*, not of what is still frozen.
- * @param pendingAppOps packages whose background app-op is still set to `ignore` by a session.
- * @param verified whether the package manager answered with a per-package suspension list.
+ * @param pendingPackages journaled packages not confirmed awake. A missing command result
+ *   keeps the entry even when the device hasn't confirmed the package is still frozen.
+ * @param pendingAppOps packages whose original background app-op has not been verified back.
+ * @param verified whether every pending suspension was confirmed by the package manager.
  */
 data class GamingModeRecovery(
     val isChecking: Boolean = false,
@@ -292,4 +291,3 @@ data class FixedPerformanceOutcome(
     val accepted: Boolean,
     val message: String
 )
-

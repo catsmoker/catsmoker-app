@@ -86,12 +86,14 @@ class AutomationProtocolTest {
     @Test fun activationCapturesPackageInputsBeforeSuspensionAndRestoreIsOwned() {
         val engine = File("src/main/java/com/catsmoker/app/screens/gaming/mode/GamingEngine.kt").readText()
         val activation = engine.substringAfter("private suspend fun enableGamingMode(")
-        assertTrue(activation.indexOf("gameSettingsStore.read(it)") < activation.indexOf("isRootAvailable()"))
+        assertTrue(activation.contains("appChanges.apply(targets, identity)"))
+        assertTrue(activation.indexOf("gameSettingsStore.read(it)") in 0 until activation.indexOf("appChanges.apply("))
         assertTrue(activation.contains("PointerSpeed.sanitize(pointerChoice)"))
         assertTrue(activation.contains("val downscale = downscaleChoice"))
-        assertTrue(engine.contains("if (ownedOnly) affected else affected + getSuspendTargets(null)"))
+        assertTrue(engine.contains("appChanges.restoreSuspensions()"))
+        assertFalse(engine.contains("affected + getSuspendTargets"))
         val automation = File("src/main/java/com/catsmoker/app/screens/gaming/automation/GameAutomation.kt").readText()
-        assertTrue(automation.contains("jobs.deactivate(ownedOnly = true).join()"))
+        assertTrue(automation.contains("jobs.deactivate().join()"))
     }
 
     @Test fun desktopOwnershipAndPriorGameModeSurviveSnapshotRoundTrip() {
@@ -123,7 +125,7 @@ class AutomationProtocolTest {
 
     @Test fun recoveryRetainsSnapshotUntilAllOwnedStepsAreClean() {
         val engine = File("src/main/java/com/catsmoker/app/screens/gaming/mode/GamingEngine.kt").readText()
-        val journal = engine.substringAfter("private fun beginSession()").substringBefore("private fun currentBootCount()")
+        val journal = engine.substringAfter("private fun beginSession(", "").substringBefore("private fun currentBootCount()")
         assertTrue(journal.contains(".commit()"))
         val close = engine.substringAfter("private suspend fun disableGamingMode(")
             .substringAfter("if (clean) {").substringBefore("} else {")
@@ -134,10 +136,14 @@ class AutomationProtocolTest {
 
     @Test fun sessionRestorePreservesTheStandaloneFixedPerformanceOwner() {
         val engine = File("src/main/java/com/catsmoker/app/screens/gaming/mode/GamingEngine.kt").readText()
-        val restore = engine.substringAfter("private suspend fun disableGamingMode(")
-            .substringBefore("private suspend fun restoreAppOpsRecord(")
+        val restore = engine.substringAfter("private suspend fun disableGamingMode(", "")
+            .substringBefore("private suspend fun recoverThermalOverrideIfNeeded(")
         assertTrue(restore.contains("fixedPerformanceArgs(manualFixedPerformance)"))
         assertFalse(restore.contains("putBoolean(\"fixed_perf_manual\", false)"))
+        val appsOnly = engine.substringAfter("private suspend fun restoreAppsFromRecord(", "")
+            .substringBefore("private fun beginSession(")
+        assertTrue(appsOnly.contains("appChanges.restoreSuspensions()"))
+        assertFalse(appsOnly.contains("fixed_perf_manual"))
         val manual = engine.substringAfter("suspend fun toggleFixedPerformanceMode(")
             .substringBefore("fun setInterventionDownscale(")
         assertTrue(manual.contains("if (_sessionOpen.value)"))

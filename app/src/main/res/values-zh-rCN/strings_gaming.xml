@@ -611,6 +611,8 @@
     <string name="gt_eng_booster_start">🚀 开始…</string>
     <string name="gt_eng_booster_start_force">🚀 开始 — 重做已完成的应用…</string>
     <string name="gt_eng_booster_no_priv">需要 Root 或 Shizuku。Android 不允许普通应用对其他应用执行此操作，因此未运行任何内容。</string>
+    <string name="gt_eng_booster_access_lost">无法确认编译结果。请检查 Root 或 Shizuku 权限后重试。</string>
+    <string name="gt_eng_booster_denied">Android 拒绝使用当前权限编译应用。请重启 Shizuku 后重试，若设备有此要求，请使用 Root。</string>
     <string name="gt_eng_booster_no_apps">没有可处理的应用 — 没有你安装的，也没有加入游戏的内置应用。</string>
     <string name="gt_eng_booster_unavail">❌ %1$s</string>
     <string name="gt_eng_booster_failed">❌ 因出错而停止：%1$s</string>
@@ -724,6 +726,16 @@
     <string name="gt_gm_restore_partial">已恢复 %1$d 个应用和 %2$d 项限制，仍有 %3$d 项待处理。</string>
     <string name="gt_gm_restore_unverified">无法确认结果。记录中仍有 %1$d 个应用，请重试。</string>
     <string name="gt_gm_restore_active">游戏模式正在运行。请先关闭再恢复应用。</string>
+    <string name="gt_gm_rescue_title">恢复已暂停的应用</string>
+    <string name="gt_gm_rescue_explain">这些应用被 Shell 或 Root 暂停，但不在 CatSmoker 的记录中。也可能是其他工具暂停的。请只选择要恢复的应用。</string>
+    <string name="gt_gm_rescue_empty">未发现记录之外由 Shell 或 Root 暂停的应用。</string>
+    <string name="gt_gm_rescue_confirm">恢复所选应用（%1$d）</string>
+    <string name="gt_gm_rescue_working">正在恢复所选应用…</string>
+    <string name="gt_gm_rescue_result">可用：%1$d · 未确认：%2$d</string>
+    <string name="gt_gm_rescue_retry">如果 Shell 管理的应用仍处于暂停状态，请尝试在 Shell 模式下运行 Shizuku。Android 仍可能保持部分应用的暂停状态。</string>
+    <string name="gt_gm_rescue_busy">请等待当前游戏模式操作完成，或关闭游戏模式后重试。</string>
+    <string name="gt_gm_rescue_profile">请在 Android 的主用户资料中打开 CatSmoker 以恢复应用。</string>
+    <string name="gt_gm_rescue_unreadable">无法读取已暂停的应用。请检查 Root 或 Shizuku 权限后重试。</string>
     <string name="gt_gm_revert_needed">上次会话的设置可能仍在生效。关闭游戏模式即可恢复。</string>
     <string name="gt_gm_error_session_open">本次会话的部分设置可能仍在生效。请用电源按钮撤销。</string>
     <string name="gt_suspend_count">%1$d 个已选择 · %2$d 个当前已冻结</string>

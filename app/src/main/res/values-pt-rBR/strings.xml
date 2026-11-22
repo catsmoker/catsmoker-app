@@ -61,7 +61,7 @@
     <string name="booster_status_compiling">Trabalhando em %1$d de %2$d: %3$s</string>
     <string name="booster_status_done">Concluído: %1$d melhorados, %2$d já estavam bons, %3$d não puderam ser feitos.</string>
     <string name="booster_status_cancelled">Parado após %1$d apps.</string>
-    <string name="booster_status_failed">Não foi possível iniciar: %1$s</string>
+    <string name="booster_status_failed">Compilação interrompida: %1$s</string>
     <string name="booster_scheduled_title">Otimização agendada</string>
     <string name="booster_scheduled_skipped">Não foi executado: %1$s</string>
     <string name="dash_live_performance">TELEMETRIA EM TEMPO REAL</string>

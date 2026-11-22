@@ -77,6 +77,7 @@ import com.catsmoker.app.screens.gaming.mode.GamingModeCard
 import com.catsmoker.app.screens.gaming.mode.GamingModeRecovery
 import com.catsmoker.app.screens.gaming.mode.GamingModeReport
 import com.catsmoker.app.screens.gaming.mode.GamingModeState
+import com.catsmoker.app.screens.gaming.mode.SuspensionRescueDialog
 import com.catsmoker.app.screens.gaming.network.BackgroundDataContent
 import com.catsmoker.app.screens.gaming.network.DnsContent
 import com.catsmoker.app.screens.gaming.network.DnsFeature
@@ -105,6 +106,7 @@ fun GamingToolsRoute(
 ) {
     val viewModel: GamingToolsViewModel = hiltViewModel()
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val suspensionRescue by viewModel.suspensionRescue.collectAsStateWithLifecycle()
     val context = LocalContext.current
     val noDevOptions = stringResource(R.string.gt_dialog_no_dev_options)
     // The Glyph strip mirrors the loading bar on this screen. Once the screen is no longer
@@ -227,6 +229,7 @@ fun GamingToolsRoute(
         onActivateGamingMode = viewModel::activateGamingMode,
         onDeactivateGamingMode = viewModel::deactivateGamingMode,
         onRestoreGamingApps = viewModel::restoreSuspendedApps,
+        onOpenSuspensionRescue = viewModel::openSuspensionRescue,
         onBoostRam = viewModel::boostRam,
         onTrimStorage = viewModel::trimStorage,
         onRunBooster = viewModel::runBooster,
@@ -318,6 +321,13 @@ fun GamingToolsRoute(
             titleRes = R.string.gt_picker_add_keep
         )
     }
+    suspensionRescue?.let { state ->
+        SuspensionRescueDialog(
+            state = state,
+            onDismiss = viewModel::closeSuspensionRescue,
+            onRestore = viewModel::restoreSelectedSuspensions
+        )
+    }
     if (uiState.showAggressiveCleanWarning) {
         AlertDialog(
             onDismissRequest = viewModel::dismissAggressiveCleanWarning,
@@ -383,6 +393,7 @@ fun GamingToolsScreen(
     onActivateGamingMode: () -> Unit,
     onDeactivateGamingMode: () -> Unit,
     onRestoreGamingApps: () -> Unit,
+    onOpenSuspensionRescue: () -> Unit,
     onBoostRam: () -> Unit,
     onTrimStorage: () -> Unit,
     onRunBooster: (String, Boolean) -> Unit,
@@ -596,6 +607,7 @@ fun GamingToolsScreen(
                 isRestoringApps = uiState.isRestoringApps,
                 restoreResult = uiState.restoreResult,
                 onRestoreApps = onRestoreGamingApps,
+                onOpenSuspensionRescue = onOpenSuspensionRescue,
                 onActivate = onActivateGamingMode,
                 onDeactivate = onDeactivateGamingMode,
                 sessionActive = uiState.isGameSessionActive,
@@ -924,6 +936,7 @@ fun GamingToolsPreview() {
             onActivateGamingMode = {},
             onDeactivateGamingMode = {},
             onRestoreGamingApps = {},
+            onOpenSuspensionRescue = {},
             onBoostRam = {},
             onTrimStorage = {},
             onRunBooster = { _, _ -> },

@@ -611,6 +611,8 @@
     <string name="gt_eng_booster_start">🚀 بدء…</string>
     <string name="gt_eng_booster_start_force">🚀 بدء — إعادة التطبيقات المنجزة فعلاً…</string>
     <string name="gt_eng_booster_no_priv">يتطلب روت أو Shizuku. لا يسمح أندرويد لتطبيق عادي بفعل هذا لتطبيقات أخرى، لذا لم يُشغَّل شيء.</string>
+    <string name="gt_eng_booster_access_lost">تعذّر تأكيد نتيجة التجميع. تحقّق من صلاحيات الروت أو Shizuku وحاول مجددًا.</string>
+    <string name="gt_eng_booster_denied">منع أندرويد تجميع التطبيقات بالصلاحيات الحالية. أعد تشغيل Shizuku وحاول مجددًا، أو استخدم الروت إذا كان جهازك يتطلب ذلك.</string>
     <string name="gt_eng_booster_no_apps">لا توجد تطبيقات للعمل عليها — لا شيء ثبّته بنفسك، ولا تطبيق مدمج أضفته إلى ألعابك.</string>
     <string name="gt_eng_booster_unavail">❌ %1$s</string>
     <string name="gt_eng_booster_failed">❌ توقف لأن خطأ ما حدث: %1$s</string>
@@ -724,6 +726,16 @@
     <string name="gt_gm_restore_partial">تمت استعادة %1$d تطبيق و%2$d قيد. ما زال %3$d بحاجة إلى معالجة.</string>
     <string name="gt_gm_restore_unverified">تعذّر تأكيد النتيجة. ما زال %1$d تطبيق في السجل — أعد المحاولة.</string>
     <string name="gt_gm_restore_active">وضع الألعاب يعمل. أوقفه قبل استعادة التطبيقات.</string>
+    <string name="gt_gm_rescue_title">استعادة التطبيقات المعلّقة</string>
+    <string name="gt_gm_rescue_explain">أوقفت Shell أو صلاحيات الروت هذه التطبيقات مؤقتًا، لكنها غير مسجلة في CatSmoker. ربما أوقفتها أداة أخرى. اختر فقط التطبيقات التي تريد استعادتها.</string>
+    <string name="gt_gm_rescue_empty">لم يُعثر على تطبيقات علّقتها Shell أو صلاحيات الروت خارج السجل.</string>
+    <string name="gt_gm_rescue_confirm">استعادة المحددة (%1$d)</string>
+    <string name="gt_gm_rescue_working">جارٍ استعادة التطبيقات المحددة…</string>
+    <string name="gt_gm_rescue_result">متاحة: %1$d · غير مؤكدة: %2$d</string>
+    <string name="gt_gm_rescue_retry">إذا ظل تطبيق تديره Shell معلّقًا، جرّب تشغيل Shizuku في وضع Shell. قد يُبقي أندرويد بعض التطبيقات معلّقة.</string>
+    <string name="gt_gm_rescue_busy">انتظر انتهاء العملية الحالية في وضع الألعاب أو أوقف الوضع، ثم أعد المحاولة.</string>
+    <string name="gt_gm_rescue_profile">افتح CatSmoker في ملف أندرويد الشخصي الأساسي لاستعادة التطبيقات.</string>
+    <string name="gt_gm_rescue_unreadable">تعذّر قراءة التطبيقات المعلّقة. تحقّق من صلاحيات الروت أو Shizuku وأعد المحاولة.</string>
     <string name="gt_gm_revert_needed">قد تظل إعدادات الجلسة الأخيرة مطبّقة. أوقف وضع الألعاب لاستعادتها.</string>
     <string name="gt_gm_error_session_open">قد يكون جزء من هذه الجلسة مطبّقًا. استخدم زر الطاقة للتراجع.</string>
     <string name="gt_suspend_count">%1$d محدد · %2$d مجمّد الآن</string>

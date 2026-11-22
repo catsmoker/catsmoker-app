@@ -61,7 +61,7 @@
     <string name="booster_status_compiling">正在处理第 %1$d / %2$d 个：%3$s</string>
     <string name="booster_status_done">完成：%1$d 个已优化，%2$d 个原本就正常，%3$d 个无法完成。</string>
     <string name="booster_status_cancelled">已在 %1$d 个应用后停止。</string>
-    <string name="booster_status_failed">无法启动：%1$s</string>
+    <string name="booster_status_failed">编译已停止：%1$s</string>
     <string name="booster_scheduled_title">定时应用优化</string>
     <string name="booster_scheduled_skipped">未运行：%1$s</string>
     <string name="dash_live_performance">实时性能监测</string>

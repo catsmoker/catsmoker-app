@@ -354,6 +354,8 @@
     <string name="gt_audio_unknown">不明な出力</string>
 
     <!-- App booster card -->
+    <string name="gt_eng_booster_access_lost">コンパイル結果を確認できませんでした。Root または Shizuku の権限を確認してから再試行してください。</string>
+    <string name="gt_eng_booster_denied">現在の権限では、Android がアプリのコンパイルを拒否しました。Shizuku を再起動して再試行するか、端末に必要な場合は Root を使用してください。</string>
     <string name="gt_booster_what_1">アプリは実行時に端末が翻訳しなければならない形式で届きます。これを今すべて翻訳しておけば、後で端末が立ち止まってやる必要がなくなります。</string>
     <string name="gt_booster_what_2">ゲームでは、最初の数分と各ローディング後の小さなスタッターがそれです。これを事前に片付けます。</string>
     <string name="gt_booster_what_3">ゲームが動き出してから速くなるわけではありません。開始時を滑らかにします。</string>
@@ -692,6 +694,16 @@
     <string name="gt_gm_restore_partial">%1$d個のアプリと%2$d個の制限を復元しました。%3$d個はまだ対応が必要です。</string>
     <string name="gt_gm_restore_unverified">結果を確認できませんでした。%1$d個のアプリがまだ記録に残っています — 再試行してください。</string>
     <string name="gt_gm_restore_active">ゲーミングモードが実行中です。アプリを復元する前にオフにしてください。</string>
+    <string name="gt_gm_rescue_title">停止中のアプリを復元</string>
+    <string name="gt_gm_rescue_explain">Shell または Root で停止され、CatSmoker の記録にないアプリです。別のツールが停止した可能性もあります。復元したいアプリだけを選んでください。</string>
+    <string name="gt_gm_rescue_empty">記録にない Shell または Root による停止は確認できませんでした。</string>
+    <string name="gt_gm_rescue_confirm">選択したアプリを復元（%1$d）</string>
+    <string name="gt_gm_rescue_working">選択したアプリを復元しています…</string>
+    <string name="gt_gm_rescue_result">利用可能：%1$d ・ 確認できず：%2$d</string>
+    <string name="gt_gm_rescue_retry">Shell が管理するアプリが停止したままなら、Shizuku を Shell モードで実行して再試行してください。Android が一部のアプリを引き続き停止する場合があります。</string>
+    <string name="gt_gm_rescue_busy">ゲーミングモードの処理が終わるまで待つか、モードをオフにして再試行してください。</string>
+    <string name="gt_gm_rescue_profile">アプリを復元するには、Android のメインプロファイルで CatSmoker を開いてください。</string>
+    <string name="gt_gm_rescue_unreadable">停止中のアプリを読み取れませんでした。Root または Shizuku の権限を確認して再試行してください。</string>
     <string name="gt_gm_revert_needed">前回セッションの設定がまだ適用中の可能性があります。ゲーミングモードをオフにして復元してください。</string>
     <string name="gt_gm_error_session_open">このセッションの一部がまだ適用中の可能性があります。電源ボタンで元に戻してください。</string>
 </resources>

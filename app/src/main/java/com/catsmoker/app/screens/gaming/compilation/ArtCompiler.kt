@@ -5,10 +5,10 @@ import android.content.SharedPreferences
 import android.content.pm.ApplicationInfo
 import android.content.pm.PackageManager
 import android.os.Build
+import android.util.Log
 import androidx.core.content.edit
 import com.catsmoker.app.R
 import com.catsmoker.app.platform.shell.ShellRunner
-import java.util.concurrent.TimeUnit
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -124,7 +124,8 @@ internal class ArtCompiler(
                 fail(BoosterOutcome.Unavailable(reason), context.getString(R.string.gt_eng_booster_unavail, reason))
                 return
             }
-            if (!shellRunner.hasPrivilege()) {
+            val identity = shellRunner.preferredPrivilegedIdentity()
+            if (identity == null) {
                 val reason = context.getString(R.string.gt_eng_booster_no_priv)
                 fail(BoosterOutcome.Unavailable(reason), context.getString(R.string.gt_eng_booster_unavail, reason))
                 return
@@ -139,9 +140,8 @@ internal class ArtCompiler(
             addBoosterLog(context.getString(R.string.gt_eng_booster_found, apps.size))
             _boosterState.update { it.copy(totalCount = apps.size) }
 
-            val useRoot = shellRunner.isRootAvailable()
             addBoosterLog(
-                if (useRoot) context.getString(R.string.gt_eng_booster_root)
+                if (identity == ShellRunner.PrivilegedIdentity.ROOT) context.getString(R.string.gt_eng_booster_root)
                 else context.getString(R.string.gt_eng_booster_shizuku)
             )
 
@@ -209,7 +209,7 @@ internal class ArtCompiler(
 
                 _boosterState.update { it.copy(currentPackage = pkg) }
                 addBoosterLog(context.getString(R.string.gt_eng_booster_working, pkg))
-                val outcome = runCompileCommand(mode, force, pkg, useRoot)
+                val outcome = runCompileCommand(mode, force, pkg, identity)
 
                 // A cancel that landed mid-compile: the partial result is not a failure of this app.
                 if (boosterCancelRequested.get()) return
@@ -229,6 +229,13 @@ internal class ArtCompiler(
                 } else {
                     addBoosterLog(context.getString(R.string.gt_eng_booster_fail, pkg, outcome.detail))
                     _boosterState.update { it.copy(currentPackage = null, failedCount = it.failedCount + 1) }
+                    if (outcome.stopSweep) {
+                        fail(
+                            BoosterOutcome.Failed(outcome.detail),
+                            context.getString(R.string.gt_eng_booster_failed, outcome.detail)
+                        )
+                        return
+                    }
                 }
             }
 
@@ -255,7 +262,8 @@ internal class ArtCompiler(
             markBoosterCancelled()
             throw e
         } catch (e: Exception) {
-            val reason = e.message ?: e.javaClass.simpleName
+            Log.w(TAG, "App compilation stopped", e)
+            val reason = e.message?.lineSequence()?.firstOrNull()?.take(180) ?: e.javaClass.simpleName
             fail(
                 BoosterOutcome.Failed(reason),
                 context.getString(R.string.gt_eng_booster_failed, reason)
@@ -293,7 +301,8 @@ internal class ArtCompiler(
             _boosterState.value = BoosterState(isRunning = true, outcome = BoosterOutcome.Running)
             addBoosterLog(context.getString(R.string.gt_eng_booster_working, pkg))
 
-            if (!shellRunner.hasPrivilege()) {
+            val identity = shellRunner.preferredPrivilegedIdentity()
+            if (identity == null) {
                 val reason = context.getString(R.string.gt_eng_booster_no_priv)
                 _boosterState.value = BoosterState(isRunning = false, outcome = BoosterOutcome.Unavailable(reason))
                 return SingleCompileResult(pkg, false, false, null, reason)
@@ -306,7 +315,7 @@ internal class ArtCompiler(
                 return SingleCompileResult(pkg, true, true, status, "")
             }
 
-            val outcome = runCompileCommand("speed-profile", false, pkg, shellRunner.isRootAvailable())
+            val outcome = runCompileCommand("speed-profile", false, pkg, identity)
             if (boosterCancelRequested.get()) {
                 markBoosterCancelled()
                 return SingleCompileResult(
@@ -321,6 +330,9 @@ internal class ArtCompiler(
             }
             recordBoosterRun(if (outcome.succeeded) "completed" else "failed")
             return SingleCompileResult(pkg, outcome.succeeded, false, status, outcome.detail)
+        } catch (e: CancellationException) {
+            markBoosterCancelled()
+            throw e
         } finally {
             if (boosterCancelRequested.get()) markBoosterCancelled()
             currentCompileProcess?.destroy()
@@ -456,86 +468,45 @@ internal class ArtCompiler(
         }
     }.getOrNull()
     /** What `cmd package compile` actually reported for one package. */
-    private data class CompileOutcome(val succeeded: Boolean, val detail: String)
+    private data class CompileOutcome(val succeeded: Boolean, val detail: String, val stopSweep: Boolean = false)
 
-    private fun shellCommandForSu(args: List<String>): String =
-        args.joinToString(" ") { arg ->
-            if (arg.isEmpty()) "''" else "'" + arg.replace("'", "'\\''") + "'"
-        }
-
-    /**
-     * Compiles one package and reports what the platform said about it.
-     *
-     * The root path spawns `su` directly instead of going through [ShellRunner] because cancelling
-     * has to be able to `destroy()` this exact process: both libsu and the Shizuku binder call
-     * block until the compile returns, and a dexopt of a large app is not quick.
-     */
     private suspend fun runCompileCommand(
         mode: String,
         force: Boolean,
         pkg: String,
-        useRoot: Boolean
-    ): CompileOutcome = withContext(Dispatchers.IO) {
+        identity: ShellRunner.PrivilegedIdentity
+    ): CompileOutcome {
         val args = buildList {
             add("cmd"); add("package"); add("compile"); add("-m"); add(mode)
             if (force) add("-f")
             add(pkg)
-        }
-        if (!useRoot) {
-            val result = shellRunner.execSafeResult(*args.toTypedArray())
-            return@withContext classifyCompileOutput(result.exitCode, result.text)
-        }
-        try {
-            val process = ProcessBuilder("su", "-c", shellCommandForSu(args))
-                .redirectErrorStream(true)
-                .start()
-            currentCompileProcess = process
-            val output = StringBuilder()
-            val reader = Thread {
-                try {
-                    process.inputStream.bufferedReader().use { reader ->
-                        output.append(reader.readText())
-                    }
-                } catch (_: Exception) {
-                }
-            }.apply { isDaemon = true; start() }
-            val exit = try {
-                if (!process.waitFor(COMPILE_TIMEOUT_SECONDS, TimeUnit.SECONDS)) {
-                    process.destroyForcibly()
-                    runCatching { process.inputStream.close() }
-                    runCatching { process.errorStream.close() }
-                    -1
-                } else {
-                    process.exitValue()
-                }
-            } finally {
-                reader.join(1_000)
-                runCatching { process.inputStream.close() }
-                runCatching { process.errorStream.close() }
-                runCatching { process.outputStream.close() }
-                currentCompileProcess = null
+        }.toTypedArray()
+        val rootResult = if (identity == ShellRunner.PrivilegedIdentity.ROOT) {
+            shellRunner.execCancellableRootSafeResult(*args, timeoutSeconds = COMPILE_TIMEOUT_SECONDS) { process ->
+                currentCompileProcess = process
+                if (boosterCancelRequested.get()) process?.destroy()
             }
-            classifyCompileOutput(exit, output.toString())
-        } catch (e: Exception) {
-            currentCompileProcess = null
-            CompileOutcome(false, e.message ?: e.javaClass.simpleName)
+        } else null
+        val result = rootResult ?: shellRunner.execPrivilegedSafeResult(*args, identity = identity)
+        if (result == null) {
+            return CompileOutcome(false, context.getString(R.string.gt_eng_booster_access_lost), stopSweep = true)
         }
-    }
-
-    /**
-     * Decides whether one compile was accepted, from the exit code and the shell's own words.
-     *
-     * `cmd package compile` prints its verdict — `Success`, or a `Failure`/`Error:` line — and some
-     * builds still exit 0 after refusing, so both signals are read. A silent exit 0 is taken at
-     * face value; inventing a failure there would be as wrong as inventing a success.
-     */
-    private fun classifyCompileOutput(exitCode: Int, output: String): CompileOutcome {
-        val text = output.trim()
-        val lower = text.lowercase(java.util.Locale.US)
-        return when {
-            exitCode != 0 -> CompileOutcome(false, text.ifBlank { context.getString(R.string.gt_eng_booster_exit, exitCode) })
-            lower.startsWith("failure") || lower.contains("error:") -> CompileOutcome(false, text)
-            else -> CompileOutcome(true, text.takeUnless { it.equals("Success", ignoreCase = true) }.orEmpty())
+        val verdict = classifyCompileOutput(result.exitCode, result.stdout, result.stderr)
+        if (verdict.status != CompileCommandStatus.ACCEPTED) {
+            Log.w(TAG, "ART compile failed for $pkg (${result.exitCode}):\n${result.stdout}\n${result.stderr}")
+        }
+        if (result.exitCode < 0 && verdict.status != CompileCommandStatus.PERMISSION_DENIED) {
+            return CompileOutcome(false, context.getString(R.string.gt_eng_booster_access_lost), stopSweep = true)
+        }
+        return when (verdict.status) {
+            CompileCommandStatus.ACCEPTED -> CompileOutcome(true, verdict.detail)
+            CompileCommandStatus.REFUSED -> CompileOutcome(
+                false,
+                verdict.detail.ifBlank { context.getString(R.string.gt_eng_booster_exit, result.exitCode) }
+            )
+            CompileCommandStatus.PERMISSION_DENIED -> CompileOutcome(
+                false, context.getString(R.string.gt_eng_booster_denied), stopSweep = true
+            )
         }
     }
 
@@ -608,5 +579,8 @@ internal class ArtCompiler(
 
     private suspend fun execute(command: String): String = shellRunner.exec(command)
 
-    private companion object { const val COMPILE_TIMEOUT_SECONDS = 60L }
+    private companion object {
+        const val TAG = "ArtCompiler"
+        const val COMPILE_TIMEOUT_SECONDS = 60L
+    }
 }

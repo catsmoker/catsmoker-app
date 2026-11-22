@@ -61,7 +61,7 @@
     <string name="booster_status_compiling">جارٍ العمل على %1$d من %2$d: %3$s</string>
     <string name="booster_status_done">تم: %1$d محسّنة، %2$d كانت جاهزة، تعذّر إنجاز %3$d.</string>
     <string name="booster_status_cancelled">توقف بعد %1$d تطبيقات.</string>
-    <string name="booster_status_failed">تعذّر البدء: %1$s</string>
+    <string name="booster_status_failed">توقّف التجميع: %1$s</string>
     <string name="booster_scheduled_title">تعزيز مجدول للتطبيقات</string>
     <string name="booster_scheduled_skipped">لم يعمل: %1$s</string>
     <string name="dash_live_performance">قياس الأداء المباشر</string>

@@ -303,10 +303,11 @@ imports and is unit-tested under `app/src/test` (both variants) plus
 ## Key components
 
 ### `ShellRunner` (`platform/shell/ShellRunner.kt`)
-The single choke point for privileged work. It routes a command through
-whatever channel is available — `su` (libsu), the Shizuku binder, or a
-plain `/system/bin/sh` — and caches which channel works. Everything else
-calls `exec`/`execSafe` rather than spawning processes itself.
+The single choke point for privileged work. It prefers libsu, then the
+Shizuku user service or one-shot remote process. Commands that can legitimately
+run unprivileged may fall back to the app UID; Gaming Mode's app changes and
+App Compilation use the privileged-only entry point. Shizuku's one-shot wait is performed by
+the server to avoid app-side polling of `exitValue()` over Binder.
 
 ### `CatsmokerApp` + `MainActivity`
 Application entry point and Compose host. A Hilt module provides
@@ -316,6 +317,10 @@ Application entry point and Compose host. A Hilt module provides
 - `MetricsEngine` (`telemetry/`) — home/overlay data (see `METRICS_ENGINE.md`).
 - `GamingEngine` (`screens/gaming/mode/`) — Gaming Mode + session + device levers
   (see `GAMING_MODE.md`).
+- `GamingAppChanges` (`screens/gaming/mode/`) — suspension and background app-op
+  journal, written before changes and recovered on process start or device boot.
+  `SuspensionRescue` is the manual Advanced fallback for selected packages with
+  no journal entry. It checks live ownership and uses the same engine lock.
 - `ArtCompiler` (`screens/gaming/compilation/`) — the ART dexopt sweep. It shares
   the engine's scope, prefs, shell and consent check, and `GamingEngine`'s
   `runArtOptimization`/`cancelArtOptimization` delegate to it, so the manual card

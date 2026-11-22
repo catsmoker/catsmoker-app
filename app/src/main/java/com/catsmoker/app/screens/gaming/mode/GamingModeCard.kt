@@ -27,6 +27,7 @@ import com.catsmoker.app.screens.gaming.mode.GamingModeReport
 import com.catsmoker.app.screens.gaming.mode.GamingModeRestoreResult
 import com.catsmoker.app.screens.gaming.mode.GamingModeState
 import com.catsmoker.app.ui.components.CatsmokerButton
+import com.catsmoker.app.ui.components.CatsmokerOutlinedButton
 import com.catsmoker.app.ui.components.InfoButton
 import com.catsmoker.app.ui.components.SectionCard
 
@@ -67,6 +68,7 @@ fun GamingModeCard(
     isRestoringApps: Boolean,
     restoreResult: GamingModeRestoreResult?,
     onRestoreApps: () -> Unit,
+    onOpenSuspensionRescue: () -> Unit,
     onActivate: () -> Unit,
     onDeactivate: () -> Unit,
     // Automatic Gaming Mode lives inside this card: it arms the same engine, so a separate
@@ -348,6 +350,14 @@ fun GamingModeCard(
                     onAdd = onAddExtraSuspend,
                     onRemove = onRemoveExtraSuspend
                 )
+
+                CatsmokerOutlinedButton(
+                    modifier = Modifier.fillMaxWidth(),
+                    enabled = !isActive && !isBusy && !isRestoringApps,
+                    onClick = onOpenSuspensionRescue
+                ) {
+                    Text(stringResource(R.string.gt_gm_rescue_title))
+                }
             }
 
             if (isActive) {

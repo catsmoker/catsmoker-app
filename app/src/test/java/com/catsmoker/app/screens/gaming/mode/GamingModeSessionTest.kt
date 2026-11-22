@@ -21,7 +21,7 @@ class GamingModeSessionTest {
             bootCountAtStart = 0,
             currentBootCount = 12,
             recorded = emptySet(),
-            suspendedNow = emptySet(),
+            suspensionStates = emptyMap(),
             appOpsRecorded = emptySet()
         )
         assertFalse(verdict.keepSession)
@@ -37,7 +37,7 @@ class GamingModeSessionTest {
             bootCountAtStart = 12,
             currentBootCount = 12,
             recorded = emptySet(),
-            suspendedNow = emptySet(),
+            suspensionStates = emptyMap(),
             appOpsRecorded = emptySet()
         )
         // Settings may still be applied, so the power button must revert rather than start again.
@@ -53,7 +53,7 @@ class GamingModeSessionTest {
             bootCountAtStart = 12,
             currentBootCount = 13,
             recorded = setOf("com.frozen"),
-            suspendedNow = setOf("com.frozen"),
+            suspensionStates = mapOf("com.frozen" to true),
             appOpsRecorded = emptySet()
         )
         // The reboot reset the settings; it did not wake the suspended package.
@@ -71,7 +71,7 @@ class GamingModeSessionTest {
             bootCountAtStart = 12,
             currentBootCount = 13,
             recorded = setOf("com.awake"),
-            suspendedNow = emptySet(),
+            suspensionStates = mapOf("com.awake" to false),
             appOpsRecorded = emptySet()
         )
         assertFalse(verdict.keepSession)
@@ -86,7 +86,7 @@ class GamingModeSessionTest {
             bootCountAtStart = 12,
             currentBootCount = 12,
             recorded = setOf("com.maybe.frozen"),
-            suspendedNow = null,
+            suspensionStates = emptyMap(),
             appOpsRecorded = emptySet()
         )
         // Unknown is not empty: the record stays as evidence, and the UI says it is unverified.
@@ -102,7 +102,7 @@ class GamingModeSessionTest {
             bootCountAtStart = 0,
             currentBootCount = 20,
             recorded = setOf("com.awake", "com.frozen"),
-            suspendedNow = setOf("com.frozen"),
+            suspensionStates = mapOf("com.frozen" to true, "com.awake" to false, "com.unrelated" to true),
             appOpsRecorded = emptySet()
         )
         assertEquals(listOf("com.frozen"), verdict.pendingPackages)
@@ -116,7 +116,7 @@ class GamingModeSessionTest {
             bootCountAtStart = 12,
             currentBootCount = 12,
             recorded = emptySet(),
-            suspendedNow = emptySet(),
+            suspensionStates = emptyMap(),
             appOpsRecorded = setOf("com.restricted")
         )
         assertTrue(verdict.keepSession)
@@ -133,7 +133,7 @@ class GamingModeSessionTest {
             bootCountAtStart = 0,
             currentBootCount = 12,
             recorded = emptySet(),
-            suspendedNow = emptySet(),
+            suspensionStates = emptyMap(),
             appOpsRecorded = emptySet()
         )
         assertFalse(verdict.rebootedSinceStart)
@@ -147,10 +147,25 @@ class GamingModeSessionTest {
             bootCountAtStart = 0,
             currentBootCount = 1,
             recorded = setOf("com.c", "com.a", "com.b"),
-            suspendedNow = null,
+            suspensionStates = emptyMap(),
             appOpsRecorded = setOf("com.z", "com.y")
         )
         assertEquals(listOf("com.a", "com.b", "com.c"), verdict.pendingPackages)
         assertEquals(listOf("com.y", "com.z"), verdict.pendingAppOps)
+    }
+
+    @Test
+    fun partialDumpCannotDiscardJournalEntriesThatAreMissingFromIt() {
+        val verdict = GamingModeSession.reconcile(
+            sessionOpen = false,
+            bootCountAtStart = 12,
+            currentBootCount = 13,
+            recorded = setOf("com.awake", "com.missing"),
+            suspensionStates = mapOf("com.awake" to false),
+            appOpsRecorded = emptySet()
+        )
+        assertEquals(listOf("com.missing"), verdict.pendingPackages)
+        assertFalse(verdict.verified)
+        assertTrue(verdict.keepSession)
     }
 }

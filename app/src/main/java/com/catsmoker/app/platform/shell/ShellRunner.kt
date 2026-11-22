@@ -32,6 +32,7 @@ import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
 import rikka.shizuku.Shizuku
+import rikka.shizuku.ShizukuRemoteProcess
 
 /**
  * Single entry point for privileged execution. Prefers root, then Shizuku (an already-bound
@@ -57,6 +58,11 @@ class ShellRunner @Inject constructor(
         companion object {
             val FAILED = ExecResult(-1, "", "")
         }
+    }
+
+    /** Android attributes package suspensions to the caller (root and shell are separate owners). */
+    internal enum class PrivilegedIdentity(val uid: Int) {
+        ROOT(0), SHELL(2000)
     }
 
     private val _shizukuHasPermission = MutableStateFlow(false)
@@ -362,38 +368,7 @@ class ShellRunner @Inject constructor(
      */
     suspend fun execResult(command: String, redactCommand: Boolean = false): ExecResult = withContext(Dispatchers.IO) {
         val diagnosticCommand = if (redactCommand) "<redacted>" else command
-        if (isRootAvailable()) {
-            val result = runCatching { Shell.cmd(command).exec() }.getOrNull()
-            if (result != null) {
-                if (!result.isSuccess) Log.w(TAG, "Root exec failed (exit ${result.code}): $diagnosticCommand")
-                // Root is the highest privilege we have; retrying with less cannot help.
-                return@withContext ExecResult(
-                    result.code,
-                    result.out.joinToString("\n"),
-                    result.err.joinToString("\n")
-                )
-            }
-        }
-
-        bindUserService()?.let { service ->
-            try {
-                val remote = service.executeForResult(arrayOf("sh", "-c", command))
-                return@withContext ExecResult(
-                    exitCode = remote.exitCode,
-                    stdout = remote.output.orEmpty(),
-                    stderr = remote.error.orEmpty()
-                )
-            } catch (t: Throwable) {
-                Log.w(TAG, "Shizuku service exec failed, dropping proxy", t)
-                fileService = null
-            }
-        }
-
-        // No bound user service. The reference's own channel needs none: BattleGrounds_GFX
-        // (reference/gamingtools/BattleGrounds_GFX-main MainActivity2/3 executeShellCommand)
-        // forks every command through Shizuku's one-shot remote process — shell UID, no
-        // helper to bind, so a helper that refuses to start cannot take the command down.
-        execShizukuRemote(command)?.let { return@withContext it }
+        execPrivileged(command, diagnosticCommand)?.let { return@withContext it }
 
         val result = runCatching { Shell.cmd(command).exec() }.getOrNull()
             ?: return@withContext ExecResult.FAILED
@@ -403,6 +378,118 @@ class ShellRunner @Inject constructor(
         ExecResult(result.code, result.out.joinToString("\n"), result.err.joinToString("\n"))
     }
 
+    internal suspend fun preferredPrivilegedIdentity(): PrivilegedIdentity? = withContext(Dispatchers.IO) {
+        if (rootShellOrNull() != null) PrivilegedIdentity.ROOT else shizukuIdentity()
+    }
+
+    /** A missing privilege channel is not permission to replay the command as the app UID. */
+    internal suspend fun execPrivilegedSafeResult(
+        vararg args: String,
+        identity: PrivilegedIdentity? = null
+    ): ExecResult? = execPrivilegedResult(joinArgs(args), identity)
+
+    internal suspend fun execPrivilegedResult(
+        command: String,
+        identity: PrivilegedIdentity? = null
+    ): ExecResult? = withContext(Dispatchers.IO) { execPrivileged(command, command, identity) }
+
+    /** Some Android operations are caller-owned, so UID 0 cannot stand in for the Shell UID. */
+    internal suspend fun execAsShellViaRoot(vararg args: String): ExecResult? {
+        val uid = PrivilegedIdentity.SHELL.uid
+        val script = """[ "${'$'}(id -u)" = $uid ] || exit 126; exec ${joinArgs(args)}"""
+        // Use su's positional UID and stdin: its -c/UID argument order differs across managers.
+        val input = joinArgs(arrayOf("printf", "%s\\n", script))
+        return execPrivilegedResult("$input | su $uid", identity = PrivilegedIdentity.ROOT)
+    }
+
+    /** Long-running root work can keep a handle to its own process instead of stopping libsu. */
+    internal suspend fun execCancellableRootSafeResult(
+        vararg args: String,
+        timeoutSeconds: Long,
+        onProcessChanged: (Process?) -> Unit
+    ): ExecResult? = withContext(Dispatchers.IO) {
+        if (rootShellOrNull() == null) return@withContext null
+        val process = try {
+            ProcessBuilder("su", "-c", joinArgs(args)).redirectErrorStream(true).start()
+        } catch (e: Exception) {
+            Log.w(TAG, "Root process could not start", e)
+            return@withContext null
+        }
+        var finished = false
+        try {
+            onProcessChanged(process)
+            var output: String? = null
+            val reader = Thread {
+                output = runCatching { process.inputStream.bufferedReader().use { it.readText() } }.getOrNull()
+            }.apply { isDaemon = true; start() }
+            finished = process.waitFor(timeoutSeconds, TimeUnit.SECONDS)
+            if (!finished) return@withContext ExecResult.FAILED
+            reader.join(DRAIN_JOIN_MILLIS)
+            if (reader.isAlive) return@withContext ExecResult.FAILED
+            ExecResult(process.exitValue(), output ?: return@withContext ExecResult.FAILED, "")
+        } catch (e: Exception) {
+            Log.w(TAG, "Root process lost its result", e)
+            ExecResult.FAILED
+        } finally {
+            if (!finished) runCatching { process.destroyForcibly() }
+            runCatching { process.inputStream.close() }
+            runCatching { process.errorStream.close() }
+            runCatching { process.outputStream.close() }
+            onProcessChanged(null)
+        }
+    }
+
+    private fun rootShellOrNull(): Shell? =
+        if (isRootAvailable()) runCatching { Shell.getShell().takeIf { it.isRoot } }.getOrNull() else null
+
+    private fun shizukuIdentity(): PrivilegedIdentity? = runCatching {
+        if (!Shizuku.pingBinder() || Shizuku.checkSelfPermission() != PackageManager.PERMISSION_GRANTED) {
+            null
+        } else {
+            val uid = Shizuku.getUid()
+            PrivilegedIdentity.entries.firstOrNull { it.uid == uid }
+        }
+    }.getOrNull()
+
+    private suspend fun execPrivileged(
+        command: String,
+        diagnosticCommand: String,
+        identity: PrivilegedIdentity? = null
+    ): ExecResult? {
+        if (identity != PrivilegedIdentity.SHELL) {
+            rootShellOrNull()?.let { shell ->
+                val result = runCatching { shell.newJob().add(command).exec() }.getOrNull()
+                    ?: return ExecResult.FAILED
+                if (!result.isSuccess) Log.w(TAG, "Root exec failed (exit ${result.code}): $diagnosticCommand")
+                return ExecResult(result.code, result.out.joinToString("\n"), result.err.joinToString("\n"))
+            }
+        }
+        val shizuku = shizukuIdentity() ?: return null
+        if (identity != null && shizuku != identity) return null
+        bindUserService()?.let { service ->
+            if (shizukuIdentity() == shizuku) {
+                try {
+                    val remote = service.executeForResult(arrayOf("sh", "-c", command))
+                    return ExecResult(
+                        exitCode = remote.exitCode,
+                        stdout = remote.output.orEmpty(),
+                        stderr = remote.error.orEmpty()
+                    )
+                } catch (t: Throwable) {
+                    Log.w(TAG, "Shizuku service exec failed, dropping proxy", t)
+                    fileService = null
+                    // A strict caller may already have made a change. Leave it to the caller to
+                    // read that change back rather than forking the same command again.
+                    if (identity != null) return ExecResult.FAILED
+                }
+            }
+        }
+
+        // The one-shot process does not need the helper. Recheck the UID in case Shizuku was
+        // restarted in a different mode while binding.
+        return if (shizukuIdentity() == shizuku) execShizukuRemote(command) else null
+    }
+
     /**
      * One-shot command in Shizuku's own process (shell UID) via the private `Shizuku.newProcess`
      * — the same reflective call BattleGrounds_GFX uses, fed [stdin] before stdout is read.
@@ -410,13 +497,14 @@ class ShellRunner @Inject constructor(
      * bind handshake, no daemonized helper to go stale, which is exactly why it works where
      * [bindUserService] reports "helper could not be started" (a version-gated or wedged
      * helper leaves this channel fully alive). Both pipes are drained concurrently and the
-     * wait is bounded — a wedged remote process must not hold a binder thread, the same rule
-     * FileService's KDoc states for its service. Binary-safe for [readFileDirect]: the
-     * trimmed stdout travels back as ISO-8859-1, a byte-for-byte mapping, so a save's GVAS
-     * bytes are not mangled by any text decode. Null when the binder is gone, the permission
-     * is missing, or the call itself fails.
+     * wait is bounded. A missing channel returns null; failure after launch is a failed result,
+     * since a command that Android already ran must not be tried again as the app UID.
      */
-    private fun execShizukuRemoteRaw(command: String, stdin: ByteArray): ExecResult? {
+    private fun execShizukuRemoteRaw(
+        command: String,
+        stdin: ByteArray,
+        preserveStdoutBytes: Boolean = false
+    ): ExecResult? {
         if (!Shizuku.pingBinder()) return null
         if (runCatching { Shizuku.checkSelfPermission() }.getOrNull() != PackageManager.PERMISSION_GRANTED) return null
         val newProcess: Method = runCatching {
@@ -425,41 +513,57 @@ class ShellRunner @Inject constructor(
             ).apply { isAccessible = true }
         }.getOrNull() ?: return null
 
+        val process = try {
+            newProcess.invoke(null, arrayOf("sh", "-c", command), null, null)
+                as? ShizukuRemoteProcess ?: return null
+        } catch (e: Exception) {
+            Log.w(TAG, "Shizuku could not start a remote process", e)
+            return null
+        }
+
+        var finished = false
         return try {
-            val process = newProcess.invoke(null, arrayOf("sh", "-c", command), null, null)
-                as? Process ?: return null
             // Both pipes must be drained concurrently; reading stdout/stderr to EOF in one
-            // thread can deadlock the moment either pipe fills its 64 KB buffer. The wait is
-            // also bounded: a wedged remote command must never keep the binder thread alive.
-            val stdout = StringBuilder()
-            val stderr = StringBuilder()
+            // thread can deadlock the moment either pipe fills its buffer.
+            var stdout: String? = null
+            var stderr: String? = null
+            val stdoutStream = process.inputStream
+            val stderrStream = process.errorStream
+            val stdoutCharset = if (preserveStdoutBytes) Charsets.ISO_8859_1 else Charsets.UTF_8
             val stdoutDrainer = Thread {
-                runCatching { process.inputStream.bufferedReader().readText() }
-                    .onSuccess { stdout.append(it) }
+                stdout = runCatching { stdoutStream.bufferedReader(stdoutCharset).use { it.readText() } }.getOrNull()
             }.apply { isDaemon = true; start() }
             val errDrainer = Thread {
-                runCatching { process.errorStream.bufferedReader().readText() }
-                    .onSuccess { stderr.append(it) }
+                stderr = runCatching { stderrStream.bufferedReader().use { it.readText() } }.getOrNull()
             }.apply { isDaemon = true; start() }
+
             try {
-                process.outputStream.use { it.write(stdin) }
-            } catch (_: Exception) {
+                val inputWritten = runCatching { process.outputStream.use { it.write(stdin) } }.isSuccess
+                if (!inputWritten && stdin.isNotEmpty()) return ExecResult.FAILED
+                // Process.waitFor(timeout) polls exitValue() on the app side. The Binder proxy
+                // turns "not exited yet" into IllegalArgumentException, which that poll does not catch.
+                // Shizuku's own timed wait polls on the server, where the exception keeps its type.
+                finished = process.waitForTimeout(REMOTE_COMMAND_TIMEOUT_SECONDS, TimeUnit.SECONDS)
+                if (!finished) return ExecResult.FAILED
+                stdoutDrainer.join(DRAIN_JOIN_MILLIS)
+                errDrainer.join(DRAIN_JOIN_MILLIS)
+                if (stdoutDrainer.isAlive || errDrainer.isAlive) return ExecResult.FAILED
+                ExecResult(
+                    process.exitValue(),
+                    stdout?.let { if (preserveStdoutBytes) it else it.trimEnd('\n') } ?: return ExecResult.FAILED,
+                    stderr?.trimEnd('\n') ?: return ExecResult.FAILED
+                )
+            } finally {
+                runCatching { stdoutStream.close() }
+                runCatching { stderrStream.close() }
             }
-            val finished = process.waitFor(REMOTE_COMMAND_TIMEOUT_SECONDS, TimeUnit.SECONDS)
-            if (!finished) {
-                process.destroy()
-                if (process.isAlive) process.destroyForcibly()
-            }
-            stdoutDrainer.join(DRAIN_JOIN_MILLIS)
-            errDrainer.join(DRAIN_JOIN_MILLIS)
-            val exitCode = if (finished) process.exitValue() else -1
-            if (exitCode != 0) {
-                Log.w(TAG, "Shizuku remote exec exit $exitCode: ${stderr.toString().ifBlank { "no stderr" }}")
-            }
-            ExecResult(exitCode, stdout.toString().trimEnd('\n'), stderr.toString().trimEnd('\n'))
-        } catch (t: Throwable) {
-            Log.w(TAG, "Shizuku remote exec threw", t)
-            null
+        } catch (e: Exception) {
+            // The command may already have taken effect; a lost response must not replay it
+            // under another UID or be treated as a successful read.
+            Log.w(TAG, "Shizuku remote exec lost its result", e)
+            ExecResult.FAILED
+        } finally {
+            if (!finished) runCatching { process.destroy() }
         }
     }
 
@@ -471,11 +575,8 @@ class ShellRunner @Inject constructor(
 
     /**
      * Reads [path] as bytes through Shizuku. The user service is first — one binder call, no
-     * fork; the remote-shell channel is the fallback when the helper cannot start. Binary-safe
-     * by construction: the service returns the file's own bytes, and the remote channel pipes
-     * them through stdin (not a shell variable or a text pipe that mangles non-UTF8), which is
-     * why a save's GVAS bytes survive `cat > stage` + `cp` untouched — the same move
-     * BattleGrounds_GFX makes with its whole-save template push.
+     * fork; the remote-shell fallback maps each stdout byte through ISO-8859-1 without trimming,
+     * so non-UTF-8 bytes and trailing newlines survive.
      *
      * Three outcomes, kept distinct for the caller:
      * - non-null, non-empty — the file's bytes;
@@ -490,13 +591,13 @@ class ShellRunner @Inject constructor(
     suspend fun readFileDirect(path: String, forceBind: Boolean = false): ByteArray? = withContext(Dispatchers.IO) {
         if (forceBind) bindBlockedUntil = 0L
         runCatching { bindUserService()?.readFile(path) }.getOrNull()
-            ?: execShizukuRemoteRaw("cat ${joinArgs(arrayOf(path))}", ByteArray(0))?.let { result ->
-                if (result.isSuccess) {
-                    result.stdout.toByteArray(Charsets.ISO_8859_1)
-                } else {
+            ?: execShizukuRemoteRaw("cat ${joinArgs(arrayOf(path))}", ByteArray(0), preserveStdoutBytes = true)?.let { result ->
+                when {
+                    result.isSuccess -> result.stdout.toByteArray(Charsets.ISO_8859_1)
+                    result.exitCode < 0 -> null
                     // The channel ran and the read failed — a missing (or unreadable) file,
                     // not a dead channel. Empty is the caller's "nothing there" signal.
-                    ByteArray(0)
+                    else -> ByteArray(0)
                 }
             }
     }

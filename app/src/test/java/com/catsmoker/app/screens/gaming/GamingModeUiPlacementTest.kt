@@ -227,6 +227,19 @@ class GamingModeUiPlacementTest {
     }
 
     @Test
+    fun unrecordedSuspensionRecoveryIsBehindAdvancedAndOpensASeparatePicker() {
+        val advancedBody = card.substringAfter("GamingModeAdvancedSection(", "").substringBefore("if (isActive)")
+        assertTrue(advancedBody.contains("onClick = onOpenSuspensionRescue"))
+        assertTrue(advancedBody.contains("R.string.gt_gm_rescue_title"))
+        assertFalse(card.substringBefore("GamingModeAdvancedSection(").contains("R.string.gt_gm_rescue_title"))
+        assertTrue(screen.contains("onOpenSuspensionRescue = viewModel::openSuspensionRescue"))
+        assertTrue(screen.contains("onRestore = viewModel::restoreSelectedSuspensions"))
+        val dialog = source("mode/SuspensionRescueDialog.kt")
+        assertTrue(dialog.contains("mutableStateOf(emptySet<String>())"))
+        assertTrue(dialog.contains("enabled = selected.isNotEmpty(), onClick = { onRestore(selected) }"))
+    }
+
+    @Test
     fun interruptedSessionIsNotReportedAsReadyOrActive() {
         assertTrue(card.contains("GamingModeState.Checking"))
         assertTrue(card.contains("GamingModeState.Interrupted"))

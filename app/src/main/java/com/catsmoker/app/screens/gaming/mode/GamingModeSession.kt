@@ -12,8 +12,8 @@ package com.catsmoker.app.screens.gaming.mode
  * flag was written produced the opposite lie (apps suspended, UI idle, flag false).
  *
  * This reconciliation starts from what the device can actually be asked:
- *  - the package manager's per-package suspension list (suspendedNow, null when unreadable);
- *  - the persisted record of what this app suspended;
+ *  - the package manager's per-package suspension states (missing when unreadable);
+ *  - the persisted record of suspend commands this app may have applied;
  *  - the boot count, which tells whether the settings levers could even have survived.
  *
  * Pure so the decision table is pinned by a JVM test rather than only by device runs.
@@ -25,11 +25,9 @@ object GamingModeSession {
      *   still be applied, or something it wrote has not been verified back.
      * @param rebootedSinceStart true when the session began before the current boot, so the
      *   settings it applied were reset by the reboot.
-     * @param pendingPackages recorded packages that are still suspended, or every recorded package
-     *   when the device could not answer.
+     * @param pendingPackages recorded packages not confirmed awake by the device.
      * @param pendingAppOps packages whose `RUN_IN_BACKGROUND` app-op is still recorded as changed.
-     * @param verified false when suspendedNow was unreadable; the pending list is then the
-     *   record alone, not live evidence.
+     * @param verified false when any recorded package's state was unreadable.
      */
     data class Verdict(
         val keepSession: Boolean,
@@ -47,8 +45,7 @@ object GamingModeSession {
      * @param bootCountAtStart boot count recorded at activation, or 0 when unknown.
      * @param currentBootCount this boot's count, or 0 when the platform would not report it.
      * @param recorded packages the session recorded as suspended.
-     * @param suspendedNow packages the package manager reports as suspended for this user, or
-     *   null when the query could not be run or parsed.
+     * @param suspensionStates per-package states for this user; missing entries are unknown.
      * @param appOpsRecorded packages whose background app-op the session changed.
      */
     fun reconcile(
@@ -56,7 +53,7 @@ object GamingModeSession {
         bootCountAtStart: Int,
         currentBootCount: Int,
         recorded: Set<String>,
-        suspendedNow: Set<String>?,
+        suspensionStates: Map<String, Boolean>,
         appOpsRecorded: Set<String>
     ): Verdict {
         // Unknown boot counts on either side are treated as "no reboot": reverting a snapshot on a
@@ -67,11 +64,7 @@ object GamingModeSession {
             currentBootCount > 0 &&
             bootCountAtStart != currentBootCount
 
-        val pendingPackages = when {
-            recorded.isEmpty() -> emptyList()
-            suspendedNow != null -> recorded.filter { it in suspendedNow }.sorted()
-            else -> recorded.sorted()
-        }
+        val pendingPackages = recorded.filter { suspensionStates[it] != false }.sorted()
 
         val settingsStillApplied = sessionOpen && !rebooted
         val pendingAppOps = appOpsRecorded.sorted()
@@ -80,7 +73,7 @@ object GamingModeSession {
             rebootedSinceStart = rebooted,
             pendingPackages = pendingPackages,
             pendingAppOps = pendingAppOps,
-            verified = suspendedNow != null
+            verified = recorded.all { it in suspensionStates }
         )
     }
 }

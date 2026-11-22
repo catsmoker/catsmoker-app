@@ -140,9 +140,8 @@ In order:
    keep list win. Both lists live inside the Gaming Mode card (the same sweep's
    second input, not a separate Background Apps feature), behind one collapsed
    **Advanced** disclosure that remembers whether it is open; the freeze list
-   marks each pick **selected** or **frozen now** from this session's verified
-   `pm suspend` results, so a configured app is never presented as an
-   already-frozen one.
+    marks a pick **frozen now** only with suspension evidence. Packages that were
+    already paused, or whose prior state could not be read, are left alone.
    Every package this sweep attempts additionally gets
    `cmd appops set <pkg> RUN_IN_BACKGROUND ignore`, its prior mode recorded
    first and restored by deactivation.
@@ -375,8 +374,10 @@ compile` dexopt:
 - Counts results from what the shell actually answered (compiled / skipped /
   failed), feeds a live progress bar, and supports cancellation that never
   overwrites a completed or cancelled outcome.
-- Uses `ProcessBuilder("su", ...)` directly for root so the in-flight
-  process can be `destroy()`ed on cancel (Shizuku binder calls block).
+- Uses `ShellRunner`'s cancellable root command or Shizuku. A lost privileged
+  channel never replays a compile under the normal app UID.
+- Treats Android's permission denial as a blocked run and stops the sweep. The
+  card shows what to try next; the full output stays in the logs.
 
 ## RAM Reclaim (UI toast prefix "RAM Reclaim:")
 
@@ -403,13 +404,14 @@ of packages it suspended. Deactivation can therefore:
 
 `is_active` is written at the **start** of activation (`beginSession()`), not at
 the end: a crash or a refused step can leave suspended apps and half-applied
-settings with no record otherwise. Activation also appends each confirmed
-package to `affected_pkgs` and each changed app-op to `appops_prior` as it goes,
-so the record describes what the device accepted, not what the code intended.
+settings with no record otherwise. `GamingAppChanges` commits each package to
+`affected_pkgs` and each prior app-op to `appops_prior` **before** its command.
+If the process dies or loses the reply, the undo target is still on disk.
+The confirmed-suspension count remains separate from the journal.
 
 On startup `GamingEngine` enters `Checking`, reads the record plus the package
-manager's own per-user `suspended=true` state (one `dumpsys package` call,
-parsed by `SuspendVerdict.parseDumpsysSuspended`), and asks
+manager's explicit `suspended=true/false` states for user 0 (one filtered
+`dumpsys package packages` call), and asks
 `GamingModeSession.reconcile` what the evidence means:
 
 - a live session keeps its record and is shown as **Interrupted** rather than
@@ -417,29 +419,47 @@ parsed by `SuspendVerdict.parseDumpsysSuspended`), and asks
   revert rather than start a second session;
 - after a reboot the settings are already stock, but suspensions survive, so
   only the app record is pending;
-- an unreadable package-manager answer is *unknown*, not empty: the record is
-  kept and labelled unverified;
+- omissions from an unreadable or partial package-manager answer are **unknown**:
+  only explicit evidence that a package is awake clears its entry;
 - a clean record with no leftovers closes the session and returns to `Idle`.
 
-**Restore apps** is the second, narrower action: it wakes only the packages the
-session recorded (`pm unsuspend` each, verified against the package manager)
-and restores their recorded `RUN_IN_BACKGROUND` modes, without writing the
-settings snapshot over values the system may have changed since a reboot. It is
+**Restore apps** is the second, narrower action: it issues `pm unsuspend` only
+for the packages in the journal, using the recorded Android caller (root or
+Shell) where available. Those identities own separate suspensions. It also
+restores recorded `RUN_IN_BACKGROUND` modes, without writing the settings
+snapshot over values the system may have changed since a reboot. It is
 hidden and refused while Gaming Mode is `Active`/`Enabling`/`Disabling`/
 `Checking`; its result is reported as restored / still-suspended / app-op
 counts, never as a bare success. A session whose settings still need reverting
 stays Interrupted until the power button runs the full revert.
 
-After `BOOT_COMPLETED`, a receiver queues one unique WorkManager job when either
-the suspended-package record or the changed-app-op record remains. The worker
+On app process start and after `BOOT_COMPLETED`, CatSmoker queues the same unique
+WorkManager job when either app-change record remains. The worker
 waits for startup reconciliation before restoring, so the engine cannot reject
 the attempt just because it is still checking the saved session. It does not
 rely on `is_active` or a readable boot count: interrupted sessions can have
 their active flag cleared, and a reboot may reset settings while leaving package
 suspensions behind. Failed attempts are retried a limited number of times;
 remaining records stay available to the in-app recovery card. Automatic restore
-uses the existing privileged shell path (root or Shizuku); if it is unavailable,
-the records remain for manual recovery.
+uses the existing authorized root or Shizuku connection; if it is unavailable,
+the records remain. Reconnect the same type of access used for the session and
+use **Gaming Tools → Gaming Mode → Restore apps** to retry. Clearing CatSmoker's
+data would discard its recovery record, not Android's suspensions.
+
+For a suspension with no journal entry, open **Gaming Tools → Gaming Mode →
+Advanced → Recover suspended apps**. The picker reads Android's live suspension
+state in the primary profile using existing inventory consent and Shizuku or
+root access. It shows unrecorded apps whose only reported suspension owners are
+Shell or root. Android does not distinguish CatSmoker from another tool using
+the same Shell identity, so nothing starts selected and only confirmed picks
+are restored. Unidentified owners, device policy and quarantine are left alone.
+
+Recovery rechecks the selected packages while Gaming Mode is stopped, uses the
+matching owner, and verifies whether each selected app is available again.
+For Shell suspensions it prefers Shizuku running as Shell; supported root
+managers can also run the targeted restore as Shell after verifying the UID.
+The picker does not invent missing background app-op values or write the
+device settings snapshot.
 
 ## Who runs a toggle, and the auto game session
 

@@ -127,7 +127,7 @@
     <string name="booster_status_compiling">%1$d / %2$d 処理中: %3$s</string>
     <string name="booster_status_done">完了: %1$d 改善, %2$d 既に最適, %3$d 失敗</string>
     <string name="booster_status_cancelled">%1$d アプリ処理後に停止</string>
-    <string name="booster_status_failed">開始できませんでした: %1$s</string>
+    <string name="booster_status_failed">コンパイルを停止しました: %1$s</string>
     <!-- Scheduled sweep. It runs while the app is closed, so the notification is the only surface
          a skipped run has — the reason is the engine's own refusal text, not a slogan. -->
     <string name="booster_scheduled_title">スケジュール アプリブースト</string>

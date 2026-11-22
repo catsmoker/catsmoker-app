@@ -5,8 +5,8 @@ package com.catsmoker.app.screens.gaming.apps
 /**
  * Serialization of Gaming Mode's `RUN_IN_BACKGROUND` prior-mode record (M42).
  *
- * Activation stores one `<pkg>=<mode>` entry per package whose background op it set, with the
- * mode read before the write; deactivation restores them and drops only what it verified back.
+ * Activation stores one `<pkg>=<mode>` entry before setting a package's background op, with the
+ * prior mode; deactivation restores them and drops only what it verified back.
  * Modes are the [AppOpsVerdict.KNOWN_MODES] words; a package name cannot contain `=`, and the
  * split is on the first one so a corrupt entry can never swallow another's mode.
  *

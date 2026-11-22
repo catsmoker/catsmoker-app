@@ -9,6 +9,7 @@ import com.catsmoker.app.application.appearance.LocaleHelper
 import com.catsmoker.app.application.privacy.AnalyticsConsent
 import com.catsmoker.app.integrations.ads.AdsInit
 import com.catsmoker.app.platform.shell.ShellRunner
+import com.catsmoker.app.screens.gaming.mode.BootRecoveryReceiver
 import com.catsmoker.app.screens.logs.CrashLogStore
 import com.catsmoker.app.telemetry.MetricsEngine
 import com.topjohnwu.superuser.Shell
@@ -99,6 +100,10 @@ class CatsmokerApp : Application(), Configuration.Provider {
         // deprecated. ShellRunner relies on the merge (result.err stays empty).
         Shell.enableLegacyStderrRedirection = true
         Shell.setDefaultBuilder(Shell.Builder.create().setTimeout(30))
+
+        applicationScope.launch(Dispatchers.IO) {
+            BootRecoveryReceiver.enqueueIfNeeded(this@CatsmokerApp)
+        }
     }
 
     /**

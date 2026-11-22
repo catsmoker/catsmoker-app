@@ -1270,3 +1270,24 @@ File Engineering now owns a stable launcher and saves the selected game and
 specific pending file tab, so returning from the picker does not drop or retarget
 the result. Scoped restores use the original URI or direct path in addition to
 game and basename. Keep unscoped backups on disk but do not assume their source.
+
+## 2026-11-21 - Preserve privileged command results and Gaming Mode undo records
+
+Use Shizuku's server-side timed wait for its remote process. Android can
+remarshal “process hasn't exited” as a different exception, which caused the
+app-side timed wait to discard a command that had already started. Compilation
+uses only an authorized channel and keeps detailed platform refusals in logs.
+
+Supersedes the post-write app-change recording and blind wake-up sweep:
+commit recovery entries before mutating a known baseline, keep them until
+explicit read-back, and recover only recorded packages with their original
+root or shell identity for new sessions. Queue the same app recovery on
+process relaunch and device boot; leave same-boot settings rollback separate.
+
+## 2026-11-21 - In-app recovery for suspensions without a record
+
+Put the recovery picker below the Gaming Mode app lists, inside **Advanced**.
+Read and recheck live suspension ownership rather than making users run shell
+commands. Restore only explicit selections owned by root or Shell; unknown,
+other-owner and quarantined apps are excluded. Automatic recovery still uses
+only CatSmoker's journal, and manual recovery never guesses missing app-op priors.
