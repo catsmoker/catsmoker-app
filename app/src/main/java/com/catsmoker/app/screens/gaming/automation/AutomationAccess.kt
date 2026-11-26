@@ -24,7 +24,7 @@ class AutomationAccess @Inject constructor(@ApplicationContext private val conte
     fun revoke() {
         prefs.edit { remove("token") }
         _enabled.value = false
-        context.getSystemService(android.app.NotificationManager::class.java).cancel(7431)
+        GameAutomationReceiver.cancelContinuation(context)
         // Token removal remains effective even if an OEM launcher rejects shortcut maintenance.
         runCatching {
             val shortcuts = context.getSystemService(android.content.pm.ShortcutManager::class.java)

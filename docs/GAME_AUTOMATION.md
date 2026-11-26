@@ -40,11 +40,14 @@ exposes it to the clipboard and to the recipient. Do not paste it into public
 scripts, logs, bug reports, URLs, or screenshots. ADB examples below put it in
 shell history: use only a trusted development machine.
 
-The bottom sheet separates Tasker, MacroDroid, ADB and launcher-shortcut setup.
+The Automation workspace separates Tasker, MacroDroid, ADB and launcher-shortcut setup.
 The key stays masked; only Copy key exposes it to the clipboard. **Replace key**
 and disabling access require confirmation before existing integrations are
-invalidated. Advanced setup contains a placeholder-only command reference,
-not the actual secret. Accepted requests are not presented as applied settings.
+invalidated. **Copy broadcast fields** copies the selected game's exact fields.
+**Copy ADB apply command** copies only the apply command, not the query or restore
+shown below it. Both use the literal placeholder `TOKEN`. **Apply saved profile**
+uses the same in-app activation path as Gaming Mode and is not a test of the
+external caller's identity or background-service eligibility.
 
 Disabling access invalidates the token, disables this feature's pinned shortcuts,
 and cancels the pending continuation notification. Re-enable and copy the new
@@ -64,7 +67,9 @@ supported-games list. Removing a game makes it unavailable to this API.
   `com.catsmoker.app/.screens.gaming.automation.GameAutomationActivity`
 - Broadcast component:
   `com.catsmoker.app/.screens.gaming.automation.GameAutomationReceiver`
-- String extras only: `token`, `operation`, and, where required, `game`.
+- String extras only: `token`, `operation`, `game` where required, and optional
+  `request_id` (a UUID, case-insensitive). Use a fresh UUID for each new event;
+  do not put secrets in this field. It is not authentication.
 - No data URI, selector, ClipData, additional extras, shell commands, filenames,
   arbitrary settings, or caller-supplied components are accepted.
 
@@ -132,8 +137,10 @@ Query afterward for the terminal report. Running alongside the existing foregrou
 session or a documented battery exemption can permit unattended execution.
 Merely granting root/Shizuku does **not** exempt CatSmoker's app UID.
 
-If Android rejects the service start, a continuation notification is the supported
-fallback. With notifications denied/blocked, the result is `foreground_required`.
+If Android synchronously rejects the service start, a one-shot continuation
+notification is the supported fallback. A later service-promotion refusal is
+reported as `foreground_required`; the app will not perform unheld writes.
+With notifications denied/blocked, the result is `foreground_required`.
 There is no overlay, shell-UID, background-Activity, or security-policy bypass.
 OEM power management and force-stop can still prevent delivery/execution.
 
@@ -145,7 +152,9 @@ reports it resumed. Keep it visible until completion. Tasker/MacroDroid must hav
 a legitimate background-Activity-start allowance if invoked without user interaction.
 For game-detection automation,
 the game is already launching, so use `APPLY_SAVED`, not `APPLY_AND_LAUNCH`.
-A newer continuation request replaces the older notification.
+A newer continuation request replaces the older notification. An admitted
+broadcast restore cancels any previous continuation; an exit event must not leave
+a posted entry action waiting for a tap.
 
 ### ADB
 
@@ -158,6 +167,14 @@ adb shell am broadcast -n com.catsmoker.app/.screens.gaming.automation.GameAutom
 adb shell am broadcast -n com.catsmoker.app/.screens.gaming.automation.GameAutomationReceiver -a com.catsmoker.app.GAME_AUTOMATION --es token TOKEN --es operation RESTORE
 ```
 
+For a desktop or secondary Android user, add `--user current` immediately after
+`broadcast`. To correlate an apply and status query, use the same fresh UUID:
+
+```text
+adb shell am broadcast --user current -n com.catsmoker.app/.screens.gaming.automation.GameAutomationReceiver -a com.catsmoker.app.GAME_AUTOMATION --es token TOKEN --es operation APPLY_SAVED --es game com.example.game --es request_id dcee44f3-dd4b-4066-9da3-91144d27b09c
+adb shell am broadcast --user current -n com.catsmoker.app/.screens.gaming.automation.GameAutomationReceiver -a com.catsmoker.app.GAME_AUTOMATION --es token TOKEN --es operation QUERY_STATUS --es request_id dcee44f3-dd4b-4066-9da3-91144d27b09c
+```
+
 Ordered broadcast callers receive result data JSON (success code `-1`; denied
 code `0`). The Activity supplies `status` JSON to a caller using activity results.
 Use a query broadcast to inspect a longer operation after service admission or Activity start.
@@ -167,7 +184,7 @@ Query returns `version`, `selectedGame`, `mode`, `modeObserved`, `sessionOpen`,
 `restore_required`, `busy`, `game_unavailable`, `awaiting_user`,
 `foreground_required`, `failed`, and `denied`. These are execution states, not
 FPS or latency measurements. After process death, a persisted `running` result
-becomes `interrupted`, not success. A passive query never constructs the engine
+or `accepted` admission becomes `interrupted`, not success. A passive query never constructs the engine
 or reapplies its manual settings: until an engine exists in this process,
 `modeObserved=false`, `unavailableCount=null`, and any recorded session is
 conservatively reported as `RecordedSession` requiring recovery.
@@ -175,12 +192,20 @@ Completed preparation/restoration status also contains `operation`, `game`,
 `operations` (engine result fields and resolved `unavailable` explanations),
 `cache`, `error`, and `notRequested`. A false legacy Boolean can mean an
 intentionally untouched feature; consult `notRequested`, not just that Boolean.
-Poll for the matching operation/game and a newer `time`; this v1 contract has
-no caller-supplied request IDs. Do not treat a previous terminal result as the
-new broadcast's outcome. Read the in-app engine report for device-specific
-refusals. Requests are serialized; a concurrent preparation is rejected as `busy`.
-`lastDelivery` records the most recent completed service/Activity request,
-including `busy`, without replacing the report of an operation still in progress.
+With `request_id`, the ordered receipt echoes the ID. Supply the same ID on
+`QUERY_STATUS` to read `matchingRequest` (or `null`). This searches the latest
+delivery and latest execution report only; it is not a persistent request
+history. Without an ID, match operation/game and a newer `time`; never infer
+success from a stale result. Execution reports include elapsed `durationMs`.
+Requests are serialized; a concurrent preparation is rejected as `busy`.
+`lastDelivery` separately records admission, continuation or execution outcome,
+including `busy`, without replacing a run in progress. After authentication,
+incoming broadcast mutations are limited to one request per second in each
+of the preparation/launch, restore and selection lanes. Queries are exempt.
+The app reports `duplicate` for IDs among the last 64 admitted broadcast
+mutations still in memory (up to five minutes). This is not an exactly-once
+guarantee across process restarts. A burst rejection never replaces the
+original receipt.
 One restore can wait behind an in-flight preparation and cancels owned cache
 work; duplicate waiting restores return `busy`. This avoids losing a game-exit
 request while the game-entry task is still running.

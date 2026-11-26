@@ -55,7 +55,7 @@ class GameAutomationActivity : ComponentActivity() {
             started = true
             if (request.operation == AutomationProtocol.Operation.QUERY_STATUS ||
                 request.operation == AutomationProtocol.Operation.QUERY_SELECTION) {
-                setResult(RESULT_OK, android.content.Intent().putExtra("status", automation.query()))
+                setResult(RESULT_OK, android.content.Intent().putExtra("status", automation.query(request.requestId)))
                 finish()
                 return@launch
             }
@@ -66,18 +66,20 @@ class GameAutomationActivity : ComponentActivity() {
                 val pkg = request.game ?: return@launch
                 if (!lifecycle.currentState.isAtLeast(Lifecycle.State.RESUMED) ||
                     automation.parse(intent) == null) {
-                    automation.record("foreground_required")
+                    automation.recordDelivery(request, "foreground_required")
                 } else if (automation.gameAvailable(pkg)) {
                     try {
                         val launch = packageManager.getLaunchIntentForPackage(pkg)
-                        if (launch == null) automation.record("game_unavailable") else {
+                        if (launch == null) automation.recordDelivery(request, "game_unavailable") else {
                             startActivity(launch)
-                            automation.record("launched")
+                            automation.recordDelivery(request, "launched")
                         }
-                    } catch (_: Exception) { automation.record("launch_failed") }
+                    } catch (_: Exception) { automation.recordDelivery(request, "launch_failed") }
+                } else {
+                    automation.recordDelivery(request, "game_unavailable")
                 }
             }
-            setResult(RESULT_OK, android.content.Intent().putExtra("status", automation.query()))
+            setResult(RESULT_OK, android.content.Intent().putExtra("status", automation.query(request.requestId)))
         }
     }
     override fun onSaveInstanceState(outState: Bundle) {

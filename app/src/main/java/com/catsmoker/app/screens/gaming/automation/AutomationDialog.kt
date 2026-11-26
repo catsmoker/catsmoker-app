@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.text.selection.SelectionContainer
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Bolt
 import androidx.compose.material3.*
@@ -30,10 +31,11 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.catsmoker.app.R
 import com.catsmoker.app.screens.gaming.GameInfo
-import com.catsmoker.app.screens.gaming.components.GamingToolSheet
 import com.catsmoker.app.screens.gaming.components.gamingOperationLabel
 import dagger.hilt.EntryPoint
 import dagger.hilt.InstallIn
@@ -76,19 +78,33 @@ fun AutomationEntry(onClick: () -> Unit) {
 }
 
 @Composable
-fun AutomationDialog(selectedGame: GameInfo?, onDismiss: () -> Unit) {
+fun AutomationDialog(
+    selectedGame: GameInfo?,
+    canApply: Boolean,
+    backendLabel: String,
+    onApply: () -> Unit,
+    onDismiss: () -> Unit
+) {
     val context = LocalContext.current
     val controls = automationControls()
     val access = controls.access()
     val enabled by access.enabled.collectAsStateWithLifecycle()
-    val status by controls.automation().status.collectAsStateWithLifecycle()
-    var confirm by remember { mutableStateOf<String?>(null) }
+    val automation = controls.automation()
+    val status by automation.status.collectAsStateWithLifecycle()
+    val delivery by automation.delivery.collectAsStateWithLifecycle()
+    var confirm by rememberSaveable { mutableStateOf<String?>(null) }
     var feedback by remember { mutableStateOf<String?>(null) }
     var integration by rememberSaveable { mutableStateOf(0) }
-    var advanced by rememberSaveable { mutableStateOf(false) }
+    var showResult by rememberSaveable { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
-    GamingToolSheet(stringResource(R.string.gt_automation), onDismiss) {
-        Text(stringResource(R.string.gt_automation_intro), style = MaterialTheme.typography.bodyLarge)
+    val setup: @Composable () -> Unit = {
+        Text(selectedGame?.appName ?: stringResource(R.string.gt_context_select_game),
+            style = MaterialTheme.typography.titleMedium)
+        selectedGame?.let { Text(it.packageName, style = MaterialTheme.typography.bodySmall) }
+        Text(backendLabel, style = MaterialTheme.typography.bodySmall)
+        FilledTonalButton(enabled = canApply && selectedGame != null, onClick = onApply) {
+            Text(stringResource(R.string.gt_workspace_apply))
+        }
         Row(Modifier.fillMaxWidth().heightIn(min = 56.dp).toggleable(value = enabled, role = Role.Switch,
             onValueChange = { if (it) access.enable() else confirm = "revoke" }),
             verticalAlignment = Alignment.CenterVertically) {
@@ -102,9 +118,8 @@ fun AutomationDialog(selectedGame: GameInfo?, onDismiss: () -> Unit) {
         if (enabled) {
             HorizontalDivider()
             Text(stringResource(R.string.gt_automation_key), style = MaterialTheme.typography.titleSmall)
-            Text("••••  ••••  ••••  ••••", style = MaterialTheme.typography.titleMedium)
             Text(stringResource(R.string.gt_automation_key_help), style = MaterialTheme.typography.bodySmall)
-            Row {
+            Row(Modifier.horizontalScroll(rememberScrollState())) {
                 FilledTonalButton(onClick = {
                     val clip = ClipData.newPlainText("CatSmoker automation", access.token().orEmpty())
                     if (Build.VERSION.SDK_INT >= 33) clip.description.extras = PersistableBundle().apply {
@@ -116,11 +131,44 @@ fun AutomationDialog(selectedGame: GameInfo?, onDismiss: () -> Unit) {
                 TextButton(onClick = { confirm = "regenerate" }) { Text(stringResource(R.string.gt_automation_regenerate)) }
             }
         }
+        if (enabled) {
+            Text(stringResource(if (context.getSystemService(PowerManager::class.java)
+                    .isIgnoringBatteryOptimizations(context.packageName))
+                R.string.gt_automation_unattended_ready else R.string.gt_automation_unattended_restricted),
+                style = MaterialTheme.typography.bodySmall)
+            TextButton(onClick = {
+                runCatching { context.startActivity(Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS)) }
+                    .onFailure { feedback = context.getString(R.string.gt_automation_settings_unavailable) }
+            }) { Text(stringResource(R.string.gt_automation_battery_settings)) }
+        }
         HorizontalDivider()
+        Text(stringResource(R.string.gt_automation_last_result), style = MaterialTheme.typography.titleSmall)
+        val result = remember(status) { JSONObject(status) }
+        val receipt = remember(delivery) { JSONObject(delivery) }
+        Text(stringResource(gamingOperationLabel(result.optString("result"))))
+        if (receipt.optString("result") != "idle") {
+            Text(stringResource(R.string.gt_automation_last_delivery,
+                stringResource(gamingOperationLabel(receipt.optString("result")))),
+                style = MaterialTheme.typography.bodySmall)
+        }
+        result.optString("error").takeIf { it.isNotBlank() && it != "null" }?.let { Text(it) }
+        TextButton(onClick = { showResult = !showResult }) {
+            Text(stringResource(if (showResult) R.string.gt_advanced_hide else R.string.gt_automation_details))
+        }
+        if (showResult) SelectionContainer {
+            Text(JSONObject().put("last", result).put("lastDelivery", receipt).toString(2),
+                style = MaterialTheme.typography.bodySmall)
+        }
+        feedback?.let { Text(it, color = MaterialTheme.colorScheme.primary) }
+    }
+    val integrations: @Composable () -> Unit = {
         Text(stringResource(R.string.gt_automation_integrations), style = MaterialTheme.typography.titleMedium)
         Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             listOf("Tasker", "MacroDroid", "ADB", stringResource(R.string.gt_automation_shortcuts)).forEachIndexed { index, name ->
-                FilterChip(selected = integration == index, onClick = { integration = index }, label = { Text(name) })
+                FilterChip(selected = integration == index, onClick = { integration = index }, label = { Text(name) },
+                    colors = FilterChipDefaults.filterChipColors(
+                        selectedContainerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.18f),
+                        selectedLabelColor = MaterialTheme.colorScheme.onSurface))
             }
         }
         Text(stringResource(when (integration) {
@@ -130,8 +178,6 @@ fun AutomationDialog(selectedGame: GameInfo?, onDismiss: () -> Unit) {
             else -> R.string.gt_automation_shortcut_help
         }))
         if (integration == 3) {
-            Text(selectedGame?.appName ?: stringResource(R.string.gt_context_select_game),
-                style = MaterialTheme.typography.titleSmall)
             FilledTonalButton(enabled = enabled && selectedGame != null, onClick = {
                 val game = selectedGame ?: return@FilledTonalButton
                 val token = access.token() ?: return@FilledTonalButton
@@ -158,33 +204,47 @@ fun AutomationDialog(selectedGame: GameInfo?, onDismiss: () -> Unit) {
                         else R.string.gt_automation_shortcut_unavailable)
                 }
             }) { Text(stringResource(R.string.gt_automation_shortcut)) }
-        }
-        Text(stringResource(R.string.gt_automation_background_simple), style = MaterialTheme.typography.bodySmall)
-        if (enabled) {
-            Text(stringResource(if (context.getSystemService(PowerManager::class.java)
-                    .isIgnoringBatteryOptimizations(context.packageName))
-                R.string.gt_automation_unattended_ready else R.string.gt_automation_unattended_restricted),
-                style = MaterialTheme.typography.bodySmall)
+        } else if (selectedGame != null) {
+            val example = automationExample(integration, selectedGame.packageName)
+            val copied = stringResource(R.string.gt_automation_copied_template)
             TextButton(onClick = {
-                runCatching { context.startActivity(Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS)) }
-                    .onFailure { feedback = context.getString(R.string.gt_automation_settings_unavailable) }
-            }) { Text(stringResource(R.string.gt_automation_battery_settings)) }
-        }
-        Text(stringResource(R.string.gt_automation_last_result), style = MaterialTheme.typography.titleSmall)
-        val result = remember(status) { runCatching { JSONObject(status) }.getOrDefault(JSONObject()) }
-        Text(stringResource(gamingOperationLabel(result.optString("result"))))
-        result.optString("error").takeIf { it.isNotBlank() && it != "null" }?.let { Text(it) }
-        feedback?.let { Text(it, color = MaterialTheme.colorScheme.primary) }
-        TextButton(onClick = { advanced = !advanced }) {
-            Text(stringResource(if (advanced) R.string.gt_advanced_hide else R.string.gt_automation_advanced))
-        }
-        if (advanced) {
-            Text(stringResource(R.string.gt_automation_contract_help))
-            val pkg = selectedGame?.packageName ?: "com.example.game"
+                context.getSystemService(ClipboardManager::class.java)
+                    .setPrimaryClip(ClipData.newPlainText("CatSmoker automation template",
+                        if (integration == 2) example.substringBefore('\n') else example))
+                feedback = copied
+            }) { Text(stringResource(if (integration == 2) R.string.gt_automation_copy_adb else R.string.gt_automation_copy_intent)) }
             SelectionContainer {
-                Text(automationExample(integration, pkg), style = MaterialTheme.typography.bodySmall)
+                Text(example, style = MaterialTheme.typography.bodySmall, fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace)
             }
-            Text(stringResource(R.string.gt_automation_result_help), style = MaterialTheme.typography.bodySmall)
+        } else Text(stringResource(R.string.gt_context_select_game))
+        Text(stringResource(R.string.gt_automation_background_simple), style = MaterialTheme.typography.bodySmall)
+    }
+    val setupScroll = rememberScrollState()
+    val integrationScroll = rememberScrollState()
+    Dialog(onDismissRequest = onDismiss, properties = DialogProperties(usePlatformDefaultWidth = false)) {
+        Surface(Modifier.padding(16.dp).widthIn(max = 940.dp).fillMaxWidth(),
+            shape = MaterialTheme.shapes.large, color = MaterialTheme.colorScheme.surface) {
+            Column(Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                    Text(stringResource(R.string.gt_automation), Modifier.weight(1f), style = MaterialTheme.typography.titleLarge)
+                    TextButton(onClick = onDismiss) { Text(stringResource(R.string.gt_automation_close)) }
+                }
+                BoxWithConstraints(Modifier.fillMaxWidth().heightIn(max = 560.dp)) {
+                    val gap = Arrangement.spacedBy(8.dp)
+                    if (maxWidth >= 680.dp) {
+                        Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+                            Column(Modifier.weight(1f).verticalScroll(setupScroll), verticalArrangement = gap) { setup() }
+                            Column(Modifier.weight(1.35f).verticalScroll(integrationScroll), verticalArrangement = gap) { integrations() }
+                        }
+                    } else {
+                        Column(Modifier.fillMaxWidth().verticalScroll(setupScroll), verticalArrangement = gap) {
+                            setup()
+                            HorizontalDivider()
+                            integrations()
+                        }
+                    }
+                }
+            }
         }
     }
     if (confirm != null) AlertDialog(onDismissRequest = { confirm = null },
@@ -203,16 +263,16 @@ fun AutomationDialog(selectedGame: GameInfo?, onDismiss: () -> Unit) {
 
 /** Examples never interpolate the secret; copying a key is a separate, explicit sensitive action. */
 internal fun automationExample(integration: Int, pkg: String): String {
-    val receiver = "com.catsmoker.app.screens.gaming.automation.GameAutomationReceiver"
+    require(com.catsmoker.app.screens.gaming.GameSettings.validPackage(pkg))
+    val receiver = AutomationProtocol.RECEIVER
+    val target = AutomationProtocol.APP_PACKAGE
     return if (integration == 2) {
-        "adb shell am broadcast -n com.catsmoker.app/$receiver -a ${AutomationProtocol.ACTION} " +
-            "--es token TOKEN --es operation APPLY_SAVED --es game $pkg\n\n" +
-            "adb shell am broadcast -n com.catsmoker.app/$receiver -a ${AutomationProtocol.ACTION} " +
-            "--es token TOKEN --es operation QUERY_STATUS\n\n" +
-            "adb shell am broadcast -n com.catsmoker.app/$receiver -a ${AutomationProtocol.ACTION} " +
-            "--es token TOKEN --es operation RESTORE"
+        val prefix = "adb shell am broadcast --user current -n $target/$receiver -a ${AutomationProtocol.ACTION} --es token TOKEN"
+        "$prefix --es operation APPLY_SAVED --es game $pkg\n\n" +
+            "$prefix --es operation QUERY_STATUS\n\n" +
+            "$prefix --es operation RESTORE"
     } else {
-        "Action: ${AutomationProtocol.ACTION}\nPackage: com.catsmoker.app\nClass: $receiver\n" +
-            "token: TOKEN\noperation: APPLY_SAVED\ngame: $pkg\n\noperation: RESTORE"
+        "Action: ${AutomationProtocol.ACTION}\nPackage: $target\nClass: $receiver\nTarget: Broadcast Receiver\n" +
+            "\nString extras:\ntoken: TOKEN\noperation: APPLY_SAVED\ngame: $pkg"
     }
 }

@@ -23,9 +23,9 @@
     <string name="gt_keep_access">Keep current access</string>
     <string name="gt_automation_integrations">Connect an app</string>
     <string name="gt_automation_shortcuts">Shortcuts</string>
-    <string name="gt_automation_tasker_help">1. Create a game-entry task using Send Intent, targeting Broadcast Receiver.\n2. Use the action and String extras in Advanced setup below, with your copied key and game package.\n3. Send RESTORE on game exit; leave out the game extra.</string>
-    <string name="gt_automation_macro_help">1. Add a Send Intent action with target Broadcast.\n2. Enter the action, package, class and String extras in Advanced setup below.\n3. Use APPLY_SAVED on game entry and RESTORE without a game extra on exit.</string>
-    <string name="gt_automation_adb_help">Use Android platform tools from your computer to send an authorized request. Advanced setup includes prepare, status and restore commands. Replace TOKEN locally; never post your key in a report.</string>
+    <string name="gt_automation_tasker_help">Use Send Intent with the Broadcast Receiver target and the fields below. Paste your key in the token extra. To restore on game exit, use RESTORE and omit the game extra.</string>
+    <string name="gt_automation_macro_help">Use Send Intent with the Broadcast target and the String extras below. Use APPLY_SAVED on game entry and RESTORE without a game extra on exit.</string>
+    <string name="gt_automation_adb_help">Run the commands separately. Replace TOKEN locally; never post your key in a report.</string>
     <string name="gt_automation_shortcut_help">Add a launcher shortcut to prepare the selected game and then launch it. Your launcher may ask you to confirm. Keep CatSmoker visible until preparation finishes.</string>
     <string name="gt_automation_background_simple">Prepare and Restore can run without a tap when Android permits background service starts. Otherwise, tap the continuation notification. Launching a game requires foreground interaction.</string>
     <string name="gt_automation_settings_unavailable">This device could not open battery settings. Open them from Android Settings.</string>

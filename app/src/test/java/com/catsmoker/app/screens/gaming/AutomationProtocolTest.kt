@@ -2,6 +2,7 @@ package com.catsmoker.app.screens.gaming
 
 import com.catsmoker.app.screens.gaming.automation.AutomationProtocol
 import com.catsmoker.app.screens.gaming.automation.AutomationStatus
+import com.catsmoker.app.screens.gaming.automation.BroadcastAdmission
 import com.catsmoker.app.screens.gaming.mode.GamingModeObservation
 import com.catsmoker.app.screens.gaming.mode.GamingOptimizationSnapshot
 import org.json.JSONObject
@@ -32,6 +33,41 @@ class AutomationProtocolTest {
         assertNotNull(AutomationProtocol.parse("QUERY_STATUS", null))
     }
 
+    @Test fun requestIdsAreOptionalCanonicalAndDoNotAcceptTokensOrPaths() {
+        val id = "00000000-A000-4000-8000-000000000001"
+        assertEquals(id.lowercase(), AutomationProtocol.parse("RESTORE", null, id)?.requestId)
+        assertNull(AutomationProtocol.parse("RESTORE", null, "a".repeat(64)))
+        assertNull(AutomationProtocol.parse("RESTORE", null, "alternate/entry"))
+        assertNull(AutomationProtocol.parse("RESTORE", null, ""))
+        assertNull(AutomationProtocol.parse("RESTORE", null)?.requestId)
+    }
+
+    @Test fun duplicateBurstsAreBoundedWithoutBlockingQueriesOrExitRestore() {
+        val admission = BroadcastAdmission()
+        val id = "00000000-0000-4000-8000-000000000001"
+        val apply = AutomationProtocol.parse("APPLY_SAVED", "com.game", id)!!
+        val query = AutomationProtocol.parse("QUERY_STATUS", null, id)!!
+        val restore = AutomationProtocol.parse("RESTORE", null)!!
+        assertNull(admission.admit(apply, 1))
+        assertEquals("duplicate", admission.admit(apply, 2))
+        assertEquals("rate_limited", admission.admit(apply.copy(requestId = null), 2))
+        assertNull(admission.admit(query, 2))
+        assertNull(admission.admit(restore, 2))
+        assertEquals("rate_limited", admission.admit(restore, 3))
+        assertNull(admission.admit(apply, 300_001))
+    }
+
+    @Test fun requestLookupPreservesExecutionDetailsAndRejectsAnotherRunsReceipt() {
+        val id = "00000000-0000-4000-8000-000000000001"
+        val run = """{"version":1,"result":"partial","time":3,"request_id":"$id","operations":{}}"""
+        val receipt = """{"version":1,"result":"partial","time":4,"request_id":"$id"}"""
+        assertTrue(AutomationStatus.matchingRequest(id, run, receipt)!!.has("operations"))
+        assertNull(AutomationStatus.matchingRequest("other", run, receipt))
+        val restart = JSONObject(AutomationStatus.afterProcessStart(receipt.replace("partial", "accepted")))
+        assertEquals("interrupted", restart.getString("result"))
+        assertEquals(id, restart.getString("request_id"))
+    }
+
     @Test fun receiverCannotLaunchAnActivityOrPrivilegedWorkDirectly() {
         val receiver = File("src/main/java/com/catsmoker/app/screens/gaming/automation/GameAutomationReceiver.kt").readText()
         assertFalse(receiver.contains("startActivity("))
@@ -42,6 +78,8 @@ class AutomationProtocolTest {
         assertTrue(receiver.contains("FLAG_IMMUTABLE"))
         assertTrue(receiver.contains("automation.parse(intent)"))
         assertTrue(receiver.contains("foreground_required"))
+        assertFalse(receiver.contains("Intent(intent)"))
+        assertTrue(receiver.contains("FLAG_ONE_SHOT"))
     }
 
     @Test fun activityWaitsForResumedBeforeExecutingEvenAnImmediateLaunch() {
@@ -116,7 +154,7 @@ class AutomationProtocolTest {
         assertTrue(automation.contains("restorePending = true"))
         assertTrue(automation.contains("cachePreloader.cancel()"))
         assertTrue(automation.contains("lastDelivery"))
-        assertTrue(automation.contains("lastDelivery = JSONObject().put(\"version\", 1)"))
+        assertTrue(automation.contains("_delivery.value = lastDelivery"))
         assertTrue(automation.contains("else if (!writes.tryLock()) return response(\"busy\")"))
         val cache = File("src/main/java/com/catsmoker/app/screens/gaming/cache/GameCachePreloader.kt").readText()
         assertTrue(cache.contains("ParcelFileDescriptor.AutoCloseInputStream"))
@@ -150,8 +188,9 @@ class AutomationProtocolTest {
     }
     @org.junit.Test fun launchOnlyDoesNotConstructThePrivilegedEngineForItsReport() {
         val automation = java.io.File("src/main/java/com/catsmoker/app/screens/gaming/automation/GameAutomation.kt").readText()
-        val reportGuard = automation.substringAfter("}.let { result ->")
-            .substringBefore("JSONObject(result)")
+        val reportGuard = automation.substringAfter("private suspend fun runRequest(")
+            .substringAfter("}.let { result ->")
+            .substringBefore("JSONObject(AutomationStatus.withRequest")
         assertTrue(reportGuard.contains("AutomationProtocol.Operation.LAUNCH_GAME"))
         assertTrue(reportGuard.contains("return@let result"))
         assertTrue(automation.contains("(pkg == null || JSONObject(cachePreloader.status.value)"))
