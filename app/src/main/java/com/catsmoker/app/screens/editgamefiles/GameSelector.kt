@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.selection.selectableGroup
+import androidx.compose.foundation.border
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
@@ -38,6 +39,7 @@ import com.catsmoker.app.screens.editgamefiles.storage.PUBG_VARIANTS
 import com.catsmoker.app.screens.editgamefiles.storage.installSortRank
 import com.catsmoker.app.screens.editgamefiles.storage.pubgGroupDot
 import com.catsmoker.app.ui.components.ChipFlowRow
+import com.catsmoker.app.ui.components.SectionLabel
 import kotlinx.coroutines.flow.collectLatest
 
 @Composable
@@ -46,57 +48,36 @@ fun GameSelector(
     installedGames: Map<GameType, Boolean>,
     onGameSelected: (GameType) -> Unit,
     onLaunchGame: () -> Unit,
-    isLoading: Boolean
+    isLoading: Boolean,
+    /**
+     * False when the host already shows the game list itself (the desktop rail). The
+     * trigger is then replaced by a read-only summary, so the same game is never offered
+     * twice on one screen.
+     */
+    showTrigger: Boolean = true
 ) {
     var showPicker by remember { mutableStateOf(false) }
     val isPubg = selectedGame in PUBG_VARIANTS
-    // A tappable field opening the full game list — one entry per *game*, not per variant:
-    // five PUBG rows were five near-identical lines, and nine chips needed swiping. PUBG
-    // Mobile is a single entry here; picking it (or already having it selected) reveals the
-    // variant selector below, which is where the store-variant choice belongs — after the
-    // game is chosen, before the profile rows.
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(8.dp)
-    ) {
-        Row(
-            modifier = Modifier.weight(1f).clickable { showPicker = true },
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            OutlinedTextField(
-                value = when {
-                    selectedGame == GameType.NONE -> stringResource(R.string.gf_tap_to_choose_game)
-                    isPubg -> GameType.PUBG_GLOBAL.displayName.removeSuffix(" (Global)")
-                    else -> selectedGame.displayName
-                },
-                onValueChange = {},
-                readOnly = true,
-                label = { Text(stringResource(R.string.gf_game_label)) },
-                placeholder = { Text(stringResource(R.string.gf_tap_to_choose_game)) },
-                enabled = false,
-                colors = OutlinedTextFieldDefaults.colors(
-                    disabledTextColor = MaterialTheme.colorScheme.onSurface,
-                    disabledBorderColor = MaterialTheme.colorScheme.outline,
-                    disabledLabelColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                    disabledPlaceholderColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                    disabledLeadingIconColor = MaterialTheme.colorScheme.onSurfaceVariant
-                ),
-                leadingIcon = if (selectedGame != GameType.NONE) {
-                    // The selected game's own dot, so the field itself carries the install
-                    // state the dialog rows show — no need to reopen the dialog to see it.
-                    { InstallDot(installed = installedGames[selectedGame]) }
-                } else null,
-                modifier = Modifier.fillMaxWidth()
-            )
-        }
-        FilledIconButton(
-            onClick = onLaunchGame,
-            enabled = selectedGame != GameType.NONE && !isLoading,
-            modifier = Modifier.size(48.dp)
-        ) {
-            Icon(Icons.Default.PlayArrow, contentDescription = stringResource(R.string.gf_launch_game_desc))
-        }
+    // The list behind this is one entry per *game*, not per variant: five PUBG rows were
+    // five near-identical lines, and nine chips needed swiping. PUBG Mobile is a single
+    // entry; picking it (or already having it selected) reveals the variant selector below,
+    // which is where the store-variant choice belongs — after the game, before the profile.
+    if (showTrigger) {
+        GameSelectorTrigger(
+            selectedGame = selectedGame,
+            installedGames = installedGames,
+            isLoading = isLoading,
+            onOpenPicker = { showPicker = true },
+            onLaunchGame = onLaunchGame
+        )
+    } else {
+        // The rail owns selection here; the card still names the current target.
+        SelectedGameSummary(
+            selectedGame = selectedGame,
+            installedGames = installedGames,
+            isLoading = isLoading,
+            onLaunchGame = onLaunchGame
+        )
     }
     // The second selector: which PUBG store-variant the profile flow targets. Visible only
     // once a PUBG entry is the selected game — the group entry in the dialog opens this,
@@ -134,6 +115,175 @@ fun GameSelector(
         )
     }
 }
+/**
+ * The trigger for the game list. It used to be a disabled `OutlinedTextField` labelled
+ * "Game", which read as a text input that refused typing; it is now a bordered row with a
+ * chevron, the current target and the install dot, plus the launch button beside it — an
+ * action that looks like one.
+ */
+@Composable
+private fun GameSelectorTrigger(
+    selectedGame: GameType,
+    installedGames: Map<GameType, Boolean>,
+    isLoading: Boolean,
+    onOpenPicker: () -> Unit,
+    onLaunchGame: () -> Unit
+) {
+    val shape = RoundedCornerShape(14.dp)
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        Row(
+            modifier = Modifier
+                .weight(1f)
+                .clip(shape)
+                .border(1.dp, MaterialTheme.colorScheme.outline, shape)
+                .clickable(role = Role.Button, onClick = onOpenPicker)
+                .padding(horizontal = 14.dp, vertical = 10.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            if (selectedGame != GameType.NONE) {
+                GameBadge(
+                    game = selectedGame,
+                    installed = installedGames[selectedGame],
+                    installedGames = installedGames
+                )
+            } else {
+                Icon(
+                    imageVector = Icons.Default.SportsEsports,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = if (selectedGame == GameType.NONE) {
+                        stringResource(R.string.gf_tap_to_choose_game)
+                    } else {
+                        selectedGameLabel(selectedGame)
+                    },
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+                if (selectedGame != GameType.NONE) {
+                    Text(
+                        text = stringResource(R.string.gf_change_game),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
+            if (selectedGame != GameType.NONE) {
+                InstallDot(installed = installedGames[selectedGame])
+            }
+            Icon(
+                imageVector = Icons.Default.ExpandMore,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+        FilledIconButton(
+            onClick = onLaunchGame,
+            enabled = selectedGame != GameType.NONE && !isLoading,
+            modifier = Modifier.size(48.dp)
+        ) {
+            Icon(Icons.Default.PlayArrow, contentDescription = stringResource(R.string.gf_launch_game_desc))
+        }
+    }
+}
+
+/**
+ * Read-only target line for hosts that select from their own list (the desktop rail).
+ * It keeps the launch button: selection moved to the rail, launching did not, and dropping
+ * the button here silently removed the only way to start the game from this screen.
+ */
+@Composable
+private fun SelectedGameSummary(
+    selectedGame: GameType,
+    installedGames: Map<GameType, Boolean>,
+    isLoading: Boolean,
+    onLaunchGame: () -> Unit
+) {
+    val installed = installedGames[selectedGame]
+    Row(
+        modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        if (selectedGame != GameType.NONE) {
+            GameBadge(game = selectedGame, installed = installed, installedGames = installedGames)
+            Text(
+                text = selectedGameLabel(selectedGame),
+                style = MaterialTheme.typography.titleMedium,
+                color = MaterialTheme.colorScheme.onSurface,
+                modifier = Modifier.weight(1f)
+            )
+            InstallDot(installed = installed)
+            FilledIconButton(
+                onClick = onLaunchGame,
+                enabled = !isLoading,
+                modifier = Modifier.size(48.dp)
+            ) {
+                Icon(
+                    Icons.Default.PlayArrow,
+                    contentDescription = stringResource(R.string.gf_launch_game_desc)
+                )
+            }
+        } else {
+            Text(
+                text = stringResource(R.string.gf_pick_from_list),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+    }
+}
+
+/** One display name for both the trigger and the summary: PUBG is named by its group. */
+private fun selectedGameLabel(game: GameType): String =
+    if (game in PUBG_VARIANTS) GameType.PUBG_GLOBAL.displayName.removeSuffix(" (Global)")
+    else game.displayName
+
+/**
+ * The game list as a side rail, for wide windows. Same rows and sort order as the picker
+ * dialog (installed first, PUBG collapsed to one group entry), so the two surfaces can
+ * never disagree about what is installed or what is selected.
+ */
+@Composable
+internal fun GameLibraryRail(
+    selectedGame: GameType,
+    installedGames: Map<GameType, Boolean>,
+    onGameSelected: (GameType) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val otherGroup = GameType.entries.filter { it != GameType.NONE && it !in PUBG_VARIANTS }
+    val pubgSelected = selectedGame in PUBG_VARIANTS
+    val pubgDot = pubgGroupDot(installedGames)
+    val rows = (listOf(Triple(GameType.PUBG_GLOBAL, pubgDot, true)) +
+        otherGroup.map { Triple(it, installedGames[it], false) })
+        .sortedBy { installSortRank(it.second) }
+    Column(modifier = modifier.fillMaxWidth()) {
+        SectionLabel(stringResource(R.string.gf_games_rail))
+        rows.forEach { (game, installed, isPubgGroup) ->
+            if (isPubgGroup) {
+                PickerRow(
+                    game = game,
+                    label = "PUBG Mobile",
+                    installed = installed,
+                    selected = pubgSelected,
+                    installedGames = installedGames,
+                    onPick = { onGameSelected(GameType.PUBG_GLOBAL) }
+                )
+            } else {
+                PickerRow(game, installed, selectedGame == game, onGameSelected)
+            }
+        }
+    }
+}
+
 /**
  * The full game list — one entry per game. The PUBG variants collapse into the single
  * "PUBG Mobile" row (their dot is green when *any* variant is installed, red only when none
@@ -175,10 +325,7 @@ internal fun GamePickerDialog(
                             label = "PUBG Mobile",
                             installed = installed,
                             selected = pubgSelected,
-                            iconPackages = pickerIconPackages(
-                                if (pubgSelected) selectedGame else GameType.PUBG_GLOBAL,
-                                installedGames
-                            ),
+                            installedGames = installedGames,
                             onPick = { onPick(GameType.PUBG_GLOBAL) } // opens the VERSION chips, not a silent Global pick
                         )
                     } else {
@@ -200,7 +347,7 @@ internal fun PickerRow(
     selected: Boolean,
     onPick: (GameType) -> Unit,
     label: String = game.displayName,
-    iconPackages: List<String> = pickerIconPackages(game)
+    installedGames: Map<GameType, Boolean> = emptyMap()
 ) {
     Row(
         modifier = Modifier
@@ -212,7 +359,7 @@ internal fun PickerRow(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        GamePickerIcon(packages = iconPackages)
+        GameBadge(game = game, installed = installed, installedGames = installedGames)
         Text(
             label,
             style = MaterialTheme.typography.bodyMedium,

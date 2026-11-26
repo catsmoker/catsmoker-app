@@ -164,9 +164,16 @@ fun EditGameFilesScreen(
         subtitle = stringResource(R.string.gf_edit_files_subtitle),
         onBack = onBack
     ) {
-        Column(
-            modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(bottom = 32.dp)
-        ) {
+        BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
+            // Wide windows get the same library rail Gaming Tools uses: the game list is a
+            // permanent column instead of a modal that hides the screen, and the workspace
+            // beside it stops being a phone strip in the middle of a desktop window.
+            val wide = maxWidth >= 792.dp
+            @Composable
+            fun body(modifier: Modifier, showTrigger: Boolean) {
+            Column(
+                modifier = modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(bottom = 32.dp)
+            ) {
             // The warning as one line, not a card: it must be seen, but it does not need a
             // whole surface plus 24dp of spacing above the picker to say two sentences.
             Row(
@@ -195,7 +202,8 @@ fun EditGameFilesScreen(
                         installedGames = uiState.installedGames,
                         onGameSelected = onGameSelected,
                         onLaunchGame = onLaunchGame,
-                        isLoading = uiState.isLoading
+                        isLoading = uiState.isLoading,
+                        showTrigger = showTrigger
                     )
                 }
             }
@@ -253,6 +261,29 @@ fun EditGameFilesScreen(
                         onApplySaveEdits = onApplySaveEdits
                     )
                     }
+                }
+            }
+            }
+            }
+            if (!wide) {
+                body(Modifier, true)
+            } else {
+                Row(
+                    modifier = Modifier.fillMaxSize(),
+                    horizontalArrangement = Arrangement.spacedBy(16.dp)
+                ) {
+                    Column(
+                        modifier = Modifier.width(278.dp).fillMaxHeight()
+                            .verticalScroll(rememberScrollState()).padding(bottom = 24.dp)
+                    ) {
+                        GameLibraryRail(
+                            selectedGame = uiState.selectedGame,
+                            installedGames = uiState.installedGames,
+                            onGameSelected = onGameSelected
+                        )
+                    }
+                    VerticalDivider(Modifier.fillMaxHeight())
+                    body(Modifier.weight(1f), false)
                 }
             }
         }
