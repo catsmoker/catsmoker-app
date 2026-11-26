@@ -86,6 +86,13 @@ android {
         manifestPlaceholders["NOTHING_API_KEY"] =
             nothingProps.getProperty("NOTHING_API_KEY") ?: "test"
 
+        // An app bundle ignores `splits.abi` below, so without this the release bundle
+        // also packed a 32-bit x86 bridge that no APK split ever ships (and that no
+        // supported device runs). Keep the native build on the same three ABIs the
+        // splits declare so the bundle and the audit contract agree.
+        ndk {
+            abiFilters += setOf("arm64-v8a", "armeabi-v7a", "x86_64")
+        }
     }
 
     splits {
