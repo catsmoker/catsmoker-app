@@ -17,8 +17,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
@@ -74,6 +76,9 @@ fun QuickActionButton(
 ) {
     val clickable = enabled && !isLoading
     val shape = RoundedCornerShape(20.dp)
+    // The chevron is an affordance, not decoration: it has to stay proportional to a
+    // badge that grows on desktop, or it turns into a speck in the tile's far corner.
+    val chevronSize = (iconSize * 0.45f).coerceAtLeast(20.dp)
     Card(
         onClick = onClick,
         enabled = clickable,
@@ -129,7 +134,7 @@ fun QuickActionButton(
                             imageVector = Icons.Default.ChevronRight,
                             contentDescription = null,
                             tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
-                            modifier = Modifier.size(20.dp)
+                            modifier = Modifier.size(chevronSize)
                         )
                     }
                 }
@@ -253,6 +258,23 @@ fun UpdateIndicator(
 }
 
 /**
+ * Material's `Icon` draws at a fixed 24dp, so a 46dp or 64dp badge would leave the glyph
+ * floating in empty space while the container grew. Rather than size every call site's
+ * vector, the badge scales the icon's own density; the glyph then keeps its 24dp default
+ * while filling a proportional share of whatever badge the host asks for.
+ */
+@Composable
+private fun LocalIconGlyph(iconSize: Dp, content: @Composable () -> Unit) {
+    val base = LocalDensity.current
+    val glyphDp = (iconSize * 0.56f).coerceAtLeast(24.dp)
+    val scale = glyphDp.value / 24f
+    CompositionLocalProvider(
+        LocalDensity provides Density(base.density * scale, base.fontScale),
+        content = content
+    )
+}
+
+/**
  * The rounded icon badge with the update indicator pinned to its top-end corner. The outer
  * Box carries no clip so the badge keeps its full circle on every screen size/density.
  */
@@ -264,11 +286,12 @@ private fun BadgedIcon(
     showIndicator: Boolean,
     icon: @Composable () -> Unit
 ) {
+    val cornerRadius = iconSize * 0.3f
     Box {
         Box(
             modifier = Modifier
                 .size(iconSize)
-                .clip(RoundedCornerShape(14.dp))
+                .clip(RoundedCornerShape(cornerRadius))
                 .background(
                     Brush.verticalGradient(
                         colors = listOf(
@@ -285,12 +308,12 @@ private fun BadgedIcon(
                             contentColor.copy(alpha = 0.15f)
                         )
                     ),
-                    RoundedCornerShape(14.dp)
+                    RoundedCornerShape(cornerRadius)
                 ),
             contentAlignment = Alignment.Center
         ) {
             CompositionLocalProvider(LocalContentColor provides contentColor) {
-                icon()
+                LocalIconGlyph(iconSize) { icon() }
             }
         }
         if (showIndicator) {
@@ -319,6 +342,7 @@ private fun ActionIconBadge(
     showIndicator: Boolean = false,
     icon: @Composable () -> Unit
 ) {
+    val chevronSize = (iconSize * 0.45f).coerceAtLeast(20.dp)
     Row(
         modifier = Modifier.fillMaxWidth(),
         verticalAlignment = Alignment.CenterVertically,
@@ -341,7 +365,7 @@ private fun ActionIconBadge(
                 imageVector = Icons.Default.ChevronRight,
                 contentDescription = null,
                 tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
-                modifier = Modifier.size(20.dp)
+                modifier = Modifier.size(chevronSize)
             )
         }
     }

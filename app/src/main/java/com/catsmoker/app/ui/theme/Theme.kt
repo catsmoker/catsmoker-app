@@ -10,10 +10,15 @@ import androidx.compose.material3.dynamicDarkColorScheme
 import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.remember
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalView
+import androidx.compose.ui.unit.Density
 import androidx.core.view.WindowInsetsControllerCompat
 
 private val NothingColorScheme = darkColorScheme(
@@ -75,6 +80,20 @@ fun CatsmokerTheme(
         else -> NothingLightScheme
     }
     val view = LocalView.current
+    // Desktop windows are physically large, so the same 12-14sp body text that reads fine on
+    // a phone looks like fine print a metre away. Scale the font scale (not the density, so
+    // dp layout is untouched) with the window width: this also reaches the hard-coded 10-11sp
+    // captions inside cards, which a typography override would miss. Phones are unchanged.
+    val windowWidthDp = LocalConfiguration.current.screenWidthDp
+    val textScale = when {
+        windowWidthDp >= 1400 -> 1.18f
+        windowWidthDp >= 840 -> 1.10f
+        else -> 1f
+    }
+    val baseDensity = LocalDensity.current
+    val scaledDensity = remember(baseDensity, textScale) {
+        Density(baseDensity.density, baseDensity.fontScale * textScale)
+    }
 
     if (!view.isInEditMode) {
         DisposableEffect(view, darkTheme) {
@@ -89,9 +108,11 @@ fun CatsmokerTheme(
         }
     }
 
-    MaterialTheme(
-        colorScheme = colorScheme,
-        typography = Typography,
-        content = content
-    )
+    CompositionLocalProvider(LocalDensity provides scaledDensity) {
+        MaterialTheme(
+            colorScheme = colorScheme,
+            typography = Typography,
+            content = content
+        )
+    }
 }

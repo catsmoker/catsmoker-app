@@ -152,6 +152,16 @@ fun HomeScreen(
             .padding(horizontal = 24.dp)
     ) {
         val landscape = maxWidth > maxHeight
+        // Phone-sized badges look like crumbs once the tiles are half a metre wide on a
+        // desktop window, so the badge (and the chevron inside it) tracks the window width
+        // instead of staying at the 32/40dp phone values.
+        val tileIconSize = when {
+            maxWidth >= 1200.dp -> 64.dp
+            maxWidth >= 840.dp -> 56.dp
+            maxWidth >= 600.dp -> 46.dp
+            landscape -> 32.dp
+            else -> 40.dp
+        }
         if (!landscape) {
             Column(
                 modifier = Modifier.fillMaxSize()
@@ -292,6 +302,7 @@ fun HomeScreen(
             QuickActionsSection(
                 modifier = Modifier.fillMaxWidth().weight(1.5f),
                 compact = false,
+                iconSize = tileIconSize,
                 availableUpdateName = availableUpdateName,
                 onNavigateDistribution = onNavigateDistribution,
                 onOpenEditGameFiles = onOpenEditGameFiles,
@@ -374,6 +385,7 @@ fun HomeScreen(
                         QuickActionsSection(
                             modifier = Modifier.weight(1f).fillMaxHeight(),
                             compact = true,
+                            iconSize = tileIconSize,
                             availableUpdateName = availableUpdateName,
                             onNavigateDistribution = onNavigateDistribution,
                             onOpenEditGameFiles = onOpenEditGameFiles,
@@ -400,6 +412,8 @@ fun HomeScreen(
 private fun QuickActionsSection(
     modifier: Modifier,
     compact: Boolean,
+    /** Badge size for the tiles; the host picks it from the window width. */
+    iconSize: Dp,
     availableUpdateName: String?,
     onNavigateDistribution: (String) -> Unit,
     onOpenEditGameFiles: () -> Unit,
@@ -407,8 +421,13 @@ private fun QuickActionsSection(
     onOpenSettings: () -> Unit
 ) {
     val spacing = if (compact) 8.dp else 12.dp
-    val contentPadding = if (compact) 8.dp else 12.dp
-    val iconSize = if (compact) 32.dp else 40.dp
+    // Padding has to follow the badge: a 64dp badge inside 8dp padding is edge-to-edge.
+    val contentPadding = when {
+        iconSize >= 56.dp -> 20.dp
+        iconSize >= 46.dp -> 16.dp
+        compact -> 8.dp
+        else -> 12.dp
+    }
 
     Column(modifier = modifier) {
         Text(

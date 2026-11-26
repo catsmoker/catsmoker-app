@@ -187,151 +187,188 @@ fun SettingsScreen(
         subtitle = stringResource(R.string.sys_settings_subtitle),
         onBack = onBack
     ) {
-        // Centred and capped on tablets/landscape; phones keep the full width. The header
-        // stays full-bleed because ScreenScaffold owns it.
-        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.TopCenter) {
-            Column(
-                modifier = Modifier
-                    .widthIn(max = 720.dp)
-                    .fillMaxSize()
-                    .verticalScroll(rememberScrollState())
-                    .padding(bottom = 32.dp)
-            ) {
-                Spacer(modifier = Modifier.height(16.dp))
-
-                // ---------------------------------------------------------------------------
-                // General — the choices people change most.
-                // ---------------------------------------------------------------------------
-                SectionLabel(stringResource(R.string.sys_section_general), accent = true)
-                CardGroup {
-                    SettingsRowCard(
-                        icon = Icons.Default.Palette,
-                        title = stringResource(R.string.sys_section_appearance),
-                        summary = stringResource(R.string.sys_appearance_summary, themeModeLabel(themeMode)),
-                        onClick = { themeDialog = true }
-                    )
-                    SettingsRowCard(
-                        icon = Icons.Default.Notifications,
-                        title = stringResource(R.string.sys_notifications_title),
-                        summary = stringResource(
-                            if (notificationsEnabled) {
-                                R.string.sys_notifications_allowed
-                            } else {
-                                R.string.sys_notifications_blocked
-                            }
-                        ),
-                        onClick = { openNotificationSettings(context) }
-                    )
-                    SettingsRowCard(
-                        icon = Icons.Default.Language,
-                        title = stringResource(R.string.sys_language_title),
-                        summary = stringResource(
-                            R.string.sys_language_summary,
-                            languageDisplayName(languageTag)
-                        ),
-                        onClick = { languageDialog = true }
-                    )
-                }
-
-                updateControls()
-
-                // ---------------------------------------------------------------------------
-                // Privacy & Data — both switches that send something off the device.
-                // Only these two switches keep an info icon, opening a bottom sheet that
-                // explains what is collected.
-                // ---------------------------------------------------------------------------
-                Spacer(modifier = Modifier.height(CatsmokerSpacing.SectionGap))
-                SectionLabel(stringResource(R.string.sys_section_privacy), accent = true)
-                CardGroup {
-                    SettingsToggleCard(
-                        icon = Icons.Default.Analytics,
-                        title = stringResource(R.string.sys_analytics_title),
-                        summary = stringResource(
-                            if (analyticsEnabled) R.string.sys_state_on else R.string.sys_state_off
-                        ),
-                        checked = analyticsEnabled,
-                        onCheckedChange = onAnalyticsToggled,
-                        info = SettingsInfoTopics.analytics
-                    )
-                    adsControls()
-                }
-
-                // ---------------------------------------------------------------------------
-                // Help & Info — diagnostics and permissions. No info icons here: the rows
-                // are self-explanatory, and App Permissions hands the user to Android's own
-                // settings page via the explicit action below the row.
-                // ---------------------------------------------------------------------------
-                Spacer(modifier = Modifier.height(CatsmokerSpacing.SectionGap))
-                SectionLabel(stringResource(R.string.sys_section_help), accent = true)
-                CardGroup {
-                    SettingsRowCard(
-                        icon = Icons.Default.Terminal,
-                        title = stringResource(R.string.sys_logs_title),
-                        summary = stringResource(R.string.sys_logs_subtitle),
-                        onClick = onOpenLogs
-                    )
-                    SettingsRowCard(
-                        icon = Icons.Default.Security,
-                        title = stringResource(R.string.sys_permissions_title),
-                        onClick = onOpenPermissions,
-                        extraContent = {
-                            HorizontalDivider(
-                                modifier = Modifier.padding(horizontal = 16.dp),
-                                thickness = 0.5.dp,
-                                color = MaterialTheme.colorScheme.outlineVariant
-                            )
-                            TextButton(
-                                onClick = { openAppSystemSettings(context) },
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .heightIn(min = 48.dp)
-                                    .padding(horizontal = 8.dp)
-                            ) {
-                                Icon(
-                                    imageVector = Icons.AutoMirrored.Filled.OpenInNew,
-                                    contentDescription = null,
-                                    modifier = Modifier.size(18.dp)
-                                )
-                                Spacer(modifier = Modifier.width(8.dp))
-                                Text(stringResource(R.string.sys_permissions_open_system))
-                            }
-                        }
-                    )
-                    storeControls()
-                    SettingsRowCard(
-                        icon = Icons.Default.Share,
-                        title = stringResource(R.string.sys_share_app_title),
-                        summary = stringResource(R.string.sys_share_app_summary),
-                        onClick = onShareApp,
-                        // The APK copy happens off the main thread; while it runs the card
-                        // shows progress where its chevron would be, so the tap is visibly
-                        // working without adding a second line of text.
-                        trailing = if (isSharingApk) {
-                            {
-                                CircularProgressIndicator(
-                                    modifier = Modifier.size(18.dp),
-                                    strokeWidth = 2.dp
-                                )
-                            }
+        // Wide windows get two columns: a single 720dp column on a desktop leaves a phone
+        // strip in the middle of the screen with dead space either side. Phones keep the
+        // full-width single column, and the section bodies are declared once so the two
+        // arrangements cannot drift apart.
+        val generalSection: @Composable () -> Unit = {
+            SectionLabel(stringResource(R.string.sys_section_general), accent = true)
+            CardGroup {
+                SettingsRowCard(
+                    icon = Icons.Default.Palette,
+                    title = stringResource(R.string.sys_section_appearance),
+                    summary = stringResource(R.string.sys_appearance_summary, themeModeLabel(themeMode)),
+                    onClick = { themeDialog = true }
+                )
+                SettingsRowCard(
+                    icon = Icons.Default.Notifications,
+                    title = stringResource(R.string.sys_notifications_title),
+                    summary = stringResource(
+                        if (notificationsEnabled) {
+                            R.string.sys_notifications_allowed
                         } else {
-                            null
+                            R.string.sys_notifications_blocked
                         }
-                    )
-                }
+                    ),
+                    onClick = { openNotificationSettings(context) }
+                )
+                SettingsRowCard(
+                    icon = Icons.Default.Language,
+                    title = stringResource(R.string.sys_language_title),
+                    summary = stringResource(
+                        R.string.sys_language_summary,
+                        languageDisplayName(languageTag)
+                    ),
+                    onClick = { languageDialog = true }
+                )
+            }
+            updateControls()
+        }
 
-                // ---------------------------------------------------------------------------
-                // About — version and licence at the bottom. Tapping opens the About screen,
-                // which is the canonical home for the GitHub/website/legal links.
-                // ---------------------------------------------------------------------------
-                Spacer(modifier = Modifier.height(CatsmokerSpacing.SectionGap))
-                SectionLabel(stringResource(R.string.sys_section_about), accent = true)
-                CardGroup {
-                    SettingsRowCard(
-                        icon = Icons.Default.Info,
-                        title = stringResource(R.string.about_header_title),
-                        summary = stringResource(R.string.sys_about_summary, BuildConfig.VERSION_NAME),
-                        onClick = onOpenAbout
-                    )
+        // Only these two switches send something off the device, so only these two keep an
+        // info icon opening the sheet that explains what is collected.
+        val privacySection: @Composable () -> Unit = {
+            SectionLabel(stringResource(R.string.sys_section_privacy), accent = true)
+            CardGroup {
+                SettingsToggleCard(
+                    icon = Icons.Default.Analytics,
+                    title = stringResource(R.string.sys_analytics_title),
+                    summary = stringResource(
+                        if (analyticsEnabled) R.string.sys_state_on else R.string.sys_state_off
+                    ),
+                    checked = analyticsEnabled,
+                    onCheckedChange = onAnalyticsToggled,
+                    info = SettingsInfoTopics.analytics
+                )
+                adsControls()
+            }
+        }
+
+        // No info icons here: the rows are self-explanatory, and App Permissions hands the
+        // user to Android's own settings page via the explicit action below the row.
+        val helpSection: @Composable () -> Unit = {
+            SectionLabel(stringResource(R.string.sys_section_help), accent = true)
+            CardGroup {
+                SettingsRowCard(
+                    icon = Icons.Default.Terminal,
+                    title = stringResource(R.string.sys_logs_title),
+                    summary = stringResource(R.string.sys_logs_subtitle),
+                    onClick = onOpenLogs
+                )
+                SettingsRowCard(
+                    icon = Icons.Default.Security,
+                    title = stringResource(R.string.sys_permissions_title),
+                    onClick = onOpenPermissions,
+                    extraContent = {
+                        HorizontalDivider(
+                            modifier = Modifier.padding(horizontal = 16.dp),
+                            thickness = 0.5.dp,
+                            color = MaterialTheme.colorScheme.outlineVariant
+                        )
+                        TextButton(
+                            onClick = { openAppSystemSettings(context) },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .heightIn(min = 48.dp)
+                                .padding(horizontal = 8.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.AutoMirrored.Filled.OpenInNew,
+                                contentDescription = null,
+                                modifier = Modifier.size(18.dp)
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(stringResource(R.string.sys_permissions_open_system))
+                        }
+                    }
+                )
+                storeControls()
+                SettingsRowCard(
+                    icon = Icons.Default.Share,
+                    title = stringResource(R.string.sys_share_app_title),
+                    summary = stringResource(R.string.sys_share_app_summary),
+                    onClick = onShareApp,
+                    // The APK copy happens off the main thread; while it runs the card shows
+                    // progress where its chevron would be, so the tap is visibly working
+                    // without adding a second line of text.
+                    trailing = if (isSharingApk) {
+                        {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(18.dp),
+                                strokeWidth = 2.dp
+                            )
+                        }
+                    } else {
+                        null
+                    }
+                )
+            }
+        }
+
+        // Version and licence last: tapping opens the About screen, the canonical home for
+        // the GitHub/website/legal links.
+        val aboutSection: @Composable () -> Unit = {
+            SectionLabel(stringResource(R.string.sys_section_about), accent = true)
+            CardGroup {
+                SettingsRowCard(
+                    icon = Icons.Default.Info,
+                    title = stringResource(R.string.about_header_title),
+                    summary = stringResource(R.string.sys_about_summary, BuildConfig.VERSION_NAME),
+                    onClick = onOpenAbout
+                )
+            }
+        }
+
+        BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
+            val twoColumn = maxWidth >= 792.dp
+            val columnModifier = Modifier
+                .widthIn(max = 720.dp)
+                .fillMaxSize()
+                .verticalScroll(rememberScrollState())
+                .padding(bottom = 32.dp)
+
+            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.TopCenter) {
+                if (!twoColumn) {
+                    Column(modifier = columnModifier) {
+                        Spacer(modifier = Modifier.height(16.dp))
+                        generalSection()
+                        Spacer(modifier = Modifier.height(CatsmokerSpacing.SectionGap))
+                        privacySection()
+                        Spacer(modifier = Modifier.height(CatsmokerSpacing.SectionGap))
+                        helpSection()
+                        Spacer(modifier = Modifier.height(CatsmokerSpacing.SectionGap))
+                        aboutSection()
+                    }
+                } else {
+                    Column(
+                        modifier = Modifier
+                            .widthIn(max = 1680.dp)
+                            .fillMaxSize()
+                            .verticalScroll(rememberScrollState())
+                            .padding(bottom = 32.dp)
+                    ) {
+                        Spacer(modifier = Modifier.height(16.dp))
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(24.dp),
+                            verticalAlignment = Alignment.Top
+                        ) {
+                            // Column-major reading order is preserved: General, then
+                            // Privacy, Help and About down the right side. Grouping the
+                            // short About card with Help keeps the two columns from
+                            // ending at very different heights.
+                            Column(modifier = Modifier.weight(1f)) {
+                                generalSection()
+                            }
+                            Column(modifier = Modifier.weight(1f)) {
+                                privacySection()
+                                Spacer(modifier = Modifier.height(CatsmokerSpacing.SectionGap))
+                                helpSection()
+                                Spacer(modifier = Modifier.height(CatsmokerSpacing.SectionGap))
+                                aboutSection()
+                            }
+                        }
+                    }
                 }
             }
         }
