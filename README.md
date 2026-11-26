@@ -55,6 +55,10 @@
 | **System** | Root/Shizuku integration, diagnostics, system logs |
 | **Game Library** | Discover, launch, and manage installed games |
 
+For Tasker, MacroDroid or ADB, see the [single-broadcast automation guide](docs/GAME_AUTOMATION.md).
+The [Gaming Tools workspace guide](docs/GAMING_WORKSPACE.md) explains command inspection,
+desktop window behavior and privilege limits.
+
 ## Download & Installation
 
 Choose **one version** depending on your needs. Both versions share the same project but offer different capabilities and installation requirements.

@@ -149,16 +149,41 @@ For a release boundary audit (explicit build authorization required):
 
 ```powershell
 $env:JAVA_HOME="C:\Program Files\Android\Android Studio\jbr"
-./gradlew :app:bundlePlaystoreRelease :app:writePlaystoreReleaseAudit :app:writeFullReleaseAudit
+./gradlew :app:bundlePlaystoreRelease
 # Separate invocation: requesting a bundle disables APK ABI splits for that invocation.
 ./gradlew :app:assembleFullRelease
 # Partial check until bundletool resources/APK inspection are supplied below.
-python tools/check_playstore_boundary.py --manifest app/build/reports/playstore-boundary/AndroidManifest.xml --dependencies app/build/reports/playstore-boundary/dependencies.txt --archive app/build/outputs/bundle/playstoreRelease/app-playstore-release.aab --mapping app/build/outputs/mapping/playstoreRelease/mapping.txt
+python tools/check_playstore_boundary.py --manifest <final-manifest.xml> --dependencies <runtime-graph.txt> --archive app/build/outputs/bundle/playstoreRelease/app-playstore-release.aab --mapping app/build/outputs/mapping/playstoreRelease/mapping.txt
 ```
 
-The two Gradle audit exports resolve actual transitive compile/runtime graphs,
-record AGP-selected source directories (including generated sources), and copy
-the manifest through AGP's artifact provider (not an old guessed intermediate).
+There is no Gradle task that exports the audit inputs; the four text inputs are
+produced by the commands below, and the dated runs in
+[PLAY_ARTIFACT_EVIDENCE_2026-11-26.md](PLAY_ARTIFACT_EVIDENCE_2026-11-26.md)
+record exactly how each file was made. Treat any doc that names a
+`write*ReleaseAudit` task as stale.
+
+```powershell
+# Resolved graphs (the guard requires ads + billing and no Start.io/Xposed on Play)
+./gradlew -q :app:dependencies --configuration playstoreReleaseRuntimeClasspath   > dependencies.txt
+./gradlew -q :app:dependencies --configuration playstoreReleaseCompileClasspath   > compile-dependencies.txt
+# Final manifest + resource table from the bundle
+java -jar bundletool.jar dump manifest --bundle=app-playstore-release.aab        > AndroidManifest.xml
+java -jar bundletool.jar dump resources --bundle=app-playstore-release.aab       > resources.txt
+# Local inspection APK sets (debug-signed by bundletool; never publish them)
+java -jar bundletool.jar build-apks --bundle=app-playstore-release.aab --output=universal.apks --mode=universal
+java -jar bundletool.jar build-apks --bundle=app-playstore-release.aab --output=split.apks
+```
+
+`source-inputs.txt` is one `kind<TAB>absolute-directory` line per AGP-selected
+directory for the variant (`main`, `playstore`, `release` plus the generated
+`ksp`/`ap_generated_sources` roots). Pass every code-bearing APK with another
+`--archive`; configuration-only splits (locale, density, ABI) carry no DEX and
+the guard rejects them as empty, so select APKs that actually contain
+`classes*.dex`.
+
+The dependency exports are ordinary Gradle reports, so they resolve the real
+transitive compile/runtime graphs; the manifest and resource table come from the
+signed bundle rather than a guessed intermediate path.
 Also validate the AAB with official bundletool, dump its final manifest, generate
 local universal and default split APK sets, and inspect those. Pass each
 code-bearing APK with another `--archive` and each decoded final manifest with

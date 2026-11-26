@@ -457,12 +457,16 @@ invent one without a task asking for it.
 - `screens/gaming/automation/` owns explicit authorization, the closed intent
   protocol, authenticated receiver, visible execution Activity, and shortcut
   creation. It delegates to existing game discovery and the process-owned
-  `GamingModeJobRunner`; it introduces no general shell gateway or profile UI.
+  `GamingModeJobRunner`. Broadcast admission and execution reports are separate;
+  UUIDs correlate them without granting authority or enabling shell input.
   These shared capabilities ship in both flavors without expanding variant seams.
-  `GamingToolSheet`/`GamingToolEntry` are presentation shared by automation/cache,
-  not new navigation destinations or settings owners. `CacheUiReport` scopes
-  outcome summaries to the package being edited; raw diagnostics are advanced.
+  The adaptive Automation dialog and Gaming Tools section tabs use the same
+  selection and ViewModel; they do not own an executor or parallel profiles.
+  `CommandInspector` presents explicitly provided, safe feature commands, not
+  arbitrary shell logs. `CacheUiReport` scopes outcome summaries to the package
+  being edited; raw diagnostics are advanced.
 - [`GAME_AUTOMATION.md`](GAME_AUTOMATION.md)
+- [`GAMING_WORKSPACE.md`](GAMING_WORKSPACE.md)
 - [`VMTOUCH_REVIEW.md`](VMTOUCH_REVIEW.md)
 - [`GAMING_MODE.md`](GAMING_MODE.md)
 - [`METRICS_ENGINE.md`](METRICS_ENGINE.md)

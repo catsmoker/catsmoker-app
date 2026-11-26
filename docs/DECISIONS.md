@@ -1291,3 +1291,136 @@ Read and recheck live suspension ownership rather than making users run shell
 commands. Restore only explicit selections owned by root or Shell; unknown,
 other-owner and quarantined apps are excluded. Automatic recovery still uses
 only CatSmoker's journal, and manual recovery never guesses missing app-op priors.
+
+## 2026-11-24 - Separate automation delivery from execution
+
+Keep the existing broadcast action and profile executor. Correlate admission
+and execution with an optional request ID, preserve the running report during
+rejected deliveries, and limit bursts before starting a service. Do not queue
+time-sensitive device-wide settings changes through deferrable WorkManager
+jobs: a user may have left the game by the time the job runs, and applying the
+settings still needs the existing foreground holder. Use Android's admission
+decision and the visible continuation fallback. See [protocol](GAME_AUTOMATION.md).
+
+Group Gaming Tools by task and move the library into a pane only when the
+current window has room. Expose actual allowlisted command arguments from their
+owner rather than capturing arbitrary privileged commands or file payloads.
+Keep CPU diagnosis read-only; neither a matching UID nor a vendor preset is
+evidence that a safe write and restore are possible.
+
+## 2026-11-26 - Two columns for the Performance section on wide windows
+
+The section keeps one card list per capability, but on a wide window
+(>= 792 dp, the same breakpoint that shows the library pane) Performance now
+lays its four cards out in two columns instead of one full-width strip. The
+cards themselves, their saved expansion state and their requirements are
+unchanged; only the placement moves, so the desktop surface stops wasting the
+right half of the workspace. The other sections keep a single column because
+their cards are sequential (Profile) or few (Overlays, Network, Maintenance).
+Verified on the desktop emulator at 1200x750 dp and 380 dp wide.
+
+## 2026-11-26 - Native ABIs are pinned where the bundle can see them
+
+`defaultConfig.ndk.abiFilters` now lists `arm64-v8a`, `armeabi-v7a` and
+`x86_64` — the same three ABIs `splits.abi` already declared. Bundles ignore
+`splits.abi`, so release AABs had been carrying a 32-bit `x86`
+`libcatsmoker_bridge.so` that no APK split ever shipped and that the Play
+boundary audit rejects as an unexpected bridge ABI. Pinning the filters makes
+the bundle, the split APKs and the audit contract describe one ABI set. The
+Full audit then passes for every shipped ABI and the Play bundle loses a dead
+library.
+
+## 2026-11-26 - Desktop tile badges scale, Settings gets two columns
+
+Two reported desktop defects, both fixed in the shared UI rather than by
+per-screen overrides. First, `QuickActionButton` drew its glyph at Material's
+fixed 24 dp inside a badge that hosts sized by hand (32/40 dp), so every
+desktop tile showed a phone-sized icon floating in a large rounded square; the
+badge now scales the icon's own density so the glyph keeps a proportional share
+of whatever badge the host asks for, the chevron follows the same badge, and
+the Home dashboard picks the badge from the window width (40 → 46 → 56 → 64 dp).
+Second, Settings capped its single column at 720 dp and centred it, leaving two
+empty strips on a desktop window; at >= 792 dp it now lays the section bodies
+out in two columns (General + Updates left; Privacy, Help, About right) with the
+same 720 dp content measure per column and 1680 dp overall cap. The section
+bodies are declared once as lambdas so the one- and two-column arrangements
+cannot drift. Verified on the desktop emulator at 2880x1800 and at 1080x2400
+(phone), where the single column and the phone-sized badges are unchanged.
+
+## 2026-11-26 - Profile section of Gaming Tools gets the two-column treatment
+
+The Performance section already split into two columns at wide widths; Profile
+had stayed one full-width card stack, so at 1920 dp the Gaming Mode card put its
+title at one edge and its toggle at the other with nothing between. At a
+>= 1200 dp window (main pane ~900 dp, the width where two cards are still wider
+than a phone tile) Profile now lays Gaming Mode in the wider left column and
+Fixed Performance plus game cache controls in the right one. The threshold is
+deliberately higher than the library pane's 792 dp: two cards in a 460 dp pane
+would be narrower than a phone tile. Cards, saved expansion state and gating are
+unchanged, and the phone layout still stacks them in one column.
+
+## 2026-11-26 - Every Gaming Tools section splits at desktop width, forms get a measure
+
+The six workspaces were audited at 1920 dp. Sections with two or more independent
+cards now use the same two-column arrangement above a 1200 dp window: Overlays
+places the FPS overlay beside the crosshair, Network places Do Not Disturb and
+Background Data beside the Background Apps group. Graphics & Display and
+Maintenance stay one card because they own exactly one capability each, so the
+fix there is the card body rather than the card grid: the numeric fields, the
+DPI field and the Apply/Reset pair are capped (`widthIn`) instead of filling a
+2,200 dp row, which had turned a four-digit width into an 1,100 dp empty box and
+stranded Reset at the far edge. Phone widths are unaffected — every cap is above
+the phone content width, so those Rows still fill it through their weights.
+
+## 2026-11-26 - Desktop text scales with the window, phones keep their sizes
+
+Reported as "the text looks small on desktop mode", and the cause was the whole
+app rendering at phone text sizes on a 1,920 dp surface. `CatsmokerTheme` now
+multiplies the composition's `fontScale` (1.0 below 840 dp, 1.10 from 840 dp,
+1.18 from 1400 dp) instead of scaling density, so dp layout is untouched and the
+hard-coded 10-13sp captions inside cards scale too — a typography override
+would have missed them. The decision is deliberately conservative: 1.18 is the
+largest step, and nothing has moved to a second text-size scale for card titles.
+Verified at 1920 dp (title heights 23 -> 27 px, body 24 -> 29 px, no wrap or
+clipping in Settings' two columns), at 1280 and 853 dp on a 2,560x1,600 tablet,
+and at 640/411 dp where the factor is 1.0 and the phone layout is unchanged.
+
+## 2026-11-26 - Game selection moves to a rail on wide windows, and stops pretending to be a text field
+
+File Engineering selected its game through a modal dialog opened by a *disabled*
+`OutlinedTextField` — a control that looked like an input but refused typing, hiding
+the screen for a seven-entry fixed list. Two changes: the trigger is now a bordered
+action row (current game, install dot, chevron) with the launch button beside it, and
+at >= 792 dp the same list lives in a permanent left rail — the arrangement Gaming
+Tools already uses — so the workspace pane is no longer a phone strip with dead space
+beside it. The rail and the dialog share `PickerRow` and the exact sort/three-state dot
+rules, so they cannot disagree about what is installed; the dialog survives only below
+792 dp, where a rail would leave the workspace too narrow. The two-step flow is
+untouched: picking PUBG Mobile in either surface still reveals the six store-variant
+chips rather than silently choosing Global.
+
+## 2026-11-26 - Game badges are derived, not bundled art
+
+The new game rail exposed a real defect the dialog had been hiding: every game drew the
+same generic gamepad glyph, because per-game art can only come from `PackageManager` and
+most of this list is deliberately "not installed yet". Installed games still get their
+real launcher icon; everything else now gets a monogram tile — two letters from the
+game's own short label plus a per-family accent colour (`gameMonogram` / `gameAccent`).
+Choosing a derived badge over bundled artwork keeps third-party game logos out of the
+APK (no trademark or Play-store asset question), needs no new file when a `GameType` is
+added, and still makes the list scannable. The PUBG family is the one exception to the
+initials rule: its short labels all start with "PUBG", so initials would collapse to
+"PG"/"PM" and drop the only distinctive word — it renders "PB".
+
+## 2026-11-26 - Every game gets an accent: brand table plus a derived hue
+
+The first version of the monogram badge listed a brand colour for ten headline titles and
+sent everything else to one grey, which read exactly as it was: some games had colours,
+the rest did not ("why do some games have different colors and the others aren't?").
+`gameAccent` now returns a brand colour where the game actually has one (PUBG amber,
+Genshin teal, New State blue, Star Rail violet, WuWa cyan, GRID orange, Roblox red) and
+otherwise derives a stable hue from the enum name at fixed saturation/lightness. Every
+game is distinguishable, adding a `GameType` needs no colour decision, and a game never
+changes colour between launches. The trade-off is deliberate: a derived hue is not a
+brand colour, so the twenty non-branded titles get a plausible-looking accent rather than
+a trademark-accurate one.
