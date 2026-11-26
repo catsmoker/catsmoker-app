@@ -16,7 +16,7 @@ Gaming Mode and needs no root/Shizuku. Preparation also runs the saved experimen
 after successful mode activation. Options save automatically to the same game
 record; no profiles. **Cancel preload** cancels owned work.
 
-The feature uses a regular expandable Gaming Tools card near the bottom.
+The feature uses an expandable card in the Gaming Tools **Profile** section.
 Global context asks for a selection; the inline controls identify the selected package
 and shows friendly outcome/data/time, budget and permission explanations.
 Raw diagnostics are behind an expandable section. A report for a different game
@@ -31,7 +31,8 @@ OBBs inaccessible even if a privileged shell could read them.
 
 Budgets are **cumulative**, not upstream's per-file `-m`: at most 64 MiB,
 24 candidates, 8 selected documents, a three-second cooperative deadline and
-64-KiB read/cancellation/memory checks. Stop if Android reports low memory or
+64-KiB read/cancellation/memory checks. Check cancellation, time and pressure
+before opening each candidate as well. Stop if Android reports low memory or
 available RAM drops below max(256 MiB, 10% total RAM). Mappings and owned
 descriptors close on completion/cancellation/error. Reads/providers can block:
 the deadline is checked between operations, not a guaranteed hard I/O timeout.
@@ -40,7 +41,8 @@ Cached pages are reclaimable kernel resources; restore does not evict them.
 The JSON report includes actual bytes read, elapsed time, process CPU time,
 available RAM before/after, and per-file failures/residency where reliable.
 App-side residency is deliberately unknown for files not owned by CatSmoker,
-because newer kernels may fabricate `mincore` answers. Reading bytes is not proof
+because newer kernels may fabricate `mincore` answers. Mapping/residency failures
+do not block a safe read. Reading bytes is not proof
 the game uses them or that they remain cached. Interrupted persisted runs are not
 reported as completed.
 
@@ -159,8 +161,9 @@ No device/performance evidence was produced by that earlier static review.
 
 ## ARM64 device experiment (2026-11-15)
 
-Using the local NDK **28.2.13676358**, built upstream **v1.3.1** at immutable
-commit `af86e27675843b3c7e4ddfee66ddbaf44eff43c4` for
+Using the local NDK **28.2.13676358**, built upstream at immutable commit
+`af86e27675843b3c7e4ddfee66ddbaf44eff43c4` (self-reported 1.3.1, not the
+`v1.3.1` tag) for
 `aarch64-linux-android27`, with `-Wl,-z,max-page-size=16384`.
 The lab-only executable has ELF LOAD alignment `0x4000` and uses Android's
 `/system/bin/linker64`; it is not bundled in either flavor. Retained upstream

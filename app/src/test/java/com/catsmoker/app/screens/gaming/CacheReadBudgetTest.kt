@@ -30,6 +30,17 @@ class CacheReadBudgetTest {
         val budget = CacheReadBudget(100, 1000, { 0 }, { true }, {})
         assertEquals(100L, budget.read(ByteArrayInputStream(ByteArray(100)), 100))
         assertEquals("byte_budget", budget.stopReason)
+        assertFalse(budget.canStartIo())
+    }
+
+    @Test fun pressureBetweenCandidatesStopsBeforeTheNextOpen() {
+        var memorySafe = true
+        val budget = CacheReadBudget(100, 10, { 0 }, { memorySafe }, {})
+        assertTrue(budget.canStartIo())
+        assertEquals(20L, budget.read(ByteArrayInputStream(ByteArray(20)), 20))
+        memorySafe = false
+        assertFalse(budget.canStartIo())
+        assertEquals("memory_pressure", budget.stopReason)
     }
 
     @Test(expected = CancellationException::class)

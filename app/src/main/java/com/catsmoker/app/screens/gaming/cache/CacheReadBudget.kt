@@ -15,19 +15,23 @@ class CacheReadBudget(
     var stopReason: String? = null
         private set
 
+    fun canStartIo(): Boolean {
+        checkCancelled()
+        if (stopReason != null) return false
+        stopReason = when {
+            bytesRead >= maxBytes -> "byte_budget"
+            clock() >= deadlineMillis -> "time_budget"
+            !memorySafe() -> "memory_pressure"
+            else -> null
+        }
+        return stopReason == null
+    }
+
     fun read(input: InputStream, length: Long): Long {
         val start = bytesRead
         val buffer = ByteArray(64 * 1024)
         var remaining = length
-        while (remaining > 0) {
-            checkCancelled()
-            stopReason = when {
-                bytesRead >= maxBytes -> "byte_budget"
-                clock() >= deadlineMillis -> "time_budget"
-                !memorySafe() -> "memory_pressure"
-                else -> null
-            }
-            if (stopReason != null) break
+        while (remaining > 0 && canStartIo()) {
             val count = input.read(buffer, 0, minOf(buffer.size.toLong(), remaining, maxBytes - bytesRead).toInt())
             if (count < 0) break
             if (count == 0) { stopReason = "no_progress"; break }

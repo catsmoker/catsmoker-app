@@ -48,7 +48,8 @@ class ShellRunner @Inject constructor(
     data class ExecResult(
         val exitCode: Int,
         val stdout: String,
-        val stderr: String
+        val stderr: String,
+        val backend: Backend? = null
     ) {
         val isSuccess: Boolean get() = exitCode == 0
 
@@ -60,6 +61,9 @@ class ShellRunner @Inject constructor(
         }
     }
 
+    data class Backend(val transport: Transport, val uid: Int)
+    enum class Transport { APP, SHIZUKU, DIRECT_ROOT }
+
     /** Android attributes package suspensions to the caller (root and shell are separate owners). */
     internal enum class PrivilegedIdentity(val uid: Int) {
         ROOT(0), SHELL(2000)
@@ -69,6 +73,8 @@ class ShellRunner @Inject constructor(
     val shizukuHasPermission = _shizukuHasPermission.asStateFlow()
 
     private val scope = CoroutineScope(Dispatchers.Main + SupervisorJob())
+    private val appShellLock = Any()
+    private var appShell: Shell? = null
 
     @Volatile
     private var cachedRootAvailable: Boolean? = null
@@ -143,15 +149,12 @@ class ShellRunner @Inject constructor(
             return cached
         }
 
-        // A working root shell or a recorded grant. The grant flag distinguishes "never
-        // granted" from "granted, but the shell daemon failed to start" — the old code
-        // consulted it only when getShell() threw, so the second case read as unrooted.
-        val granted = runCatching { Shell.isAppGrantedRoot() == true }.getOrDefault(false)
+        val live = runCatching { Shell.getCachedShell()?.isRoot == true }.getOrDefault(false)
         // State probes must not summon a superuser dialog. Only an explained Grant tap
         // may opt into opening a new root shell, including after a process restart.
         val requested = context.getSharedPreferences("privilege_consent", Context.MODE_PRIVATE)
             .getBoolean("root_requested", false)
-        val rooted = granted || (requested && runCatching { Shell.getShell().isRoot }.getOrDefault(false))
+        val rooted = live || (requested && runCatching { Shell.getShell().isRoot }.getOrDefault(false))
 
         cachedRootAvailable = rooted
         lastRootCheckTime = now
@@ -370,13 +373,34 @@ class ShellRunner @Inject constructor(
         val diagnosticCommand = if (redactCommand) "<redacted>" else command
         execPrivileged(command, diagnosticCommand)?.let { return@withContext it }
 
-        val result = runCatching { Shell.cmd(command).exec() }.getOrNull()
+        // libsu's default main shell can try `su`. This fallback must stay the app UID.
+        val result = runCatching { executeInShell(unprivilegedShell(), command,
+            Backend(Transport.APP, android.os.Process.myUid())) }.getOrNull()
             ?: return@withContext ExecResult.FAILED
         if (!result.isSuccess) {
-            Log.w(TAG, "Unprivileged shell failed (exit ${result.code}): $diagnosticCommand")
+            Log.w(TAG, "Unprivileged shell failed (exit ${result.exitCode}): $diagnosticCommand")
         }
-        ExecResult(result.code, result.out.joinToString("\n"), result.err.joinToString("\n"))
+        result
     }
+
+    private fun unprivilegedShell(): Shell = synchronized(appShellLock) {
+        appShell?.takeIf { it.isAlive } ?: Shell.Builder.create().setFlags(Shell.FLAG_NON_ROOT_SHELL)
+            .setTimeout(5).build().also { appShell = it }
+    }
+
+    private fun executeInShell(shell: Shell, command: String, backend: Backend): ExecResult {
+        val out = mutableListOf<String>()
+        val err = mutableListOf<String>()
+        // A directly constructed libsu job returns no output unless destinations are set.
+        val result = shell.newJob().add(command).to(out, err).exec()
+        return ExecResult(result.code, out.joinToString("\n"), err.joinToString("\n"), backend)
+    }
+
+    /** Observation only: discovering UID 1000 is not a claim that it can perform a mutation. */
+    internal fun authorizedShizukuUid(): Int? = runCatching {
+        if (!Shizuku.pingBinder() || Shizuku.checkSelfPermission() != PackageManager.PERMISSION_GRANTED) null
+        else Shizuku.getUid().takeIf { it >= 0 }
+    }.getOrNull()
 
     internal suspend fun preferredPrivilegedIdentity(): PrivilegedIdentity? = withContext(Dispatchers.IO) {
         if (rootShellOrNull() != null) PrivilegedIdentity.ROOT else shizukuIdentity()
@@ -442,14 +466,10 @@ class ShellRunner @Inject constructor(
     private fun rootShellOrNull(): Shell? =
         if (isRootAvailable()) runCatching { Shell.getShell().takeIf { it.isRoot } }.getOrNull() else null
 
-    private fun shizukuIdentity(): PrivilegedIdentity? = runCatching {
-        if (!Shizuku.pingBinder() || Shizuku.checkSelfPermission() != PackageManager.PERMISSION_GRANTED) {
-            null
-        } else {
-            val uid = Shizuku.getUid()
-            PrivilegedIdentity.entries.firstOrNull { it.uid == uid }
-        }
-    }.getOrNull()
+    private fun shizukuIdentity(): PrivilegedIdentity? {
+        val uid = authorizedShizukuUid() ?: return null
+        return PrivilegedIdentity.entries.firstOrNull { it.uid == uid }
+    }
 
     private suspend fun execPrivileged(
         command: String,
@@ -458,14 +478,15 @@ class ShellRunner @Inject constructor(
     ): ExecResult? {
         if (identity != PrivilegedIdentity.SHELL) {
             rootShellOrNull()?.let { shell ->
-                val result = runCatching { shell.newJob().add(command).exec() }.getOrNull()
+                val result = runCatching { executeInShell(shell, command, Backend(Transport.DIRECT_ROOT, 0)) }.getOrNull()
                     ?: return ExecResult.FAILED
-                if (!result.isSuccess) Log.w(TAG, "Root exec failed (exit ${result.code}): $diagnosticCommand")
-                return ExecResult(result.code, result.out.joinToString("\n"), result.err.joinToString("\n"))
+                if (!result.isSuccess) Log.w(TAG, "Root exec failed (exit ${result.exitCode}): $diagnosticCommand")
+                return result
             }
         }
         val shizuku = shizukuIdentity() ?: return null
         if (identity != null && shizuku != identity) return null
+        val backend = Backend(Transport.SHIZUKU, shizuku.uid)
         bindUserService()?.let { service ->
             if (shizukuIdentity() == shizuku) {
                 try {
@@ -473,21 +494,21 @@ class ShellRunner @Inject constructor(
                     return ExecResult(
                         exitCode = remote.exitCode,
                         stdout = remote.output.orEmpty(),
-                        stderr = remote.error.orEmpty()
+                        stderr = remote.error.orEmpty(),
+                        backend = backend
                     )
                 } catch (t: Throwable) {
                     Log.w(TAG, "Shizuku service exec failed, dropping proxy", t)
                     fileService = null
-                    // A strict caller may already have made a change. Leave it to the caller to
-                    // read that change back rather than forking the same command again.
-                    if (identity != null) return ExecResult.FAILED
+                    // Binder can lose a result after running the command. Never replay it.
+                    return ExecResult.FAILED.copy(backend = backend)
                 }
             }
         }
 
         // The one-shot process does not need the helper. Recheck the UID in case Shizuku was
         // restarted in a different mode while binding.
-        return if (shizukuIdentity() == shizuku) execShizukuRemote(command) else null
+        return if (shizukuIdentity() == shizuku) execShizukuRemote(command)?.copy(backend = backend) else null
     }
 
     /**

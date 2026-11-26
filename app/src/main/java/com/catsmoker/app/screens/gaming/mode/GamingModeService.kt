@@ -48,12 +48,9 @@ class GamingModeService : Service() {
                 startForeground(NOTIFICATION_ID, notification)
             }
         } catch (_: IllegalStateException) {
-            automation.get().record("foreground_required")
-            stopSelf()
+            // onStartCommand still receives the request so the refusal can be correlated.
             return
         } catch (_: SecurityException) {
-            automation.get().record("foreground_required")
-            stopSelf()
             return
         }
         CatsmokerNotifications.attachOwner(this, "GamingMode")
@@ -61,7 +58,14 @@ class GamingModeService : Service() {
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        if (!isRunning) return START_NOT_STICKY
+        if (!isRunning) {
+            val runner = automation.get()
+            val request = intent?.let(runner::parse)
+            if (request != null) runner.recordDelivery(request, "foreground_required")
+            else if (intent?.action == ACTION_PREPARE) runner.record("foreground_required")
+            stopSelfResult(startId)
+            return START_NOT_STICKY
+        }
         latestStartId = startId
         if (intent?.action == AutomationProtocol.ACTION) {
             // Non-exported service; nevertheless re-check consent/token after queued delivery.

@@ -2694,16 +2694,30 @@ class GamingEngine(
      *   report. Empty means everything landed (or there was nothing to restore).
      */
     private suspend fun restoreKernelNodeMap(priors: Map<String, String>): List<String> {
-        if (priors.isEmpty() || !shellRunner.isRootAvailable()) return emptyList()
+        if (priors.isEmpty()) return emptyList()
+        val canWrite = shellRunner.isRootAvailable()
         val refused = mutableListOf<String>()
         for ((node, prior) in priors) {
+            // A node that still holds its prior was never changed by this session (or the
+            // apply's write was refused) — writing it back is a no-op that can fail on a
+            // read-only node and turn a clean recovery into an "Interrupted" session.
+            val current = readSysfsNode(node)?.trim()
+            if (current != null && current == prior.trim()) continue
+            // Only root can have changed these nodes: every apply path that touches a
+            // kernel node is root-gated. Without root the prior already above is clean;
+            // anything else is a value this channel cannot put back.
+            if (!canWrite) {
+                refused += node
+                continue
+            }
             // Comma- and colon-aware gate (not the shared one: cpuset priors like `0-5,7` need
             // commas and per-CPU boost priors like `0:0 4:1804800` need colons).
             if (!SnapdragonCpuWiden.isSafeNodeValue(prior)) {
                 refused += node
                 continue
             }
-            shellRunner.execSafeResult("sh", "-c", "echo $prior > $node")
+            shellRunner.execPrivilegedSafeResult("sh", "-c", "echo $prior > $node",
+                identity = ShellRunner.PrivilegedIdentity.ROOT)
             if (readSysfsNode(node)?.trim() != prior.trim()) refused += node
         }
         return refused
@@ -2754,7 +2768,7 @@ class GamingEngine(
         val listing = shellRunner.execSafeResult("ls", CPUFREQ_DIR)
         if (!listing.isSuccess) return states
         val dirs = listing.stdout.split(WHITESPACE)
-            .filter { it.startsWith("policy") }
+            .filter(KernelInfo.policyNamePattern::matches)
             .map { "$CPUFREQ_DIR/$it" }
         for (dir in dirs) {
             val current = readSysfsNode("$dir/${SnapdragonCpuWiden.SCALING_MAX_FREQ}")
@@ -2776,10 +2790,10 @@ class GamingEngine(
         val sets = linkedMapOf<String, Set<Int>>()
         val listing = shellRunner.execSafeResult("ls", CPUFREQ_DIR)
         if (!listing.isSuccess) return sets
-        for (entry in listing.stdout.split(WHITESPACE).filter { it.startsWith("policy") }) {
+        for (entry in listing.stdout.split(WHITESPACE).filter(KernelInfo.policyNamePattern::matches)) {
             val dir = "$CPUFREQ_DIR/$entry"
             val cpus = readSysfsNode("$dir/${SnapdragonCpuWiden.RELATED_CPUS}")
-                ?.let(SnapdragonCpuWiden::parseCpuSet).orEmpty()
+                ?.let(KernelInfo::parseRelatedCpus).orEmpty()
             if (cpus.isNotEmpty()) sets[dir] = cpus
         }
         return sets

@@ -87,29 +87,36 @@ class GameCachePreloader @Inject constructor(
             val candidates = desired.cacheDocuments.map(Uri::parse).toMutableList()
             candidates += listOfNotNull(info.sourceDir).plus(info.splitSourceDirs.orEmpty()).map { Uri.fromFile(File(it)) }
             val obb = File(android.os.Environment.getExternalStorageDirectory(), "Android/obb/$pkg")
-            val obbs = obb.listFiles()?.filter { it.isFile && it.extension.equals("obb", true) }.orEmpty()
-            candidates += obbs.take(8).map(Uri::fromFile)
-            if (obbs.isEmpty()) files.put(JSONObject().put("source", "OBB").put("result", "absent_or_inaccessible"))
+            if (budget.canStartIo()) {
+                val obbs = obb.listFiles()?.filter { it.isFile && it.extension.equals("obb", true) }.orEmpty()
+                candidates += obbs.take(8).map(Uri::fromFile)
+                if (obbs.isEmpty()) files.put(JSONObject().put("source", "OBB").put("result", "absent_or_inaccessible"))
+            }
             for (uri in candidates.distinct().take(24)) {
-                currentCoroutineContext().ensureActive()
-                if (budget.stopReason != null) break
+                if (!budget.canStartIo()) break
                 val row = JSONObject().put("source", if (uri.scheme == "content") "selected_document" else File(uri.path.orEmpty()).name)
                 try {
                     val pfd = if (uri.scheme == "file") ParcelFileDescriptor.open(File(requireNotNull(uri.path)), ParcelFileDescriptor.MODE_READ_ONLY)
                         else context.contentResolver.openFileDescriptor(uri, "r")
                     requireNotNull(pfd).use { descriptor ->
+                        if (!budget.canStartIo()) {
+                            row.put("result", budget.stopReason)
+                            return@use
+                        }
                         val stat = Os.fstat(descriptor.fileDescriptor)
                         require(OsConstants.S_ISREG(stat.st_mode) && stat.st_size > 0) { "not_regular_file" }
                         val count = minOf(stat.st_size, budget.maxBytes - budget.bytesRead)
                         if (count <= 0) return@use
                         val pageSize = Os.sysconf(OsConstants._SC_PAGESIZE)
-                        require(pageSize > 0)
-                        val address = Os.mmap(0, count, OsConstants.PROT_READ, OsConstants.MAP_SHARED, descriptor.fileDescriptor, 0)
+                        val pages = if (pageSize > 0) ((count + pageSize - 1) / pageSize).toInt() else null
+                        // mincore can report synthetic all-resident pages for files we don't own.
+                        // Mapping is optional instrumentation, never a prerequisite to warming.
+                        val address = if (pages != null && stat.st_uid == Process.myUid()) runCatching {
+                            Os.mmap(0, count, OsConstants.PROT_READ, OsConstants.MAP_SHARED, descriptor.fileDescriptor, 0)
+                        }.getOrNull() else null
                         try {
-                            // New Linux kernels may fabricate all-resident for files not owned/writable.
-                            val reliable = stat.st_uid == Process.myUid()
-                            fun residency(): Int? = if (!reliable) null else runCatching {
-                                val vector = ByteArray(((count + pageSize - 1) / pageSize).toInt())
+                            fun residency(): Int? = if (address == null || pages == null) null else runCatching {
+                                val vector = ByteArray(pages)
                                 Os.mincore(address, count, vector)
                                 vector.count { it.toInt() and 1 != 0 }
                             }.getOrNull()
@@ -117,12 +124,13 @@ class GameCachePreloader @Inject constructor(
                             val read = ParcelFileDescriptor.AutoCloseInputStream(
                                 ParcelFileDescriptor.dup(descriptor.fileDescriptor)
                             ).use { budget.read(it, count) }
-                            row.put("bytes", read).put("pages", (count + pageSize - 1) / pageSize)
+                            val after = residency()
+                            row.put("bytes", read).put("pages", pages ?: JSONObject.NULL)
                                 .put("residentBefore", before ?: JSONObject.NULL)
-                                .put("residentAfter", residency() ?: JSONObject.NULL)
-                                .put("residencyReliable", reliable)
+                                .put("residentAfter", after ?: JSONObject.NULL)
+                                .put("residencyReliable", before != null && after != null)
                                 .put("result", if (read == count) "read" else budget.stopReason ?: "short_read")
-                        } finally { Os.munmap(address, count) }
+                        } finally { if (address != null) Os.munmap(address, count) }
                     }
                 } catch (cancelled: CancellationException) { throw cancelled
                 } catch (_: Exception) {
