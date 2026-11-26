@@ -125,3 +125,24 @@ universal and per-ABI APKs with `arm64-v8a`, `armeabi-v7a` and `x86_64` and no
 active and ROOT inactive, and logcat carried no `UnsatisfiedLinkError` or
 `dlopen failed`. A `QUERY_STATUS` broadcast after the reinstall still returned
 the app's state, so the automation path survived the repackaging.
+
+## Re-run after the UI and game-selection changes (supersedes both tables above)
+
+The desktop UI, theme and File Engineering work changed the code after the artifacts
+above were built, so both directions were rebuilt and re-audited against tree
+`1a9b00a`. Both pass with `--require-artifacts` and no `LIMIT` line.
+
+| Item | Play | Full |
+| --- | --- | --- |
+| Bundle | 14,136,869 B | 11,287,218 B |
+| SHA-256 | `bd9d9dd3649c6deddd812db58bd4b67e0294e50ff92a644ea271a537128b9d43` | `0ccacb4d2fc40814d5fef5c4f6357baf61b069e57a469822510e833710a6367e` |
+| DEX | 1 / 9,814 class definitions / 11,659 type references | 1 / 7,344 / 8,987 |
+| R8 original names | 11,508 | 8,411 |
+| Resource strings | 1,817 | 2,085 |
+| Universal APK (debug-signed, inspection only) | `b5f1c40153c32bc31344e32b9aaafae217286aa04426662abfe596c03f166e83` | `4d3b964ff4336d5eeaf24f418b6595a051489a2099b5230b9710c5a93b97df64` |
+| Code-bearing splits | `base-master` `f3e5e77c…`, `_2` `605b76cc…`, `_3` `352ad669…` | covered by AAB + universal (splits carry no `.so`) |
+
+Both bundles still ship exactly three ABIs and the same natives as before
+(`libandroidx.graphics.path.so`, `libdatastore_shared_counter.so` on Play; the 14-entry
+`libcatsmoker_bridge.so` on Full). The Play graph still resolves ads 25.5.0 and billing
+9.1.0 with no Start.io, Truenet or Xposed type anywhere in the shipped DEX.
