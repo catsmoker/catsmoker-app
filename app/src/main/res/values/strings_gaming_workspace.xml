@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="gt_workspace_profile">Profile</string>
+    <string name="gt_workspace_maintenance">Maintenance</string>
+    <string name="gt_workspace_apply">Apply saved profile</string>
+    <string name="gt_automation_status_awaiting">Waiting for confirmation in notifications</string>
+    <string name="gt_automation_status_game_unavailable">Game not available in Your Games</string>
+    <string name="gt_automation_last_delivery">Latest delivery: %1$s</string>
+    <string name="gt_automation_details">View execution details</string>
+    <string name="gt_automation_copied_template">Template copied. Insert your key separately.</string>
+    <string name="gt_automation_copy_adb">Copy ADB apply command</string>
+    <string name="gt_automation_copy_intent">Copy broadcast fields</string>
+    <string name="gt_automation_backend_unverified">Shizuku UID %1$d detected; not a supported write backend</string>
+    <string name="gt_view_commands">View commands</string>
+    <string name="gt_copy_commands">Copy</string>
+    <string name="gt_command_readback">Read back</string>
+    <string name="gt_command_backend_uid">%1$s · UID %2$d</string>
+    <string name="gt_command_backend_unavailable">No confirmed backend</string>
+    <string name="gt_command_result">%1$s · %2$s · exit %3$d</string>
+    <string name="gt_resolution_command_detail">Preferred backend: %1$s. Requires permission to change display overrides. CatSmoker sets size before density, then reads back both. Reset removes overrides; it does not restore a previous custom override. CatSmoker blocks changes with an external display attached.</string>
+    <string name="gt_cpu_policies">CPU frequency policies</string>
+    <string name="gt_cpu_policies_subtitle">Inspect kernel limits and governors</string>
+    <string name="gt_cpu_readonly">Read-only · App UID · Linux sysfs. The reported frequency is not guaranteed to be the hardware clock.</string>
+    <string name="gt_cpu_refresh">Refresh CPU policies</string>
+    <string name="gt_cpu_loading">Reading CPU policies…</string>
+    <string name="gt_cpu_no_policies">No readable CPU policy directories on this device.</string>
+    <string name="gt_cpu_unreadable">Unavailable</string>
+    <string name="gt_cpu_driver_governor">Driver: %1$s · Governor: %2$s</string>
+    <string name="gt_cpu_cpus">Related CPUs: %1$s · Affected CPUs: %2$s</string>
+    <string name="gt_cpu_limits">Scaling limits: %1$s – %2$s · Reported: %3$s</string>
+    <string name="gt_cpu_hardware_limits">Hardware limits: %1$s – %2$s</string>
+    <string name="gt_cpu_frequency_table">Frequency table: %1$s</string>
+    <string name="gt_cpu_governors">Available governors: %1$s</string>
+</resources>

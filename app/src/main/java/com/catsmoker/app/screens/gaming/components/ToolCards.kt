@@ -89,7 +89,10 @@ fun FeatureToggleCard(title: String, subtitle: String, icon: ImageVector, checke
  */
 @Composable
 fun ExpandableToolCard(title: String, subtitle: String, icon: ImageVector, isToggleable: Boolean = false, isToggled: Boolean = false, enabled: Boolean = true, requirementNote: String? = null, onToggleChange: (Boolean) -> Unit = {}, forceExpand: Boolean = false, info: InfoTopic? = null, notice: (@Composable () -> Unit)? = null, expandable: Boolean = true, content: @Composable () -> Unit = {}) {
-    var expanded by remember { mutableStateOf(false) }
+    // Saveable: a desktop window resize or fold recreates the activity, and losing which tool
+    // the user had open there is a navigation reset they did not ask for. Section switches save
+    // their content through the screen's SaveableStateHolder, so the same key restores this too.
+    var expanded by rememberSaveable { mutableStateOf(false) }
     LaunchedEffect(forceExpand) { if (forceExpand) expanded = true }
     val opens = enabled && expandable
     SectionCard(enabled = enabled) {

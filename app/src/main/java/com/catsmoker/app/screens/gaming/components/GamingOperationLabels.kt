@@ -5,7 +5,8 @@ import com.catsmoker.app.R
 
 @StringRes
 fun gamingOperationLabel(result: String): Int = when (result) {
-    "accepted", "awaiting_user" -> R.string.gt_status_received
+    "accepted" -> R.string.gt_status_received
+    "awaiting_user" -> R.string.gt_automation_status_awaiting
     "running" -> R.string.gt_status_running
     "applied", "already_applied" -> R.string.gt_status_prepared
     "restored", "nothing_to_restore" -> R.string.gt_status_restored
@@ -19,7 +20,8 @@ fun gamingOperationLabel(result: String): Int = when (result) {
     "busy" -> R.string.gt_status_busy
     "restore_required" -> R.string.gt_status_restore
     "foreground_required" -> R.string.gt_status_foreground
-    "failed", "denied", "game_unavailable", "no_progress" -> R.string.gt_status_failed
+    "game_unavailable" -> R.string.gt_automation_status_game_unavailable
+    "failed", "denied", "no_progress", "launch_failed" -> R.string.gt_status_failed
     "disabled" -> R.string.gt_status_disabled
     "selected" -> R.string.gt_status_selected
     "launched", "launch_ready" -> R.string.gt_status_launch

@@ -9,12 +9,13 @@ import java.io.File
  *
  * Everything here only *reads* world-readable sysfs/proc nodes with plain file I/O — no
  * privilege, no shell fork — so on a locked-down kernel each read simply yields null and the
- * UI says unreadable. Nothing here writes: applying governor/frequency tweaks is a future,
- * root-gated feature with snapshot/restore, deliberately out of this cycle. All parsers are
+ * UI says unreadable. The separate Gaming Mode engine owns any kernel writes and their
+ * snapshot/restore; this diagnostic surface never enables them. All parsers are
  * total (garbage in, empty-or-null out), because vendor layouts differ and a diagnostics read
  * is never worth a throw.
  */
 object KernelInfo {
+    internal val policyNamePattern = Regex("policy[0-9]+")
 
     /** One cpufreq policy (usually one per CPU cluster). Frequencies in kHz, as the kernel reports. */
     data class CpuPolicy(
@@ -24,6 +25,35 @@ object KernelInfo {
         val minKhz: Long?,
         val maxKhz: Long?
     )
+
+    internal data class CpuPolicyDetails(
+        val scaling: CpuPolicy,
+        val relatedCpus: Set<Int>,
+        val affectedCpus: Set<Int>,
+        val hardwareMinKhz: Long?,
+        val hardwareMaxKhz: Long?,
+        val frequenciesKhz: List<Long>,
+        val governors: List<String>,
+        val driver: String?
+    )
+
+    internal fun readPolicyDetails(): List<CpuPolicyDetails> =
+        policyDirs().map { policyDetails(it, ::readTrimmed) }
+
+    internal fun policyDetails(dir: File, read: (File) -> String?): CpuPolicyDetails {
+        fun node(name: String) = read(File(dir, name))?.trim()?.takeIf(String::isNotEmpty)
+        fun frequency(name: String) = node(name)?.toLongOrNull()?.takeIf { it > 0 }
+        return CpuPolicyDetails(
+            scaling = mapPolicy(dir, read),
+            relatedCpus = node("related_cpus")?.let(::parseRelatedCpus).orEmpty(),
+            affectedCpus = node("affected_cpus")?.let(::parseRelatedCpus).orEmpty(),
+            hardwareMinKhz = frequency("cpuinfo_min_freq"),
+            hardwareMaxKhz = frequency("cpuinfo_max_freq"),
+            frequenciesKhz = node("scaling_available_frequencies")?.let(::parseFreqTable)?.distinct()?.sorted().orEmpty(),
+            governors = node("scaling_available_governors")?.split(Regex("\\s+")).orEmpty(),
+            driver = node("scaling_driver")
+        )
+    }
 
     /** One thermal zone: the kernel's own name plus Celsius, or null for a stuck sensor. */
     data class ThermalZone(val name: String, val tempC: Float?)
@@ -129,7 +159,7 @@ object KernelInfo {
 
     private fun policyDirs(): List<File> {
         val root = File("/sys/devices/system/cpu/cpufreq")
-        return root.listFiles { f -> f.isDirectory && f.name.startsWith("policy") }
+        return root.listFiles { f -> f.isDirectory && policyNamePattern.matches(f.name) }
             ?.sortedBy { it.name.filter(Char::isDigit).toIntOrNull() ?: Int.MAX_VALUE }
             .orEmpty()
     }
@@ -160,6 +190,15 @@ object KernelInfo {
     fun parseFreqTable(text: String): List<Long> =
         text.trim().split(Regex("\\s+"))
             .mapNotNull { it.toLongOrNull()?.takeIf { khz -> khz > 0 } }
+
+    /** CPUFreq emits `related_cpus` as IDs separated by spaces, unlike cpuset range syntax. */
+    internal fun parseRelatedCpus(text: String): Set<Int> {
+        val ids = text.trim().split(Regex("\\s+")).map { token ->
+            if (token.isEmpty() || token.any { it !in '0'..'9' }) return emptySet()
+            token.toIntOrNull() ?: return emptySet()
+        }
+        return ids.toSet()
+    }
 
     /**
      * Millidegree sysfs value to Celsius, or null for blank/garbage/stuck-sensor values

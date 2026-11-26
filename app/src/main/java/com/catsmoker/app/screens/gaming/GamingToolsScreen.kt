@@ -25,6 +25,7 @@ import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.saveable.rememberSaveableStateHolder
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -72,6 +73,7 @@ import com.catsmoker.app.screens.gaming.graphics.DeveloperOptionsContent
 import com.catsmoker.app.screens.gaming.graphics.GameDeveloperOptions
 import com.catsmoker.app.screens.gaming.graphics.ResolutionChangerContent
 import com.catsmoker.app.screens.gaming.mode.BoostContent
+import com.catsmoker.app.screens.gaming.mode.CpuPolicyControls
 import com.catsmoker.app.screens.gaming.mode.FixedPerformanceModeCard
 import com.catsmoker.app.screens.gaming.mode.GamingModeCard
 import com.catsmoker.app.screens.gaming.mode.GamingModeRecovery
@@ -99,6 +101,15 @@ private const val GAME_GRID_COLUMNS = 4
 private const val GAME_LIBRARY_PREVIEW = GAME_GRID_COLUMNS * 2
 /** Below this many games, search would be clutter rather than help. */
 private const val GAME_SEARCH_THRESHOLD = 8
+
+private enum class GamingSection(@StringRes val title: Int) {
+    PROFILE(R.string.gt_workspace_profile),
+    GRAPHICS(R.string.gt_section_graphics),
+    PERFORMANCE(R.string.gt_section_performance),
+    OVERLAYS(R.string.gt_section_overlays),
+    NETWORK(R.string.gt_section_focus_network),
+    MAINTENANCE(R.string.gt_workspace_maintenance)
+}
 @Composable
 fun GamingToolsRoute(
     onBack: () -> Unit,
@@ -454,35 +465,38 @@ fun GamingToolsScreen(
         gamingState is GamingModeState.Checking
     LaunchedEffect(Unit) { onSync() }
     val hasPrivilege = uiState.isRooted || uiState.isShizukuActive
-    var gameQuery by remember { mutableStateOf("") }
-    var showAllGames by remember { mutableStateOf(false) }
+    var gameQuery by rememberSaveable { mutableStateOf("") }
+    var showAllGames by rememberSaveable { mutableStateOf(false) }
+    var section by rememberSaveable { mutableStateOf(GamingSection.PROFILE) }
+    val sectionStates = rememberSaveableStateHolder()
     // One popup, owned by the selected game's name button; selecting another game dismisses it.
     var openGameMenuPkg by rememberSaveable { mutableStateOf<String?>(null) }
-    var showAutomation by remember { mutableStateOf(false) }
+    var showAutomation by rememberSaveable { mutableStateOf(false) }
     if (showAutomation) {
         com.catsmoker.app.screens.gaming.automation.AutomationDialog(
             selectedGame = uiState.games.firstOrNull { it.packageName == uiState.selectedGamePkg },
+            canApply = hasPrivilege && !isBusy && !isActive && !isGamingSessionOpen && !gamingRecovery.isNeeded,
+            backendLabel = when {
+                uiState.isRooted -> stringResource(R.string.gt_command_backend_uid, "Root", 0)
+                uiState.isShizukuActive && uiState.authorizedShizukuUid != null ->
+                    stringResource(R.string.gt_command_backend_uid, "Shizuku", uiState.authorizedShizukuUid)
+                uiState.authorizedShizukuUid != null -> stringResource(R.string.gt_automation_backend_unverified, uiState.authorizedShizukuUid)
+                else -> stringResource(R.string.gt_command_backend_unavailable)
+            },
+            onApply = onActivateGamingMode,
             onDismiss = { showAutomation = false }
         )
     }
     LaunchedEffect(uiState.selectedGamePkg) { openGameMenuPkg = null }
     ScreenScaffold(
         title = stringResource(R.string.Gaming_tools_title),
-        subtitle = stringResource(R.string.gt_subtitle),
         onBack = onBack,
         trailingContent = {
             com.catsmoker.app.screens.gaming.automation.AutomationEntry(onClick = { showAutomation = true })
         }
     ) {
-        Column(
-            modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(bottom = 32.dp)
-        ) {
-            val selectedGame = uiState.games.firstOrNull { it.packageName == uiState.selectedGamePkg }
-            GamingContextBar(
-                gameName = selectedGame?.appName ?: uiState.selectedGamePkg,
-                onGlobal = onGlobalSelection
-            )
-            Spacer(Modifier.height(CatsmokerSpacing.CardGap))
+        val selectedGame = uiState.games.firstOrNull { it.packageName == uiState.selectedGamePkg }
+        val gameLibrary: @Composable ColumnScope.() -> Unit = {
             // Tap changes context only; long press opens package-addressed actions on any tile.
             // Explicit removals hide both user-added and category-discovered entries.
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
@@ -496,9 +510,8 @@ fun GamingToolsScreen(
                     )
                 }
             }
-            Spacer(modifier = Modifier.height(12.dp))
             if (uiState.games.isEmpty()) {
-                Box(modifier = Modifier.fillMaxWidth().height(80.dp), contentAlignment = Alignment.Center) {
+                Box(modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp), contentAlignment = Alignment.Center) {
                     Text(stringResource(R.string.gt_no_games_detected), color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 13.sp)
                 }
             } else {
@@ -587,62 +600,121 @@ fun GamingToolsScreen(
                     }
                 }
             }
-            Spacer(modifier = Modifier.height(CatsmokerSpacing.SectionGap))
+        }
+        val profile: @Composable ColumnScope.(Boolean, Boolean) -> Unit = { wide, twoColumn ->
+            if (!wide) {
+                gameLibrary()
+                Spacer(Modifier.height(CatsmokerSpacing.CardGap))
+            }
             Text(stringResource(R.string.gt_context_device_controls),
                 style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
             SectionLabel(stringResource(R.string.gt_section_gaming_mode))
-            GamingModeCard(
-                gamingState = gamingState,
-                report = gamingReport,
-                // Every optimization behind this switch is a `settings put`, a `cmd`, or `pm suspend`,
-                // and Android refuses all of them to an ordinary app. With neither channel the button
-                // used to be live and the activation simply failed — so it is disabled instead, and
-                // becomes live on its own as soon as root or Shizuku is granted, because `onSync`
-                // re-reads both every time this screen is shown.
-                canActivate = hasPrivilege,
-                isActive = isActive,
-                isBusy = isBusy,
-                isSessionOpen = isGamingSessionOpen,
-                recovery = gamingRecovery,
-                isRestoringApps = uiState.isRestoringApps,
-                restoreResult = uiState.restoreResult,
-                onRestoreApps = onRestoreGamingApps,
-                onOpenSuspensionRescue = onOpenSuspensionRescue,
-                onActivate = onActivateGamingMode,
-                onDeactivate = onDeactivateGamingMode,
-                sessionActive = uiState.isGameSessionActive,
-                sessionEnabled = uiState.games.isNotEmpty(),
-                onToggleSession = onToggleGameSession,
-                // The keep list travels with the engine it modifies: the next activation (manual
-                // or automatic) reads this same store.
-                keptPackages = uiState.suspendExemptPackages,
-                keepCandidateApps = uiState.suspendExemptCandidateApps,
-                onAddKeptApp = onShowSuspendExemptPicker,
-                onRemoveKeptApp = onRemoveSuspendExemptPackage,
-                // The extra freeze list is the same sweep's second input; it moved here from
-                // Background Apps so both lists and the frozen state live on one surface.
-                extraSuspendPackages = uiState.extraSuspendPackages,
-                suspendedPackages = suspendedPackages,
-                suspendCandidateApps = uiState.allApps,
-                onAddExtraSuspend = onShowSuspendPicker,
-                onRemoveExtraSuspend = onRemoveExtraSuspendPackage,
-                // Both pickers live behind one fold now; where the fold is open is a remembered
-                // preference, not a second copy of either package list.
-                advancedExpanded = uiState.isGamingModeAdvancedExpanded,
-                onToggleAdvanced = onToggleGamingModeAdvanced
-            )
-            Spacer(modifier = Modifier.height(CatsmokerSpacing.CardGap))
-            FixedPerformanceModeCard(
-                enabled = isFixedPerformanceMode,
-                onToggle = onToggleFixedPerformance,
-                isGamingModeActive = isActive
-            )
-            Spacer(modifier = Modifier.height(CatsmokerSpacing.SectionGap))
-            SectionLabel(stringResource(R.string.gt_section_performance))
-            Column(verticalArrangement = Arrangement.spacedBy(CatsmokerSpacing.CardGap)) {
+            val gamingModeCard: @Composable () -> Unit = {
+                GamingModeCard(
+                    gamingState = gamingState,
+                    report = gamingReport,
+                    // Every optimization behind this switch is a `settings put`, a `cmd`, or `pm suspend`,
+                    // and Android refuses all of them to an ordinary app. With neither channel the button
+                    // used to be live and the activation simply failed — so it is disabled instead, and
+                    // becomes live on its own as soon as root or Shizuku is granted, because `onSync`
+                    // re-reads both every time this screen is shown.
+                    canActivate = hasPrivilege,
+                    isActive = isActive,
+                    isBusy = isBusy,
+                    isSessionOpen = isGamingSessionOpen,
+                    recovery = gamingRecovery,
+                    isRestoringApps = uiState.isRestoringApps,
+                    restoreResult = uiState.restoreResult,
+                    onRestoreApps = onRestoreGamingApps,
+                    onOpenSuspensionRescue = onOpenSuspensionRescue,
+                    onActivate = onActivateGamingMode,
+                    onDeactivate = onDeactivateGamingMode,
+                    sessionActive = uiState.isGameSessionActive,
+                    sessionEnabled = uiState.games.isNotEmpty(),
+                    onToggleSession = onToggleGameSession,
+                    // The keep list travels with the engine it modifies: the next activation (manual
+                    // or automatic) reads this same store.
+                    keptPackages = uiState.suspendExemptPackages,
+                    keepCandidateApps = uiState.suspendExemptCandidateApps,
+                    onAddKeptApp = onShowSuspendExemptPicker,
+                    onRemoveKeptApp = onRemoveSuspendExemptPackage,
+                    // The extra freeze list is the same sweep's second input; it moved here from
+                    // Background Apps so both lists and the frozen state live on one surface.
+                    extraSuspendPackages = uiState.extraSuspendPackages,
+                    suspendedPackages = suspendedPackages,
+                    suspendCandidateApps = uiState.allApps,
+                    onAddExtraSuspend = onShowSuspendPicker,
+                    onRemoveExtraSuspend = onRemoveExtraSuspendPackage,
+                    // Both pickers live behind one fold now; where the fold is open is a remembered
+                    // preference, not a second copy of either package list.
+                    advancedExpanded = uiState.isGamingModeAdvancedExpanded,
+                    onToggleAdvanced = onToggleGamingModeAdvanced
+                )
+            }
+            val fixedPerformanceCard: @Composable () -> Unit = {
+                FixedPerformanceModeCard(
+                    enabled = isFixedPerformanceMode,
+                    onToggle = onToggleFixedPerformance,
+                    isGamingModeActive = isActive
+                )
+            }
+            val cacheCard: @Composable () -> Unit = {
+                com.catsmoker.app.screens.gaming.cache.GameCacheControls(
+                    uiState.selectedGamePkg,
+                    selectedGame?.appName
+                )
+            }
+            if (twoColumn) {
+                // The desktop read was one 2,300px card row: title at the far left, its toggle
+                // at the far right, nothing between. Two columns keep each row at a normal
+                // reading width; Gaming Mode takes the larger share because the freeze lists
+                // and pickers expand inside it.
+                Row(
+                    Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(CatsmokerSpacing.CardGap),
+                    verticalAlignment = Alignment.Top
+                ) {
+                    Column(
+                        Modifier.weight(1.15f),
+                        verticalArrangement = Arrangement.spacedBy(CatsmokerSpacing.CardGap)
+                    ) {
+                        gamingModeCard()
+                    }
+                    Column(
+                        Modifier.weight(1f),
+                        verticalArrangement = Arrangement.spacedBy(CatsmokerSpacing.CardGap)
+                    ) {
+                        fixedPerformanceCard()
+                        cacheCard()
+                    }
+                }
+            } else {
+                Column(verticalArrangement = Arrangement.spacedBy(CatsmokerSpacing.CardGap)) {
+                    gamingModeCard()
+                    fixedPerformanceCard()
+                    cacheCard()
+                }
+            }
+            if (!isBusy && !isActive && !isGamingSessionOpen &&
+                !uiState.isOverlayRunning && !uiState.isCrosshairRunning && uiState.optimizingGamePkg == null
+            ) {
+                GamingToolsBanner(modifier = Modifier.padding(top = CatsmokerSpacing.SectionGap))
+            }
+        }
+        val performance: @Composable (Boolean) -> Unit = { wide ->
+            val cpuCard: @Composable () -> Unit = {
+                ExpandableToolCard(
+                    title = stringResource(R.string.gt_cpu_policies),
+                    subtitle = stringResource(R.string.gt_cpu_policies_subtitle),
+                    icon = Icons.Default.Memory
+                ) { CpuPolicyControls() }
+            }
+            val soundCard: @Composable () -> Unit = {
                 ExpandableToolCard(title = stringResource(R.string.gt_tool_sound_title), subtitle = stringResource(R.string.gt_tool_sound_sub), icon = Icons.AutoMirrored.Filled.VolumeUp, info = InfoTopics.boost) {
                     BoostContent(uiState.boostLevel, uiState.audioOutput, onBoostChange)
                 }
+            }
+            val boosterCard: @Composable () -> Unit = {
                 ExpandableToolCard(
                     title = stringResource(R.string.gt_tool_booster_title),
                     subtitle = stringResource(R.string.gt_tool_booster_sub),
@@ -669,9 +741,11 @@ fun GamingToolsScreen(
                         onStop = onStopBooster
                     )
                 }
-                // One card for everything that lives in Android's own Developer Options. These used to
-                // be scattered across three sections, which made them look like separate features
-                // rather than the one screen's worth of switches they actually are.
+            }
+            // One card for everything that lives in Android's own Developer Options. These used to
+            // be scattered across three sections, which made them look like separate features
+            // rather than the one screen's worth of switches they actually are.
+            val developerOptionsCard: @Composable () -> Unit = {
                 ExpandableToolCard(
                     title = stringResource(R.string.gt_tool_devopts_title),
                     subtitle = stringResource(R.string.gt_tool_devopts_sub),
@@ -700,12 +774,34 @@ fun GamingToolsScreen(
                         onOpenDeveloperOptions = onOpenDeveloperOptions
                     )
                 }
-                // Kernel Insights lived here as a read-only dump with no controls and no
-                // other consumer — removed from Gaming Tools (§6). The parsers stay tested
-                // in KernelInfo/ThermalZoneReader for any future diagnostics use.
             }
-            Spacer(modifier = Modifier.height(CatsmokerSpacing.SectionGap))
-            SectionLabel(stringResource(R.string.gt_section_graphics))
+            if (wide) {
+                // Two columns as soon as the window is wide: the desktop complaint was one narrow
+                // strip of full-width cards with the space beside it doing nothing.
+                Row(
+                    Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(CatsmokerSpacing.CardGap),
+                    verticalAlignment = Alignment.Top
+                ) {
+                    Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(CatsmokerSpacing.CardGap)) {
+                        cpuCard()
+                        soundCard()
+                    }
+                    Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(CatsmokerSpacing.CardGap)) {
+                        boosterCard()
+                        developerOptionsCard()
+                    }
+                }
+            } else {
+                Column(verticalArrangement = Arrangement.spacedBy(CatsmokerSpacing.CardGap)) {
+                    cpuCard()
+                    soundCard()
+                    boosterCard()
+                    developerOptionsCard()
+                }
+            }
+        }
+        val graphics: @Composable () -> Unit = {
             Column(verticalArrangement = Arrangement.spacedBy(CatsmokerSpacing.CardGap)) {
                 ExpandableToolCard(title = stringResource(R.string.gt_tool_screen_title), subtitle = stringResource(R.string.gt_tool_screen_sub), icon = Icons.Default.AspectRatio, info = InfoTopics.resolution(source = uiState.nativeResolution?.let { uiState.resolutionSource } ?: stringResource(R.string.gt_res_safe_source_phone))) {
                     Text(stringResource(if (uiState.selectedGamePkg == null) R.string.gt_context_resolution_global
@@ -735,9 +831,9 @@ fun GamingToolsScreen(
                     )
                 }
             }
-            Spacer(modifier = Modifier.height(CatsmokerSpacing.SectionGap))
-            SectionLabel(stringResource(R.string.gt_section_overlays))
-            Column(verticalArrangement = Arrangement.spacedBy(CatsmokerSpacing.CardGap)) {
+        }
+        val overlays: @Composable (Boolean) -> Unit = { twoColumn ->
+            val overlayCard: @Composable () -> Unit = {
                 ExpandableToolCard(
                     title = stringResource(R.string.gt_tool_fps_title),
                     subtitle = stringResource(R.string.gt_tool_fps_sub),
@@ -755,6 +851,8 @@ fun GamingToolsScreen(
                         onReset = onResetOverlayPosition
                     )
                 }
+            }
+            val crosshairCard: @Composable () -> Unit = {
                 ExpandableToolCard(title = stringResource(R.string.gt_tool_crosshair_title), subtitle = stringResource(R.string.gt_tool_crosshair_sub), icon = Icons.Default.AddCircleOutline, isToggleable = true, isToggled = uiState.isCrosshairRunning, onToggleChange = onToggleCrosshair, forceExpand = uiState.isCrosshairRunning) {
                     CrosshairPicker(
                         selected = uiState.selectedCrosshair,
@@ -767,10 +865,31 @@ fun GamingToolsScreen(
                     )
                 }
             }
-            Spacer(modifier = Modifier.height(CatsmokerSpacing.SectionGap))
-            SectionLabel(stringResource(R.string.gt_section_focus_network))
-            Column(verticalArrangement = Arrangement.spacedBy(CatsmokerSpacing.CardGap)) {
+            if (twoColumn) {
+                // Both overlays are independent toggles with their own controls; side by side
+                // they stop being two 2,300px strips with their toggles at the far right.
+                Row(
+                    Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(CatsmokerSpacing.CardGap),
+                    verticalAlignment = Alignment.Top
+                ) {
+                    Column(Modifier.weight(1f)) { overlayCard() }
+                    Column(Modifier.weight(1f)) { crosshairCard() }
+                }
+            } else {
+                Column(verticalArrangement = Arrangement.spacedBy(CatsmokerSpacing.CardGap)) {
+                    overlayCard()
+                    crosshairCard()
+                }
+            }
+        }
+        val network: @Composable (Boolean) -> Unit = { twoColumn ->
+            val dndCard: @Composable () -> Unit = {
                 FeatureToggleCard(title = stringResource(R.string.gt_tool_dnd_title), subtitle = stringResource(R.string.gt_tool_dnd_sub), icon = Icons.Default.NotificationsOff, checked = uiState.isDndEnabled, onCheckedChange = onToggleDnd)
+            }
+            val networkGroup: @Composable () -> Unit = {
+            Column(verticalArrangement = Arrangement.spacedBy(CatsmokerSpacing.CardGap)) {
+                dndCard()
                 // Two independent ways to stop other apps using the network, and the card carries no
                 // toggle of its own: each switch lives in the body with its own state and its own
                 // requirement, because they are different mechanisms and either, both, or neither is a
@@ -817,9 +936,10 @@ fun GamingToolsScreen(
                     )
                 }
             }
-            Spacer(modifier = Modifier.height(CatsmokerSpacing.SectionGap))
-            SectionLabel(stringResource(R.string.gt_section_bg_apps))
-            Column(verticalArrangement = Arrangement.spacedBy(CatsmokerSpacing.CardGap)) {
+            }
+            val backgroundAppsGroup: @Composable () -> Unit = {
+                SectionLabel(stringResource(R.string.gt_section_bg_apps))
+                Column(verticalArrangement = Arrangement.spacedBy(CatsmokerSpacing.CardGap)) {
                 ExpandableToolCard(
                     title = stringResource(R.string.gt_tool_afs_title),
                     subtitle = stringResource(R.string.gt_tool_afs_sub),
@@ -839,12 +959,39 @@ fun GamingToolsScreen(
                 // sweep's second input, not a Background Apps feature. Keeping it here as well
                 // meant two surfaces could edit one list and only one of them showed whether a
                 // package was actually frozen.
-                // The keep list moved into the Gaming Mode card: it is the suspend sweep's
-                // exception list, not a second Background Apps feature. Its ViewModel wiring and
-                // store stay unchanged; the screen only hosts the picker dialog.
+                    // The keep list moved into the Gaming Mode card: it is the suspend sweep's
+                    // exception list, not a second Background Apps feature. Its ViewModel wiring
+                    // and store stay unchanged; the screen only hosts the picker dialog.
+                }
             }
-            Spacer(modifier = Modifier.height(CatsmokerSpacing.SectionGap))
-            SectionLabel(stringResource(R.string.gt_section_memory))
+            if (twoColumn) {
+                // Network settings and the Background Apps switch are separate mechanisms but
+                // short lists; side by side neither reads as an empty full-width strip.
+                Row(
+                    Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(CatsmokerSpacing.SectionGap),
+                    verticalAlignment = Alignment.Top
+                ) {
+                    Column(
+                        Modifier.weight(1.25f),
+                        verticalArrangement = Arrangement.spacedBy(CatsmokerSpacing.CardGap)
+                    ) {
+                        networkGroup()
+                    }
+                    Column(
+                        Modifier.weight(1f),
+                        verticalArrangement = Arrangement.spacedBy(CatsmokerSpacing.CardGap)
+                    ) {
+                        backgroundAppsGroup()
+                    }
+                }
+            } else {
+                networkGroup()
+                Spacer(modifier = Modifier.height(CatsmokerSpacing.SectionGap))
+                backgroundAppsGroup()
+            }
+        }
+        val maintenance: @Composable () -> Unit = {
             Column(verticalArrangement = Arrangement.spacedBy(CatsmokerSpacing.CardGap)) {
                 ExpandableToolCard(title = stringResource(R.string.gt_tool_cleaner_title), subtitle = stringResource(R.string.gt_tool_cleaner_sub), icon = Icons.Default.DeleteSweep, info = InfoTopics.cleaning) {
                     CleaningContent(
@@ -878,15 +1025,50 @@ fun GamingToolsScreen(
                     )
                 }
             }
-            Spacer(Modifier.height(CatsmokerSpacing.CardGap))
-            com.catsmoker.app.screens.gaming.cache.GameCacheControls(
-                uiState.selectedGamePkg, selectedGame?.appName
-            )
-            if (!isBusy && !isActive && !isGamingSessionOpen &&
-                !uiState.isOverlayRunning && !uiState.isCrosshairRunning &&
-                uiState.optimizingGamePkg == null
-            ) {
-                GamingToolsBanner(modifier = Modifier.padding(top = CatsmokerSpacing.SectionGap))
+        }
+        BoxWithConstraints(Modifier.fillMaxSize()) {
+            val wide = maxWidth >= 792.dp // 840 dp window minus ScreenScaffold's horizontal padding
+            // Two cards side by side needs more room than the library pane does: at 792dp the
+            // main pane is ~460dp, where two cards would be narrower than a phone tile.
+            val twoColumn = maxWidth >= 1200.dp
+            Row(Modifier.fillMaxSize(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+                if (wide) {
+                    Column(Modifier.width(278.dp).fillMaxHeight().verticalScroll(rememberScrollState())) {
+                        gameLibrary()
+                    }
+                    VerticalDivider(Modifier.fillMaxHeight())
+                }
+                Column(Modifier.weight(1f).fillMaxHeight()) {
+                    GamingContextBar(
+                        gameName = selectedGame?.appName ?: uiState.selectedGamePkg,
+                        onGlobal = onGlobalSelection
+                    )
+                    Row(
+                        Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        GamingSection.entries.forEach { item ->
+                            FilterChip(selected = item == section, onClick = { section = item },
+                                label = { Text(stringResource(item.title)) }, modifier = Modifier.heightIn(min = 48.dp),
+                                colors = FilterChipDefaults.filterChipColors(
+                                    selectedContainerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.18f),
+                                    selectedLabelColor = MaterialTheme.colorScheme.onSurface))
+                        }
+                    }
+                    sectionStates.SaveableStateProvider(section.name) {
+                        Column(Modifier.fillMaxWidth().weight(1f).verticalScroll(rememberScrollState())
+                            .padding(top = 8.dp, bottom = 24.dp)) {
+                            when (section) {
+                                GamingSection.PROFILE -> profile(wide, twoColumn)
+                                GamingSection.GRAPHICS -> graphics()
+                                GamingSection.PERFORMANCE -> performance(wide)
+                                GamingSection.OVERLAYS -> overlays(twoColumn)
+                                GamingSection.NETWORK -> network(twoColumn)
+                                GamingSection.MAINTENANCE -> maintenance()
+                            }
+                        }
+                    }
+                }
             }
         }
     }

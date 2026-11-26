@@ -50,6 +50,7 @@ import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.catsmoker.app.R
+import com.catsmoker.app.screens.gaming.components.CommandInspector
 import com.catsmoker.app.platform.display.DisplayMetricsProvider
 import com.catsmoker.app.screens.gaming.GamingToolsViewModel
 import com.catsmoker.app.screens.gaming.components.RequirementNotice
@@ -162,7 +163,10 @@ fun ResolutionChangerContent(
         Spacer(modifier = Modifier.height(16.dp))
         // readOnly rather than enabled = false: the numbers stay legible so a preset can be inspected
         // before it is applied, but the keyboard never opens for them.
-        Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+        // Numeric fields are capped: at desktop width an uncapped row turned a four-digit
+        // number into a 1,100dp empty box. 520dp holds both fields at a normal measure and
+        // still fills a phone's content width.
+        Row(modifier = Modifier.widthIn(max = 520.dp), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             OutlinedTextField(
                 value = width, onValueChange = onWidthChange, label = { Text(stringResource(R.string.gt_res_width)) },
                 singleLine = true,
@@ -188,7 +192,7 @@ fun ResolutionChangerContent(
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
             isError = validationError != null,
             supportingText = validationError?.let { { Text(it, fontSize = 11.sp) } },
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier.widthIn(max = 260.dp).fillMaxWidth()
         )
         Spacer(modifier = Modifier.height(6.dp))
         Text(
@@ -212,7 +216,9 @@ fun ResolutionChangerContent(
             )
         }
         Spacer(modifier = Modifier.height(8.dp))
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        // Tighter than the field row: an apply/reset pair reads as a cluster, not as one
+        // banner with a link stranded at the far edge.
+        Row(modifier = Modifier.widthIn(max = 360.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             CatsmokerButton(
                 onClick = onApply,
                 enabled = channel != null && validationError == null && !isApplying,
@@ -230,6 +236,28 @@ fun ResolutionChangerContent(
                 modifier = Modifier.weight(0.6f)
             ) { Text(stringResource(R.string.gt_res_reset)) }
         }
+        val previewTarget = if (validationError == null) {
+            val w = width.trim().toIntOrNull()
+            val h = height.trim().toIntOrNull()
+            val density = dpi.trim().toIntOrNull()
+            if (w != null && h != null && density != null) {
+                DisplayMetricsProvider.Snapshot(w, h, density, DisplayMetricsProvider.Source.SHELL_WM)
+                    .takeIf { it.isValid }
+            } else null
+        } else null
+        CommandInspector(
+            detail = stringResource(R.string.gt_resolution_command_detail, channel ?: stringResource(R.string.gt_command_backend_unavailable)),
+            groups = buildList {
+                previewTarget?.let {
+                    add(stringResource(R.string.gt_res_apply) to DisplayOverrideCommands.render(
+                        DisplayOverrideCommands.apply(it), stopOnFailure = true))
+                }
+                add(stringResource(R.string.gt_res_reset) to DisplayOverrideCommands.render(
+                    DisplayOverrideCommands.reset, stopOnFailure = false))
+                add(stringResource(R.string.gt_command_readback) to DisplayOverrideCommands.render(
+                    DisplayOverrideCommands.readback, stopOnFailure = false))
+            }
+        )
         // Next-activation tuning, kept with the resolution controls it relates to.
         // Render scale lowers the game's internal render resolution (the display
         // override above is untouched); touch speed only changes the pointer speed.

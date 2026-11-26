@@ -3,6 +3,7 @@ package com.catsmoker.app.screens.gaming
 import com.catsmoker.app.screens.gaming.mode.GamingModeService
 
 import com.catsmoker.app.R
+import com.catsmoker.app.screens.gaming.graphics.DisplayOverrideCommands
 
 import android.content.BroadcastReceiver
 import android.content.Context
@@ -115,6 +116,7 @@ class GamingToolsViewModel @Inject constructor(
     data class UiState(
         val isRooted: Boolean = false,
         val isShizukuActive: Boolean = false,
+        val authorizedShizukuUid: Int? = null,
         /**
          * Whether `Settings.Global` can be written at all — root, Shizuku, or a granted
          * `WRITE_SECURE_SETTINGS`. The last one works without either privileged channel, so gating
@@ -555,9 +557,11 @@ class GamingToolsViewModel @Inject constructor(
         viewModelScope.launch {
             checkRootStatus()
             shellRunner.refreshShizukuPermission()
+            val shizukuUid = withContext(Dispatchers.IO) { shellRunner.authorizedShizukuUid() }
             _uiState.update {
                 it.copy(
-                    isShizukuActive = shellRunner.shizukuHasPermission.value,
+                    isShizukuActive = shizukuUid == 0 || shizukuUid == 2000,
+                    authorizedShizukuUid = shizukuUid,
                     canWriteGlobalSettings = gamingEngine.canWriteAnimationScales()
                 )
             }
@@ -2011,8 +2015,9 @@ class GamingToolsViewModel @Inject constructor(
             _uiState.update { it.copy(isApplyingResolution = true) }
             // Each reset is its own command so a failure names the one that failed; `wm` prints
             // nothing on success, which makes the exit code the only usable signal.
-            val size = shellRunner.execSafeResult("wm", "size", "reset")
-            val density = shellRunner.execSafeResult("wm", "density", "reset")
+            val (sizeArgs, densityArgs) = DisplayOverrideCommands.reset
+            val size = runDisplayWrite(sizeArgs)
+            val density = runDisplayWrite(densityArgs)
             _uiState.update { it.copy(isApplyingResolution = false) }
 
             if (!size.isSuccess) logRes(context.getString(R.string.gt_vm_res_size_fail, failureDetail(size)))
@@ -2037,9 +2042,10 @@ class GamingToolsViewModel @Inject constructor(
             if (!requirePrivilegeForResolution()) return@launch
             _uiState.update { it.copy(isApplyingResolution = true) }
             // Size before density: the density that suits a size is only meaningful once it is set.
-            val size = shellRunner.execSafeResult("wm", "size", target.sizeLabel)
+            val (sizeArgs, densityArgs) = DisplayOverrideCommands.apply(target)
+            val size = runDisplayWrite(sizeArgs)
             val density = if (size.isSuccess) {
-                shellRunner.execSafeResult("wm", "density", target.densityDpi.toString())
+                runDisplayWrite(densityArgs)
             } else {
                 null
             }
@@ -2066,6 +2072,15 @@ class GamingToolsViewModel @Inject constructor(
         }
     }
 
+    private suspend fun runDisplayWrite(args: List<String>): ShellRunner.ExecResult {
+        val result = shellRunner.execSafeResult(*args.toTypedArray())
+        val backend = result.backend?.let {
+            context.getString(R.string.gt_command_backend_uid, it.transport.name, it.uid)
+        } ?: context.getString(R.string.gt_command_backend_unavailable)
+        logRes(context.getString(R.string.gt_command_result, args.joinToString(" "), backend, result.exitCode))
+        return result
+    }
+
     /** @return true when a privileged channel exists; logs the real reason when it does not. */
     private suspend fun requirePrivilegeForResolution(): Boolean {
         if (com.catsmoker.app.screens.gaming.mode.GamingEnvironment.hasExternalDisplay(context)) {
@@ -2088,8 +2103,9 @@ class GamingToolsViewModel @Inject constructor(
      */
     private suspend fun readWmState(): WmState? = withContext(Dispatchers.IO) {
         if (!shellRunner.hasPrivilege()) return@withContext null
-        val sizeOut = shellRunner.execSafeResult("wm", "size").takeIf { it.isSuccess }?.stdout.orEmpty()
-        val densityOut = shellRunner.execSafeResult("wm", "density").takeIf { it.isSuccess }?.stdout.orEmpty()
+        val (sizeArgs, densityArgs) = DisplayOverrideCommands.readback
+        val sizeOut = shellRunner.execSafeResult(*sizeArgs.toTypedArray()).takeIf { it.isSuccess }?.stdout.orEmpty()
+        val densityOut = shellRunner.execSafeResult(*densityArgs.toTypedArray()).takeIf { it.isSuccess }?.stdout.orEmpty()
         if (sizeOut.isBlank() && densityOut.isBlank()) return@withContext null
 
         val physicalSize = PHYSICAL_SIZE.find(sizeOut)

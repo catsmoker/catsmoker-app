@@ -58,19 +58,22 @@ class GamingToolsContextUxTest {
         assertFalse(automation.contains("Text(access.token"))
         assertTrue(automation.contains("ClipDescription.EXTRA_IS_SENSITIVE"))
         assertTrue(automation.contains("QUERY_STATUS"))
-        assertTrue(automation.contains("GamingToolSheet("))
+        assertTrue(automation.contains("Dialog(onDismissRequest"))
+        assertTrue(automation.contains("example.substringBefore('\\n')"))
         val cache = source("cache/GameCacheControls.kt")
         assertTrue(cache.contains("CacheUiReport.forGame(status, pkg)"))
         assertTrue(cache.contains("store.update(target)"))
         assertTrue(cache.contains("report?.result == \"running\""))
     }
 
-    @Test fun automationUsesExistingHeaderAndCacheIsAnInlineBottomToolCard() {
+    @Test fun automationUsesExistingHeaderAndCacheRemainsInTheProfile() {
         val screen = source("GamingToolsScreen.kt")
         assertEquals(1, Regex("AutomationEntry\\(").findAll(screen).count())
         assertTrue(screen.substringAfter("trailingContent = {").substringBefore(") {")
             .contains("AutomationEntry("))
-        assertTrue(screen.indexOf("cache.GameCacheControls(") > screen.indexOf("CleaningContent("))
+        val profile = screen.substringAfter("val profile:").substringBefore("val performance:")
+        assertTrue(profile.contains("cache.GameCacheControls("))
+        assertTrue(screen.contains("sectionStates.SaveableStateProvider(section.name)"))
         val automation = source("automation/AutomationDialog.kt").substringAfter("fun AutomationEntry(")
             .substringBefore("fun AutomationDialog(")
         assertTrue(automation.contains("TextButton("))

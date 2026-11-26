@@ -4,6 +4,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import java.io.File
 
 /**
  * Behaviour lock for the read-only kernel facts.
@@ -31,6 +32,27 @@ class KernelInfoTest {
     fun freqTableBlankIsEmpty() {
         assertTrue(KernelInfo.parseFreqTable("").isEmpty())
         assertTrue(KernelInfo.parseFreqTable("   \n").isEmpty())
+    }
+
+    @Test fun cpufreqPolicyCpuListIsNotACpusetRange() {
+        assertEquals(setOf(0, 1, 4, 7), KernelInfo.parseRelatedCpus("0 1  4\t7\n"))
+        assertTrue(KernelInfo.parseRelatedCpus("0-4,7").isEmpty())
+        assertTrue(KernelInfo.parseRelatedCpus("0 garbage 7").isEmpty())
+        assertTrue(KernelInfo.parseRelatedCpus("").isEmpty())
+    }
+
+    @Test fun policyDetailsNeverGuessFrequencyTableOrOnlineMembership() {
+        val nodes = mapOf("related_cpus" to "4 5", "affected_cpus" to "4", "scaling_driver" to "test",
+            "scaling_governor" to "schedutil", "scaling_cur_freq" to "-1",
+            "scaling_min_freq" to "300000", "cpuinfo_max_freq" to "2500000\n")
+        val policy = KernelInfo.policyDetails(File("policy4")) { nodes[it.name] }
+        assertEquals("policy4", policy.scaling.name)
+        assertEquals(setOf(4, 5), policy.relatedCpus)
+        assertEquals(setOf(4), policy.affectedCpus)
+        assertNull(policy.scaling.curKhz)
+        assertEquals(300000L, policy.scaling.minKhz)
+        assertEquals(2500000L, policy.hardwareMaxKhz)
+        assertTrue(policy.frequenciesKhz.isEmpty())
     }
 
     @Test
