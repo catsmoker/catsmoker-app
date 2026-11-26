@@ -259,30 +259,72 @@ internal fun GameLibraryRail(
     onGameSelected: (GameType) -> Unit,
     modifier: Modifier = Modifier
 ) {
+    // 33 entries in a 278dp column is a long scroll; the filter is what keeps the rail
+    // cheaper than the dialog it replaced. Matches the displayed label, so "pubg" finds the
+    // collapsed group entry and "rail" finds both Railroads and Star Rail.
+    var query by remember { mutableStateOf("") }
     val otherGroup = GameType.entries.filter { it != GameType.NONE && it !in PUBG_VARIANTS }
     val pubgSelected = selectedGame in PUBG_VARIANTS
     val pubgDot = pubgGroupDot(installedGames)
     val rows = (listOf(Triple(GameType.PUBG_GLOBAL, pubgDot, true)) +
         otherGroup.map { Triple(it, installedGames[it], false) })
-        .sortedBy { installSortRank(it.second) }
+        .map { Triple(it.first, it.second, it.third) to railLabel(it.first, it.third) }
+        .filter { (_, label) ->
+            query.isBlank() || label.contains(query.trim(), ignoreCase = true)
+        }
+        .sortedBy { installSortRank(it.first.second) }
     Column(modifier = modifier.fillMaxWidth()) {
         SectionLabel(stringResource(R.string.gf_games_rail))
-        rows.forEach { (game, installed, isPubgGroup) ->
+        OutlinedTextField(
+            value = query,
+            onValueChange = { query = it },
+            singleLine = true,
+            textStyle = MaterialTheme.typography.bodyMedium,
+            placeholder = { Text(stringResource(R.string.gf_filter_games)) },
+            leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
+            trailingIcon = if (query.isEmpty()) {
+                null
+            } else {
+                {
+                    IconButton(onClick = { query = "" }) {
+                        Icon(
+                            Icons.Default.Close,
+                            contentDescription = stringResource(R.string.gf_filter_clear)
+                        )
+                    }
+                }
+            },
+            modifier = Modifier.fillMaxWidth().padding(bottom = 4.dp)
+        )
+        if (rows.isEmpty()) {
+            Text(
+                text = stringResource(R.string.gf_filter_no_matches),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(horizontal = 4.dp, vertical = 8.dp)
+            )
+        }
+        rows.forEach { (row, label) ->
+            val (game, installed, isPubgGroup) = row
             if (isPubgGroup) {
                 PickerRow(
                     game = game,
-                    label = "PUBG Mobile",
+                    label = label,
                     installed = installed,
                     selected = pubgSelected,
                     installedGames = installedGames,
                     onPick = { onGameSelected(GameType.PUBG_GLOBAL) }
                 )
             } else {
-                PickerRow(game, installed, selectedGame == game, onGameSelected)
+                PickerRow(game, installed, selectedGame == game, onGameSelected, label = label)
             }
         }
     }
 }
+
+/** The label the rail and the dialog actually show, so filtering matches what is on screen. */
+private fun railLabel(game: GameType, isPubgGroup: Boolean): String =
+    if (isPubgGroup) "PUBG Mobile" else game.displayName
 
 /**
  * The full game list — one entry per game. The PUBG variants collapse into the single

@@ -236,3 +236,16 @@ Accents after the change, observed in the rail: amber (PUBG), teal (Genshin), bl
 green (Alien), red (Saints Row), green (Napoleon), coral (Hitman), olive (Guardian of
 Light), purple (Temple of Osiris), pink (Railroads), grey-green (Tomb Raider) — no shared
 grey bucket. The stub is left installed on the desktop AVD for future runs.
+
+## Rail filter at 1920 dp
+
+Driven on the desktop AVD, measured from the accessibility tree:
+
+| Query | Result |
+| --- | --- |
+| `tomb` | one row, "Tomb Raider" (monogram `TR`) |
+| `pubg` | two rows, "PUBG Mobile" and "PUBG New State" |
+| `zzzz` | no rows, text "No games match that filter." at y=349 |
+| cleared | full 33-row list returns, installed games first |
+
+The field renders at y=247-331 as "Filter games" with a search icon and a clear button.

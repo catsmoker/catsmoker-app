@@ -1424,3 +1424,13 @@ game is distinguishable, adding a `GameType` needs no colour decision, and a gam
 changes colour between launches. The trade-off is deliberate: a derived hue is not a
 brand colour, so the twenty non-branded titles get a plausible-looking accent rather than
 a trademark-accurate one.
+
+## 2026-11-26 - The game rail gets a filter, not a shorter list
+
+Replacing the picker dialog with a rail traded a small modal for a 33-entry column, which
+on a desktop window is a scroll. The rail now carries a single-line filter above the list:
+case-insensitive substring match against the label actually rendered, so "pubg" finds the
+collapsed group entry and "rail" finds both Railroads and Star Rail. The match runs before
+the installed-first sort, so a filtered list keeps that ordering, and an empty result says
+"No games match that filter." rather than showing a blank column. The dialog stays
+unfiltered because it only appears below 792 dp, where its seven rows already fit.
