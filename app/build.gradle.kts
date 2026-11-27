@@ -66,7 +66,7 @@ android {
         // versionCode 7: IFileService gained readFile/writeFile — the bump is what forces
         // Shizuku to restart the daemonized helper whose AIDL no longer matches (see the
         // ShellRunner KDoc). Shipped helpers keep serving the old AIDL until this moves.
-        versionCode = 17
+        versionCode = 18
         versionName = "2.0.10"
 
         vectorDrawables {
@@ -86,12 +86,15 @@ android {
         manifestPlaceholders["NOTHING_API_KEY"] =
             nothingProps.getProperty("NOTHING_API_KEY") ?: "test"
 
-        // An app bundle ignores `splits.abi` below, so without this the release bundle
-        // also packed a 32-bit x86 bridge that no APK split ever ships (and that no
-        // supported device runs). Keep the native build on the same three ABIs the
-        // splits declare so the bundle and the audit contract agree.
+        // An app bundle ignores `splits.abi` below and packs whatever this allows, so the
+        // three shipped splits are the floor, not the whole list: Play measured one 32-bit
+        // x86 device against the bundle and would not offer it an update once x86 was
+        // dropped. Keeping x86 here costs ~6 KB, because the only x86 images are the
+        // prebuilt androidx libs — the JNI bridge ships in `full` APKs only — and it keeps
+        // that device updatable. `splits.abi` still declares three, so no x86 split APK is
+        // produced and the arm artifacts are unchanged.
         ndk {
-            abiFilters += setOf("arm64-v8a", "armeabi-v7a", "x86_64")
+            abiFilters += setOf("arm64-v8a", "armeabi-v7a", "x86", "x86_64")
         }
     }
 
