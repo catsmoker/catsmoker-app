@@ -41,6 +41,7 @@ captures/
 *.keystore
 *.p12
 *.pfx
+*.pem
 keystore.properties
 signing.properties
 
@@ -59,6 +60,12 @@ service-account*.json
 *.bak
 *.orig
 *.rej
+
+# ── Python caches ──────────────────────────────────────────────────────────
+# tools/ holds the release and UX audit scripts; running them writes caches.
+# tools/.gitignore covers its own subtree, this covers any new tool directory.
+__pycache__/
+*.py[cod]
 
 # ── Android Studio / IntelliJ: user- and machine-specific state ─────────────
 # Kept shared on purpose: compiler.xml, gradle.xml, misc.xml, vcs.xml,
@@ -97,6 +104,8 @@ $RECYCLE.BIN/
 ._*
 .AppleDouble
 .LSOverride
+# Git Bash / MSYS crash dumps
+*.stackdump
 # ── AI development files — NEVER publish (permanent project rule; local use only) ──
 # Kept ignored even where a path is retired (.ai/, .claude/, .opencode/): a
 # reappearance there must never be able to reach a commit.
@@ -112,3 +121,15 @@ cloud.mt
 .opencode/
 .ai/
 skills-lock.json
+# Agent/MCP configuration can carry server tokens.
+.mcp.json
+mcp.json
+
+# ── Local evidence, not source ─────────────────────────────────────────────
+# artifacts/ is what tools/ux_audit and the artifact pages write: ~35 MB of
+# before/after screenshots plus one HTML page, all regenerable from a device and
+# this repo. Prose that must survive belongs in docs/ (UX_SCROLL_AUDIT.md); the
+# machine-local output stays out of every clone.
+artifacts/
+# Serena/MCP editor state for one session (was only in .git/info/exclude).
+.serena/
