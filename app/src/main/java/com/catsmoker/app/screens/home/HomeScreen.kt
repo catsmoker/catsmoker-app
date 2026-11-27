@@ -152,6 +152,12 @@ fun HomeScreen(
             .padding(horizontal = 24.dp)
     ) {
         val landscape = maxWidth > maxHeight
+        // A desktop window is wide *and* tall. The portrait column would stretch the console
+        // tiles to ~700x830 dp of mostly empty gradient, and the landscape split exists only to
+        // rescue short viewports, not to fill a 1920x1200 one. Expanded therefore gets its own
+        // bounded composition: a fixed-height telemetry card and a grid of content-sized tiles,
+        // centred and capped so the window reads as a dashboard instead of a stretched phone.
+        val expanded = maxWidth >= 792.dp && maxHeight >= 560.dp
         // Phone-sized badges look like crumbs once the tiles are half a metre wide on a
         // desktop window, so the badge (and the chevron inside it) tracks the window width
         // instead of staying at the 32/40dp phone values.
@@ -162,135 +168,41 @@ fun HomeScreen(
             landscape -> 32.dp
             else -> 40.dp
         }
-        if (!landscape) {
+        if (expanded) {
+            ExpandedDashboard(
+                state = state,
+                fpsHistory = fpsHistory,
+                cpuHistory = cpuHistory,
+                ramHistory = ramHistory,
+                tempHistory = tempHistory,
+                pingHistory = pingHistory,
+                hydrationPhase = hydrationPhase,
+                adsEnabled = adsEnabled && hydrationPhase >= 3 && showAdsDeferred,
+                availableUpdateName = availableUpdateName,
+                onNavigateDistribution = onNavigateDistribution,
+                onOpenEditGameFiles = onOpenEditGameFiles,
+                onOpenGamingTools = onOpenGamingTools,
+                onOpenSettings = onOpenSettings
+            )
+        } else if (!landscape) {
             Column(
                 modifier = Modifier.fillMaxSize()
             ) {
-        // 1. Header (Always Instant)
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(vertical = 20.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Text(
-                text = stringResource(R.string.app_name),
-                style = MaterialTheme.typography.titleLarge,
-                color = MaterialTheme.colorScheme.onSurface
-            )
-
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                StatusBadge(label = stringResource(R.string.res_method_root), active = state.hasRoot, activeColor = NothingRed)
-                StatusBadge(label = stringResource(R.string.res_method_shizuku), active = state.hasShizuku, activeColor = NothingRed)
-            }
-        }
+            HomeHeader(state = state, verticalPadding = 20.dp)
 
         // 2. Performance Monitor
         if (hydrationPhase >= 1) {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .weight(1f)
-            ) {
-                SectionCard(modifier = Modifier.fillMaxSize(), contentPadding = 16.dp) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Column {
-                            Text(
-                                text = stringResource(R.string.dash_live_performance),
-                                style = MaterialTheme.typography.labelSmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                            Row(verticalAlignment = Alignment.Bottom) {
-                                // The number is whatever was actually measured; when nothing was,
-                                // the reason takes the label's place rather than a 0 appearing here.
-                                Text(
-                                    text = state.fps?.toString() ?: "—",
-                                    style = MaterialTheme.typography.displayLarge,
-                                    color = NothingRed
-                                )
-                                Text(
-                                    text = when {
-                                        state.fps == null -> stringResource(state.fpsReadStatus.labelRes)
-                                        // The vsync fallback counts this app's frames, not the
-                                        // game's, so it is never labelled plain "FPS".
-                                        state.fpsSource == FpsSource.Choreographer ->
-                                            stringResource(R.string.dash_fps_label_ui)
-                                        else -> stringResource(R.string.dash_fps_label)
-                                    },
-                                    style = MaterialTheme.typography.titleMedium,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                    modifier = Modifier.padding(start = 4.dp, bottom = 12.dp)
-                                )
-                            }
-                        }
-                        
-                        Column(horizontalAlignment = Alignment.End, verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                            Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-                                CompactStat(
-                                    label = stringResource(R.string.core_metric_cpu),
-                                    value = state.cpuPercentage
-                                        ?.let { "$it%" }
-                                        ?: state.cpuReadStatus.compactLabel(),
-                                    color = Color(0xFF22C55E)
-                                )
-                                CompactStat(
-                                    label = stringResource(R.string.core_metric_ram),
-                                    value = state.ramUsedGb
-                                        ?.let { String.format(Locale.US, "%.1fG", it) }
-                                        ?: state.ramReadStatus.compactLabel(),
-                                    color = Color(0xFF3B82F6)
-                                )
-                            }
-                            Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-                                // Label doubles as the source: SoC sensor when available, else battery.
-                                CompactStat(
-                                    label = if (state.displayTempIsSoc) stringResource(R.string.core_metric_soc) else stringResource(R.string.core_metric_temp),
-                                    value = state.displayTempC
-                                        ?.let { "${it.toInt()}°" }
-                                        ?: state.displayTempReadStatus.compactLabel(),
-                                    color = Color(0xFFF59E0B)
-                                )
-                                CompactStat(
-                                    label = stringResource(R.string.core_metric_ping),
-                                    value = state.pingMs
-                                        ?.let { "${it}ms" }
-                                        ?: state.pingReadStatus.compactLabel(),
-                                    color = Color(0xFF8B5CF6)
-                                )
-                            }
-                        }
-                    }
-
-                    Spacer(modifier = Modifier.height(12.dp))
-
-                    if (hydrationPhase >= 4) {
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .weight(1f)
-                        ) {
-                            CombinedChart(
-                                fpsHistory = fpsHistory,
-                                // No privilege gate needed: the engine only appends readings it
-                                // actually took, so an unreadable channel contributes no line.
-                                cpuHistory = cpuHistory,
-                                ramHistory = ramHistory,
-                                tempHistory = tempHistory,
-                                pingHistory = pingHistory,
-                                ramTotal = state.ramTotalGb,
-                                modifier = Modifier.fillMaxSize()
-                            )
-                        }
-                    } else {
-                        Spacer(modifier = Modifier.weight(1f))
-                    }
-                }
-            }
+            TelemetryCard(
+                state = state,
+                fpsHistory = fpsHistory,
+                cpuHistory = cpuHistory,
+                ramHistory = ramHistory,
+                tempHistory = tempHistory,
+                pingHistory = pingHistory,
+                hydrationPhase = hydrationPhase,
+                contentPadding = 16.dp,
+                modifier = Modifier.fillMaxWidth().weight(1f)
+            )
         } else {
             Spacer(modifier = Modifier.weight(1f))
         }
@@ -331,53 +243,23 @@ fun HomeScreen(
             // Landscape: two-column layout so the short viewport height does not
             // squeeze the performance card and the quick actions into one column.
             Column(modifier = Modifier.fillMaxSize().padding(vertical = 8.dp)) {
-                Row(
-                    modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(text = stringResource(R.string.app_name), style = MaterialTheme.typography.titleLarge, color = MaterialTheme.colorScheme.onSurface)
-                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        StatusBadge(label = stringResource(R.string.res_method_root), active = state.hasRoot, activeColor = NothingRed)
-                        StatusBadge(label = stringResource(R.string.res_method_shizuku), active = state.hasShizuku, activeColor = NothingRed)
-                    }
-                }
+                HomeHeader(state = state, verticalPadding = 8.dp)
                 Row(
                     modifier = Modifier.fillMaxWidth().weight(1f),
                     horizontalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
                     if (hydrationPhase >= 1) {
-                        Column(modifier = Modifier.weight(1f).fillMaxHeight()) {
-                            SectionCard(modifier = Modifier.fillMaxSize(), contentPadding = 12.dp) {
-                                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-                                    Column {
-                                        Text(text = stringResource(R.string.dash_live_performance), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                                        Row(verticalAlignment = Alignment.Bottom) {
-                                            Text(text = state.fps?.toString() ?: "?", style = MaterialTheme.typography.displayLarge, color = NothingRed)
-                                            Text(text = when { state.fps == null -> stringResource(state.fpsReadStatus.labelRes); state.fpsSource == FpsSource.Choreographer -> stringResource(R.string.dash_fps_label_ui); else -> stringResource(R.string.dash_fps_label) }, style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(start = 4.dp, bottom = 12.dp))
-                                        }
-                                    }
-                                    Column(horizontalAlignment = Alignment.End, verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                                        Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-                                            CompactStat(label = stringResource(R.string.core_metric_cpu), value = state.cpuPercentage?.let { "$it%" } ?: state.cpuReadStatus.compactLabel(), color = Color(0xFF22C55E))
-                                            CompactStat(label = stringResource(R.string.core_metric_ram), value = state.ramUsedGb?.let { String.format(Locale.US, "%.1fG", it) } ?: state.ramReadStatus.compactLabel(), color = Color(0xFF3B82F6))
-                                        }
-                                        Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-                                            CompactStat(label = if (state.displayTempIsSoc) stringResource(R.string.core_metric_soc) else stringResource(R.string.core_metric_temp), value = state.displayTempC?.let { "${it.toInt()}?" } ?: state.displayTempReadStatus.compactLabel(), color = Color(0xFFF59E0B))
-                                            CompactStat(label = stringResource(R.string.core_metric_ping), value = state.pingMs?.let { "${it}ms" } ?: state.pingReadStatus.compactLabel(), color = Color(0xFF8B5CF6))
-                                        }
-                                    }
-                                }
-                                Spacer(modifier = Modifier.height(8.dp))
-                                if (hydrationPhase >= 4) {
-                                    Box(modifier = Modifier.fillMaxWidth().weight(1f)) {
-                                        CombinedChart(fpsHistory = fpsHistory, cpuHistory = cpuHistory, ramHistory = ramHistory, tempHistory = tempHistory, pingHistory = pingHistory, ramTotal = state.ramTotalGb, modifier = Modifier.fillMaxSize())
-                                    }
-                                } else {
-                                    Spacer(modifier = Modifier.weight(1f))
-                                }
-                            }
-                        }
+                        TelemetryCard(
+                            state = state,
+                            fpsHistory = fpsHistory,
+                            cpuHistory = cpuHistory,
+                            ramHistory = ramHistory,
+                            tempHistory = tempHistory,
+                            pingHistory = pingHistory,
+                            hydrationPhase = hydrationPhase,
+                            contentPadding = 12.dp,
+                            modifier = Modifier.weight(1f).fillMaxHeight()
+                        )
                     } else {
                         Spacer(modifier = Modifier.weight(1f))
                     }
@@ -407,6 +289,242 @@ fun HomeScreen(
     }
 }
 
+/**
+ * The title row: wordmark plus the two privilege badges.
+ *
+ * Shared by every dashboard branch. It used to be copy-pasted per branch, which is how the
+ * landscape copy drifted (placeholder `?` instead of an em dash) from the portrait one.
+ */
+@Composable
+private fun HomeHeader(state: MetricsState, verticalPadding: Dp) {
+    Row(
+        modifier = Modifier.fillMaxWidth().padding(vertical = verticalPadding),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(
+            text = stringResource(R.string.app_name),
+            style = MaterialTheme.typography.titleLarge,
+            color = MaterialTheme.colorScheme.onSurface
+        )
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            StatusBadge(label = stringResource(R.string.res_method_root), active = state.hasRoot, activeColor = NothingRed)
+            StatusBadge(label = stringResource(R.string.res_method_shizuku), active = state.hasShizuku, activeColor = NothingRed)
+        }
+    }
+}
+
+/**
+ * The live telemetry card: the FPS readout, four compact stats and the combined chart.
+ *
+ * Extracted because the phone, landscape and expanded dashboards all show exactly this card and
+ * had three copies of it. [contentPadding] is the only thing they disagree on — the scale comes
+ * from the caller's `Modifier`, so the same card is a weighted half of a phone column, a short
+ * landscape column, or a fixed-height panel on a desktop window.
+ */
+@Composable
+private fun TelemetryCard(
+    state: MetricsState,
+    fpsHistory: List<Int>,
+    cpuHistory: List<Int>,
+    ramHistory: List<Float>,
+    tempHistory: List<Float>,
+    pingHistory: List<Int>,
+    hydrationPhase: Int,
+    contentPadding: Dp,
+    modifier: Modifier = Modifier
+) {
+    SectionCard(modifier = modifier, contentPadding = contentPadding) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Column {
+                Text(
+                    text = stringResource(R.string.dash_live_performance),
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Row(verticalAlignment = Alignment.Bottom) {
+                    // The number is whatever was actually measured; when nothing was, the reason
+                    // takes the label's place rather than a 0 appearing here.
+                    Text(
+                        text = state.fps?.toString() ?: "—",
+                        style = MaterialTheme.typography.displayLarge,
+                        color = NothingRed
+                    )
+                    Text(
+                        text = when {
+                            state.fps == null -> stringResource(state.fpsReadStatus.labelRes)
+                            // The vsync fallback counts this app's frames, not the game's, so it
+                            // is never labelled plain "FPS".
+                            state.fpsSource == FpsSource.Choreographer ->
+                                stringResource(R.string.dash_fps_label_ui)
+                            else -> stringResource(R.string.dash_fps_label)
+                        },
+                        style = MaterialTheme.typography.titleMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.padding(start = 4.dp, bottom = 12.dp)
+                    )
+                }
+            }
+
+            Column(horizontalAlignment = Alignment.End, verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+                    CompactStat(
+                        label = stringResource(R.string.core_metric_cpu),
+                        value = state.cpuPercentage
+                            ?.let { "$it%" }
+                            ?: state.cpuReadStatus.compactLabel(),
+                        color = Color(0xFF22C55E)
+                    )
+                    CompactStat(
+                        label = stringResource(R.string.core_metric_ram),
+                        value = state.ramUsedGb
+                            ?.let { String.format(Locale.US, "%.1fG", it) }
+                            ?: state.ramReadStatus.compactLabel(),
+                        color = Color(0xFF3B82F6)
+                    )
+                }
+                Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+                    // Label doubles as the source: SoC sensor when available, else battery.
+                    CompactStat(
+                        label = if (state.displayTempIsSoc) stringResource(R.string.core_metric_soc) else stringResource(R.string.core_metric_temp),
+                        value = state.displayTempC
+                            ?.let { "${it.toInt()}°" }
+                            ?: state.displayTempReadStatus.compactLabel(),
+                        color = Color(0xFFF59E0B)
+                    )
+                    CompactStat(
+                        label = stringResource(R.string.core_metric_ping),
+                        value = state.pingMs
+                            ?.let { "${it}ms" }
+                            ?: state.pingReadStatus.compactLabel(),
+                        color = Color(0xFF8B5CF6)
+                    )
+                }
+            }
+        }
+
+        Spacer(modifier = Modifier.height(12.dp))
+
+        if (hydrationPhase >= 4) {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .weight(1f)
+            ) {
+                CombinedChart(
+                    fpsHistory = fpsHistory,
+                    // No privilege gate needed: the engine only appends readings it actually
+                    // took, so an unreadable channel contributes no line.
+                    cpuHistory = cpuHistory,
+                    ramHistory = ramHistory,
+                    tempHistory = tempHistory,
+                    pingHistory = pingHistory,
+                    ramTotal = state.ramTotalGb,
+                    modifier = Modifier.fillMaxSize()
+                )
+            }
+        } else {
+            Spacer(modifier = Modifier.weight(1f))
+        }
+    }
+}
+
+/** Widest the dashboard is allowed to draw; beyond this the cards stop being readable spans. */
+private val DashboardMaxWidth = 1040.dp
+/** Fixed height of the telemetry panel on an expanded window. */
+private val DashboardTelemetryHeight = 320.dp
+/** Height of one console tile on an expanded window — content-sized, not window-sized. */
+private val DashboardTileHeight = 152.dp
+
+/**
+ * The dashboard on an expanded window (desktop, large tablet, DeX).
+ *
+ * Measured before this existed, at 1920x1200 dp: the four console tiles came out ~700x830 dp
+ * each, of which roughly four fifths was empty gradient, because both the tile rows and the
+ * telemetry card were dividing whatever height the window happened to have. Nothing was broken
+ * and nothing was off-screen — the composition simply stopped being a dashboard.
+ *
+ * So the expanded branch stops dividing and starts sizing: the workspace is capped at
+ * [DashboardMaxWidth], the telemetry panel is a fixed [DashboardTelemetryHeight], the console
+ * tiles are [DashboardTileHeight] tall, and the board is centred in the window rather than
+ * pinned to the top. 1920 dp of window then reads as one composed board of real content instead
+ * of a phone layout stretched in both axes, and it keeps the same shape when the window is
+ * resized from 1200 dp to 720 dp tall.
+ */
+@Composable
+private fun ExpandedDashboard(
+    state: MetricsState,
+    fpsHistory: List<Int>,
+    cpuHistory: List<Int>,
+    ramHistory: List<Float>,
+    tempHistory: List<Float>,
+    pingHistory: List<Int>,
+    hydrationPhase: Int,
+    adsEnabled: Boolean,
+    availableUpdateName: String?,
+    onNavigateDistribution: (String) -> Unit,
+    onOpenEditGameFiles: () -> Unit,
+    onOpenGamingTools: () -> Unit,
+    onOpenSettings: () -> Unit
+) {
+    Box(modifier = Modifier.fillMaxSize()) {
+        Column(
+            modifier = Modifier
+                .align(Alignment.Center)
+                .widthIn(max = DashboardMaxWidth)
+                .padding(vertical = 24.dp)
+        ) {
+            HomeHeader(state = state, verticalPadding = 0.dp)
+
+            if (hydrationPhase >= 1) {
+                TelemetryCard(
+                    state = state,
+                    fpsHistory = fpsHistory,
+                    cpuHistory = cpuHistory,
+                    ramHistory = ramHistory,
+                    tempHistory = tempHistory,
+                    pingHistory = pingHistory,
+                    hydrationPhase = hydrationPhase,
+                    contentPadding = 20.dp,
+                    modifier = Modifier.fillMaxWidth().height(DashboardTelemetryHeight)
+                )
+            } else {
+                Spacer(modifier = Modifier.height(DashboardTelemetryHeight))
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            if (hydrationPhase >= 2) {
+                QuickActionsSection(
+                    modifier = Modifier.fillMaxWidth(),
+                    compact = false,
+                    iconSize = 56.dp,
+                    tileHeight = DashboardTileHeight,
+                    availableUpdateName = availableUpdateName,
+                    onNavigateDistribution = onNavigateDistribution,
+                    onOpenEditGameFiles = onOpenEditGameFiles,
+                    onOpenGamingTools = onOpenGamingTools,
+                    onOpenSettings = onOpenSettings
+                )
+            }
+        }
+
+        // The ad slot is the one thing that stays pinned: it is the only element that must sit
+        // against the window edge rather than travel with the centred board.
+        if (adsEnabled) {
+            AdBanner(
+                modifier = Modifier
+                    .align(Alignment.BottomCenter)
+                    .padding(bottom = 8.dp)
+            )
+        }
+    }
+}
+
 // Isolate stable navigation controls so telemetry updates can skip this subtree.
 @Composable
 private fun QuickActionsSection(
@@ -414,6 +532,14 @@ private fun QuickActionsSection(
     compact: Boolean,
     /** Badge size for the tiles; the host picks it from the window width. */
     iconSize: Dp,
+    /**
+     * Fixed height for each row of tiles, or null to divide the incoming height instead.
+     *
+     * Portrait and landscape divide whatever space the frame gives them, which is right on a
+     * phone. An expanded window is far taller than four tiles need, and dividing it turned each
+     * tile into ~830 dp of empty gradient; a null here is what keeps that from happening.
+     */
+    tileHeight: Dp? = null,
     availableUpdateName: String?,
     onNavigateDistribution: (String) -> Unit,
     onOpenEditGameFiles: () -> Unit,
@@ -438,11 +564,11 @@ private fun QuickActionsSection(
         )
 
         Column(
-            modifier = Modifier.weight(1f),
+            modifier = if (tileHeight == null) Modifier.weight(1f) else Modifier,
             verticalArrangement = Arrangement.spacedBy(spacing)
         ) {
             Row(
-                modifier = Modifier.weight(1f),
+                modifier = if (tileHeight == null) Modifier.weight(1f) else Modifier.height(tileHeight),
                 horizontalArrangement = Arrangement.spacedBy(spacing)
             ) {
                 DistributionQuickAction(onNavigateDistribution, contentPadding, iconSize)
@@ -455,7 +581,7 @@ private fun QuickActionsSection(
             }
 
             Row(
-                modifier = Modifier.weight(1f),
+                modifier = if (tileHeight == null) Modifier.weight(1f) else Modifier.height(tileHeight),
                 horizontalArrangement = Arrangement.spacedBy(spacing)
             ) {
                 QuickActionButton(

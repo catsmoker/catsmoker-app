@@ -2,7 +2,7 @@
 <resources>
     <string name="onb_analytics_explanation">Optional Firebase usage analytics. Collection starts only after confirmation.</string>
     <string name="onb_analytics_details">Google Firebase Analytics receives automatic usage events, device and app details, an installation identifier and IP-derived approximate location to help understand app usage. No custom events are added. Collection starts only if you choose to enable analytics and continue. You can disable it in Settings. Advertising choices are separate.</string>
-    <string name="onb_access_summary">Optional, on-device use. Save applies selections; Allow applies one use. You can skip all.</string>
+    <string name="onb_access_summary">Optional, on device only. Skip anything unnecessary.</string>
     <string name="onb_inventory_status">No Android grant needed</string>
     <string name="onb_access_pending_save">Selected · Save to grant</string>
     <string name="onb_enable_analytics_continue">Enable analytics and continue</string>

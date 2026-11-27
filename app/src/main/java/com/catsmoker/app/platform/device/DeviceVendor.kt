@@ -24,3 +24,20 @@ fun isVivoOrIqoo(): Boolean {
     )
     return caps.isVivo
 }
+
+/**
+ * True on Samsung builds.
+ *
+ * The same shape as [isVivoOrIqoo] and for the same reason: Samsung's DeX switch, HFR floating
+ * features and pacesetter calls exist only there, so the display engine asks this before it
+ * offers them. It reads only [Build], so no detector has to be constructed around it.
+ */
+fun isSamsung(): Boolean {
+    val caps = DeviceCapabilities.detect(
+        DeviceCapabilities.DeviceInfo(
+            manufacturer = Build.MANUFACTURER,
+            brand = Build.BRAND
+        )
+    )
+    return caps.isSamsung
+}

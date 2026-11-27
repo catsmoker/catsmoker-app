@@ -1,5 +1,6 @@
 package com.catsmoker.app.screens.gaming.mode
 
+import com.catsmoker.app.ui.components.LabelledSwitch
 import com.catsmoker.app.R
 
 import android.os.Build
@@ -90,7 +91,8 @@ fun FixedPerformanceModeCard(
 
                 InfoButton(InfoTopics.fixedPerformance)
 
-                Switch(
+                LabelledSwitch(
+                    label = stringResource(R.string.gt_fp_title),
                     checked = enabled && supported,
                     onCheckedChange = onToggle,
                     enabled = supported,

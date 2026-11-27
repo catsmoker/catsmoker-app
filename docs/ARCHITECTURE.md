@@ -66,6 +66,7 @@ app/src/
 │       │   │   ├── apps/          # game library, auto force-stop, suspend/appops state
 │       │   │   ├── crosshair/     # library screen, catalog, assets, overlay, controls
 │       │   │   ├── performanceoverlay/ # readout service, position store, controls
+│       │   │   ├── display/       # refresh-rate engine: planner, snapshot, DeX, card
 │       │   │   ├── audio/ + glyph/ # audio boost, Nothing glyph mirror
 │       │   │   └── components/    # card shells, info topics, picker, schedule labels
 │       │   ├── editgamefiles/     # File Engineering screen + delivery pipeline
@@ -78,7 +79,7 @@ app/src/
 │       │   ├── about/      # About only; linked destinations are peers
 │       │   ├── donate/ ├── settings/ ├── logs/
 │       ├── ui/             # reusable presentation, no screen ownership
-│       │   ├── components/ # ScreenScaffold, cards, chips, dialogs, info button
+│       │   ├── components/ # ScreenScaffold, cards, chips, section tabs/rail, dialogs, info button
 │       │   └── theme/      # colours, typography, spacing, log-line palette
 │       ├── telemetry/      # MetricsEngine, GPU reader, model/, parsers/
 │       ├── platform/       # Android/OS access with one named responsibility each
@@ -469,6 +470,7 @@ invent one without a task asking for it.
 - [`GAMING_WORKSPACE.md`](GAMING_WORKSPACE.md)
 - [`VMTOUCH_REVIEW.md`](VMTOUCH_REVIEW.md)
 - [`GAMING_MODE.md`](GAMING_MODE.md)
+- [`DISPLAY_RESEARCH.md`](DISPLAY_RESEARCH.md)
 - [`METRICS_ENGINE.md`](METRICS_ENGINE.md)
 - [`SPOOF_DEVICE.md`](SPOOF_DEVICE.md)
 - [`SECURITY.md`](SECURITY.md)

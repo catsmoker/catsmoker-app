@@ -36,12 +36,24 @@ class GameLibraryGridTest {
     fun libraryIsAPlainGridInsideTheScrollableScreen() {
         assertTrue(screen.contains("private const val GAME_GRID_COLUMNS = 4"))
         assertTrue(screen.contains("private const val GAME_LIBRARY_PREVIEW = GAME_GRID_COLUMNS * 2"))
-        assertTrue(screen.contains("visibleGames.chunked(GAME_GRID_COLUMNS)"))
+        // The column count is the pane's, not a constant: the phone body uses the launcher
+        // density of four, the 278 dp library rail uses two so a game name stays readable.
+        assertTrue(screen.contains("visibleGames.chunked(columns)"))
+        // The default is still the launcher row; the grid only narrows when a large system font
+        // scale would truncate the tile names, so both halves are pinned.
+        // Four columns is the launcher row; it drops to three only when a large system font scale
+        // would truncate the tile names. Both halves are pinned so neither drifts silently.
+        assertTrue(
+            screen.contains(
+                "gameLibrary(if (LocalDensity.current.fontScale > 1.15f) 3 else GAME_GRID_COLUMNS)"
+            )
+        )
+        assertTrue(screen.contains("gameLibrary(GAME_RAIL_COLUMNS)"))
         // LazyVerticalGrid inside this screen's verticalScroll would be measured with infinite
         // height; the grid must stay a chunked set of Rows.
         assertFalse(screen.contains("LazyVerticalGrid("))
         // The last, incomplete row keeps the same column widths.
-        assertTrue(screen.contains("repeat(GAME_GRID_COLUMNS - rowGames.size)"))
+        assertTrue(screen.contains("repeat(columns - rowGames.size)"))
         // Inline expansion is gone: the actions live in the popup only.
         assertFalse(screen.contains("expandedGamePkg"))
         assertFalse(screen.contains("AnimatedVisibility(visible = isExpanded)"))

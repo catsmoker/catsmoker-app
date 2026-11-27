@@ -49,6 +49,7 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.catsmoker.app.ui.components.LabelledSwitch
 import com.catsmoker.app.R
 import com.catsmoker.app.screens.gaming.GameInfo
 import com.catsmoker.app.screens.gaming.compilation.BoosterOutcome
@@ -308,7 +309,7 @@ internal fun DexoptScheduleSection(
                 )
             }
             InfoButton(InfoTopics.dexoptSchedule)
-            Switch(checked = enabled, onCheckedChange = onEnabledChange)
+            LabelledSwitch(label = stringResource(R.string.gt_booster_schedule), checked = enabled, onCheckedChange = onEnabledChange)
         }
         if (enabled) {
             // Changing the interval retunes the schedule in place (UPDATE, not REPLACE), so the

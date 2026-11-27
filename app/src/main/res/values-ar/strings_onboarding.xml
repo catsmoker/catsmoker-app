@@ -2,7 +2,7 @@
 <resources>
     <string name="onb_analytics_explanation">تحليلات استخدام Firebase اختيارية. لا يبدأ الجمع إلا بعد التأكيد.</string>
     <string name="onb_analytics_details">تتلقى Google Firebase Analytics أحداث الاستخدام التلقائية وتفاصيل الجهاز والتطبيق ومعرّف التثبيت وموقعًا تقريبيًا مستنتجًا من IP لفهم استخدام التطبيق. لا تُضاف أحداث مخصصة. يبدأ الجمع فقط إذا اخترت تفعيل التحليلات والمتابعة. يمكنك تعطيلها في الإعدادات. خيارات الإعلانات منفصلة.</string>
-    <string name="onb_access_summary">اختياري ومحلي. الحفظ يطبّق الاختيارات؛ السماح يطبّق استخدامًا واحدًا. يمكنك تخطي الجميع.</string>
+    <string name="onb_access_summary">اختياري، على الجهاز فقط. تخطَّ ما لا تحتاجه.</string>
     <string name="onb_inventory_status">لا يلزم إذن Android</string>
     <string name="onb_access_pending_save">محدد · احفظ لمنح الوصول</string>
     <string name="onb_enable_analytics_continue">تفعيل التحليلات والمتابعة</string>

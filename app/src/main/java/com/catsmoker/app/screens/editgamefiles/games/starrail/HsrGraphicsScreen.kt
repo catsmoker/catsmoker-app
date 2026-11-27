@@ -1,8 +1,19 @@
 package com.catsmoker.app.screens.editgamefiles.games.starrail
 
+import androidx.annotation.StringRes
+import androidx.compose.material.icons.filled.Monitor
+import androidx.compose.material.icons.filled.Star
+import androidx.compose.material.icons.filled.Tune
+import androidx.compose.ui.graphics.vector.ImageVector
+import com.catsmoker.app.ui.components.LabelledSwitch
+import com.catsmoker.app.screens.editgamefiles.editor.rememberEditorTab
+import com.catsmoker.app.screens.editgamefiles.editor.EditorTabSpec
 import com.catsmoker.app.R
+import com.catsmoker.app.screens.editgamefiles.editor.DeployActions
+import com.catsmoker.app.screens.editgamefiles.editor.DeployView
 import com.catsmoker.app.screens.editgamefiles.editor.GameEditorLayout
 import com.catsmoker.app.screens.editgamefiles.editor.GameEditorSection
+import com.catsmoker.app.screens.editgamefiles.editor.HostedDeploy
 
 import android.widget.Toast
 import androidx.compose.foundation.layout.*
@@ -74,8 +85,7 @@ fun HsrGraphicsRoute(onBack: (() -> Unit)? = null) {
         uiState = uiState,
         onUpdate = viewModel::updateSettings,
         onUpdatePrefs = viewModel::updatePrefs,
-        onApply = viewModel::onApply,
-        onApplyPrefs = viewModel::onApplyPrefs,
+        onApplyPending = viewModel::onApplyPending,
         onRestoreBackup = viewModel::onRestoreBackup,
         onRefresh = viewModel::refresh,
         onUndoSettings = viewModel::undoSettings,
@@ -88,13 +98,29 @@ fun HsrGraphicsRoute(onBack: (() -> Unit)? = null) {
     )
 }
 
+/**
+ * Where a Star Rail preference lives. DISPLAY is the tuning surface (frame rate, render scale and
+ * the resolution decoupling), QUALITY the ladder and its presets, PREFS the QoL keys the editor
+ * also writes. The flat file format keeps no tabs: it carries a quality tier and a resolution.
+ */
+private enum class HsrEditorTab(@StringRes val label: Int, val icon: ImageVector) {
+    DISPLAY(R.string.gf_tab_display, Icons.Default.Monitor),
+    QUALITY(R.string.gf_tab_quality, Icons.Default.Star),
+    PREFS(R.string.gf_tab_prefs, Icons.Default.Tune)
+}
+
+@Composable
+private fun hsrEditorTabs(): List<EditorTabSpec> = HsrEditorTab.entries.map {
+    EditorTabSpec(it.name, stringResource(it.label), it.icon)
+}
+
 @Composable
 fun HsrGraphicsScreen(
     uiState: HsrGraphicsUiState,
     onUpdate: ((HsrGraphicsSettings) -> HsrGraphicsSettings) -> Unit,
     onUpdatePrefs: ((HsrGamePreferences) -> HsrGamePreferences) -> Unit,
-    onApply: () -> Unit,
-    onApplyPrefs: () -> Unit,
+    /** Writes every pending working copy in order; this is what the pinned bar calls. */
+    onApplyPending: () -> Unit,
     onRestoreBackup: () -> Unit,
     onRefresh: () -> Unit,
     onUndoSettings: () -> Unit,
@@ -147,7 +173,16 @@ fun HsrGraphicsScreen(
                         HsrLoadFailureCard(uiState.loadFailure, onRefresh, onShowAnyway = null)
                     }
 
-                    if (!flat) {
+                    // Three groups instead of one six-swipe form. The write lives in the pinned
+                    // bar, so a preference changed here stays one tap from being applied. The flat
+                    // file format keeps no row: it carries a quality tier and a resolution only.
+                    val hsrTab = rememberEditorTab(
+                        hsrEditorTabs(),
+                        HsrEditorTab.DISPLAY.name
+                    )
+                    if (!flat) hsrTab.row()
+
+                    if (!flat && hsrTab.selected == HsrEditorTab.DISPLAY.name) {
                     SectionCard {
                         CardHeading(stringResource(R.string.gf_frame_rate))
                         Spacer(modifier = Modifier.height(8.dp))
@@ -174,6 +209,7 @@ fun HsrGraphicsScreen(
                     }
 
 
+                    if (flat || hsrTab.selected == HsrEditorTab.DISPLAY.name) {
                     SectionCard {
                         CardHeading(stringResource(R.string.gf_render_scale_sync))
                         Spacer(modifier = Modifier.height(12.dp))
@@ -203,7 +239,8 @@ fun HsrGraphicsScreen(
                                 Text(stringResource(R.string.gf_hsr_vsync), color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f))
                                 Text(stringResource(R.string.gf_hsr_vsync_caption), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                             }
-                            Switch(
+                            LabelledSwitch(
+                                label = stringResource(R.string.gf_hsr_vsync),
                                 checked = settings.enableVSync,
                                 onCheckedChange = { checked -> onUpdate { it.copy(enableVSync = checked) } }
                             )
@@ -216,15 +253,17 @@ fun HsrGraphicsScreen(
                                 Text(stringResource(R.string.gf_hsr_pso), color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f))
                                 Text(stringResource(R.string.gf_hsr_pso_caption), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                             }
-                            Switch(
+                            LabelledSwitch(
+                                label = stringResource(R.string.gf_hsr_pso),
                                 checked = settings.enablePsoShaderWarmup,
                                 onCheckedChange = { checked -> onUpdate { it.copy(enablePsoShaderWarmup = checked) } }
                             )
                         }
                     }
+                    }
 
 
-                    if (!flat) {
+                    if (!flat && hsrTab.selected == HsrEditorTab.QUALITY.name) {
                     SectionCard {
                         CardHeading(stringResource(R.string.gf_quality))
                         Spacer(modifier = Modifier.height(4.dp))
@@ -257,7 +296,7 @@ fun HsrGraphicsScreen(
                     // One-tap starting points from the community reference (Low…Max): a single
                     // undo step, and every slider below stays adjustable afterwards.
                     // JSON-backed tiers — hidden in flat format, where tiers have no meaning.
-                    if (!flat) {
+                    if (!flat && hsrTab.selected == HsrEditorTab.QUALITY.name) {
                     SectionCard {
                         CardHeading(stringResource(R.string.gf_hsr_preset_title))
                         Spacer(modifier = Modifier.height(8.dp))
@@ -281,7 +320,7 @@ fun HsrGraphicsScreen(
 
 
                     // JSON-backed toggles — hidden in flat format with the rest.
-                    if (!flat) {
+                    if (!flat && hsrTab.selected == HsrEditorTab.QUALITY.name) {
                     SectionCard {
                         CardHeading(stringResource(R.string.gf_hidden_upscaling))
                         Spacer(modifier = Modifier.height(4.dp))
@@ -297,7 +336,8 @@ fun HsrGraphicsScreen(
                                 Text(stringResource(R.string.gf_hsr_metalfx), color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f))
                                 Text(stringResource(R.string.gf_hsr_metalfx_caption), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                             }
-                            Switch(
+                            LabelledSwitch(
+                                label = stringResource(R.string.gf_hsr_metalfx),
                                 checked = settings.enableMetalFXSU,
                                 onCheckedChange = { checked -> onUpdate { it.copy(enableMetalFXSU = checked) } }
                             )
@@ -309,7 +349,8 @@ fun HsrGraphicsScreen(
                                 Text(stringResource(R.string.gf_hsr_halfres), color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f))
                                 Text(stringResource(R.string.gf_hsr_halfres_caption), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                             }
-                            Switch(
+                            LabelledSwitch(
+                                label = stringResource(R.string.gf_hsr_halfres),
                                 checked = settings.enableHalfResTransparent,
                                 onCheckedChange = { checked -> onUpdate { it.copy(enableHalfResTransparent = checked) } }
                             )
@@ -360,7 +401,7 @@ fun HsrGraphicsScreen(
                     }
 
 
-                    if (!flat) {
+                    if (!flat && hsrTab.selected == HsrEditorTab.QUALITY.name) {
                     SectionCard {
                         CardHeading(stringResource(R.string.gf_anti_aliasing))
                         Spacer(modifier = Modifier.height(8.dp))
@@ -377,6 +418,7 @@ fun HsrGraphicsScreen(
                     }
 
 
+                    if (flat || hsrTab.selected == HsrEditorTab.DISPLAY.name) {
                     SectionCard {
                         CardHeading(stringResource(R.string.gf_res_decoupling))
                         Spacer(modifier = Modifier.height(8.dp))
@@ -409,49 +451,90 @@ fun HsrGraphicsScreen(
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
+                    }
 
-                    GameEditorSection(stringResource(R.string.gf_deploy)) {
-                        // External-change warning (formerly part of the removed status card):
-                        // the live file changed outside the app, so Apply would overwrite it.
-                        if (uiState.settingsExternalChanged || uiState.prefsExternalChanged) {
-                            Text(
-                                stringResource(R.string.gf_hsr_external_changed),
-                                style = MaterialTheme.typography.bodySmall,
-                                color = Color(0xFFFFB74D)
-                            )
+                    // Apply, pending state and undo/redo live in the pinned DeployBar once this
+                    // editor is embedded (see editor/DeployBar.kt): the card used to sit ~40% of
+                    // the way down a 5-swipe form, so a chip changed near the top had to be
+                    // scrolled past a whole preferences section before it could be written.
+                    // Standalone, the same block still draws inline.
+                    // One bar for two working copies. The bar's undo follows the copy the user
+                    // touched last (see HsrEditArea) and falls back to the other one when that
+                    // copy has nothing left, so a single undo step is never unreachable.
+                    val undoPrefs = if (uiState.lastEdited == HsrEditArea.PREFS) {
+                        uiState.canUndoPrefs
+                    } else {
+                        uiState.canUndoPrefs && !uiState.canUndoSettings
+                    }
+                    val redoPrefs = if (uiState.lastEdited == HsrEditArea.PREFS) {
+                        uiState.canRedoPrefs
+                    } else {
+                        uiState.canRedoPrefs && !uiState.canRedoSettings
+                    }
+                    HostedDeploy(
+                        view = DeployView(
+                            applyLabel = stringResource(R.string.gf_apply_to_game),
+                            dirty = uiState.settingsDirty || uiState.prefsDirty,
+                            busy = uiState.applying || uiState.applyingPrefs,
+                            pendingCount = uiState.pendingSettingsCount + uiState.pendingPrefsCount,
+                            canUndo = uiState.canUndoSettings || uiState.canUndoPrefs,
+                            canRedo = uiState.canRedoSettings || uiState.canRedoPrefs
+                        ),
+                        actions = DeployActions(
+                            apply = onApplyPending,
+                            undo = if (undoPrefs) onUndoPrefs else onUndoSettings,
+                            redo = if (redoPrefs) onRedoPrefs else onRedoSettings
+                        ),
+                        inline = {
+                            GameEditorSection(stringResource(R.string.gf_deploy)) {
+                                CatsmokerButton(
+                                    onClick = onApplyPending,
+                                    modifier = Modifier.fillMaxWidth(),
+                                    // Nothing pending means the only effect of Apply would be
+                                    // force-stopping the game to rewrite identical bytes.
+                                    enabled = uiState.loadFailure == null &&
+                                        !uiState.applying && !uiState.applyingPrefs &&
+                                        (uiState.settingsDirty || uiState.prefsDirty),
+                                    isLoading = uiState.applying || uiState.applyingPrefs,
+                                    loadingLabel = stringResource(R.string.gf_applying)
+                                ) {
+                                    Text(stringResource(R.string.gf_apply_to_game))
+                                }
+                                if (!uiState.settingsDirty && !uiState.prefsDirty &&
+                                    !uiState.applying && !uiState.applyingPrefs) {
+                                    Text(
+                                        stringResource(R.string.gf_no_pending_changes),
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                }
+                                UndoRedoRow(
+                                    canUndo = uiState.canUndoSettings,
+                                    canRedo = uiState.canRedoSettings,
+                                    dirty = uiState.settingsDirty,
+                                    pendingCount = uiState.pendingSettingsCount,
+                                    applying = uiState.applying,
+                                    onUndo = onUndoSettings,
+                                    onRedo = onRedoSettings
+                                )
+                            }
                         }
+                    )
 
-                        CatsmokerButton(
-                            onClick = onApply,
-                            modifier = Modifier.fillMaxWidth(),
-                            // Nothing pending means the only effect of Apply would be force-stopping
-                            // the game to rewrite identical bytes. Say that instead of doing it.
-                            enabled = uiState.loadFailure == null && !uiState.applying && uiState.settingsDirty,
-                            isLoading = uiState.applying,
-                            loadingLabel = stringResource(R.string.gf_applying)
-                        ) {
-                            Text(stringResource(R.string.gf_apply_to_game))
-                        }
-                        if (!uiState.settingsDirty && !uiState.applying) {
-                            Text(
-                                stringResource(R.string.gf_no_pending_changes),
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                        }
-                        // Undo/redo for the graphics working copy above. No-ops when empty, so the
-                        // buttons disable instead of running an edit that edits nothing; the dirty
-                        // line says whether Apply would write anything new at all.
-                        UndoRedoRow(
-                            canUndo = uiState.canUndoSettings,
-                            canRedo = uiState.canRedoSettings,
-                            dirty = uiState.settingsDirty,
-                            pendingCount = uiState.pendingSettingsCount,
-                            applying = uiState.applying,
-                            onUndo = onUndoSettings,
-                            onRedo = onRedoSettings
+                    // The external-change warning stays in the flow: it is a fact about the file,
+                    // not part of the widget that writes it.
+                    if (uiState.settingsExternalChanged || uiState.prefsExternalChanged) {
+                        Text(
+                            stringResource(R.string.gf_hsr_external_changed),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = Color(0xFFFFB74D)
                         )
-                        if (uiState.hasBackup) {
+                    }
+
+                    // Restore keeps its own card: it is the way back from a write, not another way
+                    // to write, so it must not move into the bar with the apply button.
+                    if (uiState.hasBackup) {
+                        GameEditorSection(stringResource(R.string.gf_restore_backup)) {
                             CatsmokerOutlinedButton(
                                 onClick = {
                                     if (uiState.settingsDirty || uiState.prefsDirty) {
@@ -475,7 +558,7 @@ fun HsrGraphicsScreen(
 
                     // QoL preferences live in keys this flat file never had — writing them
                     // would invent entries, so the whole section stays blob-mode-only.
-                    if (!flat) {
+                    if (!flat && hsrTab.selected == HsrEditorTab.PREFS.name) {
                     uiState.gamePrefs?.let { prefs ->
 
                         SectionCard {
@@ -513,7 +596,8 @@ fun HsrGraphicsScreen(
                                         color = MaterialTheme.colorScheme.onSurfaceVariant
                                     )
                                 }
-                                Switch(
+                                LabelledSwitch(
+                                    label = stringResource(R.string.gf_hsr_autobattle),
                                     checked = prefs.autoBattleOpen == 1,
                                     enabled = prefs.autoBattleOpen != null,
                                     onCheckedChange = { checked -> onUpdatePrefs { it.copy(autoBattleOpen = if (checked) 1 else 0) } }
@@ -530,7 +614,8 @@ fun HsrGraphicsScreen(
                                         color = MaterialTheme.colorScheme.onSurfaceVariant
                                     )
                                 }
-                                Switch(
+                                LabelledSwitch(
+                                    label = stringResource(R.string.gf_hsr_speedup),
                                     checked = prefs.speedUpOpen == 1,
                                     enabled = prefs.speedUpOpen != null,
                                     onCheckedChange = { checked -> onUpdatePrefs { it.copy(speedUpOpen = if (checked) 1 else 0) } }
@@ -558,35 +643,10 @@ fun HsrGraphicsScreen(
                             }
                         }
 
-                        UndoRedoRow(
-                            canUndo = uiState.canUndoPrefs,
-                            canRedo = uiState.canRedoPrefs,
-                            dirty = uiState.prefsDirty,
-                            pendingCount = uiState.pendingPrefsCount,
-                            applying = uiState.applyingPrefs,
-                            onUndo = onUndoPrefs,
-                            onRedo = onRedoPrefs
-                        )
-                        CatsmokerButton(
-                            onClick = onApplyPrefs,
-                            modifier = Modifier.fillMaxWidth(),
-                            enabled = uiState.loadFailure == null && !uiState.applyingPrefs && uiState.prefsDirty
-                        ) {
-                            if (uiState.applyingPrefs) {
-                                CircularProgressIndicator(modifier = Modifier.size(18.dp), strokeWidth = 2.dp, color = Color.Black)
-                                Spacer(modifier = Modifier.width(8.dp))
-                                Text(stringResource(R.string.gf_applying))
-                            } else {
-                                Text(stringResource(R.string.gf_apply_prefs))
-                            }
-                        }
-                        if (!uiState.prefsDirty && !uiState.applyingPrefs) {
-                            Text(
-                                stringResource(R.string.gf_no_pending_changes),
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                        }
+                        // No second APPLY and no second undo row: the pinned bar writes both
+                        // working copies in order and its undo follows whichever copy was edited
+                        // last. A page with two apply buttons made the user decide which of their
+                        // own pending edits was allowed to land first.
                     }
                     }
                 }
@@ -905,8 +965,7 @@ private fun HsrGraphicsScreenPreview() {
             ),
             onUpdate = {},
             onUpdatePrefs = {},
-            onApply = {},
-            onApplyPrefs = {},
+            onApplyPending = {},
             onRestoreBackup = {},
             onRefresh = {},
             onUndoSettings = {},

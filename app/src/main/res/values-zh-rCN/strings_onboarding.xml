@@ -2,7 +2,7 @@
 <resources>
     <string name="onb_analytics_explanation">Firebase 使用分析是可选的。仅在确认后开始收集。</string>
     <string name="onb_analytics_details">Google Firebase Analytics 接收自动使用事件、设备和应用信息、安装标识符以及根据 IP 推算的概略位置，以了解应用使用情况。不添加自定义事件。仅在选择启用分析并继续后才开始收集。可在设置中停用分析。广告选项单独管理。</string>
-    <string name="onb_access_summary">可选，仅在本机使用。保存应用所选项，允许仅应用单项用途。可全部跳过。</string>
+    <string name="onb_access_summary">可选，仅在本机处理。不需要的可以跳过。</string>
     <string name="onb_inventory_status">无需 Android 授权</string>
     <string name="onb_access_pending_save">已选择 · 保存以授予访问权限</string>
     <string name="onb_enable_analytics_continue">启用分析并继续</string>

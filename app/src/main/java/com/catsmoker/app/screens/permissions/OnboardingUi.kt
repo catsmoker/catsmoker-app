@@ -81,6 +81,8 @@ fun OnboardingScaffold(
      */
     hideSubtitleWhenCompact: Boolean = false,
     trailing: (@Composable () -> Unit)? = null,
+    /** Sits at the end of the step row, level with the counter. Keeps the title row text-sized. */
+    progressTrailing: (@Composable () -> Unit)? = null,
     content: @Composable ColumnScope.(compact: Boolean) -> Unit
 ) {
     BoxWithConstraints(
@@ -103,13 +105,14 @@ fun OnboardingScaffold(
             MaterialTheme.typography.bodyMedium
         }
         val resolvedSubtitle = subtitle.takeUnless { compact && hideSubtitleWhenCompact }
+            // Blank means "this step has no subtitle", not "leave a gap where one would be".
 
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(horizontal = if (compact) 18.dp else 24.dp)
         ) {
-            Spacer(Modifier.height(if (compact) 10.dp else 20.dp))
+            Spacer(Modifier.height(if (dense) 6.dp else if (compact) 10.dp else 20.dp))
 
             if (showProgress) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
@@ -118,23 +121,30 @@ fun OnboardingScaffold(
                             Icon(Icons.AutoMirrored.Filled.ArrowBack, stringResource(R.string.core_back))
                         }
                     }
-                    OnboardingProgress(step = step, total = 3)
+                    // Weighted: OnboardingProgress fills its width, and a sibling with no weight
+                    // would have pushed the counter and the trailing button off the row.
+                    Box(modifier = Modifier.weight(1f)) {
+                        OnboardingProgress(step = step, total = 3)
+                    }
+                    progressTrailing?.invoke()
                 }
-                Spacer(Modifier.height(if (compact) 12.dp else 18.dp))
+                Spacer(Modifier.height(if (dense) 8.dp else if (compact) 12.dp else 18.dp))
             } else if (showBack) {
                 IconButton(onClick = onBack) {
                     Icon(Icons.AutoMirrored.Filled.ArrowBack, stringResource(R.string.core_back))
                 }
             }
 
-            Row(verticalAlignment = Alignment.Top) {
+            // The trailing control is a 48 dp icon button; against a 22 sp title that leaves a band
+            // of nothing under the words. Centring splits the slack instead of stacking it.
+            Row(verticalAlignment = if (dense) Alignment.CenterVertically else Alignment.Top) {
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
                         text = title,
                         style = titleStyle,
                         color = MaterialTheme.colorScheme.onSurface
                     )
-                    if (resolvedSubtitle != null) {
+                    if (!resolvedSubtitle.isNullOrBlank()) {
                         Spacer(Modifier.height(if (dense) 2.dp else 5.dp))
                         Text(
                             text = resolvedSubtitle,
@@ -146,7 +156,7 @@ fun OnboardingScaffold(
                 trailing?.invoke()
             }
 
-            Spacer(Modifier.height(if (compact) 10.dp else 16.dp))
+            Spacer(Modifier.height(if (dense) 4.dp else if (compact) 10.dp else 16.dp))
 
             Column(
                 modifier = Modifier
@@ -155,7 +165,7 @@ fun OnboardingScaffold(
                 content = { content(compact) }
             )
 
-            Spacer(Modifier.height(if (compact) 8.dp else 14.dp))
+            Spacer(Modifier.height(if (dense) 8.dp else if (compact) 8.dp else 14.dp))
             footer()
             Spacer(Modifier.height(if (compact) 8.dp else 16.dp))
         }
@@ -189,7 +199,10 @@ private fun OnboardingProgress(step: Int, total: Int) {
         Text(
             text = "${step + 1}/$total",
             style = MaterialTheme.typography.labelSmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            // The dot-matrix glyph ends on a full stroke; flush against the content edge it reads
+            // as a clipped digit rather than as a counter.
+            modifier = Modifier.padding(end = 2.dp)
         )
     }
 }

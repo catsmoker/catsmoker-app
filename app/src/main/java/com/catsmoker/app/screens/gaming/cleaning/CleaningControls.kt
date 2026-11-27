@@ -49,6 +49,7 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.catsmoker.app.ui.components.LabelledSwitch
 import com.catsmoker.app.R
 import com.catsmoker.app.application.distribution.VariantCapabilities
 import com.catsmoker.app.format.formatBytes
@@ -604,7 +605,7 @@ internal fun CleanerScheduleSection(
                 )
             }
             InfoButton(InfoTopics.cleaningSchedule)
-            Switch(checked = enabled, onCheckedChange = onEnabledChange)
+            LabelledSwitch(label = stringResource(R.string.gt_booster_schedule), checked = enabled, onCheckedChange = onEnabledChange)
         }
         if (enabled) {
             ChipFlowRow {

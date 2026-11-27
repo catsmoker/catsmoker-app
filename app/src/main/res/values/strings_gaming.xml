@@ -753,4 +753,40 @@
     <string name="gt_cleaner_review_hide">Hide items</string>
     <string name="gt_cleaner_advanced">Schedule &amp; rules</string>
     <string name="gt_cleaner_advanced_hide">Hide schedule &amp; rules</string>
+    <!-- Refresh rate / display control. Rates come from the display's own mode list, so no
+         rate is named here: "60 Hz" in a label would become a claim about hardware we did not
+         measure. Only fixed labels live in resources; engine diagnoses stay as raw text, the
+         same way Gaming Mode's refusal notices do. -->
+    <string name="gt_display_title">Refresh rate</string>
+    <string name="gt_display_sub">Hold a display at a rate it really reports</string>
+    <string name="gt_display_builtin">Built-in</string>
+    <string name="gt_display_external">External</string>
+    <string name="gt_display_no_external">No external display is connected</string>
+    <string name="gt_display_now">Now</string>
+    <string name="gt_display_resolution">Resolution</string>
+    <string name="gt_display_mode_label">Mode</string>
+    <string name="gt_display_mode_id">Mode %1$d</string>
+    <string name="gt_display_available">Rates this display reports</string>
+    <string name="gt_display_apply">Apply</string>
+    <string name="gt_display_applying">Applying…</string>
+    <string name="gt_display_restore">Restore defaults</string>
+    <string name="gt_display_restoring">Restoring…</string>
+    <string name="gt_display_confirm_title">Keep this mode?</string>
+    <string name="gt_display_confirm_text">Reverting in %1$d s. A mode the panel cannot drive shows nothing, so the change is undone unless you keep it.</string>
+    <string name="gt_display_keep">Keep it</string>
+    <string name="gt_display_revert_now">Revert now</string>
+    <string name="gt_display_technical">Technical details</string>
+    <string name="gt_display_backend">Backend</string>
+    <string name="gt_display_backend_settings">Settings rows</string>
+    <string name="gt_display_capabilities">Detected capabilities</string>
+    <string name="gt_display_identity_matrix">Which identity can use each mechanism</string>
+    <string name="gt_display_app_rate">App rendering</string>
+    <string name="gt_display_not_measured">not measured</string>
+    <string name="gt_display_save_pref">Save as preference</string>
+    <string name="gt_display_saved_pref">Saved %1$s Hz for %2$s</string>
+    <string name="gt_display_saved_none">No saved preference</string>
+    <string name="gt_display_unavailable">—</string>
+    <string name="gt_display_pacing_even">divides evenly</string>
+    <string name="gt_display_pacing_uneven">held unevenly</string>
+    <string name="gt_display_pacing_exceeds">faster than the display</string>
 </resources>

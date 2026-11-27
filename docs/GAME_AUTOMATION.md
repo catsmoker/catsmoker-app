@@ -60,16 +60,19 @@ A target must be installed, launchable, and present in Your Games, and must not
 be CatSmoker itself. Explicitly added games work; this API invents no fixed
 supported-games list. Removing a game makes it unavailable to this API.
 
-## Intent contract (version 1)
+## Intent contract (version 2)
 
 - Action: `com.catsmoker.app.GAME_AUTOMATION`
 - Foreground component:
   `com.catsmoker.app/.screens.gaming.automation.GameAutomationActivity`
 - Broadcast component:
   `com.catsmoker.app/.screens.gaming.automation.GameAutomationReceiver`
-- String extras only: `token`, `operation`, `game` where required, and optional
-  `request_id` (a UUID, case-insensitive). Use a fresh UUID for each new event;
-  do not put secrets in this field. It is not authentication.
+- String extras only: `token`, `operation`, `game` where required, `request_id`
+  (a UUID, case-insensitive) and `hz` (see below). Use a fresh UUID for each new
+  event; do not put secrets in this field. It is not authentication.
+- Version 2 adds display-rate control to this same intent and token (see
+  "Refresh rate" below). Version 1 callers are unaffected: the four original
+  extras keep their meaning and every version-1 operation rejects `hz`.
 - No data URI, selector, ClipData, additional extras, shell commands, filenames,
   arbitrary settings, or caller-supplied components are accepted.
 
@@ -84,6 +87,8 @@ supported-games list. Removing a game makes it unavailable to this API.
 | `RESTORE` | Forbidden | Same as `DISABLE_MODE`; not a reset of every manual tool |
 | `QUERY_SELECTION` | Forbidden | Query selection and status |
 | `QUERY_STATUS` | Forbidden | Same query |
+| `APPLY_DISPLAY` | Optional | Apply a refresh rate to the display in use |
+| `RESTORE_DISPLAY` | Forbidden | Put every display CatSmoker changed back |
 
 Apply does **not** deploy physical resolution, edit game files, replay immediate
 global controls, or change ANGLE. It uses the existing engine and its existing
@@ -93,6 +98,40 @@ No privileges are silently granted. An unchanged already-active game returns
 inputs, or pending recovery produces `restore_required`; restore first. Selecting a new
 game alone does not retarget the active session. Unsupported/refused steps
 produce `partial`, not a performance promise.
+
+### Refresh rate (version 2)
+
+`APPLY_DISPLAY` and `RESTORE_DISPLAY` are the only operation family that does not
+involve a Gaming Mode session, so they take no session lock and cannot deadlock a
+game-entry/game-exit pair. They still require the same token, the same consent gates
+and the same burst limits (their own admission lane).
+
+- `hz` is optional and belongs to `APPLY_DISPLAY` only. Format: `[0-9]{1,3}` with an
+  optional one- or two-place fraction (`120`, `59.94`), bounded to 10..600 Hz. It is a
+  number and never a value, path or command; every other operation rejects it.
+- Without `hz`, the request applies the rate saved in the app for its context: the
+  game's own preference, then DeX, then the external display, then the global one. That
+  is what makes "configure once, apply from Tasker" work.
+- The target is the display in use: an attached external display if one is lit,
+  otherwise the built-in panel. `game` is optional and, when present, must be installed
+  and visible in Your Games; it selects that game's saved preference.
+- Background callers are non-interactive. A request that would **switch a display's
+  mode** — the change that can blank a monitor — is refused with a reason instead of
+  being made unconfirmable, because the countdown needs a person. Rate changes that do
+  not switch a mode apply immediately.
+- No foreground service is started. Nothing about a display write needs one, and the
+  engine's on-disk snapshot plus its `pendingConfirm` flag is what recovery relies on.
+
+Result codes are the existing set. A display request returns `applied` when the requested
+rate was **observed** afterwards, `failed` otherwise, and the receipt carries a `display`
+object: `applied`, `summary`, `backend`, `requestedHz`, `observedHz`, `pacing`, `refused`,
+`details`, `revertSeconds`. `QUERY_STATUS` also reports `display` (attached displays, their
+rates, the detected backends and their reason, the saved preferences and the last report),
+so a caller can discover what a device can do before asking for a rate.
+
+Tasker/MacroDroid: same action, package and receiver as the apply task; extras
+`token`, `operation:APPLY_DISPLAY`, and optionally `hz:120`. Exit task:
+`operation:RESTORE_DISPLAY` with no `game` and no `hz`.
 
 ### Tasker / MacroDroid
 

@@ -139,6 +139,41 @@ class RefreshRateController @Inject constructor(
     }
 
     /**
+     * Writes an arbitrary rate range to the AOSP rows, confirming each by read-back.
+     *
+     * The Display Engine's settings fallback goes through here rather than writing the rows
+     * itself: this class is the single writer for `min_refresh_rate`/`peak_refresh_rate`, and
+     * a second writer is exactly the bug consolidation F3 removed.
+     *
+     * @return which of the two rows verified.
+     */
+    suspend fun writeRates(minHz: Float, peakHz: Float): LockResult {
+        val peakOk = writeFloatChecked(KEY_PEAK_REFRESH_RATE, peakHz)
+        val minOk = writeFloatChecked(KEY_MIN_REFRESH_RATE, minHz)
+        return LockResult(peakOk = peakOk, minOk = minOk, lockedHz = peakHz.toInt())
+    }
+
+    /**
+     * Puts both AOSP rows back to a snapshot: a null entry means the row was unset, so it is
+     * deleted rather than set to a number that merely looks like a default.
+     *
+     * @return true when both rows read back as requested.
+     */
+    suspend fun restoreRates(minHz: Float?, peakHz: Float?): Boolean {
+        val peakOk = if (peakHz == null) deleteRow(KEY_PEAK_REFRESH_RATE) else writeFloatChecked(KEY_PEAK_REFRESH_RATE, peakHz)
+        val minOk = if (minHz == null) deleteMin() else writeFloatChecked(KEY_MIN_REFRESH_RATE, minHz)
+        return peakOk && minOk
+    }
+
+    /** The stored `peak_refresh_rate` as a number, or null when the row is unset or unparsable. */
+    fun readPeakHz(): Float? = readRaw(KEY_PEAK_REFRESH_RATE)?.trim()?.toFloatOrNull()
+
+    private suspend fun deleteRow(key: String): Boolean = withContext(Dispatchers.IO) {
+        shellRunner.execSafeResult("settings", "delete", "system", key)
+        readRaw(key) == null
+    }
+
+    /**
      * Outcome of the vendor half of the lock.
      *
      * @param applicable true only on vivo/iQOO — every other device is "not applicable",
@@ -251,15 +286,20 @@ class RefreshRateController @Inject constructor(
     }
 
     private suspend fun writeFloat(key: String, value: Float): Boolean = withContext(Dispatchers.IO) {
+        writeFloatChecked(key, value)
+    }
+
+    /** One verified float write to a `system` row, provider or shell whichever lands. */
+    private suspend fun writeFloatChecked(key: String, value: Float): Boolean = withContext(Dispatchers.IO) {
         val formatted = String.format(Locale.US, "%.2f", value)
         if (shellRunner.hasPrivilege()) {
             shellRunner.execSafeResult("settings", "put", "system", key, formatted)
         }
-        val landed = readMinHz()?.let { abs(it - value) < HZ_TOLERANCE } == true
+        val landed = readRaw(key)?.trim()?.toFloatOrNull()?.let { abs(it - value) < HZ_TOLERANCE } == true
         if (!landed && Settings.System.canWrite(context)) {
             runCatching { Settings.System.putFloat(context.contentResolver, key, value) }
         }
-        readMinHz()?.let { abs(it - value) < HZ_TOLERANCE } == true
+        readRaw(key)?.trim()?.toFloatOrNull()?.let { abs(it - value) < HZ_TOLERANCE } == true
     }
 
     private suspend fun deleteMin(): Boolean = withContext(Dispatchers.IO) {

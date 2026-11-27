@@ -1,8 +1,25 @@
 package com.catsmoker.app.screens.editgamefiles.games.grid
 
+import androidx.annotation.StringRes
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Layers
+import androidx.compose.material.icons.filled.Monitor
+import androidx.compose.material.icons.filled.Star
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.foundation.clickable
+import androidx.compose.material.icons.filled.ExpandLess
+import androidx.compose.material.icons.filled.ExpandMore
+import androidx.compose.ui.semantics.Role
+import androidx.compose.foundation.layout.defaultMinSize
+import com.catsmoker.app.ui.components.LabelledSwitch
+import com.catsmoker.app.screens.editgamefiles.editor.rememberEditorTab
+import com.catsmoker.app.screens.editgamefiles.editor.EditorTabSpec
 import com.catsmoker.app.R
 import com.catsmoker.app.screens.editgamefiles.editor.GameEditorLayout
+import com.catsmoker.app.screens.editgamefiles.editor.DeployActions
+import com.catsmoker.app.screens.editgamefiles.editor.DeployView
 import com.catsmoker.app.screens.editgamefiles.editor.GameEditorSection
+import com.catsmoker.app.screens.editgamefiles.editor.HostedDeploy
 
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -10,6 +27,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -89,6 +107,21 @@ fun GridRoute(onBack: (() -> Unit)? = null) {
     )
 }
 
+/**
+ * The three groups this editor's cards fall into. Order matters: DISPLAY is where a user tuning for
+ * frame rate starts, QUALITY is the long ladder, SWITCHES is the per-file boolean list.
+ */
+private enum class GridEditorTab(@StringRes val label: Int, val icon: ImageVector) {
+    DISPLAY(R.string.gf_tab_display, Icons.Default.Monitor),
+    QUALITY(R.string.gf_tab_quality, Icons.Default.Star),
+    SWITCHES(R.string.gf_tab_switches, Icons.Default.Layers)
+}
+
+@Composable
+private fun gridEditorTabs(): List<EditorTabSpec> = GridEditorTab.entries.map {
+    EditorTabSpec(it.name, stringResource(it.label), it.icon)
+}
+
 @Composable
 fun GridScreen(
     uiState: GridUiState,
@@ -144,6 +177,12 @@ fun GridScreen(
                         GridLoadFailureCard(uiState.loadFailure, onPickFolder, onRefresh, onShowAnyway = null)
                     }
 
+                    // One group of cards at a time. The form put a preference changed at the top five
+                    // swipes away from APPLY, and the pinned bar alone cannot fix reach inside the form.
+                    val gridTab = rememberEditorTab(gridEditorTabs(), GridEditorTab.DISPLAY.name)
+                    gridTab.row()
+                    when (gridTab.selected) {
+                        GridEditorTab.DISPLAY.name -> {
                     SectionCard {
                         CardHeading(stringResource(R.string.gf_frame_rate))
                         Spacer(modifier = Modifier.height(8.dp))
@@ -193,6 +232,8 @@ fun GridScreen(
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
+                        }
+                        GridEditorTab.QUALITY.name -> {
 
 
                     SectionCard {
@@ -223,6 +264,8 @@ fun GridScreen(
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
+                        }
+                        else -> {
 
 
                     SectionCard {
@@ -242,7 +285,8 @@ fun GridScreen(
                                         color = MaterialTheme.colorScheme.onSurfaceVariant
                                     )
                                 }
-                                Switch(
+                                LabelledSwitch(
+                                    label = switchLabel(name),
                                     checked = uiState.edits.switches[name] ?: current ?: false,
                                     enabled = current != null,
                                     onCheckedChange = { checked -> onSetSwitch(name, checked) }
@@ -287,7 +331,8 @@ fun GridScreen(
                                         color = MaterialTheme.colorScheme.onSurfaceVariant
                                     )
                                 }
-                                Switch(
+                                LabelledSwitch(
+                                    label = switchLabel("fxaa"),
                                     checked = uiState.edits.fxaa ?: fxaaCurrent ?: false,
                                     enabled = fxaaCurrent != null,
                                     onCheckedChange = { checked -> onSetFxaa(checked) }
@@ -321,27 +366,52 @@ fun GridScreen(
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
+
                         }
                     }
+                        }
+                    }
+                    // Whether Apply would write anything: the working copy differs from the file.
+                    // Computed once here because the deploy block, the restore guard and the bar
+                    // all ask the same question.
+                    val hasPendingEdits = uiState.edits != GridPreferences.Edits()
 
-                    GameEditorSection(stringResource(R.string.gf_deploy)) {
-                        val hasPendingEdits = uiState.edits != GridPreferences.Edits()
-                        CatsmokerButton(
-                            onClick = onApply,
-                            modifier = Modifier.fillMaxWidth(),
-                            enabled = !uiState.applying && hasPendingEdits,
-                            isLoading = uiState.applying,
-                            loadingLabel = stringResource(R.string.gf_applying)
-                        ) {
-                            Text(stringResource(R.string.gf_apply_to_game))
+                    // The primary write lives in the pinned DeployBar when this editor is
+                    // embedded (editor/DeployBar.kt); the card used to sit mid-form, so a
+                    // preference changed at the top had to be scrolled to the bottom to apply.
+                    // Standalone, the same block still draws inline.
+                    HostedDeploy(
+                        view = DeployView(
+                            applyLabel = stringResource(R.string.gf_apply_to_game),
+                            dirty = hasPendingEdits,
+                            busy = uiState.applying
+                        ),
+                        actions = DeployActions(apply = onApply),
+                        inline = {
+                            GameEditorSection(stringResource(R.string.gf_deploy)) {
+                                CatsmokerButton(
+                                    onClick = onApply,
+                                    modifier = Modifier.fillMaxWidth(),
+                                    enabled = !uiState.applying && hasPendingEdits,
+                                    isLoading = uiState.applying,
+                                    loadingLabel = stringResource(R.string.gf_applying)
+                                ) {
+                                    Text(stringResource(R.string.gf_apply_to_game))
+                                }
+                                if (!hasPendingEdits && !uiState.applying) {
+                                    Text(
+                                        stringResource(R.string.gf_no_pending_changes),
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                }
+                            }
                         }
-                        if (!hasPendingEdits && !uiState.applying) {
-                            Text(
-                                stringResource(R.string.gf_no_pending_changes),
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                        }
+                    )
+
+                    // Restore and the last-apply report stay in the flow: one is the way back from
+                    // a write, the other is the evidence of what the last one did.
+                    GameEditorSection(stringResource(R.string.gf_restore_backup)) {
                         if (uiState.hasBackup) {
                             CatsmokerOutlinedButton(
                                 onClick = {
@@ -362,6 +432,7 @@ fun GridScreen(
                             Text(stringResource(R.string.gf_last_apply, report), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.primary)
                         }
                     }
+
                 }
 
                 // Defensive: override active but no read (seeding is the ViewModel's job and
@@ -447,6 +518,13 @@ private fun switchLabel(key: String): String = when (key) {
     else -> key.replaceFirstChar { it.uppercase() }
 }
 
+/**
+ * What a closed ladder row reports: the pending choice when there is one, otherwise what the file
+ * currently holds. The row must never show the old tier while a new one is queued for writing —
+ * that is the difference between "this is set to High" and "this will be High".
+ */
+internal fun ladderRowValue(selected: String?, current: String?): String? = selected ?: current
+
 @Composable
 private fun LadderRow(
     label: String,
@@ -456,29 +534,56 @@ private fun LadderRow(
     current: String?,
     onSelect: (String) -> Unit
 ) {
+    // Sixteen quality axes times five tiers is eighty chips: as a list of open rows this card was
+    // four screens of scrolling, and the one thing a tuning screen must answer first — "what is it
+    // set to now?" — was the thing you had to scroll to find. Closed, each row shows the label and
+    // the tier the file holds, so all sixteen read at a glance; opening one swaps in the tiers.
+    var open by rememberSaveable(label) { mutableStateOf(false) }
+    val value = ladderRowValue(selected, current)
+    val expandLabel = stringResource(R.string.gf_grid_row_expand)
+    val collapseLabel = stringResource(R.string.gf_grid_row_collapse)
     Column {
-        Row(verticalAlignment = Alignment.CenterVertically) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .defaultMinSize(minHeight = 48.dp)
+                .clickable(role = Role.Button, onClickLabel = if (open) collapseLabel else expandLabel) { open = if (open) false else true }
+                .padding(vertical = 4.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
             Text(
                 label,
                 modifier = Modifier.weight(1f),
                 color = if (enabled) MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f) else MaterialTheme.colorScheme.onSurfaceVariant
             )
-            if (current != null) {
-                Text(stringResource(R.string.gf_grid_device_value, current), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-            }
+            Text(
+                text = value ?: stringResource(R.string.gf_grid_not_in_file),
+                style = MaterialTheme.typography.bodySmall,
+                // Same ink either way: the text itself says the key is missing, and `outline` on
+                // this surface sat below the contrast floor for small text.
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            Icon(
+                imageVector = if (open) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(start = 4.dp).size(18.dp)
+            )
         }
-        // Every tier visible at once — a wrapping flow, never sideways scroll.
-        ChipFlowRow {
-            options.forEach { tier ->
-                FilterChip(
-                    selected = selected == tier,
-                    enabled = enabled,
-                    onClick = { onSelect(tier) },
-                    label = { Text(tier) }
-                )
+        if (open) {
+            // Every tier visible at once — a wrapping flow, never sideways scroll.
+            ChipFlowRow {
+                options.forEach { tier ->
+                    FilterChip(
+                        selected = selected == tier,
+                        enabled = enabled,
+                        onClick = { onSelect(tier) },
+                        label = { Text(tier) }
+                    )
+                }
             }
+            Spacer(modifier = Modifier.height(6.dp))
         }
-        Spacer(modifier = Modifier.height(6.dp))
     }
 }
 

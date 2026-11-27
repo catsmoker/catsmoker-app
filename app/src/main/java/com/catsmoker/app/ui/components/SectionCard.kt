@@ -20,7 +20,9 @@ import androidx.compose.ui.unit.dp
 fun SectionCard(
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
-    contentPadding: Dp = 20.dp,
+    // 16 dp rather than 20: the corner radius is 20, so 16 keeps the content inside the curve and
+    // still gives back 8 dp of height per card — which on a phone is a tenth of a row of controls.
+    contentPadding: Dp = 16.dp,
     content: @Composable ColumnScope.() -> Unit
 ) {
     val shape = RoundedCornerShape(20.dp)

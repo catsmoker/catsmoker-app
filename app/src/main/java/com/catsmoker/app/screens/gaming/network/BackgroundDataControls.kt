@@ -49,6 +49,7 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.catsmoker.app.ui.components.LabelledSwitch
 import com.catsmoker.app.R
 import com.catsmoker.app.screens.gaming.GameInfo
 import com.catsmoker.app.screens.gaming.components.RequirementNotice
@@ -194,7 +195,7 @@ internal fun NetworkBlockSwitch(
         if (busy) {
             CircularProgressIndicator(modifier = Modifier.size(20.dp), strokeWidth = 2.dp)
         } else {
-            Switch(checked = checked, onCheckedChange = onCheckedChange, enabled = enabled)
+            LabelledSwitch(label = title, checked = checked, onCheckedChange = onCheckedChange, enabled = enabled)
         }
     }
 }

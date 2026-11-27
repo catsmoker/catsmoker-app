@@ -27,6 +27,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.catsmoker.app.ui.components.LabelledSwitch
 import com.catsmoker.app.R
 import com.catsmoker.app.screens.editgamefiles.EditGameFilesViewModel
 import com.catsmoker.app.screens.editgamefiles.model.GameType
@@ -173,8 +174,9 @@ private fun GameConfigControl(field: ConfigField, value: String, enabled: Boolea
         is ConfigControl.Toggle -> {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(field.name, modifier = Modifier.weight(1f))
-                Switch(checked = value == control.on, enabled = enabled && value in listOf(control.off, control.on),
-                    onCheckedChange = { onChange(if (it) control.on else control.off) })
+                LabelledSwitch(label = field.name, checked = value == control.on,
+                    enabled = enabled && value in listOf(control.off, control.on),
+                    onCheckedChange = { if (it) onChange(control.on) else onChange(control.off) })
             }
         }
         is ConfigControl.Number -> {

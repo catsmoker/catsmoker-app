@@ -1,5 +1,6 @@
 package com.catsmoker.app.screens.gaming.mode
 
+import com.catsmoker.app.ui.components.LabelledSwitch
 import com.catsmoker.app.R
 
 import androidx.compose.foundation.background
@@ -315,7 +316,8 @@ fun GamingModeCard(
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
-                Switch(
+                LabelledSwitch(
+                    label = stringResource(R.string.gt_session_title),
                     checked = sessionActive,
                     onCheckedChange = onToggleSession,
                     enabled = sessionEnabled

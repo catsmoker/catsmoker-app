@@ -49,6 +49,9 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
+import com.catsmoker.app.ui.components.LabelledSwitch
 import com.catsmoker.app.R
 import com.catsmoker.app.screens.gaming.components.RequirementNotice
 import com.catsmoker.app.ui.components.InfoButton
@@ -66,7 +69,7 @@ fun FeatureToggleCard(title: String, subtitle: String, icon: ImageVector, checke
                 Text(title, fontWeight = FontWeight.Bold, color = if (enabled) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 15.sp)
                 Text(subtitle, color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 12.sp)
             }
-            Switch(checked = checked, onCheckedChange = onCheckedChange, enabled = enabled)
+            LabelledSwitch(label = title, checked = checked, onCheckedChange = onCheckedChange, enabled = enabled)
         }
     }
 }
@@ -98,7 +101,15 @@ fun ExpandableToolCard(title: String, subtitle: String, icon: ImageVector, isTog
     SectionCard(enabled = enabled) {
         Column(modifier = Modifier.fillMaxWidth()) {
             Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                Box(modifier = Modifier.size(40.dp).clip(RoundedCornerShape(10.dp)).background(if (enabled) MaterialTheme.colorScheme.surfaceVariant else Color.Gray.copy(alpha = 0.1f)).clickable(enabled = opens) { expanded = !expanded }, contentAlignment = Alignment.Center) { Icon(icon, null, tint = if (enabled) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(20.dp)) }
+                // Decorative, not a second target: two adjacent controls with the same name and the
+                // same action are read out twice, and the title beside it is the wide target.
+                Box(
+                    modifier = Modifier.size(40.dp).clip(RoundedCornerShape(10.dp))
+                        .background(if (enabled) MaterialTheme.colorScheme.surfaceVariant else Color.Gray.copy(alpha = 0.1f)),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(icon, null, tint = if (enabled) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(20.dp))
+                }
                 Spacer(modifier = Modifier.width(16.dp))
                 Column(modifier = Modifier.weight(1f).clickable(enabled = opens) { expanded = !expanded }) {
                     Text(title, fontWeight = FontWeight.Bold, color = if (enabled) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 15.sp)
@@ -108,9 +119,22 @@ fun ExpandableToolCard(title: String, subtitle: String, icon: ImageVector, isTog
                     InfoButton(topic = info)
                 }
                 if (isToggleable) {
-                    Switch(checked = isToggled, onCheckedChange = onToggleChange, enabled = enabled)
+                    // The label sits in the row, not in the switch's semantics, so a bare Switch
+                    // announced "on, switch" with no setting named.
+                    LabelledSwitch(
+                        label = title,
+                        checked = isToggled,
+                        onCheckedChange = onToggleChange,
+                        enabled = enabled
+                    )
                 } else if (expandable) {
-                    IconButton(onClick = { expanded = !expanded }, enabled = enabled) { Icon(if (expanded) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown, null, tint = if (enabled) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.onSurfaceVariant) }
+                    // Affordance only: the row's icon and title already toggle, and a third
+                    // unlabelled clickable for the same action was one target too many.
+                    Icon(
+                        if (expanded) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown,
+                        null,
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
                 }
             }
             if (!enabled && requirementNote != null) {

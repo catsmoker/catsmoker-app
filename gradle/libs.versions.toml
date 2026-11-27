@@ -8,7 +8,7 @@ documentfile = "1.1.0"
 junit = "4.13.2"
 material = "1.14.0"
 activity = "1.13.0"
-startioSdk = "5.5.1"
+startioSdk = "5.5.2"
 # Play distribution variant only (AdMob banner and consent management). Declared here so the
 # version is pinned; the dependency itself is added via playstoreImplementation in
 # app/build.gradle.kts and never enters the full variant.

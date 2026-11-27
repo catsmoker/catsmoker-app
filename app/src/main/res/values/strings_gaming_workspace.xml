@@ -2,6 +2,18 @@
 <resources>
     <string name="gt_workspace_profile">Profile</string>
     <string name="gt_workspace_maintenance">Maintenance</string>
+    <!--
+        Section-switcher captions. One word each: the switcher draws all six side by side in a
+        single row, so a caption that needs a second line or a scroll defeats it. The long
+        headings (gt_section_graphics, gt_section_focus_network, …) remain the section titles
+        inside the content pane.
+    -->
+    <string name="gt_tab_profile">Profile</string>
+    <string name="gt_tab_display">Display</string>
+    <string name="gt_tab_speed">Speed</string>
+    <string name="gt_tab_overlays">Overlays</string>
+    <string name="gt_tab_network">Network</string>
+    <string name="gt_tab_cleanup">Clean</string>
     <string name="gt_workspace_apply">Apply saved profile</string>
     <string name="gt_automation_status_awaiting">Waiting for confirmation in notifications</string>
     <string name="gt_automation_status_game_unavailable">Game not available in Your Games</string>
@@ -31,4 +43,8 @@
     <string name="gt_cpu_hardware_limits">Hardware limits: %1$s – %2$s</string>
     <string name="gt_cpu_frequency_table">Frequency table: %1$s</string>
     <string name="gt_cpu_governors">Available governors: %1$s</string>
+    <string name="gt_search_title">Find a tool</string>
+    <string name="gt_search_placeholder">Name or what it does</string>
+    <string name="gt_search_no_match">No tool matches that.</string>
+    <string name="gt_search_desc">Find a tool by name</string>
 </resources>

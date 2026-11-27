@@ -1,5 +1,17 @@
 package com.catsmoker.app.screens.editgamefiles.games.wutheringwaves
 
+import androidx.annotation.StringRes
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Build
+import androidx.compose.material.icons.filled.Monitor
+import androidx.compose.material.icons.filled.Star
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.material.icons.filled.Handyman
+import com.catsmoker.app.ui.components.LabelledSwitch
+import com.catsmoker.app.screens.editgamefiles.editor.rememberEditorTab
+import com.catsmoker.app.screens.editgamefiles.editor.EditorTabSpec
 import com.catsmoker.app.R
 import com.catsmoker.app.screens.editgamefiles.editor.GameEditorLayout
 
@@ -9,6 +21,9 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
+import com.catsmoker.app.screens.editgamefiles.editor.DeployActions
+import com.catsmoker.app.screens.editgamefiles.editor.DeployView
+import com.catsmoker.app.screens.editgamefiles.editor.HostedDeploy
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -126,6 +141,22 @@ private fun gameModeLabel(mode: WuwaConfigGenerator.GameMode): String = when (mo
     WuwaConfigGenerator.GameMode.ToA -> stringResource(R.string.gf_mode_toa)
 }
 
+/**
+ * Where a Wuthering Waves control lives: the preset a beginner starts from and the effect switches,
+ * the frame rate and engine mode, and the engine/driver levers that used to sit behind MORE OPTIONS.
+ */
+private enum class WuwaEditorTab(@StringRes val label: Int, val icon: ImageVector) {
+    PRESET(R.string.gf_tab_preset, Icons.Default.Star),
+    DISPLAY(R.string.gf_tab_display, Icons.Default.Monitor),
+    ADVANCED(R.string.gf_tab_advanced, Icons.Default.Build),
+    TOOLS(R.string.gf_tab_tools, Icons.Default.Handyman)
+}
+
+@Composable
+private fun wuwaEditorTabs(): List<EditorTabSpec> = WuwaEditorTab.entries.map {
+    EditorTabSpec(it.name, stringResource(it.label), it.icon)
+}
+
 @Composable
 fun WuwaConfigScreen(
     uiState: WuwaConfigUiState,
@@ -151,9 +182,6 @@ fun WuwaConfigScreen(
     onShowAnyway: () -> Unit = {},
     onBack: (() -> Unit)? = null
 ) {
-    // Engine/driver levers, generated-file toggles and CVar overrides are advanced; keep them
-    // one tap away instead of making the beginner scroll past six cards to reach DEPLOY.
-    var showAdvanced by remember { mutableStateOf(false) }
     val content: @Composable () -> Unit = {
         GameEditorLayout(standalone = onBack != null) {
             if (uiState.loading) {
@@ -179,12 +207,24 @@ fun WuwaConfigScreen(
                 WuwaNotInstalledCard(onRefresh = onRefresh, onShowAnyway = null)
             }
 
+            // Three groups instead of one form: the preset a beginner starts from, the frame rate
+            // and engine mode they tune next, and the engine/driver levers that used to hide
+            // behind a MORE OPTIONS toggle. The deploy bar keeps the write one tap away.
+            val wuwaTab = rememberEditorTab(
+                wuwaEditorTabs(),
+                WuwaEditorTab.PRESET.name
+            )
+            wuwaTab.row()
+
+            if (wuwaTab.selected == WuwaEditorTab.PRESET.name) {
             uiState.recommendation?.let { rec ->
                 RecommendCard(rec, uiState.preset, uiState.chipset, onApplyRecommendation)
+            }
             }
 
             // The recommendation's apply target sits directly below it — the preset chips
             // used to live several cards down, past the auto-tune card.
+            if (wuwaTab.selected == WuwaEditorTab.PRESET.name) {
             SectionCard {
                 CardHeading(stringResource(R.string.gf_preset_section))
                 Spacer(modifier = Modifier.height(8.dp))
@@ -215,8 +255,10 @@ fun WuwaConfigScreen(
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
+            }
 
 
+            if (wuwaTab.selected == WuwaEditorTab.DISPLAY.name) {
             SectionCard {
                 CardHeading(stringResource(R.string.gf_frame_rate))
                 Spacer(modifier = Modifier.height(8.dp))
@@ -239,8 +281,10 @@ fun WuwaConfigScreen(
                     uiState.options.vsync
                 ) { v -> onUpdateOptions { it.copy(vsync = v) } }
             }
+            }
 
 
+            if (wuwaTab.selected == WuwaEditorTab.DISPLAY.name) {
             SectionCard {
                 CardHeading(stringResource(R.string.gf_game_mode))
                 Spacer(modifier = Modifier.height(8.dp))
@@ -260,8 +304,10 @@ fun WuwaConfigScreen(
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
+            }
 
 
+            if (wuwaTab.selected == WuwaEditorTab.PRESET.name) {
             SectionCard {
                 CardHeading(stringResource(R.string.gf_effects))
                 Spacer(modifier = Modifier.height(8.dp))
@@ -289,21 +335,10 @@ fun WuwaConfigScreen(
                     !uiState.options.fog
                 ) { v -> onUpdateOptions { it.copy(fog = !v) } }
             }
-
-
-            TextButton(
-                onClick = { showAdvanced = !showAdvanced },
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Text(
-                    stringResource(
-                        if (showAdvanced) R.string.gf_fewer_options
-                        else R.string.gf_more_options
-                    )
-                )
             }
 
-            if (showAdvanced) {
+
+            if (wuwaTab.selected == WuwaEditorTab.ADVANCED.name) {
 
                 // Engine/driver/thermal levers and the visual-effect toggles answer different
                 // questions ("how does the renderer behave" vs "what is drawn"), so they live in
@@ -407,13 +442,45 @@ fun WuwaConfigScreen(
             }
 
 
+            // Deploy has four channels here, so the bar cannot carry "the" apply button: it
+            // carries one DEPLOY that opens a sheet with them. The card below stays as it is —
+            // it explains what a deploy does (backup, md5 read-back, hash monitor) and keeps the
+            // channels next to that explanation, while the bar keeps the action reachable.
+            var showDeploySheet by remember { mutableStateOf(false) }
+            HostedDeploy(
+                view = DeployView(
+                    applyLabel = stringResource(R.string.gf_deploy),
+                    dirty = uiState.previews.isNotEmpty() && !uiState.generating,
+                    busy = uiState.applying,
+                    // A generated config has no undo history: the arrows would be dead furniture.
+                    showHistory = false
+                ),
+                actions = DeployActions(apply = { showDeploySheet = true }),
+                inline = {}
+            )
+            if (showDeploySheet) {
+                WuwaDeploySheet(
+                    canShell = uiState.canShell,
+                    hasSafUri = uiState.hasSafUri,
+                    enabled = !uiState.applying && !uiState.generating && uiState.previews.isNotEmpty(),
+                    busy = uiState.applying,
+                    onDismiss = { showDeploySheet = false },
+                    onDeploy = { channel ->
+                        showDeploySheet = false
+                        onDeploy(channel)
+                    }
+                )
+            }
+
             SectionCard {
                 CardHeading(stringResource(R.string.gf_deploy))
                 Spacer(modifier = Modifier.height(8.dp))
-                Text(
-                    stringResource(R.string.gf_deploy_body),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                // Documentation, not a control: it used to occupy three lines at the top of the
+                // one card that is visible from every tab. Collapsed it keeps the text one tap
+                // away instead of charging every visit for it.
+                CollapsibleExplainer(
+                    title = stringResource(R.string.gf_wuwa_deploy_what),
+                    lines = listOf(stringResource(R.string.gf_deploy_body))
                 )
                 // Generation report (M100): accepted / stripped / render-pipeline
                 // counts for the previewed Engine.ini, computed inside generation
@@ -449,6 +516,10 @@ fun WuwaConfigScreen(
                         )
                     }
                 }
+                // Embedded, the bar's DEPLOY opens a sheet with both channels and this card
+                // explains the operation — so the same two buttons here were a second path to the
+                // same write. Standalone there is no bar, so the card keeps them.
+                if (onBack != null) {
                 Spacer(modifier = Modifier.height(12.dp))
                 CatsmokerButton(
                     onClick = { onDeploy(WuwaDeployChannel.SHELL) },
@@ -476,6 +547,7 @@ fun WuwaConfigScreen(
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
+                }
                 }
 
                 // M106(b): the reference's Protocol A clean-test step. Deletes the two
@@ -507,6 +579,7 @@ fun WuwaConfigScreen(
 
             // Deploy and community packs are separate cards in the same stack; without this
             // gap the two surfaces rendered flush against each other.
+            if (wuwaTab.selected == WuwaEditorTab.TOOLS.name) {
             CommunityPacksCard(
                 uiState = uiState,
                 onImportPack = onImportPack,
@@ -514,7 +587,9 @@ fun WuwaConfigScreen(
                 onDeployPackVariantStripped = onDeployPackVariantStripped,
                 onDeletePack = onDeletePack
             )
+            }
 
+            if (wuwaTab.selected == WuwaEditorTab.TOOLS.name) {
             if (uiState.backups.isNotEmpty()) {
                 SectionCard {
                     CardHeading(stringResource(R.string.gf_backups))
@@ -563,6 +638,7 @@ fun WuwaConfigScreen(
                     }
                 }
             }
+            }
 
             // Installed profile (M96): uid, servers, versions, language and ini counts
             // from the databases plus the log half when Client.log exists. Read-only —
@@ -571,6 +647,7 @@ fun WuwaConfigScreen(
             // permanently excluded from this screen — see WuwaConfigViewModel's KDoc.
             // The installed-profile card above and Auto-Tune below read Client.log
             // internally for their own axes; that is not the removed analysis surface.
+            if (wuwaTab.selected == WuwaEditorTab.TOOLS.name) {
             SectionCard {
                 CardHeading(stringResource(R.string.gf_wuwa_profile_title))
                 Spacer(modifier = Modifier.height(8.dp))
@@ -592,11 +669,13 @@ fun WuwaConfigScreen(
                     }
                 }
             }
+            }
 
             // Auto-tune measures instead of guessing: each round deploys the selected
             // preset, you play a session, then Measure reads what the game's own log
             // recorded (one Client.log read per round — the tuner's own measurement,
             // not the removed analysis surface).
+            if (wuwaTab.selected == WuwaEditorTab.TOOLS.name) {
             AutoTuneCard(
                 uiState = uiState,
                 onStart = onStartAutoTune,
@@ -605,6 +684,7 @@ fun WuwaConfigScreen(
                 onStop = onStopTuner,
                 onReset = onResetTuner
             )
+            }
         }
     }
 
@@ -960,29 +1040,48 @@ private fun RecommendCard(
             )
         }
         Spacer(modifier = Modifier.height(8.dp))
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Column(modifier = Modifier.weight(1f)) {
-                // The title is the *recommended* preset; the line below names the
-                // *selected* preset explicitly, so the two are never confused even
-                // when they agree (the old card showed one bare name for both).
-                Text(
-                    stringResource(R.string.gf_wuwa_recommended, presetLabel(rec.preset)),
-                    style = MaterialTheme.typography.titleMedium,
-                    color = MaterialTheme.colorScheme.primary
-                )
-                Text(
-                    stringResource(R.string.gf_wuwa_current_preset, presetLabel(currentPreset)),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-                Text(
-                    if (currentPreset == rec.preset) stringResource(R.string.gf_wuwa_already_selected) else stringResource(R.string.gf_wuwa_rec_body),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
+        // The headline and the button share a row only while the headline fits beside the
+        // button. "Recommended: Endurance" at font scale 1.3 was wider than the column and
+        // Compose broke it mid-word ("Recomme / nded:"), so past that point the button moves
+        // below instead of squeezing the sentence. Width, not font scale, is the trigger: a
+        // longer translation has the same problem at 1.0.
+        val titles: @Composable ColumnScope.() -> Unit = {
+            // The title is the *recommended* preset; the line below names the
+            // *selected* preset explicitly, so the two are never confused even
+            // when they agree (the old card showed one bare name for both).
+            Text(
+                stringResource(R.string.gf_wuwa_recommended, presetLabel(rec.preset)),
+                style = MaterialTheme.typography.titleMedium,
+                color = MaterialTheme.colorScheme.primary
+            )
+            Text(
+                stringResource(R.string.gf_wuwa_current_preset, presetLabel(currentPreset)),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            Text(
+                if (currentPreset == rec.preset) stringResource(R.string.gf_wuwa_already_selected) else stringResource(R.string.gf_wuwa_rec_body),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+        val action: @Composable () -> Unit = {
             CatsmokerButton(onClick = onApply, enabled = currentPreset != rec.preset) {
                 Text(stringResource(R.string.gf_wuwa_use_recommended))
+            }
+        }
+        BoxWithConstraints {
+            if (maxWidth < 340.dp) {
+                Column {
+                    titles()
+                    Spacer(modifier = Modifier.height(8.dp))
+                    action()
+                }
+            } else {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Column(modifier = Modifier.weight(1f)) { titles() }
+                    action()
+                }
             }
         }
         // Unscored silicon note: the SoC family beside the score. The scored GPU tier comes
@@ -1045,7 +1144,7 @@ private fun WuwaSwitchRow(title: String, caption: String, checked: Boolean, enab
             Text(title, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurface)
             Text(caption, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
-        Switch(checked = checked, onCheckedChange = onChange, enabled = enabled)
+        LabelledSwitch(label = title, checked = checked, onCheckedChange = onChange, enabled = enabled)
     }
 }
 
@@ -1091,4 +1190,64 @@ private fun DeployReportCard(report: WuwaConfigManager.DeploySuccess) {
         },
         initiallyExpanded = true
     )
+}
+
+/**
+ * The deploy channels, offered from the pinned bar.
+ *
+ * Two of the editor's four channels write the config itself; pack variants and the shader-cache
+ * clean stay in their own cards because they are different operations on different files. The
+ * sheet exists so the bar can hold one primary action without claiming the channels are one.
+ */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun WuwaDeploySheet(
+    canShell: Boolean,
+    hasSafUri: Boolean,
+    enabled: Boolean,
+    busy: Boolean,
+    onDismiss: () -> Unit,
+    onDeploy: (WuwaDeployChannel) -> Unit
+) {
+    ModalBottomSheet(
+        onDismissRequest = onDismiss,
+        sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    ) {
+        Column(
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp).padding(bottom = 24.dp)
+        ) {
+            CardHeading(stringResource(R.string.gf_deploy))
+            Spacer(Modifier.height(10.dp))
+            CatsmokerButton(
+                onClick = { onDeploy(WuwaDeployChannel.SHELL) },
+                enabled = enabled && canShell,
+                isLoading = busy,
+                loadingLabel = stringResource(R.string.gf_deploying),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text(stringResource(R.string.gf_deploy_shell))
+            }
+            Spacer(Modifier.height(8.dp))
+            CatsmokerOutlinedButton(
+                onClick = { onDeploy(WuwaDeployChannel.SAF) },
+                enabled = enabled,
+                isLoading = busy,
+                loadingLabel = stringResource(R.string.gf_deploying),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text(
+                    if (hasSafUri) stringResource(R.string.gf_deploy_saf)
+                    else stringResource(R.string.gf_deploy_saf_pick)
+                )
+            }
+            if (!canShell) {
+                Spacer(Modifier.height(8.dp))
+                Text(
+                    stringResource(R.string.gf_deploy_noshell),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+        }
+    }
 }

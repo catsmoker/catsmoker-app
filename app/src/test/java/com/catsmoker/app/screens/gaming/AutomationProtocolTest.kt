@@ -42,6 +42,28 @@ class AutomationProtocolTest {
         assertNull(AutomationProtocol.parse("RESTORE", null)?.requestId)
     }
 
+    @Test fun displayOperationsTakeAnOptionalGameAndOneValidatedRate() {
+        // Display rate control rides the same authenticated intent; it does not add a second API.
+        assertNotNull(AutomationProtocol.parse("APPLY_DISPLAY", null))
+        assertNotNull(AutomationProtocol.parse("APPLY_DISPLAY", "com.Game_1.app"))
+        assertNotNull(AutomationProtocol.parse("RESTORE_DISPLAY", null))
+        assertEquals(120f, AutomationProtocol.parse("APPLY_DISPLAY", null, null, "120")?.hz)
+        assertEquals(59.94f, AutomationProtocol.parse("APPLY_DISPLAY", null, null, "59.94")?.hz)
+        assertNull(AutomationProtocol.parse("APPLY_DISPLAY", null)?.hz)
+
+        // `hz` is a number, never a value, a command or a path.
+        listOf("abc", "", "120;reboot", "0", "5", "1200", "120.001", "-120", "1e3", " 120").forEach {
+            assertNull(it, AutomationProtocol.parse("APPLY_DISPLAY", null, null, it))
+        }
+        // ... and it belongs to exactly one operation.
+        assertNull(AutomationProtocol.parse("RESTORE", null, null, "120"))
+        assertNull(AutomationProtocol.parse("APPLY_SAVED", "com.Game_1.app", null, "120"))
+
+        // An optional package is still validated, and restore-only operations refuse one.
+        assertNull(AutomationProtocol.parse("APPLY_DISPLAY", "../com.x"))
+        assertNull(AutomationProtocol.parse("RESTORE_DISPLAY", "com.Game_1.app"))
+    }
+
     @Test fun duplicateBurstsAreBoundedWithoutBlockingQueriesOrExitRestore() {
         val admission = BroadcastAdmission()
         val id = "00000000-0000-4000-8000-000000000001"

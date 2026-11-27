@@ -272,14 +272,17 @@ fun PermissionsListScreen(
         step = 2,
         onBack = onBack,
         title = stringResource(R.string.core_permissions_title),
-        subtitle = stringResource(R.string.core_permissions_subtitle),
+        // No subtitle: "Grant permissions to enable all features" restated the title and the rows
+        // below already say, per line, what is granted. The step's own intro carries the one thing
+        // a user needs to know before the first tap.
+        subtitle = "",
         showProgress = uiState.isOnboarding,
         // A Settings revisit reuses this checklist but is entered from the Settings back stack,
         // so only the first-run flow offers a previous step.
         showBack = uiState.isOnboarding,
         dense = true,
         hideSubtitleWhenCompact = true,
-        trailing = {
+        progressTrailing = {
             IconButton(onClick = onRefresh) {
                 Icon(
                     imageVector = Icons.Default.Refresh,
@@ -301,14 +304,24 @@ fun PermissionsListScreen(
             // so tiles remain tappable in landscape.
             val compact = maxHeight < 420.dp
             Column(
-                modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(bottom = 8.dp),
-                verticalArrangement = Arrangement.spacedBy(if (compact) 8.dp else 12.dp),
+                // 4 dp, not 16: this step is laid out to fit one screen, and padding the list for a
+                // scroll it no longer needs is what kept a 96 px scroll alive at the very bottom.
+                // No overscroll stretch: the step is laid out to fit one screen, and the rubber
+                // band was the only thing left that looked like scrolling. Content that genuinely
+                // overflows (large font scale, short window) still scrolls.
+                modifier = Modifier.fillMaxSize()
+                    .verticalScroll(rememberScrollState(), overscrollEffect = null)
+                    .padding(bottom = 4.dp),
+                verticalArrangement = Arrangement.spacedBy(if (compact) 8.dp else 10.dp),
             ) {
                 PermissionGroup(label = stringResource(R.string.policy_access_title)) {
                     Text(stringResource(R.string.onb_access_summary), style = MaterialTheme.typography.bodySmall)
                     Spacer(Modifier.height(8.dp))
-                    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                        GamingAccessTile(
+                    // One card of three rows, not three cards: each consent is a checkbox and a
+                    // state, and the Android request sits on the row instead of in a button band
+                    // of its own. Same choices, same gates, a third of the height.
+                    GamingAccessCard {
+                        GamingAccessRow(
                             titleRes = R.string.onb_inventory_title,
                             explanationRes = R.string.policy_inventory,
                             selected = uiState.choices.inventory,
@@ -318,7 +331,8 @@ fun PermissionsListScreen(
                                 confirmed = GamingAccessConsent.INVENTORY in uiState.confirmedGamingAccess,
                             ),
                         )
-                        GamingAccessTile(
+                        HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+                        GamingAccessRow(
                             titleRes = R.string.onb_usage_title,
                             explanationRes = R.string.policy_usage,
                             selected = uiState.choices.usage,
@@ -333,7 +347,8 @@ fun PermissionsListScreen(
                                 openSettings(Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS))
                             },
                         )
-                        GamingAccessTile(
+                        HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+                        GamingAccessRow(
                             titleRes = R.string.onb_notifications_title,
                             explanationRes = R.string.policy_notifications,
                             selected = uiState.choices.notifications,
@@ -351,22 +366,55 @@ fun PermissionsListScreen(
                     }
                 }
                 PermissionGroup(label = stringResource(R.string.onb_perm_group_essential)) {
-                    PermissionGrid(specs = essential, tileHeight = 86.dp)
+                    PermissionGrid(specs = essential, tileHeight = 92.dp)
                 }
-                PermissionGroup(label = stringResource(R.string.onb_perm_group_system)) {
-                    PermissionGrid(specs = system, tileHeight = 86.dp)
-                }
-                PermissionGroup(label = stringResource(R.string.onb_perm_group_additional)) {
-                    PermissionGrid(specs = additional, tileHeight = 86.dp)
+                // Two groups, one row of the screen: each column is a single-file stack of its own
+                // three tiles. Side by side they cost three tile heights instead of four, and the
+                // two labels stay apart so "System" and "Additional" keep their meaning.
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Column(modifier = Modifier.weight(1f)) {
+                        PermissionGroup(label = stringResource(R.string.onb_perm_group_system)) {
+                            PermissionGrid(specs = system, tileHeight = 92.dp, columns = 1)
+                        }
+                    }
+                    Column(modifier = Modifier.weight(1f)) {
+                        PermissionGroup(label = stringResource(R.string.onb_perm_group_additional)) {
+                            PermissionGrid(specs = additional, tileHeight = 92.dp, columns = 1)
+                        }
+                    }
                 }
             }
         } // BoxWithConstraints
     }
 }
 
-/** The checkbox edits the choice; the status reflects access in effect now. */
+/**
+ * The card that holds the three optional consents.
+ *
+ * It replaced three separate tiles, each with its own border, its own 48 dp row and — for the two
+ * that need an Android grant — a full-width request button underneath. Same three choices, same
+ * explicit checkboxes, less than half the height.
+ */
 @Composable
-private fun GamingAccessTile(
+private fun GamingAccessCard(content: @Composable ColumnScope.() -> Unit) {
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(14.dp),
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
+    ) {
+        // The last row's request button would otherwise sit a couple of dp above the border.
+        Column(modifier = Modifier.padding(vertical = 4.dp), content = content)
+    }
+}
+
+/**
+ * One consent: the checkbox edits the choice, the status reflects the access in effect now.
+ *
+ * The Android request lives on the row rather than in a band below it. It is only offered while the
+ * state is ANDROID_REQUIRED, which is exactly when the checkbox alone cannot deliver the feature.
+ */
+@Composable
+private fun GamingAccessRow(
     @StringRes titleRes: Int,
     @StringRes explanationRes: Int,
     selected: Boolean,
@@ -381,70 +429,81 @@ private fun GamingAccessTile(
         GamingAccessStatus.ANDROID_REQUIRED -> R.string.onb_android_not_granted
         GamingAccessStatus.PENDING_SAVE -> R.string.onb_access_pending_save
     }
-    Surface(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(14.dp),
-        border = BorderStroke(1.dp, if (granted) MaterialTheme.colorScheme.primary.copy(alpha = 0.35f)
-            else MaterialTheme.colorScheme.outline),
+    Row(
+        modifier = Modifier.fillMaxWidth().padding(start = 4.dp, end = 10.dp, top = 2.dp, bottom = 2.dp),
+        verticalAlignment = Alignment.CenterVertically,
     ) {
-        Column(Modifier.padding(horizontal = 9.dp, vertical = 7.dp)) {
-            Row(
-                modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)
-                    .toggleable(value = selected, role = Role.Checkbox, onValueChange = onChange),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Checkbox(checked = selected, onCheckedChange = null)
-                Spacer(Modifier.width(5.dp))
+        Row(
+            modifier = Modifier.weight(1f).heightIn(min = 60.dp)
+                .toggleable(value = selected, role = Role.Checkbox, onValueChange = onChange),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Checkbox(checked = selected, onCheckedChange = null)
+            Spacer(Modifier.width(2.dp))
+            Column(modifier = Modifier.weight(1f)) {
                 Text(
                     stringResource(titleRes),
                     fontSize = 13.sp,
-                    lineHeight = 14.sp,
+                    lineHeight = 15.sp,
                     fontWeight = FontWeight.SemiBold,
-                    modifier = Modifier.weight(1f),
                 )
-                InfoButton(
-                    topic = InfoTopic(
-                        name = InfoText.Res(titleRes),
-                        sections = listOf(InfoSection(
-                            title = InfoText.Res(R.string.sys_info_what_title),
-                            paragraphs = buildList {
-                                add(InfoText.Res(explanationRes))
-                                if (onRequest == null) add(InfoText.Res(R.string.onb_inventory_visibility))
-                                add(InfoText.Res(R.string.policy_access_intro))
-                                add(InfoText.Res(R.string.core_perm_restricted_hint))
-                            },
-                        )),
-                    ),
-                    compact = true,
-                )
-            }
-            Row(
-                modifier = Modifier.padding(start = 5.dp, bottom = 4.dp),
-                horizontalArrangement = Arrangement.spacedBy(5.dp),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                if (granted) {
-                    Icon(
-                        imageVector = Icons.Default.Check,
-                        contentDescription = null,
-                        tint = PermissionGrantedGreen,
-                        modifier = Modifier.size(14.dp),
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(5.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    if (granted) {
+                        Icon(
+                            imageVector = Icons.Default.Check,
+                            contentDescription = null,
+                            tint = PermissionGrantedGreen,
+                            modifier = Modifier.size(13.dp),
+                        )
+                    }
+                    Text(
+                        text = stringResource(statusRes),
+                        fontSize = 11.sp,
+                        lineHeight = 13.sp,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                 }
-                Text(
-                    text = stringResource(statusRes),
-                    style = MaterialTheme.typography.labelMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
             }
-            if (status == GamingAccessStatus.ANDROID_REQUIRED && onRequest != null) {
-                TextButton(
-                    onClick = onRequest,
-                    modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp),
-                    contentPadding = PaddingValues(horizontal = 0.dp),
-                ) {
-                    Text(stringResource(R.string.onb_allow_open_settings), fontSize = 11.sp, lineHeight = 13.sp)
-                }
+        }
+        InfoButton(
+            topic = InfoTopic(
+                name = InfoText.Res(titleRes),
+                sections = listOf(InfoSection(
+                    title = InfoText.Res(R.string.sys_info_what_title),
+                    paragraphs = buildList {
+                        add(InfoText.Res(explanationRes))
+                        if (onRequest == null) add(InfoText.Res(R.string.onb_inventory_visibility))
+                        add(InfoText.Res(R.string.policy_access_intro))
+                        add(InfoText.Res(R.string.core_perm_restricted_hint))
+                    },
+                )),
+            ),
+            compact = true,
+        )
+        if (status == GamingAccessStatus.ANDROID_REQUIRED && onRequest != null) {
+            // Drawn as a bordered pill: in this screen's plain link style the words read as another
+            // status label, and this is the only control on the row that leaves the app.
+            TextButton(
+                onClick = onRequest,
+                modifier = Modifier
+                    .padding(start = 6.dp, end = 2.dp)
+                    .heightIn(min = 48.dp)
+                    .border(
+                        width = 1.dp,
+                        color = MaterialTheme.colorScheme.primary.copy(alpha = 0.75f),
+                        shape = RoundedCornerShape(10.dp)
+                    ),
+                contentPadding = PaddingValues(horizontal = 8.dp),
+            ) {
+                Text(
+                    stringResource(R.string.onb_allow_open_settings),
+                    fontSize = 11.sp,
+                    lineHeight = 13.sp,
+                    maxLines = 2
+                )
             }
         }
     }
@@ -494,9 +553,9 @@ internal fun PermissionGroup(
 }
 
 @Composable
-internal fun PermissionGrid(specs: List<PermissionSpec>, tileHeight: Dp) {
-    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-        specs.chunked(2).forEach { row ->
+internal fun PermissionGrid(specs: List<PermissionSpec>, tileHeight: Dp, columns: Int = 2) {
+    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+        specs.chunked(columns).forEach { row ->
             if (row.size == 1) {
                 PermissionTile(
                     spec = row.first(),
@@ -524,13 +583,16 @@ internal fun PermissionGrid(specs: List<PermissionSpec>, tileHeight: Dp) {
 internal fun PermissionTile(spec: PermissionSpec, modifier: Modifier = Modifier) {
     val shape = RoundedCornerShape(14.dp)
     Column(
+        verticalArrangement = Arrangement.Center,
         modifier = modifier
             .clip(shape)
             .background(MaterialTheme.colorScheme.surface)
             .border(
                 width = 1.dp,
                 color = if (spec.granted) {
-                    MaterialTheme.colorScheme.primary.copy(alpha = 0.35f)
+                    // Green, not the accent: the accent is this screen's "act on me" colour, and a
+                    // granted tile wearing it read as an error while its own dot said Granted.
+                    PermissionGrantedGreen.copy(alpha = 0.45f)
                 } else {
                     MaterialTheme.colorScheme.outline
                 },
@@ -541,8 +603,10 @@ internal fun PermissionTile(spec: PermissionSpec, modifier: Modifier = Modifier)
                 role = Role.Button,
                 onClick = spec.onClick
             )
-            .padding(horizontal = 9.dp, vertical = 7.dp)
+            .padding(horizontal = 9.dp, vertical = 5.dp)
     ) {
+        // Intentional: see the arrangement below, the tile centres its two rows.
+
         Row(verticalAlignment = Alignment.Top) {
             Text(
                 text = stringResource(spec.titleRes),
@@ -560,7 +624,6 @@ internal fun PermissionTile(spec: PermissionSpec, modifier: Modifier = Modifier)
             )
             PermissionInfoButton(spec)
         }
-        Spacer(Modifier.weight(1f))
         Row(verticalAlignment = Alignment.CenterVertically) {
             Box(
                 modifier = Modifier
@@ -571,8 +634,8 @@ internal fun PermissionTile(spec: PermissionSpec, modifier: Modifier = Modifier)
             Spacer(Modifier.width(5.dp))
             Text(
                 text = stringResource(spec.statusRes),
-                fontSize = 10.sp,
-                lineHeight = 11.sp,
+                fontSize = 11.sp,
+                lineHeight = 13.sp,
                 maxLines = 1,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.weight(1f)
@@ -580,7 +643,7 @@ internal fun PermissionTile(spec: PermissionSpec, modifier: Modifier = Modifier)
             if (spec.actionable) {
                 Text(
                     text = stringResource(R.string.core_grant),
-                    fontSize = 9.5.sp,
+                    fontSize = 11.sp,
                     fontWeight = FontWeight.Bold,
                     letterSpacing = 0.5.sp,
                     maxLines = 1,
@@ -602,7 +665,7 @@ internal fun PermissionTile(spec: PermissionSpec, modifier: Modifier = Modifier)
 internal fun permissionStatusColor(spec: PermissionSpec): Color = when {
     spec.granted -> PermissionGrantedGreen
     spec.actionable -> MaterialTheme.colorScheme.primary
-    else -> MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.45f)
+    else -> MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
 }
 
 /** One tap opens the shared info sheet; the explanation is never printed in the tile. */

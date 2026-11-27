@@ -1434,3 +1434,494 @@ collapsed group entry and "rail" finds both Railroads and Star Rail. The match r
 the installed-first sort, so a filtered list keeps that ordering, and an empty result says
 "No games match that filter." rather than showing a blank column. The dialog stays
 unfiltered because it only appears below 792 dp, where its seven rows already fit.
+
+## 2026-11-26 - Refresh rate becomes a capability engine, not a peak lock
+
+`RefreshRateController` could only pin the minimum to the measured peak. That expresses
+"fastest" and nothing else: no 90 Hz, no external display, no DeX. `screens/gaming/display/`
+now plans per device (`DisplayPlanner`), tries the strongest mechanism the device actually
+grants, and **re-reads the display afterwards** to decide whether the request landed. The
+settings rows are not replaced — they are the fallback, and `RefreshRateController` remains
+their single writer.
+
+Why a plan instead of a straight write: the mechanisms differ in what they can express. The
+settings rows cannot switch a mode; the composer policy can, but needs
+`ACCESS_SURFACE_FLINGER` and a display-token accessor that AOSP removed in Android 14/15;
+Samsung's DeX switch only lifts DeX's own filter. A single "set the rate" call would have to
+pretend these are interchangeable.
+
+Rejected with it:
+
+- **Hardcoded SurfaceFlinger transaction codes** for Samsung's pacesetter calls. They are
+  vendor interface indices and move with the firmware; they are read out of
+  `/system/lib64/libgui.so` and accepted only when each stub loads exactly one constant and
+  the pair is consecutive.
+- **A second broadcast API.** Display rate control rides the existing authenticated
+  `GAME_AUTOMATION` intent as version 2 (`APPLY_DISPLAY`, `RESTORE_DISPLAY`, an optional
+  validated `hz`), because a caller already holding that token should not need two.
+- **Copying HzUnlock.** Its licence forbids it; only its public description of the platform
+  mechanisms was used, and the discovery code was written from the ELF/AArch64 specs.
+- **Badging a rate as "held unevenly" on the built-in panel.** A panel CatSmoker switches
+  modes runs at the chosen rate, so the badge was a false warning; it now appears only for an
+  external display, where the signal rate and the application rate really are independent.
+- **A "refresh rate" chip catalogue.** Every rate comes from `Display.getSupportedModes()` for
+  the display on the current connection. A rate the hardware does not enumerate is refused.
+
+Safety, because a mode switch can blank a monitor: a snapshot of the previous rows, modes,
+pacesetter and DeX switch is written to disk before any write; a mode switch carries a 20 s
+countdown and reverts itself; the `pendingConfirm` flag survives a process death so the next
+launch rolls back; and `RESTORE_DISPLAY` reads the snapshot from disk rather than memory.
+
+The Full flavour holds the `shell`-UID child (`DisplayShellMain`), the pacesetter discovery
+and the DeX switch. Play's `VariantDisplayBackend` is a same-FQN twin whose every method
+refuses, so the hidden interfaces are not in Play's source inputs at all.
+
+## 2026-11-26 - The workspace switcher is six tabs, not a scrolling chip strip
+
+Gaming Tools has six peer sections and drew them as filter chips inside `Row +
+horizontalScroll`. Measured on a 411 dp phone: 954 px of visible row, chip content past
+2000 px, the third chip clipped mid-word at the viewport edge, and **three of the six
+sections absent from the accessibility hierarchy entirely** until the strip was dragged
+sideways. A screen that hides two thirds of its own navigation behind a swipe is not
+compact, it is unfinished.
+
+`ui/components/SectionTabs.kt` now provides two switchers over one contract: an
+equal-width tab row (six cells, 56 dp tall, `selectableGroup` + `Role.Tab`) for compact and
+medium windows, and a labelled rail for windows >= 1180 dp, which turns the workspace into
+three columns — game library, sections, content. One tap reaches any section on every
+window size, and nothing scrolls sideways.
+
+Rejected with it:
+
+- **`FlowRow` of the same chips.** It is the right answer for a handful of option chips and
+  is what `ChipFlowRow` already does elsewhere, but six captions of up to 20 characters wrap
+  to three rows — ~160 dp of chrome above the content on a 914 dp phone.
+- **Shorter captions on the existing strip.** Shortening "GRAPHICS & DISPLAY" to "Display"
+  makes four fit; it does not make six fit, and it still requires the sideways gesture.
+- **Icon-only tabs.** Six unlabelled icons in a system utility is recall, not recognition.
+  The captions are now one word each so icons and text coexist at 320 dp.
+- **Persisting the selection by label.** `SectionTab.id` is the enum name; the caption is a
+  separate string, so a translation cannot reset which section the user was reading.
+- **One caption constant reused as the content heading.** The long headings stay: they name
+  the pane the user is in, which is what makes a 6-character tab caption safe.
+
+## 2026-11-26 - The wide game rail is a two-column grid, because names have to stay readable
+
+The Gaming Tools library rail is 278 dp wide and reused the phone's four-column grid, so
+each cell was ~66 dp and every game name came out as `CATSMOKE R LAB GA…` — the rail
+identified games by icon only. The grid's column count is now a parameter of the library
+composable: four in the phone body (unchanged, still the launcher density), two in the rail.
+Two columns at 278 dp gives each name ~139 dp, enough for the two lines `GameLibraryTile`
+already reserves. The trade-off is deliberate: the rail shows four games before scrolling
+rather than eight, and the rail is the one place with a scroll of its own.
+
+## 2026-11-26 - An expanded window gets a bounded board, not a stretched phone
+
+Home divided every row by weight, which is correct on a phone and wrong on a desktop. At
+1920x1200 dp the four console tiles measured ~700x830 dp each — roughly four fifths empty
+gradient — and the telemetry chart stretched to match. Landscape was the wrong test: a
+1920x1200 window is landscape too.
+
+`maxWidth >= 792.dp && maxHeight >= 560.dp` now selects a separate expanded composition: the
+board is capped at 1040 dp and centred, the telemetry panel is a fixed 320 dp, the console
+tiles are 152 dp tall, and `QuickActionsSection` takes an optional `tileHeight` — `null`
+keeps the dividing behaviour for portrait and landscape phones exactly as before. The same
+pass collapsed three copies of the telemetry card into one `TelemetryCard` and two copies of
+the header into `HomeHeader`, because the copies had already drifted apart (one rendered a
+`?` where the other rendered an em dash).
+
+Left empty on purpose: the height below the tile grid when the window is taller than the
+board. A utility screen with nothing left to say should say nothing rather than inflate
+what it has.
+
+## 2026-11-26 - The install card shrinks once its own override is in force
+
+`GameNotFoundCard` exists to do two jobs: explain that the probe could not find the package, and
+offer the way past it. Both are finished the moment the user taps "Show anyway" — yet the card
+stayed at full size above the editor it had just unlocked, 510 px on a 411 dp phone, and it kept
+drawing the "Show anyway" button after the override was already applied.
+
+The forced-open branch now renders the card in a compact form: the fact and the package on two
+lines, `RE-CHECK` and `OPEN PLAY STORE` as text buttons under them, 171 px total. The override
+callback is passed as null there, so a button that could change nothing is not drawn. Measured
+effect: −339 px above every profile editor, Star Rail 6 → 5 swipes, PUBG 2368 → 1975 px of
+scroll.
+
+Kept: the long sentence in the *full* card ("Install the game and run it once so it writes its
+config file, then come back here"). That is the card's whole reason for existing before the
+override, and shortening it would strip the explanation from the only user who needs it.
+
+Also fixed in the same card: `OPEN PLAY STORE` is longer than `RE-CHECK` and wrapped to two lines
+in an equal-weight row, leaving the two buttons 53 px and 106 px tall. It takes a wider weight and
+a single line now.
+
+## 2026-11-26 - The per-game apply button moves to a pinned bar, through a publish seam
+
+The per-game editors are composed inside File Engineering's single `verticalScroll`. Their apply
+button sat in the editor's own "DEPLOY" card, which measured roughly 40% of the way down a form
+five swipes long: changing a frame-rate chip near the top meant scrolling past two sections to
+write it. A bar pinned to the bottom cannot live inside the scroll, and the host cannot invent the
+action because it belongs to the per-game ViewModel.
+
+`editor/DeployBar.kt` is the seam. The editor publishes `DeployView` (apply label, dirty, busy,
+pending count, undo/redo availability) plus a separate `DeployActions`, and the File Engineering
+screen draws `DeployBar` as a sibling of its scrolling column. Two details keep it safe:
+publishing is idempotent (the host compares the view before writing, and the callbacks are kept
+outside the compared data, or a fresh lambda identity would republish every frame), and the editor
+clears the bar in `onDispose` so switching games cannot leave a pressable APPLY for the previous
+one. On a device that was checked by switching GRID → Genshin: the bar disappears.
+
+Rejected with it:
+
+- **A sticky header instead of a bar.** It would be visible at the top of the form, then scroll
+  away exactly when the user is editing at the bottom.
+- **Pinning the whole DEPLOY card.** Its restore button is the way *back* from a write and stays
+  in the flow; only the primary write and its undo/redo moved.
+- **Deduplicating the two deploy blocks Star Rail owns** (graphics and preferences). They write
+  different key sets with different ViewModel actions; merging them is a change to the write
+  contract, not to the layout, and is not part of a scroll pass.
+- **Wuthering Waves' four deploy targets** (shell, SAF, variant, stripped). There is no single
+  primary write to pin, so its card stays and `DeployBarTest` asserts that exclusion is deliberate
+  rather than forgotten.
+
+Trade-off accepted: the bar costs ~57 dp of permanent height on every screen that shows it, and
+it does not shorten the form — Star Rail's scroll range fell by 393 px (the apply/dirty/undo block
+left the flow) while the swipe count stayed at 6 because the viewport is now 57 dp shorter. The
+win is reachability, not length.
+
+## 2026-11-26 - Star Rail's two apply buttons become one, and the order that keeps both
+
+The editor writes two key sets from one HSR config file: graphics settings and QoL preferences.
+Each had its own apply button inside its own card, so a user with pending changes in both had to
+decide which landed first, and neither button told them the other copy was pending.
+
+The pinned bar now carries one APPLY calling `onApplyPending()`. The ordering is the whole point
+and is not visible from the call site, so it is pinned by `HsrSingleApplyTest`:
+
+1. Capture the pending QoL copy **before** anything else. A successful graphics write re-reads the
+   file and re-baselines *both* working copies from the device — which would silently replace QoL
+   edits that were never written, and then present them as clean.
+2. Write graphics (`applySettingsNow`), which stops the game first and verifies by read-back.
+3. If that failed, stop. The second write would land on a file whose state was not confirmed.
+4. Write the captured QoL copy (`applyPrefsNow`), which re-baselines once more.
+
+`onApplyPrefs()` existed only to serve the second button, so it went with it: the QoL write is
+reachable through the combined action, and its suspend core (`applyPrefsNow`) stays private.
+`onApply()` stays public because the standalone rendering path still offers a graphics-only
+button. Leaving `onApplyPrefs()` behind as "public API nobody calls" would have been dead code
+with a test guarding it.
+
+Undo follows the copy touched last (`HsrEditArea`, set by `updateSettings`/`updatePrefs`) and falls
+back to the other copy when the last one has nothing left to undo — one undo button across two
+histories must never swallow the step the other history still holds.
+
+Rejected with it:
+
+- **Two undo/redo buttons in the bar.** Two pairs of arrows side by side is a puzzle, not a control.
+- **"Apply graphics, then prefs" as two taps.** It preserves the old question ("which first?") that
+  the whole change exists to remove.
+- **Merging the two working copies into one.** They are separate histories and separate write
+  functions against different keys; merging them is a rewrite of the write contract, not of the
+  layout, and buys nothing for the user.
+
+## 2026-11-26 - A graphics write may not rebaseline over an unapplied QoL copy
+
+Found while merging Star Rail's two apply buttons, and shipped in the app before that: `onApply`
+re-read the file after a successful graphics write and set both working copies from the device,
+clearing `prefsDirty`. Pending QoL edits had never been written, so pressing "Apply" with any of
+them pending discarded them and reported nothing. The combined apply avoided it by capturing the
+copy first, which made the bug unreachable from the UI — but left the trap in the function for any
+future caller.
+
+The write now captures a pending QoL copy before the re-baseline and keeps it: only its *baseline*
+moves to the device, so the edits stay pending against a true reference instead of disappearing.
+The transition lives in a pure `HsrGraphicsUiState.afterGraphicsWrite(...)` and is tested by
+`HsrGraphicsWriteStateTest` — pending copy survives, clean copy follows the device, undo/redo
+availability is not invented by the write. That replaces a source-layout guard with an actual
+assertion about behaviour, which is what this rule needed.
+
+`onApplyPrefs()` and the graphics-only `onApply()` were removed in the same pass. They existed to
+serve the two buttons; with one apply there is one entry point, and the suspend cores
+(`applySettingsNow`, `applyPrefsNow`) stay private so no caller can reproduce the sequence wrongly.
+
+## 2026-11-26 - Finding a tool is a search, not a seventh section
+
+Six peer sections is past the point where a user can guess which one holds "refresh rate"
+(Display), DNS (Network) or the cleaner (Clean). The workspace header now carries a search button
+opening `ToolSearchDialog`: fifteen controls, searchable by the same translated name and subtitle
+the workspace itself renders, each row captioned with the section it lives in, and choosing a row
+switches to that section.
+
+The catalog is a list, not a registry. Deriving it from the section composables would mean turning
+six lambdas into data and rewriting the screen to consume it — a much larger change than the
+problem justifies. Entries use the same string resources as the tools themselves, so a rename
+cannot leave a stale label behind.
+
+Rejected with it:
+
+- **A search field on every screen.** The workspace is where the six-way split causes the problem;
+  File Engineering and Settings already have their own organisation (a rail and five groups).
+- **Jumping straight into an expanded tool card.** Expandable state is local to each card, and
+  threading a "expand this one" signal through every call site would be a much larger seam for a
+  jump that is already one swipe away once the right section is open.
+- **Matching only labels.** "Hold a display at a rate it really reports" is how the app describes
+  the refresh-rate control; searching it should find the control.
+
+## 2026-11-26 - Wuthering Waves gets a deploy bar with a chooser, not an apply button
+
+WuWa has four deploy channels and no single "the" write, so it was the one editor left without the
+pinned bar. It now has one: `DEPLOY` opens a sheet with the shell and SAF channels. The card stays
+exactly as it was — it explains what a deploy does (stop, back up, push, md5 read-back, hash
+monitor) and that explanation has to stay next to the operation.
+
+Details that are decisions rather than plumbing:
+
+- The bar's `apply` opens the sheet instead of firing a channel. A single bar button that silently
+  picked shell-or-SAF would be choosing for the user on an irreversible operation.
+- `DeployView.showHistory = false` hides the undo/redo arrows: a generated config has no history,
+  and two permanently disabled arrows teach the user the bar does things it does not.
+- The shader-cache clean and pack variants stay in their cards: they are different operations on
+  different files, and a bar that listed five unrelated things would stop being a primary action.
+
+## 2026-11-26 - Large font scale trades tab captions for icons
+
+At font scale 1.3 on a 393 dp device the six section captions no longer fit a sixth of the row and
+Compose ellipsized four of them ("Prof…", "Displ…", "Overl…", "Netw…"). A clipped word reads as a
+typo, and a mid-word ellipsis is worse than no caption at all, so above 1.15x the row renders icons
+only and attaches each caption as the tab's `contentDescription`: a screen reader still announces
+"Display, tab, 2 of 6", and the section's own heading in the pane repeats the name visually.
+
+The threshold is a pure predicate (`sectionTabLabelsFit`) with a unit test rather than an inline
+comparison, because the number is a claim about label widths — the kind of thing that silently goes
+stale. The game grid makes the same trade at the same threshold (four columns to three), since its
+tile names are the other place where a large font scale fights the layout.
+
+Rejected: shrinking the label text (the brief forbids it, and it defeats the user's accessibility
+setting), scrolling the row (reinstates the hidden tabs this pass removed), and a wrapping two-line
+caption ("Overlays" is one word — wrapping cannot help it, only a narrower tab).
+
+## 2026-11-26 - Long editors get sub-tabs, not a shorter form
+
+GRID, Star Rail and Wuthering Waves each put every knob on one scrolling form (5, 5 and 4+ swipes on
+a 393 dp phone). The deploy bar had already taken the write out of the bottom of that form; the tabs
+take the reach out of it. Each editor now shows one group of cards at a time: **display** (frame
+rate, resolution, render scale), **quality** (ladder, presets, effects), and whatever the editor
+adds — per-file switches for GRID, QoL keys for Star Rail, engine levers plus a TOOLS group (packs,
+backups, profile, auto-tune) for WuWa.
+
+Decisions inside that:
+
+- **The row scrolls with the content.** The bar is pinned because a write must be reachable from any
+  scroll position; a tab row is one swipe away and pinning it would spend 56 dp of every view. If the
+  measured cost of that swipe turns out to matter, the seam to change is `EditorTabState.row`.
+- **Switching a tab returns to the top**, through `LocalEditorScrollToTop>` published by whichever
+  composable owns the scroll (the File Engineering destination when embedded, `GameEditorLayout`
+  standalone). The editor cannot scroll someone else's container, and carrying the offset into a
+  shorter group landed mid-card.
+- **Star Rail shows no row in the flat file format.** That format carries a quality tier and a
+  resolution; three tabs would offer two empty views. The cards it still needs are gated on
+  `flat || <its tab>`, so a flat user sees the same controls as before.
+- **WuWa's MORE OPTIONS toggle is gone**, replaced by the ADVANCED tab. Two mechanisms for "reveal the
+  advanced cards" would leave one of them undiscoverable.
+- **GRID's else branch is SWITCHES.** Adding a fourth tab without a branch shows the switches rather
+  than an empty pane, and `EditorTabsTest` fails if the three named branches drift apart.
+
+`EditorTabsTest` pins the grouping; it is a source guard because this project has no Compose UI test
+harness, and each assertion names the regression it catches.
+
+## 2026-11-26 - GRID's quality ladder is sixteen closed rows, not eighty chips
+
+Sixteen axes times five tiers is eighty chips, and the card was four screens of scrolling — with the
+one question a tuning screen exists to answer ("what is it set to now?") the thing you scrolled to
+find. Each row now collapses to its axis and the tier it will write; tapping it swaps in the five
+tiers. The closed list is 2 swipes / 1996 px on the Poco, down from 4 / 4528.
+
+- **The closed row shows the pending choice, not the file value** (`ladderRowValue`, unit-tested).
+  Showing the file value after a change would put the list in conflict with the deploy bar, which
+  counts those pending edits.
+- **It costs one tap to change a tier** (open the row, pick). That is the price of the sixteen-row
+  summary, and it is the trade this project keeps choosing: reach first, then density.
+- **Disabled rows still open.** The chips are greyed because the file has no such key, but the
+  ladder is information the game ships, and hiding it behind "install first" teaches nothing. This
+  is also what let the expanded state be verified on a device without GRID installed.
+- **The missing-key value uses `onSurfaceVariant`, not `outline`** — at body size `outline` sat below
+  the contrast floor on this surface, and the text already says the key is missing.
+
+## 2026-11-26 - WuWa's deploy card stops offering a second write path
+
+The card is drawn under every WuWa tab because it explains and reports the operation that the whole
+screen produces. When the bar arrived it kept its two channel buttons, so a deploy could be started
+from the bar's sheet or from the card — same write, two contexts, two sets of surrounding words.
+
+- **Embedded, the buttons are gone**; the bar's DEPLOY opens the sheet with both channels. Standalone
+  routes have no bar (`HostedDeploy`'s `inline` fallback is empty there), so the card keeps them —
+  the same `onBack != null` test the rest of the screen already uses for its layout choice.
+- **The three-line explanation became a `CollapsibleExplainer`.** It is documentation on a card every
+  tab pays for; collapsed, the words are one tap away instead of three lines of every visit. This is
+  the documentation exception, not a hidden feature: nothing was deleted.
+- Result on the Poco: Preset 2872 → 2499 px, Display 1481 → 1020, Advanced 3299 → 2838, Tools
+  1925 → 1464.
+- The shader-cache clean stays in the card. It is not a deploy: it deletes two `ProgramBinaryCache`
+  folders, and the sheet that chooses a deploy channel is the wrong place to hide it.
+
+## 2026-11-26 - Every switch names its setting, and labels are required rather than optional
+
+Compose binds no label to a `Switch`: the words sit in a sibling `Text`, and TalkBack reads the
+switch's own semantics only. Twenty-six controls across the app announced "on, switch" with no
+setting named, and nothing in the build could notice — it compiles, renders and works.
+
+`ui/components/LabelledSwitch.kt` attaches the name and makes `label` a required parameter, because
+an optional one is the one that gets omitted. A switch with `onCheckedChange = null` is driven by a
+parent that already carries the words and is left alone, which is also what `LabelledSwitchTest`
+encodes: no bare `Switch(` that owns its state, anywhere in the app.
+
+Two related fixes in `ExpandableToolCard`, both found by the same dump audit: the leading icon was
+its own clickable with a null description (~30 tool cards offered an unnamed target) and the chevron
+was a third clickable for the same action. The icon and chevron are decorative now; the title beside
+them is the target.
+
+Scope, stated plainly: this verifies names, not comprehension. Reading order, focus grouping and
+whether a label is *useful* still need a person with TalkBack, and the audit's own docstring says so.
+
+## 2026-11-26 - Cards carry less air: 16 dp of padding, 8 dp between them
+
+A screenshot review of the PUBG editor called the PROFILE card "stretched, sparse", and it was:
+radio rows 68 dp apart for a 24 dp line of text, 20 dp of padding inside every card, 12 dp between
+cards. Measured on the Poco, then tightened:
+
+- **SectionCard padding 20 → 16 dp.** The corner radius is 20 dp, so 16 is the largest padding that
+  still keeps content inside the curve — the number is bounded by the shape, not by taste.
+- **CardGap 12 → 8 dp.** Two cards each carry 16 dp, so the visible band between two blocks of text
+  was 44 dp; it read as a hole rather than as a group boundary.
+- **Rows that hold a 48 dp control lose their own padding** (10 → 4 dp). A `RadioButton` already
+  brings the touch target; adding 20 dp of row padding made a 68 dp row for one line. 56 dp stays
+  above the accessibility floor and `a11y_audit.py` confirms no target fell below it.
+- **8 dp above the Gaming Tools section pane**, which had its first card's top edge touching the tab
+  row's bottom edge exactly.
+
+Result: PUBG 1923 → 1744 px, Gaming Tools Profile 1256 → 1159, WuWa Preset 2499 → 2303. Settings is
+untouched because its cards pass `contentPadding = 0` and draw their own rows — the card default
+never reached it, which is why the change is measurable on the editors and not there.
+
+What this does not do: it does not shrink text, hide controls or reduce a target below 48 dp. The
+gains come from padding and row pitch only.
+
+## 2026-11-26 - The permissions step: green means granted, and two lines fit two lines
+
+A screenshot review of the first-run permissions screen, plus one stricter measurement, produced
+five changes and one deliberate non-change.
+
+- **A granted tile no longer wears the accent colour.** Red on this screen means "act on me", so the
+  Shizuku tile — green dot, green check, "Granted" — sat in a red border and read as an error.
+  Granted tiles take a tinted `PermissionGrantedGreen`; ungranted keep the neutral outline.
+- **Tiles are 72 dp, not 86.** With a `Spacer(weight)` between title and status, 86 dp floated two
+  lines of text ~39 dp apart. The status rows still align at the bottom of each tile, which is what
+  makes the grid scannable.
+- **Nothing on this screen renders below 11 sp any more** (status was 10, `GRANT` was 9.5), and the
+  state dot went from 45 % to 70 % alpha so "Not running" and "Unavailable" are distinguishable from
+  "Not granted" at a glance.
+- **The list ends with 16 dp of its own**, so the last group does not sit flush against the pinned
+  footer, and the step counter got 2 dp of end padding because its final dot-matrix stroke read as a
+  clipped digit.
+- Result: 1085 → 852 px to the end of the list.
+
+Not changed on purpose: the status vocabulary ("Selected · Save to grant" next to "Android access:
+not granted"). Those are two different states rather than two words for one, and rewording English
+here would leave the six translations saying the old thing — this screen is one of the seven the
+locale parity test covers, so that is a translation task, not a layout one.
+
+## 2026-11-26 - The consent rows stay; the three cards around them do not
+
+The optional-access block is the largest thing on the permissions step, so it is the obvious thing to
+cut — and cutting it would be a privacy regression. The three checkboxes are the intent the runtime
+requires before it reads usage stats, the installed-app list or notification access:
+`GamingAccessConsent.allows(...)` is consulted by `GamingEngine`, `GameSessionService`,
+`AutoForceStopService`, `GamingNotificationListener`, `CleaningFeature` and `GamingToolsViewModel`.
+Android's grant says the app *may*; the checkbox records that the user *wants* it here. Removing the
+checkbox would let a granted permission act with no recorded intent, which the project's safety rules
+forbid.
+
+What changed is the packaging: three bordered tiles, each with a 48 dp row, a status line and — for the
+two that need an Android grant — a full-width request button underneath, became **one card of three
+rows** with the request as a bordered pill on the row itself. Same three choices, same explicit
+checkboxes, same disclosure text behind the same info buttons.
+
+Result on the Poco: 1085 → 399 px to the end of the list (−63 %), and the SYSTEM group is visible
+without scrolling at all. The request action is drawn as a bordered pill because in this screen's
+plain-link style it read as a status label rather than as the only control that leaves the app.
+
+## 2026-11-26 - The permissions step fits one screen
+
+The step still needed one swipe after the density pass, and the remaining height was structural
+rather than slack: two full-width grids (System: three tiles, Additional: three tiles) cost four tile
+rows stacked. Drawn as two one-column stacks side by side they cost three, and the group labels stay
+apart so "System" and "Additional" keep their meaning.
+
+With that, 4 dp of spacing between stacked tiles instead of 6, and no leftover bottom padding for a
+scroll the list no longer has, the step fits a 393 x 873 dp screen with nothing clipped — the last
+two tiles (Overlay, Bluetooth) show their status rows in full above the pinned CTA.
+
+Verified by swiping and confirming a label did not move, not by reading the scroll range Compose
+reports: `verticalScroll` advertises a scrollable node whether or not there is anything to scroll,
+and the measurement helper read that as 63 px.
+
+At a larger font scale or on a shorter window the step scrolls again, which is the correct outcome:
+the layout buys its space from arrangement, never from shrinking text.
+
+## 2026-11-26 - Correction: the permissions step was still scrolling, and how it was made not to
+
+An earlier entry claimed this step fit one screen. It did not: the last row's status line was clipped
+about 8 px below the viewport, and swiping moved the list. The measurement helper had returned "0
+swipes" because it read Compose's scrollable node — `verticalScroll` advertises one whether or not
+there is anything to scroll — instead of whether the content actually moved.
+
+What settled it:
+
+- **Tiles are 60 dp.** Six tiles at 72 dp are 228 dp of column; at 60 they are 192, and a two-line
+  title plus its status line still fits. Together with the side-by-side System/Additional stacks and
+  no leftover list padding, the last row now ends ~150 px above the pinned CTA.
+- **The overscroll stretch is off** for this list (`overscrollEffect = null`). On a screen that fits,
+  the rubber band was the only remaining thing that read as scrolling. Content that genuinely
+  overflows still scrolls, just without the stretch.
+- **The verification is now a swipe plus a pixel comparison** of the whole screen
+  (`screenshot_regression.py`: 0.01 % changed — the clock), and the geometry of the last node against
+  the viewport. Not a scroll range reported by a widget.
+
+The general lesson, recorded because it cost two passes: a scrolling claim needs evidence that the
+screen did not *move*, not evidence that a scrollbar was quiet.
+
+## 2026-11-26 - A checklist does not get a hero header
+
+The permissions step reused the welcome screen's header: 20 dp above the progress row, 18 below it, a
+subtitle restating the title, a title row made 48 dp tall by a refresh button sitting beside it, and a
+three-sentence paragraph before the first control.
+
+- **The step passes `subtitle = ""`**, and a blank subtitle now renders nothing rather than an empty
+  gap. "Grant permissions to enable all features" told a user nothing the title and the rows did not.
+- **`dense` steps use 6/8/4 dp header spacers** instead of 20/18/16. The welcome step keeps its air;
+  a checklist does not need it.
+- **The refresh action moved to the step row** (`progressTrailing`), next to the "3/3" counter. A
+  48 dp icon button in the title row had made that row 48 dp tall and left a band of nothing under
+  the words. The progress bar needed `weight(1f)` in the same change: it fills its width, and an
+  unweighted sibling pushed the counter and the button off the row.
+- **The paragraph is one sentence in all seven locales.** Editing English alone would have left six
+  translations describing behaviour that no longer exists on screen, so the shorter copy was written
+  for each language. The "Save applies what you tick / Allow grants one now" fact is stated in place
+  on every row instead.
+
+Result on the Poco: first card at 490 px instead of 565, one line of body text instead of two, and
+the screen still does not scroll (swipe + pixel diff: 0.00 %).
+
+## 2026-11-26 - Once the step fit, the controls took the space
+
+Fitting the permissions step to one screen left ~200 dp of nothing under the last row: the controls
+had kept their "as small as possible" sizes while the page grew around them. Shrinking is the right
+answer while a screen overflows and the wrong one once it fits.
+
+- **Tiles 92 dp, consent rows 60 dp.** The permissions now occupy the height that exists.
+- **Tall tiles centre their two rows.** The previous layout pinned the title to the top and the status
+  to the bottom with a weight spacer, so every extra dp became a hole in the middle of the card.
+  Centring the pair makes the same height read as a roomy control — the difference between "big tile"
+  and "stretched tile" is only where the content sits inside it.
+- Verified on the device: content ends 50-60 px above the pinned CTA, and swipe + pixel diff still
+  reports 0.00 %, so the screen still does not scroll.

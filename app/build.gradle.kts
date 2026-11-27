@@ -66,8 +66,8 @@ android {
         // versionCode 7: IFileService gained readFile/writeFile — the bump is what forces
         // Shizuku to restart the daemonized helper whose AIDL no longer matches (see the
         // ShellRunner KDoc). Shipped helpers keep serving the old AIDL until this moves.
-        versionCode = 16
-        versionName = "2.0.10-beta.1"
+        versionCode = 17
+        versionName = "2.0.10"
 
         vectorDrawables {
             useSupportLibrary = true

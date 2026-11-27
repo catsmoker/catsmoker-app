@@ -69,8 +69,10 @@ class GamingToolsContextUxTest {
     @Test fun automationUsesExistingHeaderAndCacheRemainsInTheProfile() {
         val screen = source("GamingToolsScreen.kt")
         assertEquals(1, Regex("AutomationEntry\\(").findAll(screen).count())
-        assertTrue(screen.substringAfter("trailingContent = {").substringBefore(") {")
-            .contains("AutomationEntry("))
+        // The trailing slot carries the search button and the automation entry; the assertion is
+        // that automation lives in the header, not that it is the first child.
+        val header = screen.substringAfter("trailingContent = {").take(1400)
+        assertTrue(header.contains("AutomationEntry("))
         val profile = screen.substringAfter("val profile:").substringBefore("val performance:")
         assertTrue(profile.contains("cache.GameCacheControls("))
         assertTrue(screen.contains("sectionStates.SaveableStateProvider(section.name)"))

@@ -49,6 +49,7 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.catsmoker.app.ui.components.LabelledSwitch
 import com.catsmoker.app.R
 import com.catsmoker.app.screens.gaming.GameInfo
 import com.catsmoker.app.screens.gaming.components.AppPickerDialog
@@ -319,7 +320,7 @@ internal fun DevSwitchRow(
                 )
             }
             InfoButton(info)
-            Switch(checked = checked, onCheckedChange = onCheckedChange, enabled = enabled)
+            LabelledSwitch(label = label, checked = checked, onCheckedChange = onCheckedChange, enabled = enabled)
         }
         if (!enabled) {
             RequirementNotice(stringResource(R.string.gt_needs_root_shizuku_change))
@@ -373,7 +374,8 @@ internal fun DevOptionSwitchRow(
                 )
             }
             InfoButton(info)
-            Switch(
+            LabelledSwitch(
+                label = label,
                 checked = state.enabled == true,
                 onCheckedChange = onCheckedChange,
                 // A switch that refuses to move is better than one that moves and changes nothing.

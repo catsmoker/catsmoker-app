@@ -2,6 +2,7 @@ package com.catsmoker.app.screens.permissions
 
 import java.io.File
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -82,9 +83,26 @@ class OnboardingInteractionTest {
     @Test
     fun compactAccessTilesKeepDisclosuresAndSeparateAndroidRequests() {
         val screen = source("PermissionsListScreen")
-        listOf("essential", "system", "additional").forEach {
-            assertTrue(screen.contains("PermissionGrid(specs = $it, tileHeight = 86.dp)"))
+        // 92 dp: the tiles are sized to fill the screen they live on (the step fits, so the space
+        // they take is the space available), and their two rows are centred inside rather than
+        // pinned top and bottom, which is what made a taller tile look hollow.
+        assertTrue(screen.contains("PermissionGrid(specs = essential, tileHeight = 92.dp)"))
+        // System and Additional are stacked one per row and drawn side by side: on a phone that is
+        // what makes the whole step fit without scrolling. Two full-width grids do not.
+        listOf("system", "additional").forEach {
+            assertTrue(screen.contains("PermissionGrid(specs = $it, tileHeight = 92.dp, columns = 1)"))
         }
+        assertTrue(screen.contains("Row(horizontalArrangement = Arrangement.spacedBy(8.dp))"))
+        // No overscroll stretch: with the step fitted to one screen, the rubber band was the last
+        // thing that still looked like scrolling.
+        assertTrue(screen.contains("overscrollEffect = null"))
+        // Tall tiles centre their two rows; a weight spacer between them was a hollow middle.
+        assertTrue(screen.contains("verticalArrangement = Arrangement.Center"))
+        // The three optional consents are one card of three rows, not three cards with a request
+        // button band under each. The choices, gates and disclosures are unchanged.
+        assertTrue(screen.contains("GamingAccessCard {"))
+        // One declaration plus three call sites.
+        assertEquals(3, screen.split("GamingAccessRow(").size - 2)
         listOf("policy_inventory", "policy_usage", "policy_notifications", "policy_access_intro").forEach {
             assertTrue(screen.contains("R.string.$it"))
         }

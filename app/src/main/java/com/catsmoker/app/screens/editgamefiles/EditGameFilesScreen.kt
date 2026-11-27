@@ -9,6 +9,8 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.runtime.rememberCoroutineScope
+import kotlinx.coroutines.launch
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
@@ -31,6 +33,9 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.catsmoker.app.R
 import com.catsmoker.app.screens.editgamefiles.EditGameFilesViewModel
+import com.catsmoker.app.screens.editgamefiles.editor.DeployBar
+import com.catsmoker.app.screens.editgamefiles.editor.DeployHost
+import com.catsmoker.app.screens.editgamefiles.editor.LocalDeployHost
 import com.catsmoker.app.screens.editgamefiles.games.grid.GridRoute
 import com.catsmoker.app.screens.editgamefiles.games.pubg.PubgSavePatcher
 import com.catsmoker.app.screens.editgamefiles.games.roblox.RobloxRoute
@@ -127,6 +132,9 @@ fun EditGameFilesRoute(onBack: () -> Unit) {
         onBack = onBack
     )
 }
+/** Widest the editor column draws before it stops being a reading width. */
+private val EditorMaxWidth = 1040.dp
+
 @Composable
 fun EditGameFilesScreen(
     uiState: EditGameFilesViewModel.UiState,
@@ -159,11 +167,15 @@ fun EditGameFilesScreen(
     onScopedDocumentHandled: (EditGameFilesViewModel.ScopedDocument) -> Unit = {},
     onBack: () -> Unit
 ) {
+    // The seam the per-game editors publish their deploy state into: the bar lives here, outside
+    // the scroll container, while the state it shows belongs to the editor's own ViewModel.
+    val deployHost = remember { DeployHost() }
     ScreenScaffold(
         title = stringResource(R.string.dash_edit_files_title),
         subtitle = stringResource(R.string.gf_edit_files_subtitle),
         onBack = onBack
     ) {
+        CompositionLocalProvider(LocalDeployHost provides deployHost) {
         BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
             // Wide windows get the same library rail Gaming Tools uses: the game list is a
             // permanent column instead of a modal that hides the screen, and the workspace
@@ -171,8 +183,20 @@ fun EditGameFilesScreen(
             val wide = maxWidth >= 792.dp
             @Composable
             fun body(modifier: Modifier, showTrigger: Boolean) {
+            // Content scrolls; the deploy bar does not. Keeping them in separate columns is what
+            // makes the primary write reachable from any scroll position.
+            Column(modifier = modifier.fillMaxSize()) {
+            // The scroll owner is also the one that can honour "back to the top" when an editor
+            // switches tab, so it publishes that through LocalEditorScrollToTop.
+            val editorScroll = rememberScrollState()
+            val editorScope = rememberCoroutineScope()
+            androidx.compose.runtime.CompositionLocalProvider(
+                com.catsmoker.app.screens.editgamefiles.editor.LocalEditorScrollToTop provides {
+                    editorScope.launch { editorScroll.animateScrollTo(0) }
+                }
+            ) {
             Column(
-                modifier = modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(bottom = 32.dp)
+                modifier = Modifier.fillMaxWidth().weight(1f).verticalScroll(editorScroll).padding(bottom = 24.dp)
             ) {
             // The warning as one line, not a card: it must be seen, but it does not need a
             // whole surface plus 24dp of spacing above the picker to say two sentences.
@@ -230,7 +254,11 @@ fun EditGameFilesScreen(
                             packageName = definition.storePackage,
                             onRecheck = onRecheckInstalls,
                             onOpenStore = onOpenStore,
-                            onShowAnyway = onShowAnyway
+                            // No override button here: we are already past it, so it would be a
+                            // button that does nothing visible. The compact form keeps the fact
+                            // and both recovery actions next to the editor it unlocks.
+                            onShowAnyway = null,
+                            compact = uiState.showEditorAnyway
                         )
                         Spacer(modifier = Modifier.height(12.dp))
                     }
@@ -265,6 +293,9 @@ fun EditGameFilesScreen(
             }
             }
             }
+            DeployBar(deployHost)
+            }
+            }
             if (!wide) {
                 body(Modifier, true)
             } else {
@@ -283,9 +314,20 @@ fun EditGameFilesScreen(
                         )
                     }
                     VerticalDivider(Modifier.fillMaxHeight())
-                    body(Modifier.weight(1f), false)
+                    // The editor column is capped and left-aligned against the rail: a
+                    // `SectionCard` spans its parent, so at 1920 dp the same cards Home used to
+                    // stretch were ~1590 dp wide here, with every label at the far end of a
+                    // mostly empty surface. Capped, the rail stays where the eye learned it and
+                    // the form keeps a reading width it was designed at.
+                    Column(Modifier.weight(1f).fillMaxHeight()) {
+                        body(
+                            Modifier.widthIn(max = EditorMaxWidth).fillMaxHeight(),
+                            false
+                        )
+                    }
                 }
             }
+        }
         }
     }
     if (uiState.showMethodChooser) {
@@ -341,7 +383,7 @@ fun EditGameFilesScreen(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .clickable { onBackupChosen(backup) }
-                                .padding(vertical = 10.dp),
+                                .padding(vertical = 4.dp),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Column(Modifier.weight(1f)) {

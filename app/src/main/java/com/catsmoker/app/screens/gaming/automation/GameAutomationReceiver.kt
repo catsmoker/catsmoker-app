@@ -42,6 +42,10 @@ class GameAutomationReceiver : BroadcastReceiver() {
         val result = when (request.operation) {
             AutomationProtocol.Operation.LAUNCH_GAME,
             AutomationProtocol.Operation.APPLY_AND_LAUNCH -> requestForeground(context, request, token)
+            // Display work needs no foreground service and no confirmation tap; the engine's
+            // own snapshot plus countdown covers the risk a service would not reduce anyway.
+            AutomationProtocol.Operation.APPLY_DISPLAY,
+            AutomationProtocol.Operation.RESTORE_DISPLAY -> automation.launchDisplay(request)
             else -> {
                 // Rebuild a new explicit intent; don't forward caller flags, categories or metadata.
                 val service = Intent(context, GamingModeService::class.java).fillRequest(request, token)

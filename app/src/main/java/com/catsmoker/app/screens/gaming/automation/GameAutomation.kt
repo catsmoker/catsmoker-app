@@ -21,9 +21,14 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.async
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import org.json.JSONObject
 import com.catsmoker.app.screens.gaming.cache.GameCachePreloader
+import com.catsmoker.app.platform.device.isSamsung
+import com.catsmoker.app.screens.gaming.display.DisplayApplyReport
+import com.catsmoker.app.screens.gaming.display.DisplayEngine
+import com.catsmoker.app.screens.gaming.display.DisplayRateStore
 import com.catsmoker.app.screens.gaming.mode.GamingOptimizationSnapshot
 
 @Singleton
@@ -34,8 +39,12 @@ class GameAutomation @Inject constructor(
     private val engineProvider: dagger.Lazy<GamingEngine>,
     private val jobsProvider: dagger.Lazy<GamingModeJobRunner>,
     private val modeObservation: GamingModeObservation,
-    private val cachePreloader: GameCachePreloader
+    private val cachePreloader: GameCachePreloader,
+    private val displayEngineProvider: dagger.Lazy<DisplayEngine>,
+    private val displayRates: DisplayRateStore
 ) {
+    /** Built on first display request only, so a game-only caller never constructs it. */
+    private val displayEngine: DisplayEngine get() = displayEngineProvider.get()
     // Reject unauthenticated entry points before constructing a privileged engine.
     private val engine: GamingEngine get() = engineProvider.get()
     private val jobs: GamingModeJobRunner get() = jobsProvider.get()
@@ -56,7 +65,12 @@ class GameAutomation @Inject constructor(
         val extras = intent.extras ?: return null
         if (extras.keySet().any { it !in AutomationProtocol.keys || extras.get(it) !is String }) return null
         if (!access.accepts(extras.getString("token")) || !consented()) return null
-        AutomationProtocol.parse(extras.getString("operation"), extras.getString("game"), extras.getString("request_id"))
+        AutomationProtocol.parse(
+            extras.getString("operation"),
+            extras.getString("game"),
+            extras.getString("request_id"),
+            extras.getString("hz")
+        )
     }.getOrNull()
 
     internal fun rejectBroadcast(request: AutomationProtocol.Request): String? =
@@ -84,7 +98,7 @@ class GameAutomation @Inject constructor(
         val recordedSession = recorded.getBoolean("is_active", false) ||
             !recorded.getStringSet("affected_pkgs", emptySet()).isNullOrEmpty() ||
             !recorded.getStringSet("appops_prior", emptySet()).isNullOrEmpty()
-        put("version", 1)
+        put("version", AutomationProtocol.VERSION)
         put("selectedGame", settings.selection.value.packageName ?: JSONObject.NULL)
         put("mode", live?.mode ?: if (recordedSession) "RecordedSession" else "Idle")
         put("modeObserved", live != null)
@@ -99,7 +113,44 @@ class GameAutomation @Inject constructor(
             put("matchingRequest", AutomationStatus.matchingRequest(id, status.value, delivery.value) ?: JSONObject.NULL)
         }
         put("cache", JSONObject(cachePreloader.status.value))
+        put("display", displayStatus())
     }.toString()
+
+    /**
+     * The display half of a query: what is attached, what each display runs at, and what the
+     * engine last did. Reported even when no display session is open, because "nothing is
+     * attached" is itself the answer a caller needs before sending APPLY_DISPLAY.
+     */
+    private fun displayStatus(): JSONObject = JSONObject().apply {
+        val state = displayEngine.state.value
+        put("displays", org.json.JSONArray(state.displays.map { display ->
+            JSONObject().apply {
+                put("id", display.id)
+                put("name", display.name)
+                put("external", display.isExternal)
+                put("on", display.isOn)
+                display.currentHz?.let { put("currentHz", it) }
+                put("rates", org.json.JSONArray(display.rates.map { it.toDouble() }))
+            }
+        }))
+        put("availableBackends", org.json.JSONArray(state.probe.availableBackends.map { it.name }))
+        put("privilegedReason", state.probe.reason ?: JSONObject.NULL)
+        put("savedRates", JSONObject().apply {
+            for (scope in listOf(DisplayRateStore.GLOBAL, DisplayRateStore.EXTERNAL, DisplayRateStore.DEX)) {
+                displayRates.rate(scope)?.let { put(scope, it) }
+            }
+        })
+        put("lastReport", state.lastReport?.let { report ->
+            JSONObject().apply {
+                put("applied", report.applied)
+                put("summary", report.summary)
+                report.backend?.let { put("backend", it.name) }
+                report.requestedHz?.let { put("requestedHz", it) }
+                report.observedHz?.let { put("observedHz", it) }
+                report.refusedReason?.let { put("refused", it) }
+            }
+        } ?: JSONObject.NULL)
+    }
 
     fun select(request: AutomationProtocol.Request): String {
         val pkg = request.game ?: return response("invalid_request")
@@ -141,6 +192,10 @@ class GameAutomation @Inject constructor(
 
     private suspend fun runRequest(request: AutomationProtocol.Request, authorized: () -> Boolean = ::consented): String {
         if (!authorized()) return response("denied")
+        // Display work is independent of a Gaming Mode session: it takes neither the session
+        // mutex nor the session's restore ordering, so a game-exit RESTORE and a panel change
+        // cannot deadlock each other.
+        if (request.isDisplay) return runDisplayRequest(request, authorized)
         val restore = request.isRestore
         val startedAt = SystemClock.elapsedRealtime()
         if (restore) {
@@ -193,6 +248,9 @@ class GameAutomation @Inject constructor(
                     }
                 }
                 AutomationProtocol.Operation.LAUNCH_GAME -> record("launch_ready", request)
+                // Routed to runDisplayRequest before the session lock; never reached here.
+                AutomationProtocol.Operation.APPLY_DISPLAY,
+                AutomationProtocol.Operation.RESTORE_DISPLAY -> response("failed")
                 AutomationProtocol.Operation.QUERY_SELECTION,
                 AutomationProtocol.Operation.QUERY_STATUS -> query(request.requestId)
             }.let { result ->
@@ -233,6 +291,95 @@ class GameAutomation @Inject constructor(
             writes.unlock()
             if (restore) restorePending = false
         }
+    }
+
+    /**
+     * Applies or restores a display rate for an automation caller.
+     *
+     * The target is the display in use: an attached external display if there is one, otherwise
+     * the built-in panel. A caller that names a rate gets exactly that rate; a caller that omits
+     * `hz` gets the saved preference for its context, which is what makes "configure once, apply
+     * from Tasker" work. Background callers are non-interactive on purpose, so a change that
+     * would need the confirmation countdown is refused rather than made unconfirmable.
+     */
+    private suspend fun runDisplayRequest(
+        request: AutomationProtocol.Request,
+        authorized: () -> Boolean
+    ): String {
+        if (!authorized()) return response("denied")
+        val startedAt = SystemClock.elapsedRealtime()
+        record("running", request)
+        val engine = displayEngine
+        engine.refresh()
+        val state = engine.state.value
+        val target = state.external ?: state.builtIn
+
+        val report = when {
+            request.operation == AutomationProtocol.Operation.RESTORE_DISPLAY -> engine.restore()
+            target == null -> DisplayApplyReport(refusedReason = "No display is available")
+            else -> {
+                val onExternal = state.external != null
+                val requested = request.hz
+                    ?: displayRates.resolve(request.game, onExternal, onExternal && isSamsung())
+                if (requested == null) {
+                    DisplayApplyReport(
+                        refusedReason = "No refresh rate is saved for this context, and the request did not supply hz"
+                    )
+                } else {
+                    engine.apply(target.id, requested, interactive = false)
+                }
+            }
+        }
+        return displayReceipt(request, report, SystemClock.elapsedRealtime() - startedAt)
+    }
+
+    private fun displayReceipt(
+        request: AutomationProtocol.Request,
+        report: DisplayApplyReport,
+        durationMs: Long
+    ): String {
+        val code = if (report.applied) "applied" else "failed"
+        val json = JSONObject(AutomationStatus.withRequest(response(code), request)).apply {
+            put("durationMs", durationMs)
+            put("display", JSONObject().apply {
+                put("applied", report.applied)
+                put("summary", report.summary)
+                report.backend?.let { put("backend", it.name) }
+                report.requestedHz?.let { put("requestedHz", it) }
+                report.observedHz?.let { put("observedHz", it) }
+                report.pacing?.let { put("pacing", it.name) }
+                report.refusedReason?.let { put("refused", it) }
+                if (report.details.isNotEmpty()) put("details", org.json.JSONArray(report.details))
+                report.revertSeconds?.let { put("revertSeconds", it) }
+            })
+        }
+        return json.toString().also {
+            _status.value = it
+            prefs.edit().putString("last", it).apply()
+        }
+    }
+
+    /**
+     * Admits a display request and runs it off the receiver thread.
+     *
+     * No foreground service is started for this family: a display change is one settings write
+     * or one binder transaction, and it needs no long-running process to hold it. Android may
+     * still stop the process mid-flight, which is exactly why the engine's snapshot carries a
+     * restore record and its pending-confirmation flag survives a restart.
+     */
+    fun launchDisplay(request: AutomationProtocol.Request): String {
+        scope.launch { runCatching { runRequest(request) } }
+        return "accepted"
+    }
+
+    /** "Apply this rate" from the display UI, through the same engine the automation uses. */
+    fun applyDisplayFromUi(displayId: Int, hz: Float) = scope.async {
+        runCatching { displayEngine.apply(displayId, hz, interactive = true) }.getOrNull()
+    }
+
+    /** Restore every display CatSmoker changed, from the UI's own button. */
+    fun restoreDisplayFromUi() = scope.async {
+        runCatching { displayEngine.restore() }.getOrNull()
     }
 
     fun record(code: String, request: AutomationProtocol.Request? = null): String =

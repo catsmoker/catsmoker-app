@@ -47,4 +47,17 @@
     static rikka.shizuku.ShizukuRemoteProcess newProcess(java.lang.String[], java.lang.String[], java.lang.String);
 }
 
+# The display helper is started as `app_process /system/bin <class>` from a shell-UID child,
+# so the *name* is the entry point and `main` is what `app_process` invokes by reflection.
+# Renaming either silently disables every privileged display backend.
+-keep class com.catsmoker.app.screens.gaming.display.DisplayShellMain {
+    public static void main(java.lang.String[]);
+}
+
+# DisplaySnapshot is persisted by Gson with its field names (the same hazard as the models
+# above), and the pending-confirmation flag in it is what makes a crashed mode switch
+# recoverable on the next launch.
+-keep class com.catsmoker.app.screens.gaming.display.DisplaySnapshot { *; }
+-keep class com.catsmoker.app.screens.gaming.display.StoredMode { *; }
+
 -keep class androidx.core.app.CoreComponentFactory { *; }

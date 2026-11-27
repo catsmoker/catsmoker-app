@@ -26,12 +26,15 @@ import kotlinx.coroutines.withContext
  * doing nothing.
  *
  * A third platform switch, "Show refresh rate" (SurfaceFlinger's debug transaction `1034`),
- * is deliberately NOT offered here: from Android 14 it is gated on the signature permission
- * `ACCESS_SURFACE_FLINGER`, which the `shell` caller Shizuku uses does not hold and cannot be
- * granted — so on every supported no-root configuration the switch could never move anything.
- * Offering it would be pretending at a control we do not have. Users who want the overlay turn
- * it on in Android's own Developer options screen (linked below the switches), which runs as
- * `system` and is always accepted.
+ * is deliberately NOT offered here: the whole debug-backdoor code range (1000+), including the
+ * overlay toggle, is gated on `android.permission.HARDWARE_TEST` in
+ * `SurfaceFlinger::onTransact`, which is `signature`-only and which the `shell` caller Shizuku
+ * uses does not declare and cannot be granted. (The composer's own policy calls are a different
+ * permission — `ACCESS_SURFACE_FLINGER`, which `com.android.shell` *does* hold; that is what
+ * [com.catsmoker.app.screens.gaming.display.DisplayEngine] uses.) So on every supported no-root
+ * configuration this switch could never move anything. Offering it would be pretending at a
+ * control we do not have. Users who want the overlay turn it on in Android's own Developer
+ * options screen (linked below the switches), which runs as `system` and is always accepted.
  *
  * - **Force peak refresh rate** — writes `min_refresh_rate` as a float, set to the panel's peak
  *   rate, as `ForcePeakRefreshRatePreferenceController` does. Raising the *minimum* is what forces

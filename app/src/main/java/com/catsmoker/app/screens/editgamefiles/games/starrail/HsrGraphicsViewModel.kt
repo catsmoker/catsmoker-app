@@ -27,6 +27,44 @@ import kotlinx.coroutines.launch
  * device's own values are re-read after every successful apply, so what the screen shows
  * afterwards is what the device holds, not what we asked it to hold.
  */
+/**
+ * The state a successful graphics write leaves behind.
+ *
+ * Pure, and separate from the coroutine that runs the write, because the rule it encodes is the
+ * one that used to lose data and is worth a plain unit test: a graphics write re-baselines both
+ * working copies, but it may only *replace* the QoL copy when that copy has nothing pending.
+ * Otherwise the working copy is kept and only its baseline follows the device, so what was never
+ * written still reads as pending instead of vanishing silently.
+ *
+ * [prefsStillDirty] is supplied by the caller because it compares against the moved baseline; this
+ * function must not reach into the history to work it out.
+ */
+internal fun HsrGraphicsUiState.afterGraphicsWrite(
+    freshSettings: HsrGraphicsSettings,
+    freshDevicePrefs: HsrGamePreferences,
+    pendingPrefs: HsrGamePreferences?,
+    prefsStillDirty: Boolean,
+    hasBackup: Boolean
+): HsrGraphicsUiState = copy(
+    settings = freshSettings,
+    gamePrefs = pendingPrefs ?: freshDevicePrefs,
+    hasBackup = hasBackup,
+    canUndoSettings = false,
+    canRedoSettings = false,
+    settingsDirty = false,
+    pendingSettingsCount = 0,
+    settingsExternalChanged = false,
+    canUndoPrefs = pendingPrefs != null && canUndoPrefs,
+    canRedoPrefs = pendingPrefs != null && canRedoPrefs,
+    prefsDirty = pendingPrefs != null && prefsStillDirty,
+    // The count is derived from the history baseline by the caller's withSessionFlags().
+    pendingPrefsCount = 0,
+    prefsExternalChanged = pendingPrefs != null && prefsExternalChanged
+)
+
+/** The two working copies this editor keeps, in the order the screen shows them. */
+enum class HsrEditArea { SETTINGS, PREFS }
+
 data class HsrGraphicsUiState(
     val loading: Boolean = true,
     val settings: HsrGraphicsSettings? = null,
@@ -68,6 +106,15 @@ data class HsrGraphicsUiState(
     val pendingSettingsCount: Int = 0,
     /** True when the device's settings moved since the last baseline (game wrote behind us). */
     val settingsExternalChanged: Boolean = false,
+    /**
+     * Which working copy the user touched last.
+     *
+     * The editor has two of them (graphics settings and QoL preferences) and one pinned bar.
+     * A bar with two undo buttons would be a puzzle, so the bar's undo follows this: it undoes
+     * the copy the user most recently edited, and falls back to the other one when that copy
+     * has nothing left to undo.
+     */
+    val lastEdited: HsrEditArea = HsrEditArea.SETTINGS,
     /** Undo/redo availability for the QoL-preferences working copy. */
     val canUndoPrefs: Boolean = false,
     val canRedoPrefs: Boolean = false,
@@ -240,6 +287,7 @@ class HsrGraphicsViewModel @Inject constructor(
                 val next = transform(it)
                 state.copy(
                     settings = next,
+                    lastEdited = HsrEditArea.SETTINGS,
                     canUndoSettings = settingsHistory.canUndo,
                     canRedoSettings = settingsHistory.canRedo,
                     settingsDirty = settingsHistory.isDirty(next)
@@ -255,6 +303,7 @@ class HsrGraphicsViewModel @Inject constructor(
                 val next = transform(it)
                 state.copy(
                     gamePrefs = next,
+                    lastEdited = HsrEditArea.PREFS,
                     canUndoPrefs = prefsHistory.canUndo,
                     canRedoPrefs = prefsHistory.canRedo,
                     prefsDirty = prefsHistory.isDirty(next)
@@ -319,11 +368,14 @@ class HsrGraphicsViewModel @Inject constructor(
         }
     }
 
-    /** Same flow as [onApply], against the QoL keys. Speed-up needs a logged-in user id. */
-    fun onApplyPrefs() {
-        val prefs = _uiState.value.gamePrefs ?: return
-        if (_uiState.value.applyingPrefs) return
-        viewModelScope.launch {
+    /**
+     * The suspend core of the QoL write, taking the copy to write explicitly.
+     *
+     * [onApplyPending] has to pass the copy it captured *before* the graphics pass ran: a
+     * successful graphics apply re-baselines both working copies from the device, so the
+     * pending QoL edits are no longer in the state by the time this runs.
+     */
+    private suspend fun applyPrefsNow(prefs: HsrGamePreferences): Boolean {
             _uiState.update { it.copy(applyingPrefs = true, lastPrefsApply = null) }
 
             val gameStopped = gameManager.forceStopGame()
@@ -361,9 +413,10 @@ class HsrGraphicsViewModel @Inject constructor(
                         it.copy(applyingPrefs = false, lastPrefsApply = context.getString(R.string.gf_failed_stage_detail, result.stage, result.detail))
                     }
                     _events.emit(HsrEvent.Toast(context.getString(R.string.gf_apply_failed_detail, result.detail), true))
+                    return false
                 }
             }
-        }
+            return true
     }
 
     /**
@@ -371,11 +424,20 @@ class HsrGraphicsViewModel @Inject constructor(
      * working copy, then re-read the device. The report names every step that actually happened.
      * Flat-format files go through the sibling-only write, which never invents the blob.
      */
-    fun onApply() {
-        val settings = _uiState.value.settings ?: return
-        if (_uiState.value.applying) return
+    /**
+     * The suspend core of the graphics write, taking the copy to write explicitly.
+     *
+     * Returns false when the write failed, so [onApplyPending] can stop instead of pushing the
+     * QoL keys on top of a file it could not read back.
+     */
+    private suspend fun applySettingsNow(settings: HsrGraphicsSettings): Boolean {
         val flat = _uiState.value.flatFormat
-        viewModelScope.launch {
+        // A graphics write re-reads the file, and the re-baseline that follows is what makes the
+        // applied values read clean. It must not apply that to the QoL copy while that copy has
+        // edits in it: those keys were never written, and re-baselining over them reports
+        // unapplied work as clean — the edits vanish with no failure shown. Captured here so the
+        // success branch can put the working copy back.
+        val pendingPrefs = _uiState.value.gamePrefs?.takeIf { _uiState.value.prefsDirty }
             _uiState.update { it.copy(applying = true) }
 
             // A refused stop is surfaced, not swallowed: the write still runs, but a running HSR
@@ -390,34 +452,53 @@ class HsrGraphicsViewModel @Inject constructor(
                     _events.emit(HsrEvent.Toast(context.getString(if (result.verified) R.string.gf_hsr_gfx_verified else R.string.gf_hsr_readback_off), true))
 
                     // Show what the device now holds, not what we asked for — and re-baseline
-                    // both working copies onto it, so applied values read clean.
+                    // both working copies onto it, so applied values read clean. The QoL working
+                    // copy survives when it had pending edits: its baseline moves to the device,
+                    // so it stays dirty against a true reference instead of being replaced.
                     (gameManager.readCurrentSettings() as? HsrReadResult.Success)?.let { fresh ->
                         settingsHistory.setBaseline(fresh.settings)
                         prefsHistory.setBaseline(fresh.gamePrefs)
-                        _uiState.update {
-                            it.copy(
-                                settings = fresh.settings,
-                                gamePrefs = fresh.gamePrefs,
-                                hasBackup = gameManager.hasBackup(),
-                                canUndoSettings = false,
-                                canRedoSettings = false,
-                                settingsDirty = false,
-                                pendingSettingsCount = 0,
-                                settingsExternalChanged = false,
-                                canUndoPrefs = false,
-                                canRedoPrefs = false,
-                                prefsDirty = false,
-                                pendingPrefsCount = 0,
-                                prefsExternalChanged = false
-                            )
+                        _uiState.update { state ->
+                            state.afterGraphicsWrite(
+                                freshSettings = fresh.settings,
+                                freshDevicePrefs = fresh.gamePrefs,
+                                pendingPrefs = pendingPrefs,
+                                prefsStillDirty = pendingPrefs != null && prefsHistory.isDirty(pendingPrefs),
+                                hasBackup = gameManager.hasBackup()
+                            ).withSessionFlags()
                         }
                     }
                 }
                 is HsrWriteResult.Failure -> {
                     _uiState.update { it.copy(applying = false) }
                     _events.emit(HsrEvent.Toast(context.getString(R.string.gf_apply_failed_detail, result.detail), true))
+                    return false
                 }
             }
+            return true
+    }
+
+    /**
+     * One apply for everything the pinned bar reports as pending.
+     *
+     * The editor keeps two working copies and the screen shows one APPLY, so this is the only
+     * apply entry point. It writes in the order that cannot lose work: the QoL copy is captured
+     * first, then the graphics pass runs (it re-reads the file and re-baselines), then the
+     * captured QoL copy is written. `applySettingsNow` also keeps a pending QoL copy alive on its
+     * own, so the sequence is a guarantee at both levels rather than only here.
+     *
+     * A failed graphics write stops the sequence: the second write would land on a file whose
+     * state was not confirmed.
+     */
+    fun onApplyPending() {
+        val start = _uiState.value
+        val settings = start.settings ?: return
+        if (start.applying || start.applyingPrefs) return
+        val pendingPrefs = start.gamePrefs?.takeIf { start.prefsDirty }
+        if (!start.settingsDirty && pendingPrefs == null) return
+        viewModelScope.launch {
+            if (start.settingsDirty && !applySettingsNow(settings)) return@launch
+            if (pendingPrefs != null) applyPrefsNow(pendingPrefs)
         }
     }
 

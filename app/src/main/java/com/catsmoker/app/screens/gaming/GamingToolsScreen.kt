@@ -35,6 +35,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
@@ -67,6 +68,7 @@ import com.catsmoker.app.screens.gaming.components.InfoTopics
 import com.catsmoker.app.screens.gaming.components.backgroundDataInfo
 import com.catsmoker.app.screens.gaming.components.backgroundNetworkIcon
 import com.catsmoker.app.screens.gaming.crosshair.CrosshairPicker
+import com.catsmoker.app.screens.gaming.display.DisplayCard
 import com.catsmoker.app.screens.gaming.graphics.AngleDriverOptions
 import com.catsmoker.app.screens.gaming.graphics.AnimationScaleKind
 import com.catsmoker.app.screens.gaming.graphics.DeveloperOptionsContent
@@ -86,6 +88,9 @@ import com.catsmoker.app.screens.gaming.network.DnsFeature
 import com.catsmoker.app.screens.gaming.performanceoverlay.OverlayPositionContent
 import com.catsmoker.app.ui.components.ScreenScaffold
 import com.catsmoker.app.ui.components.SectionLabel
+import com.catsmoker.app.ui.components.SectionRail
+import com.catsmoker.app.ui.components.SectionTab
+import com.catsmoker.app.ui.components.SectionTabRow
 import com.catsmoker.app.ui.theme.CatsmokerSpacing
 import com.catsmoker.app.ui.theme.CatsmokerTheme
 import java.io.File
@@ -99,16 +104,26 @@ import java.io.File
 private const val GAME_GRID_COLUMNS = 4
 /** How many games a collapsed "Your Games" grid shows — two full rows. */
 private const val GAME_LIBRARY_PREVIEW = GAME_GRID_COLUMNS * 2
+/** Columns in the wide library rail: two, because the rail is only 278 dp wide. */
+private const val GAME_RAIL_COLUMNS = 2
 /** Below this many games, search would be clutter rather than help. */
 private const val GAME_SEARCH_THRESHOLD = 8
 
-private enum class GamingSection(@StringRes val title: Int) {
-    PROFILE(R.string.gt_workspace_profile),
-    GRAPHICS(R.string.gt_section_graphics),
-    PERFORMANCE(R.string.gt_section_performance),
-    OVERLAYS(R.string.gt_section_overlays),
-    NETWORK(R.string.gt_section_focus_network),
-    MAINTENANCE(R.string.gt_workspace_maintenance)
+/**
+ * The workspace's six peer views.
+ *
+ * Each carries a one-word tab label rather than its full heading. The long headings
+ * ("GRAPHICS & DISPLAY", "NETWORK & QUIET") are section titles inside the content pane; as tab
+ * captions they forced a 2274 dp chip strip into a 954 dp row, so the switcher clipped its own
+ * navigation. `name` is the saved-state key and stays stable across label changes.
+ */
+private enum class GamingSection(@StringRes val tabLabel: Int, val icon: ImageVector) {
+    PROFILE(R.string.gt_tab_profile, Icons.Default.Tune),
+    GRAPHICS(R.string.gt_tab_display, Icons.Default.Monitor),
+    PERFORMANCE(R.string.gt_tab_speed, Icons.Default.Speed),
+    OVERLAYS(R.string.gt_tab_overlays, Icons.Default.Layers),
+    NETWORK(R.string.gt_tab_network, Icons.Default.Wifi),
+    MAINTENANCE(R.string.gt_tab_cleanup, Icons.Default.CleaningServices)
 }
 @Composable
 fun GamingToolsRoute(
@@ -472,6 +487,7 @@ fun GamingToolsScreen(
     // One popup, owned by the selected game's name button; selecting another game dismisses it.
     var openGameMenuPkg by rememberSaveable { mutableStateOf<String?>(null) }
     var showAutomation by rememberSaveable { mutableStateOf(false) }
+    var showToolSearch by rememberSaveable { mutableStateOf(false) }
     if (showAutomation) {
         com.catsmoker.app.screens.gaming.automation.AutomationDialog(
             selectedGame = uiState.games.firstOrNull { it.packageName == uiState.selectedGamePkg },
@@ -492,11 +508,36 @@ fun GamingToolsScreen(
         title = stringResource(R.string.Gaming_tools_title),
         onBack = onBack,
         trailingContent = {
+            // Recognition over recall: six sections is past the point where a user can guess
+            // which one holds "refresh rate", and the header has the space for the answer.
+            IconButton(
+                onClick = { showToolSearch = true },
+                modifier = Modifier.size(48.dp)
+            ) {
+                Icon(
+                    Icons.Default.Search,
+                    contentDescription = stringResource(R.string.gt_search_desc),
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.size(20.dp)
+                )
+            }
             com.catsmoker.app.screens.gaming.automation.AutomationEntry(onClick = { showAutomation = true })
         }
     ) {
+        if (showToolSearch) {
+            com.catsmoker.app.screens.gaming.components.ToolSearchDialog(
+                onDismiss = { showToolSearch = false },
+                onOpenSection = { id ->
+                    GamingSection.entries.firstOrNull { it.name == id }?.let { section = it }
+                }
+            )
+        }
         val selectedGame = uiState.games.firstOrNull { it.packageName == uiState.selectedGamePkg }
-        val gameLibrary: @Composable ColumnScope.() -> Unit = {
+        // The grid's column count follows its pane, not the device: four columns is the
+        // launcher density for a phone-width body, but in the 278 dp library rail that gives
+        // each tile ~66 dp and cuts every game name to "CATSMOKE R LAB GA…". The rail draws two,
+        // which is still a grid and still recognisable by icon, but leaves a name readable.
+        val gameLibrary: @Composable ColumnScope.(Int) -> Unit = { columns ->
             // Tap changes context only; long press opens package-addressed actions on any tile.
             // Explicit removals hide both user-added and category-discovered entries.
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
@@ -552,7 +593,7 @@ fun GamingToolsScreen(
                         modifier = Modifier.fillMaxWidth(),
                         verticalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
-                        visibleGames.chunked(GAME_GRID_COLUMNS).forEach { rowGames ->
+                        visibleGames.chunked(columns).forEach { rowGames ->
                             Row(
                                 modifier = Modifier.fillMaxWidth(),
                                 horizontalArrangement = Arrangement.spacedBy(4.dp),
@@ -578,7 +619,7 @@ fun GamingToolsScreen(
                                 }
                                 // Keep the last, incomplete row aligned to the same column
                                 // widths instead of stretching its tiles across the screen.
-                                repeat(GAME_GRID_COLUMNS - rowGames.size) {
+                                repeat(columns - rowGames.size) {
                                     Spacer(modifier = Modifier.weight(1f))
                                 }
                             }
@@ -603,12 +644,21 @@ fun GamingToolsScreen(
         }
         val profile: @Composable ColumnScope.(Boolean, Boolean) -> Unit = { wide, twoColumn ->
             if (!wide) {
-                gameLibrary()
+                // Four columns is a launcher row at normal text; at a large font scale the names
+                // ("HONKAI: STAR RAIL") need the extra width more than the grid needs the column.
+                gameLibrary(if (LocalDensity.current.fontScale > 1.15f) 3 else GAME_GRID_COLUMNS)
                 Spacer(Modifier.height(CatsmokerSpacing.CardGap))
             }
+            // The caption wraps to two lines on a 411 dp phone, where it used to land flush
+            // against the GAMING MODE label below it — the two lines of dot-matrix text read as
+            // one crowded block. LabelGap separates a heading from the block it introduces, so
+            // the caption takes it as bottom padding.
             Text(stringResource(R.string.gt_context_device_controls),
-                style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-            SectionLabel(stringResource(R.string.gt_section_gaming_mode))
+                style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(bottom = CatsmokerSpacing.LabelGap))
+            // No group heading here: GamingModeCard draws "GAMING MODE" as its own eyebrow
+            // 20 dp lower, so a SectionLabel saying the same thing was pure duplication above a
+            // card that already names itself. The long caption below still describes the group.
             val gamingModeCard: @Composable () -> Unit = {
                 GamingModeCard(
                     gamingState = gamingState,
@@ -830,6 +880,9 @@ fun GamingToolsScreen(
                         showGameTuning = uiState.selectedGamePkg != null
                     )
                 }
+                // Refresh rate sits with the other screen-level controls: it is a display
+                // property, not a property of the selected game's files.
+                DisplayCard()
             }
         }
         val overlays: @Composable (Boolean) -> Unit = { twoColumn ->
@@ -1031,10 +1084,37 @@ fun GamingToolsScreen(
             // Two cards side by side needs more room than the library pane does: at 792dp the
             // main pane is ~460dp, where two cards would be narrower than a phone tile.
             val twoColumn = maxWidth >= 1200.dp
+            // A labelled rail costs ~190 dp of width. Below this the workspace would give up more
+            // reading width than the vertical navigation saves, so the tab row stays.
+            val sectionRail = maxWidth >= 1180.dp
+            val tabs = GamingSection.entries.map {
+                SectionTab(id = it.name, label = stringResource(it.tabLabel), icon = it.icon)
+            }
+            val selectSection: (SectionTab) -> Unit = { picked ->
+                section = GamingSection.entries.first { it.name == picked.id }
+            }
+            // One scroll owner per pane: the section body scrolls, the switcher never does.
+            val sectionBody: @Composable (Modifier) -> Unit = { bodyModifier ->
+                sectionStates.SaveableStateProvider(section.name) {
+                    Column(
+                        bodyModifier.fillMaxWidth().verticalScroll(rememberScrollState())
+                            .padding(top = 8.dp, bottom = 24.dp)
+                    ) {
+                        when (section) {
+                            GamingSection.PROFILE -> profile(wide, twoColumn)
+                            GamingSection.GRAPHICS -> graphics()
+                            GamingSection.PERFORMANCE -> performance(wide)
+                            GamingSection.OVERLAYS -> overlays(twoColumn)
+                            GamingSection.NETWORK -> network(twoColumn)
+                            GamingSection.MAINTENANCE -> maintenance()
+                        }
+                    }
+                }
+            }
             Row(Modifier.fillMaxSize(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
                 if (wide) {
                     Column(Modifier.width(278.dp).fillMaxHeight().verticalScroll(rememberScrollState())) {
-                        gameLibrary()
+                        gameLibrary(GAME_RAIL_COLUMNS)
                     }
                     VerticalDivider(Modifier.fillMaxHeight())
                 }
@@ -1043,30 +1123,31 @@ fun GamingToolsScreen(
                         gameName = selectedGame?.appName ?: uiState.selectedGamePkg,
                         onGlobal = onGlobalSelection
                     )
-                    Row(
-                        Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        GamingSection.entries.forEach { item ->
-                            FilterChip(selected = item == section, onClick = { section = item },
-                                label = { Text(stringResource(item.title)) }, modifier = Modifier.heightIn(min = 48.dp),
-                                colors = FilterChipDefaults.filterChipColors(
-                                    selectedContainerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.18f),
-                                    selectedLabelColor = MaterialTheme.colorScheme.onSurface))
-                        }
-                    }
-                    sectionStates.SaveableStateProvider(section.name) {
-                        Column(Modifier.fillMaxWidth().weight(1f).verticalScroll(rememberScrollState())
-                            .padding(top = 8.dp, bottom = 24.dp)) {
-                            when (section) {
-                                GamingSection.PROFILE -> profile(wide, twoColumn)
-                                GamingSection.GRAPHICS -> graphics()
-                                GamingSection.PERFORMANCE -> performance(wide)
-                                GamingSection.OVERLAYS -> overlays(twoColumn)
-                                GamingSection.NETWORK -> network(twoColumn)
-                                GamingSection.MAINTENANCE -> maintenance()
+                    if (sectionRail) {
+                        // Expanded window: the sections get their own column, so no tab has to
+                        // share the row with six peers across a metre of screen.
+                        Row(Modifier.weight(1f).fillMaxWidth()) {
+                            SectionRail(
+                                sections = tabs,
+                                selectedId = section.name,
+                                onSelect = selectSection,
+                                modifier = Modifier.padding(top = 8.dp)
+                            )
+                            VerticalDivider(Modifier.padding(horizontal = 12.dp).fillMaxHeight())
+                            Box(Modifier.weight(1f).fillMaxHeight()) {
+                                sectionBody(Modifier.fillMaxHeight())
                             }
                         }
+                    } else {
+                        SectionTabRow(
+                            sections = tabs,
+                            selectedId = section.name,
+                            onSelect = selectSection
+                        )
+                        // The pane starts a card's own padding below the tab row. Without this the
+                        // first card's top edge touched the row's bottom edge exactly, and the two
+                        // read as one crowded block.
+                        sectionBody(Modifier.weight(1f).padding(top = 8.dp))
                     }
                 }
             }

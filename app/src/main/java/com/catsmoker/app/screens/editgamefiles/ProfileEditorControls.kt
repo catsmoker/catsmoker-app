@@ -82,7 +82,7 @@ internal fun ProfileGameEditor(
                 // current language.
                 uiState.profileLabelResIds.forEachIndexed { index, labelResId ->
                     Row(
-                        modifier = Modifier.fillMaxWidth().clickable { onProfileSelected(index) }.padding(vertical = 10.dp),
+                        modifier = Modifier.fillMaxWidth().clickable { onProfileSelected(index) }.padding(vertical = 4.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         RadioButton(selected = uiState.selectedProfile == index, onClick = { onProfileSelected(index) })
@@ -248,8 +248,62 @@ internal fun GameNotFoundCard(
     packageName: String?,
     onRecheck: () -> Unit,
     onOpenStore: (String) -> Unit,
-    onShowAnyway: (() -> Unit)? = null
+    onShowAnyway: (() -> Unit)? = null,
+    /**
+     * True once the user has forced the editor open with SHOW ANYWAY.
+     *
+     * The full card exists to explain a situation and offer a way out of it. After the override
+     * both jobs are done, yet the card stayed at full size above the editor it had just
+     * unlocked: measured at 532 px on a 411 dp phone, a third of one swipe, repeating a fact the
+     * user had already acted on. The compact form keeps the fact and both actions in two rows.
+     */
+    compact: Boolean = false
 ) {
+    if (compact) {
+        SectionCard(contentPadding = 14.dp) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(
+                    Icons.Default.Warning,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.error,
+                    modifier = Modifier.size(16.dp)
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = stringResource(R.string.gf_game_not_installed, gameName),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.error
+                    )
+                    if (packageName != null) {
+                        Text(
+                            // Trimmed rather than reformatted: the separating dash is part of the
+                            // translated string and re-cutting it would mean a new resource in
+                            // every locale for a punctuation choice.
+                            text = stringResource(R.string.gf_package_not_found, packageName).trim(),
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
+            }
+            Spacer(modifier = Modifier.height(4.dp))
+            // Aligned with the text block above it (16 dp glyph + 8 dp gap), not with the card's
+            // edge: two left edges in one card read as a mistake.
+            Row(
+                modifier = Modifier.padding(start = 24.dp),
+                horizontalArrangement = Arrangement.spacedBy(4.dp)
+            ) {
+                TextButton(onClick = onRecheck) { Text(stringResource(R.string.gf_recheck)) }
+                if (packageName != null) {
+                    TextButton(onClick = { onOpenStore(packageName) }) {
+                        Text(stringResource(R.string.gf_open_play_store), maxLines = 1)
+                    }
+                }
+            }
+        }
+        return
+    }
     SectionCard {
         Column {
             CardHeading(
@@ -270,8 +324,13 @@ internal fun GameNotFoundCard(
                     Text(stringResource(R.string.gf_recheck))
                 }
                 if (packageName != null) {
-                    CatsmokerButton(onClick = { onOpenStore(packageName) }, modifier = Modifier.weight(1f)) {
-                        Text(stringResource(R.string.gf_open_play_store))
+                    // The store label is longer than RE-CHECK and used to wrap to two lines in an
+                    // equal-weight row, leaving the two buttons at different heights.
+                    CatsmokerButton(
+                        onClick = { onOpenStore(packageName) },
+                        modifier = Modifier.weight(1.4f)
+                    ) {
+                        Text(stringResource(R.string.gf_open_play_store), maxLines = 1)
                     }
                 }
             }

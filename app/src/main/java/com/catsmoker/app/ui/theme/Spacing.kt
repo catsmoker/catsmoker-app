@@ -13,8 +13,13 @@ import androidx.compose.ui.unit.dp
  * applies [CardGap]; [SectionGap] and [LabelGap] complete the scale.
  */
 object CatsmokerSpacing {
-    /** Between two cards of the same group, whether stacked or side by side. */
-    val CardGap = 12.dp
+    /**
+     * Between two cards of the same group, whether stacked or side by side.
+     *
+     * 8 dp: two cards already carry 16 dp of their own padding, so the visible band between two
+     * blocks of text was 44 dp — wide enough to read as a hole rather than as a group boundary.
+     */
+    val CardGap = 8.dp
 
     /** Between two labelled sections on a scrolling screen. */
     val SectionGap = 24.dp
